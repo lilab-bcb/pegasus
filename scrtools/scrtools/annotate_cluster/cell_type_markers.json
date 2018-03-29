@@ -1,0 +1,393 @@
+{
+	"title" : "cell type markers",
+	"cell_types" : [
+		{
+			"name" : "T cell",
+			"markers" : [
+				{
+					"genes" : ["CD3D+", "CD3E+", "CD3G+"],
+					"weight" : 0.75,
+					"comment" : "CD3"
+				},
+				{
+					"genes" : ["TRAC+"],
+					"weight" : 0.25,
+					"comment" : "T cell receptor"
+				}
+			],
+			"subtypes" : {
+				"title" : "T cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "T helper cell",
+						"markers" : [
+							{
+								"genes" : ["CD4+"],
+								"weight" : 1.0,
+								"comment" : "CD4+ T cell"
+							}
+						]
+					},
+					{
+						"name" : "Cytotoxic T cell",
+						"markers" : [
+							{
+								"genes" : ["CD8A+", "CD8B+"],
+								"weight" : 1.0,
+								"comment" : "CD8+ T cell"
+							}
+						]
+					},
+					{
+						"name" : "T regulatory cell",
+						"markers" : [
+							{
+								"genes" : ["CD4+", "IL2RA+", "IL7R-", "FOXP3+"],
+								"weight" : 1.0,
+								"comments" : "T reg"
+							}
+						]
+					},
+					{
+						"name" : "Naive T cell",
+						"markers" : [
+							{
+								"genes" : ["TCF7+", "CD27+"],
+								"weight" : 0.6,
+								"comment" : "key markers"
+							},
+							{
+								"genes" : ["SELL+", "IL7R+", "IL2RG+", "IL2RA-", "CD44-", "CD69-"],
+								"weight" : 0.4,
+								"comment" : "so so markers"
+							}
+ 						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "B cell",
+			"markers" : [
+				{
+					"genes" : ["CD19+"],
+					"weight" : 0.18
+				},
+				{
+					"genes" : ["MS4A1+"],
+					"weight" : 0.18,
+					"comment" : "CD20"
+				},
+				{
+					"genes" : ["CD79A+", "CD79B+"],
+					"weight" : 0.36,
+					"comment" : "CD79"
+				},
+				{
+					"genes" : ["MZB1+"],
+					"weight" : 0.18,
+					"comment" : ""
+				},
+				{
+					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
+					"weight" : 0.1,
+					"comment" : "MHC II"
+				}
+			]
+		},
+
+		{
+			"name" : "Natural killer cell",
+			"markers" : [
+				{
+					"genes" : ["NCAM1+"],
+					"weight" : 0.2,
+					"comment" : "CD56"
+				},
+				{
+					"genes" : ["NKG7+"],
+					"weight" : 0.2,
+					"comment" : "natural killer cell granule protein 7"
+				},
+				{
+					"genes" : ["KLRB1+", "KLRD1+", "KLRF1+", "KLRC1+", "KLRC2+", "KLRC3+", "KLRC4+"],
+					"weight" : 0.25,
+					"comment" : "killer cell lectin like receptors"
+				},
+				{
+					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
+					"weight" : 0.15,
+					"comment" : "not T cell"
+				},
+				{
+					"genes" : ["CD14-"],
+					"weight" : 0.1,
+					"comment" : "not monocyte"
+				},
+				{
+					"genes" : ["FCGR3A+", "FCGR3B+"],
+					"weight" : 0.05,
+					"comment" : "CD16"
+				},
+				{
+					"genes" : ["ITGAL+", "ITGAM+"],
+					"weight" : 0.05,
+					"comment" : "CD11a,CD11b"
+				}
+			]
+		},
+
+		{
+			"name" : "Monocyte",
+			"markers" : [
+				{
+					"genes" : ["VCAN+"],
+					"weight" : 0.16,
+					"comment" : ""
+				},
+				{
+					"genes" : ["FCN1+"],
+					"weight" : 0.16,
+					"comment" : ""
+				},
+				{
+					"genes" : ["S100A8+", "S100A9+"],
+					"weight" : 0.32,
+					"comment" : "calprotectin heterodimer"
+				},
+				{
+					"genes" : ["CD14+"],
+					"weight" : 0.08,
+					"comment" : "marker for CD14+ monocyte"
+				},
+				{
+					"genes" : ["FCGR3A+", "FCGR3B+"],
+					"weight" : 0.08,
+					"comment" : "markers for CD16+ monocyte"
+				},
+				{
+					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
+					"weight" : 0.1,
+					"comment" : "MHC II"
+				},
+				{
+					"genes" : ["ITGAL+", "ITGAM+", "CSF3R+", "CSF1R+", "CX3CR1+"],
+					"weight" : 0.1,
+					"comment" : "other non-specific markers"
+				}				
+			],
+			"subtypes" : {
+				"title" : "Monocyte subtype markers",
+				"cell_types" : [
+					{
+						"name" : "CD14+ Monocyte",
+						"markers" : [
+							{
+								"genes" : ["CD14+"],
+								"weight" : 0.5,
+								"comment" : "positive marker"
+							},
+							{
+								"genes" : ["FCGR3A-", "FCGR3B-"],
+								"weight" : 0.5,
+								"comment" : "negative markers"
+							}
+						]
+					},
+					{
+						"name" : "CD16+ Monocyte",
+						"markers" : [
+							{
+								"genes" : ["FCGR3A+", "FCGR3B+"],
+								"weight" : 1.0,
+								"comment" : "CD16"
+							}
+						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "Conventional dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["HLA-DPB1+", "HLA-DPA1+", "HLA-DQA1+"],
+					"weight" : 0.4,
+					"comment" : "key markers"
+				},
+				{
+					"genes" : ["ITGAX+"],
+					"weight" : 0.1,
+					"comment" : "CD11c"
+				},
+				{
+					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
+					"weight" : 0.1,
+					"comment" : "not T cell"
+				},
+				{
+					"genes" : ["NCAM1-"],
+					"weight" : 0.1,
+					"comment" : "not NK cell"
+				},
+				{
+					"genes" : ["CD19-"],
+					"weight" : 0.1,
+					"comment" : "not B cell"
+				},				
+				{
+					"genes" : ["CD14-"],
+					"weight" : 0.1,
+					"comment" : "not monocyte"
+				},
+				{
+					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
+					"weight" : 0.1,
+					"comment" : "MHC II"
+				}				
+			],
+			"subtypes" : {
+				"title" : "cDC subtype markers",
+				"cell_types" : [
+					{
+						"name" : "CD1C+ cDC",
+						"markers" : [
+							{
+								"genes" : ["CD1C+", "CD1E+", "FCER1A+", "CLEC10A+", "FCGR2B+"],
+								"weight" : 1.0,
+								"comment" : "CD1C"
+ 							}
+						]
+					},
+					{
+						"name" : "CD141+ cDC",
+						"markers" : [
+							{
+								"genes" : ["THBD+", "CLEC9A+", "CADM1+", "XCR1+"],
+								"weight" : 1.0,
+								"comment" : "CD141"
+ 							}
+						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "Plasmacytoid dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["IL3RA+", "GZMB+", "JCHAIN+", "IRF7+", "TCF4+", "LILRA4+", "CLEC4C+"],
+					"weight" : 0.4,
+					"comment" : "important pDC markers"
+				},
+				{
+					"genes" : ["ITGAX-"],
+					"weight" : 0.1,
+					"comment" : "CD11c, not cDC"
+				},
+				{
+					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
+					"weight" : 0.1,
+					"comment" : "not T cell"
+				},
+				{
+					"genes" : ["NCAM1-"],
+					"weight" : 0.1,
+					"comment" : "not NK cell"
+				},
+				{
+					"genes" : ["CD19-"],
+					"weight" : 0.1,
+					"comment" : "not B cell"
+				},				
+				{
+					"genes" : ["CD14-"],
+					"weight" : 0.1,
+					"comment" : "not monocyte"
+				},
+				{
+					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
+					"weight" : 0.1,
+					"comment" : "MHC II"
+				}
+			]
+		},
+
+		{
+			"name" : "Plasma cell",
+			"markers" : [
+				{
+					"genes" : ["CD38+", "XBP1+"],
+					"weight" : 0.4,
+					"comment" : "important markers"
+				},
+				{
+					"genes" : ["CD27+", "SLAMF7+"],
+					"weight" : 0.3,
+					"comment" : "so so markers"
+				},
+				{
+					"genes" : ["CD19-", "MS4A1-"],
+					"weight" : 0.2,
+					"comment" : "not B cell"
+				},				
+				{
+					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
+					"weight" : 0.1,
+					"comment" : "not T cell"
+				}
+			]
+		},
+
+		{
+			"name" : "Hematopoietic stem cell",
+			"markers" : [
+				{
+					"genes" : ["CD34+", "KIT+", "CD59+", "THY1+", "SOX4+"],
+					"weight" : 1.0,
+					"comment" : "HSC markers"
+				}
+			]
+		},
+
+		{
+			"name" : "Erythrocyte",
+			"markers" : [
+				{
+					"genes" : ["PF4+", "PPBP+", "GPX1+"],
+					"weight" : 0.6,
+					"comment" : "key markers"
+				},
+				{
+					"genes" : ["GYPA+", "HBB+", "HBA1+"],
+					"weight" : 0.3,
+					"comment" : "important markers"
+				},
+				{
+					"genes" : ["ANK1+", "ICAM4+", "BCAM+", "SLC4A1+", "ACKR1+"],
+					"weight" : 0.1,
+					"comment" : "so so markers"
+				}
+			]
+		},
+
+		{
+			"name" : "Megakaryocyte",
+			"markers" : [
+				{
+					"genes" : ["GP5+"],
+					"weight" : 0.3,
+					"comment" : "important marker"
+				},
+				{
+					"genes" : ["CXCR4+", "SLAMF1+", "MPL+"],
+					"weight" : 0.7,
+					"comment" : "other markers"
+				}
+			]
+		}		
+	]
+}
