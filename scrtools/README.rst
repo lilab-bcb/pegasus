@@ -1,1 +1,3 @@
-# Single Cell RNA-Seq tools (scrtools)
+================
+Single Cell RNA-Seq tools (scrtools)
+================
