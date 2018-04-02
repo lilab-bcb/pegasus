@@ -1,1 +1,2 @@
-from .annotate_cluster import annotate_clusters, run_annotate_cluster
+from .annotate_cluster import annotate_clusters
+from .run_annotate_cluster import run_annotate_cluster

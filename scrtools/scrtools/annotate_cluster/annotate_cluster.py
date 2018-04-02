@@ -2,8 +2,6 @@ import numpy as np
 import json
 import pandas as pd
 from sys import stdout
-import scanpy.api as sc
-import pkg_resources
 
 class CellType:
 	def __init__(self, name):
@@ -137,12 +135,3 @@ def annotate_clusters(adata, test, json_file, thre, fout = stdout):
 		results = anno.evaluate(de_up, de_down, kwds)
 		fout.write("Cluster {0}:\n".format(i + 1))
 		anno.report(fout, results, thre)
-
-def run_annotate_cluster(input_file, output_name, threshold):
-	json_file = pkg_resources.resource_filename('scrtools.annotate_cluster', 'cell_type_markers.json')
-
-	adata = sc.read(input_file)
-	with open(output_name + "_fisher.anno.txt", "w") as fout:
-		annotate_clusters(adata, 'fisher', json_file, threshold, fout)
-	with open(output_name + "_t.anno.txt", "w") as fout:
-		annotate_clusters(adata, 't', json_file, threshold, fout)

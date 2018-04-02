@@ -6,8 +6,7 @@ import warnings
 import pandas as pd
 import scipy.stats as ss
 import xlsxwriter
-from datetime import datetime
-import scanpy.api as sc
+
 
 def collect_contingency_table(adata):
 	clusts = adata.obs['louvain_groups'].value_counts()
@@ -145,29 +144,3 @@ def write_results_to_excel(output_file, adata, test, clusts = None, threshold = 
 		df.sort_values(by = sort_kw, ascending = False, inplace = True)
 		df.to_excel(writer, sheet_name = "Cluster {0}, down-regulated".format(clust_id + 1))
 	writer.save()
-
-def run_de_analysis(input_file, output_name, threshold):
-	adata = sc.read(input_file)
-
-	print("Begin t_test.")
-	print(datetime.now())
-	t_test(adata)
-	print(datetime.now())
-	print("t_test is done.")
-
-	excel_file = output_name + "_de_analysis_t.xlsx"
-	write_results_to_excel(excel_file, adata, "t", threshold = threshold)
-	print(excel_file + " is written.")
-
-	print("Begin fisher_test.")
-	print(datetime.now())
-	fisher_test(adata)
-	print(datetime.now())
-	print("fisher_test is done.")
-
-	excel_file = output_name + "_de_analysis_fisher.xlsx"
-	write_results_to_excel(excel_file, adata, "fisher", threshold = threshold)
-	print(excel_file + " is written.")
-
-	adata.write(output_name + "_de.h5ad")
-	print("Results are written.")
