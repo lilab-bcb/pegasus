@@ -126,8 +126,6 @@ def annotate_clusters(adata, test, json_file, thre, fout = stdout):
 	else:
 		kwds = {'fc' : 'log_fold_change', 'expr' : 'mean_log_expression'}
 	size = adata.obs['louvain_groups'].cat.categories.size
-	print(size)
-	print(thre)
 	for i in range(size):
 		clust_str = "de_{test}_{clust}".format(test = test, clust = i)
 		de_up = pd.DataFrame(data = adata.uns[clust_str + "_up_stats"], index = pd.Index(data = adata.uns[clust_str + "_up_genes"], name = "gene"))

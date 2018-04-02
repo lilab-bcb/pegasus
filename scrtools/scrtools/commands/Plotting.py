@@ -31,12 +31,10 @@ Examples:
 		kwargs = {
 			'attr' : self.args['--attribute'],
 			'style' : self.args['--style'],
-			'stack' : not self.args['--not-stacked'],
-			'logy' : self.args['--log-y']
+			'stacked' : not self.args['--not-stacked'],
+			'logy' : self.args['--log-y'],
 			'sizes' : [float(x) for x in self.args['--sizes'].split(',')],
 			'rmove' : float(self.args['--rmove']),
 			'wshrink' : float(self.args['--shrink'])
 		}
-		print(kwargs)
-		return
-		make_plots(self.args['<input_h5ad_file>'], 'composition', self.args['output_file'], kwargs)
+		make_plots(self.args['<input_h5ad_file>'], 'composition', self.args['<output_file>'], **kwargs)
