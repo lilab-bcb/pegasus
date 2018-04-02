@@ -7,18 +7,31 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
 requires = ['scanpy>=0.4',
-			'numpy',
-			'pandas',
+			'anndata>=0.5',
+			'matplotlib>=2.0.0',
+			'pandas>=0.21',
 			'scipy',
-			'natsort',
 			'seaborn',
+			'psutil',
+			'h5py',
+			'xlrd',
+			'scikit-learn>=0.19.1',
+			'statsmodels',
+			'networkx',
+			'natsort',
+			'joblib',
+			'profilehooks',
+			'numpy',
 			'json',
-			'pytables',
-			'sklearn',
+			'tables',
 			'xlsxwriter',
-			'matplotlib',
 			'fisher',
-			'statsmodels'
+			'tqdm',
+			'loompy',
+			'louvain',
+			'MulticoreTSNE',
+			'docopt',
+			'setuptools'
 		  ]
 
 setup(
@@ -49,7 +62,7 @@ setup(
 	install_requires=requires,
 	python_requires='~=3.5',
 	package_data={
-		'annotate_cluster': ['cell_type_markers.json'],
+		'scrtools.annotate_cluster': ['cell_type_markers.json'],
 	},
 	entry_points={
 		'console_scripts': [

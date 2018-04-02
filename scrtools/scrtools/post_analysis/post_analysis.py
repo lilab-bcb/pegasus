@@ -14,12 +14,10 @@ def search_gene(adata, gene, test = 'fisher', direction = 'up'):
 		if idx.size == 0:
 			continue
 		results.append(pd.DataFrame(adata.uns[nstr + '_stats'][idx[0] : idx[0]+1], index = pd.Index([str(cid + 1)], name = "Cluster ID")))
-
 	if len(results) > 0:
 		results = pd.concat(results)
 	else:
 		results = None
-
 	return results
 
 def calc_gene_stat(adata, clust_id):
