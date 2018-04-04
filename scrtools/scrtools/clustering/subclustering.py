@@ -7,7 +7,7 @@ from . import batch_correction
 
 
 
-def subcluster(input_h5ad_file, cluster_id, output_name, **kwargs):
+def subcluster(input_h5ad_file, cluster_ids, output_name, **kwargs):
 	output_name = os.path.abspath(output_name)
 	output_dir = os.path.dirname(output_name)
 	output_base = '.' + os.path.basename(output_name)
@@ -17,7 +17,7 @@ def subcluster(input_h5ad_file, cluster_id, output_name, **kwargs):
 
 	# Select a cluster to do sub-cluster
 	adata = sc.read(input_h5ad_file)
-	obs_index = (adata.obs['louvain_labels'] == cluster_id).values
+	obs_index = np.isin(adata.obs['louvain_labels'], cluster_ids)
 	adata._inplace_subset_obs(obs_index)
 
 	# Select variable genes

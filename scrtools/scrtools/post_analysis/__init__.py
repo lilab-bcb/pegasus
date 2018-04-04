@@ -1,1 +1,1 @@
-from .post_analysis import search_gene, calc_gene_stat
+from .post_analysis import search_genes, search_de_gene, calc_gene_stat

@@ -72,6 +72,8 @@ def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, m
 	if consider_batch:
 		for channel in data.uns['Channels']:
 			mat = X[np.isin(data.obs['Channel'], channel)]
+			if mat.shape[0] == 0:
+				continue
 			m1 = mat.mean(axis = 0).A1
 			m2 = mat.power(2).sum(axis = 0).A1
 			var += m2 - mat.shape[0] * (m1 ** 2)
@@ -79,6 +81,8 @@ def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, m
 		if data.uns['Groups'].size > 1:
 			for group in data.uns['Groups']:
 				mat = X[np.isin(data.obs['Group'], group)]
+				if mat.shape[0] == 0:
+					continue
 				var += mat.shape[0] * (mat.mean(axis = 0).A1 - mean) ** 2
 		var /= X.shape[0] - 1 
 	else:

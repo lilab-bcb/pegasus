@@ -6,12 +6,12 @@ class SubClustering(Base):
 Run scanpy to obtain subclusters.
 
 Usage:
-  scrtools subcluster [options] <input_h5ad_file> <cluster_id> <output_name>
+  scrtools subcluster [options] <input_h5ad_file> <cluster_ids> <output_name>
   scrtools subcluster -h
 
 Arguments:
   input_h5ad_file        Single cell data with clustering done by Scanpy in h5ad file format.
-  cluster_id             Tell us which cluster you want to perform subcluster task. ID starts from 1 and must be one of the cluster in input_h5ad_file.
+  cluster_ids            Tell us which clusters (separated by comma) you want to perform subcluster task. IDs start from 1 and must be clusters in input_h5ad_file.
   output_name            Output name. output_name.h5ad and output_name_var.h5ad will be generated.
 
 Options:
@@ -42,4 +42,4 @@ Examples:
 			'diagnosis' : self.args['--output-diagnosis-plots']
 		}
 
-		subcluster(self.args['<input_h5ad_file>'], self.args['<cluster_id>'], self.args['<output_name>'], **kwargs)
+		subcluster(self.args['<input_h5ad_file>'], self.split_string(self.args['<cluster_ids>']), self.args['<output_name>'], **kwargs)

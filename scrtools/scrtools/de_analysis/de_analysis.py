@@ -7,31 +7,30 @@ import pandas as pd
 import scipy.stats as ss
 import xlsxwriter
 
-
-def collect_contingency_table(adata):
-	clusts = adata.obs['louvain_groups'].value_counts()
+# assume louvain_labels always start from 1 and continuous
+def collect_contingency_table(adata):	
+	clusts = adata.obs['louvain_labels'].value_counts()
 	ct = np.zeros((adata.var_names.size, clusts.size, 2), dtype = np.uint)
 	for i in range(clusts.size):
-		label = clusts.index[i]
-		count = clusts[i]
-		mask = np.isin(adata.obs['louvain_groups'], label)
-		ct[:, i, 0] = adata.X[mask].astype(bool).sum(axis = 0).A1
+		label = str(i + 1)
+		count = clusts[label]
+		mask = np.isin(adata.obs['louvain_labels'], label)
+		ct[:, i, 0] = adata.X[mask].getnnz(axis = 0)
 		ct[:, i, 1] = count - ct[:, i, 0]
 	adata.uns["contingency_table"] = ct
 
-def fisher_test(adata, clusts = None):
+# clusts is a list of strings
+def fisher_test(adata, clusts = None, token = ""):
 	if "contingency_table" not in adata.uns:
 		collect_contingency_table(adata)
 		print("Contingency table is collected.")
 
 	ct = adata.uns["contingency_table"]
-	token = ""
 
-	if clusts != None:
-		ct = ct[:, clusts, :]
-		token = "_{0}".format(str(clusts))
+	if clusts is not None:
+		ct = ct[:, [int(x) - 1 for x in clusts], :]
 	else:
-		clusts = list(range(adata.obs['louvain_groups'].cat.categories.size))
+		clusts = [str(x + 1) for x in range(adata.obs['louvain_labels'].nunique())]
 
 	nclust = len(clusts)
 	total = ct.sum(axis = 1)
@@ -64,21 +63,17 @@ def fisher_test(adata, clusts = None):
 
 
 
-def t_test(adata, clusts = None):
-	token = ""
+def t_test(adata, clusts = None, token = ""):
 	dtypes = [('mean_log_expression', np.dtype('float64')), ('log_fold_change', np.dtype('float64')), ('pval', np.dtype('float64')), ('qval', np.dtype('float64'))]
 
-	if clusts != None:
-		clusts = [str(x) for x in clusts] # convert to string
-		token = "_{0}".format(str(clusts))
-	else:
-		clusts = adata.obs['louvain_groups'].cat.categories.tolist()
+	if clusts is None:
+		clusts = [str(x + 1) for x in range(adata.obs['louvain_labels'].nunique())]
 
 	nclust = len(clusts)
 	
 	n = n1 = n2 = 0
 
-	mask = np.isin(adata.obs['louvain_groups'], clusts)
+	mask = np.isin(adata.obs['louvain_labels'], clusts)
 	mat = adata.X[mask]
 	n = mat.shape[0]
 	v = n - 2 # degree of freedom
@@ -88,7 +83,7 @@ def t_test(adata, clusts = None):
 
 	tvar = ss.t(v)
 	for clust_id in clusts:
-		mask = np.isin(adata.obs['louvain_groups'], clust_id)
+		mask = np.isin(adata.obs['louvain_labels'], clust_id)
 		mat = adata.X[mask]
 		n1 = mat.shape[0]
 		n2 = n - n1
@@ -120,12 +115,9 @@ def t_test(adata, clusts = None):
 
 		print("Cluster {0} is processed.".format(clust_id))
 
-def write_results_to_excel(output_file, adata, test, clusts = None, threshold = 1.5):
-	token = ""
-	if clusts != None:
-		token = "_{0}".format(str(clusts))
-	else:
-		clusts = list(range(adata.obs['louvain_groups'].cat.categories.size))
+def write_results_to_excel(output_file, adata, test, clusts = None, token = "", threshold = 1.5):
+	if clusts is None:
+		clusts = [str(x + 1) for x in range(adata.obs['louvain_labels'].nunique())]
 
 	thre_kw = 'fold_change' if test == 'fisher' else 'log_fold_change'
 	sort_kw = 'percentage' if test == 'fisher' else 'mean_log_expression'
@@ -136,11 +128,11 @@ def write_results_to_excel(output_file, adata, test, clusts = None, threshold = 
 			index = pd.Index(adata.uns["de_{0}{1}_{2}_up_genes".format(test, token, clust_id)], name = "gene"))
 		df = df.loc[df[thre_kw] >= threshold]
 		df.sort_values(by = sort_kw, ascending = False, inplace = True)
-		df.to_excel(writer, sheet_name = "Cluster {0}, up-regulated".format(clust_id + 1))
+		df.to_excel(writer, sheet_name = "Cluster {0}, up-regulated".format(clust_id))
 
 		df = pd.DataFrame(adata.uns["de_{0}{1}_{2}_down_stats".format(test, token, clust_id)],
 			index = pd.Index(adata.uns["de_{0}{1}_{2}_down_genes".format(test, token, clust_id)], name = "gene"))
 		df = df.loc[df[thre_kw] <= 1.0 / threshold]
 		df.sort_values(by = sort_kw, ascending = False, inplace = True)
-		df.to_excel(writer, sheet_name = "Cluster {0}, down-regulated".format(clust_id + 1))
+		df.to_excel(writer, sheet_name = "Cluster {0}, down-regulated".format(clust_id))
 	writer.save()

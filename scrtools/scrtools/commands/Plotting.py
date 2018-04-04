@@ -6,7 +6,8 @@ class Plotting(Base):
 Generate cluster composition plots.
 
 Usage:
-  scrtools plot [options] --attribute <attr> <input_h5ad_file> <output_file>
+  scrtools plot composition [options] --attribute <attr> <input_h5ad_file> <output_file>
+  scrtools plot diffmap [--dim <dim>] --attributes <attrs> <input_h5ad_file> <output_file>
   scrtools plot -h
 
 Arguments:
@@ -21,6 +22,9 @@ Options:
   --sizes <sizes>           Figure sizes in inches, w x h, separated by comma. [default: 6,4]
   --rmove <rmove>           Move legend to right for <rmove>. [default: 1.1]
   --shrink <shrink>         Shrink figures. [default: 0.8]
+
+  --attributes <attrs>      A comma-separated list of attributes to plot side-by-side for diffmap.
+  --dim <dim>               Diffusion map dimension, can be either '2d' or '3d'. [default: 2d]
   -h, --help                Print out help information.
 
 Examples:
@@ -35,6 +39,18 @@ Examples:
 			'logy' : self.args['--log-y'],
 			'sizes' : [float(x) for x in self.args['--sizes'].split(',')],
 			'rmove' : float(self.args['--rmove']),
-			'wshrink' : float(self.args['--shrink'])
+			'wshrink' : float(self.args['--shrink']),
+
+			'attrs' : self.split_string(self.args['--attributes']),
+			'dim' : self.args['--dim']
 		}
-		make_plots(self.args['<input_h5ad_file>'], 'composition', self.args['<output_file>'], **kwargs)
+
+		keyword = ''
+		if self.args['composition']:
+			keyword = 'composition'
+		elif self.args['diffmap']:
+			keyword = 'diffmap'
+		else:
+			assert False
+
+		make_plots(self.args['<input_h5ad_file>'], keyword, self.args['<output_file>'], **kwargs)
