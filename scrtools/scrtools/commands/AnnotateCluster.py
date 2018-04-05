@@ -15,6 +15,7 @@ Arguments:
 
 Options:
   --minimum-report-score <score>        Minimum cell type score to report a potential cell type. [default: 0.5]
+  --do-not-use-non-de-genes             Do not count non DE genes as down regulated.
   -h, --help                            Print out help information.
 
 Examples:
@@ -22,4 +23,4 @@ Examples:
 	"""
 
 	def execute(self):
-		run_annotate_cluster(self.args['<input_de_h5ad_file>'], self.args['<output_name>'], float(self.args['--minimum-report-score']))
+		run_annotate_cluster(self.args['<input_de_h5ad_file>'], self.args['<output_name>'], float(self.args['--minimum-report-score'], self.args['--do-not-use-non-de-genes']))

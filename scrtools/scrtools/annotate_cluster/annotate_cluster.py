@@ -4,12 +4,13 @@ import pandas as pd
 from sys import stdout
 
 class CellType:
-	def __init__(self, name):
+	def __init__(self, name, ignoreNA = False):
 		self.name = name
 		self.score = self.avgp = 0.0
 		self.weak_support = []
 		self.strong_support = []
 		self.subtypes = None
+		self.ignoreNA = ignoreNA
 
 	def evaluate(self, obj, de_up, de_down, kwds, thre):
 		self.score = self.avgp = 0.0
@@ -52,7 +53,7 @@ class CellType:
 							else:
 								numer += 1.0 + (fc - 1.0) / (thre - 1.0)
 								self.weak_support.append((marker, "{0:.2f}".format(expr)))
-						else:
+						elif not self.ignoreNA:
 							numer += 1.0
 							self.weak_support.append((marker, "N/A"))
 			
@@ -93,18 +94,18 @@ class Annotator:
 			if sub_obj is not None:
 				self.recalibrate(sub_obj, genes)
 	
-	def evaluate(self, de_up, de_down, kwds, thre = 1.5, obj = None):
+	def evaluate(self, de_up, de_down, kwds, thre = 1.5, obj = None, ignoreNA = False):
 		if obj is None:
 			obj = self.object
 
 		results = []
 		for celltype in obj['cell_types']:
-			ct = CellType(celltype['name'])
+			ct = CellType(celltype['name'], ignoreNA)
 			ct.evaluate(celltype, de_up, de_down, kwds, thre)
 			if ct.score > 0.5:
 				sub_obj = celltype.get('subtypes', None)
 				if sub_obj is not None:
-					ct.subtypes = self.evaluate(de_up, de_down, kwds, thre, sub_obj)
+					ct.subtypes = self.evaluate(de_up, de_down, kwds, thre, sub_obj, ignoreNA = ignoreNA)
 			results.append(ct)
 
 		results.sort(key = lambda x: x.score, reverse = True)
@@ -119,7 +120,7 @@ class Annotator:
 					self.report(fout, ct.subtypes, 0.5, space + 4)
 
 
-def annotate_clusters(adata, test, json_file, thre, fout = stdout):
+def annotate_clusters(adata, test, json_file, thre, fout = stdout, ignoreNA = False):
 	anno = Annotator(json_file, adata.var_names)
 	if test == "fisher":
 		kwds = {'fc' : 'fold_change', 'expr' : 'percentage'}
@@ -127,9 +128,9 @@ def annotate_clusters(adata, test, json_file, thre, fout = stdout):
 		kwds = {'fc' : 'log_fold_change', 'expr' : 'mean_log_expression'}
 	size = adata.obs['louvain_groups'].cat.categories.size
 	for i in range(size):
-		clust_str = "de_{test}_{clust}".format(test = test, clust = i)
+		clust_str = "de_{test}_{clust}".format(test = test, clust = i + 1)
 		de_up = pd.DataFrame(data = adata.uns[clust_str + "_up_stats"], index = pd.Index(data = adata.uns[clust_str + "_up_genes"], name = "gene"))
 		de_down = pd.DataFrame(data = adata.uns[clust_str + "_down_stats"], index = pd.Index(data = adata.uns[clust_str + "_down_genes"], name = "gene"))
-		results = anno.evaluate(de_up, de_down, kwds)
+		results = anno.evaluate(de_up, de_down, kwds, ignoreNA = ignoreNA)
 		fout.write("Cluster {0}:\n".format(i + 1))
 		anno.report(fout, results, thre)

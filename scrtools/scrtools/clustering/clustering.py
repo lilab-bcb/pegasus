@@ -97,7 +97,7 @@ def cluster(input_name, output_name, **kwargs):
 	adata.X = adata.X.log1p()
 
 	# Augment key barcode annotations for batch correction
-	df = pd.read_csv(input_name + '.attr.csv', header = 0, index_col = 0)
+	df = pd.read_csv(input_name + '.attr.csv', header = 0, index_col = 0, dtype = str)
 	df = df.loc[adata.obs['Channel'], kwargs['attrs']]
 	df.index = adata.obs.index
 	adata.obs[kwargs['attrs']] = df
