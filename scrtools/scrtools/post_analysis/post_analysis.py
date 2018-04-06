@@ -6,6 +6,9 @@ import scanpy as sc
 from natsort import natsorted
 
 def search_genes(adata, gene_list, measure = 'percentage'):
+	if not isinstance(gene_list, np.ndarray):
+		gene_list = np.array(gene_list)
+	gene_list = gene_list[np.isin(gene_list, adata.var.index.values)]
 	ncluster = adata.obs['louvain_labels'].nunique()
 	columns = natsorted(adata.obs['louvain_labels'].unique())
 	gene2loc = pd.Series(range(adata.shape[1]), index = adata.var.index)
@@ -38,6 +41,39 @@ def search_de_gene(adata, gene, test = 'fisher', direction = 'up'):
 	else:
 		results = None
 	return results
+
+def search_de_genes(adata, gene_list, test = 'fisher', thre = 1.5):
+	if not isinstance(gene_list, np.ndarray):
+		gene_list = np.array(gene_list)
+	fc = 'fold_change' if test == 'fisher' else 'log_fold_change'
+	ngene = gene_list.size
+	ncluster = adata.obs['louvain_labels'].nunique()
+	columns = [str(x + 1) for x in range(ncluster)]
+	results = np.zeros((ngene, ncluster), dtype = np.dtype('U3'))
+	for i, cid in enumerate(columns):
+		results[:, i] = '?'
+		colgene = 'de_{test}_{cid}_up_genes'.format(test = test, cid = cid)
+		colstat = 'de_{test}_{cid}_up_stats'.format(test = test, cid = cid)
+		idx = np.isin(gene_list, adata.uns[colgene])
+		results[idx, i] = '+'
+		if idx.sum() > 0:	
+			idx_loc = idx.nonzero()[0]
+			gene2loc = pd.Series(range(adata.uns[colgene].size), index = adata.uns[colgene])
+			pos_list = gene2loc[gene_list[idx_loc]].values
+			idx2 = adata.uns[colstat][pos_list][fc] >= thre
+			results[idx_loc[idx2], i] = '++'
+		colgene = 'de_{test}_{cid}_down_genes'.format(test = test, cid = cid)
+		colstat = 'de_{test}_{cid}_down_stats'.format(test = test, cid = cid)
+		idx = np.isin(gene_list, adata.uns[colgene])
+		results[idx, i] = '-'
+		if idx.sum() > 0:	
+			idx_loc = idx.nonzero()[0]
+			gene2loc = pd.Series(range(adata.uns[colgene].size), index = adata.uns[colgene])
+			pos_list = gene2loc[gene_list[idx_loc]].values
+			idx2 = adata.uns[colstat][pos_list][fc] <= 1.0 / thre
+			results[idx_loc[idx2], i] = '--'
+	df = pd.DataFrame(results, index = gene_list, columns = columns)
+	return df
 
 def calc_gene_stat(adata, clust_id):
 	clust_id = str(clust_id)

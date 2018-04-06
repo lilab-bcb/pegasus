@@ -17,7 +17,6 @@ Sub-commands:
   Post cluster analsis:
     de_analysis             Differential expression analysis.
     annotate_cluster        Annotate clusters.
-    post_analysis           Some convenient functions.
   Plotting:
     plot                    Make some plots.
 
