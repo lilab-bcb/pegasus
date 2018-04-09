@@ -7,6 +7,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
 
+import cycler
+import plotly.offline as py
+import plotly.graph_objs as go
 
 
 def plot_composition(clust_labels, variable, outfile, style = 'frequency', stacked = True, logy = False, sizes = (6, 4), rmove = 1.1, wshrink = 0.8):
@@ -38,6 +41,48 @@ def plot_composition(clust_labels, variable, outfile, style = 'frequency', stack
 	ax.grid(False)
 	fig.savefig(outfile)
 	plt.close()
+
+
+
+vega_20_scanpy = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+    '#9467bd', '#8c564b', '#e377c2',  # '#7f7f7f' removed grey
+    '#bcbd22', '#17becf',
+    '#aec7e8', '#ffbb78', '#98df8a', '#ff9896',
+    '#c5b0d5', '#c49c94', '#f7b6d2',  # '#c7c7c7' removed grey
+    '#dbdb8d', '#9edae5',
+    '#ad494a', '#8c6d31']  # manual additions
+
+palettes = cycler.cycler(color = vega_20_scanpy)
+
+def plot_diffmap(df, output_file):
+	labels = natsorted(df['Annotation'].unique())
+	data = []
+	for i, (label, color) in enumerate(zip(labels, palettes)):
+		tdf = df[df['Annotation'] == label]
+		trace = dict(
+			name = label,
+			x = tdf['x'],
+			y = tdf['y'],
+			z = tdf['z'],
+			type = 'scatter3d',
+			mode = 'markers',
+			marker = dict(size = 5, color = color['color'], line = dict(width=0))
+			)
+		data.append(trace)
+	layout = dict(
+		title = 'test',
+		scene = dict(
+			xaxis = dict(title = 'DC1'),
+			yaxis = dict(title = 'DC2'),
+			zaxis = dict(title = 'DC3')
+			),
+		margin = dict(l = 0, r = 0, b = 0, t = 0)
+		)
+	fig = dict(data=data, layout=layout)
+	py.plot(fig, filename = output_file)
+
+
 
 def plot_kde(clust_labels, count_vector, clust_id, outfile, doublet_rate = 0.031, count_type = 'gene', format = None):
 	fig, ax = plt.subplots(nrows = 1, ncols = 1)

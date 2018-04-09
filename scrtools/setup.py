@@ -23,7 +23,8 @@ requires = ['scanpy>=0.4',
 			'louvain',
 			'MulticoreTSNE',
 			'docopt',
-			'setuptools'
+			'setuptools',
+			'plotly'
 		  ]
 
 setup(
@@ -32,7 +33,7 @@ setup(
 	description='scRNA-Seq analysis tools that scale to millions of cells, built upon scanpy',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scrtools',
-	author='Bo Li, Joshua Gould',
+	author='Bo Li, Marcin Tabaka, Joshua Gould',
 	author_email='libo@broadinstitute.org',
 	classifiers=[ # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 		'Development Status :: 3 - Alpha',

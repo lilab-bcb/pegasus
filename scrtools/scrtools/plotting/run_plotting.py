@@ -1,10 +1,11 @@
+import pandas as pd
 import scanpy.api as sc
 from scanpy.plotting.anndata import scatter
 from matplotlib import pyplot as pl
 
 from . import plot_library
 
-def make_plots(input_file, plot_type, output_name, **kwargs):
+def make_static_plots(input_file, plot_type, output_name, **kwargs):
 	adata = sc.read(input_file)
 	if plot_type == 'composition':
 		output_file = output_name + '.' + kwargs['ext']
@@ -13,6 +14,13 @@ def make_plots(input_file, plot_type, output_name, **kwargs):
 		assert len(kwargs['attrs']) > 0
 		plot_diffusion_map(adata, kwargs['attrs'], output_name, ext = kwargs['ext'], 
 			which = kwargs['angles'], projection = kwargs['dim'], legend_fontsize = kwargs['lfsize'], size = kwargs['ptsize'])
+
+def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
+	adata = sc.read(input_file)
+	if plot_type == 'diffmap':
+		df = pd.DataFrame(adata.obsm['X_diffmap'][:, 0:3], index = adata.obs.index, columns = ['x', 'y', 'z'])
+		df.insert(0, 'Annotation', adata.obs[kwargs['attr']])
+		plot_library.plot_diffmap(df, output_file)
 
 def plot_diffusion_map(adata, color, output_name, ext = 'png', which = 'all', projection = '3d', legend_loc = 'right margin', legend_fontsize = None, legend_fontweight = None, size = None, title = None):
 	proj2d = ['1,2', '2,3', '1,3']

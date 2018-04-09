@@ -1,5 +1,5 @@
 from .Base import Base
-from ..plotting import make_plots
+from ..plotting import make_static_plots
 
 class Plotting(Base):
 	"""
@@ -7,7 +7,7 @@ Generate cluster composition plots.
 
 Usage:
   scrtools plot composition [options] --attribute <attr> <input_h5ad_file> <output_name>
-  scrtools plot diffmap [options] --attributes <attrs> <input_h5ad_file> <output_name>
+  scrtools plot diffmap [options] --attributes <attr> <input_h5ad_file> <output_name>
   scrtools plot -h
 
 Arguments:
@@ -16,8 +16,8 @@ Arguments:
 
 Options:
   --ext <ext>               Output file extension. [default: png]
-
   --attribute <attr>        Plot <attr> against cluster labels.
+
   --style <style>           Plot styles. Can be either 'frequency', 'count', or 'normalized'. [default: frequency]
   --not-stacked             Do not stack bars.
   --log-y                   Plot y axis in log10 scale.
@@ -34,7 +34,7 @@ Options:
   -h, --help                Print out help information.
 
 Examples:
-  scrtools plot --attribute Individual manton_bm.h5ad manton_bm
+  scrtools plot composition --attribute Individual manton_bm.h5ad manton_bm
 	"""
 	def execute(self):
 		kwargs = {
@@ -63,4 +63,4 @@ Examples:
 		else:
 			assert False
 
-		make_plots(self.args['<input_h5ad_file>'], keyword, self.args['<output_name>'], **kwargs)
+		make_static_plots(self.args['<input_h5ad_file>'], keyword, self.args['<output_name>'], **kwargs)
