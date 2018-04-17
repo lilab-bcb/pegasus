@@ -42,7 +42,10 @@ def cluster(input_name, output_name, **kwargs):
 	sc.settings.verbosity = 3
 	sc.settings.writedir = sc.settings.figdir = output_dir + '/'
 
-	adata = sc.read_10x_h5(input_name + '_10x.h5', kwargs['genome'])
+	if not kwargs['input_h5ad']:
+		adata = sc.read_10x_h5(input_name + '_10x.h5', kwargs['genome'])
+	else:
+		adata = sc.read(input_name + '.h5ad')
 	update_var_names(adata, kwargs['genome'])
 
 	adata.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in adata.obs_names]
@@ -97,10 +100,11 @@ def cluster(input_name, output_name, **kwargs):
 	adata.X = adata.X.log1p()
 
 	# Augment key barcode annotations for batch correction
-	df = pd.read_csv(input_name + '.attr.csv', header = 0, index_col = 0, dtype = str)
-	df = df.loc[adata.obs['Channel'], kwargs['attrs']]
-	df.index = adata.obs.index
-	adata.obs[kwargs['attrs']] = df
+	if not kwargs['input_h5ad']:
+		df = pd.read_csv(input_name + '.attr.csv', header = 0, index_col = 0, dtype = str)
+		df = df.loc[adata.obs['Channel'], kwargs['attrs']]
+		df.index = adata.obs.index
+		adata.obs[kwargs['attrs']] = df
 
 	if kwargs['correct_batch']:
 		if len(kwargs['groupby']) == 0:

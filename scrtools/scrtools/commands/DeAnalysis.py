@@ -6,7 +6,7 @@ class DeAnalysis(Base):
 Perform t-test and Fisher's exact test.
 
 Usage:
-  scrtools de_analysis [--fold-change <threshold>] <input_h5ad_file> <output_name>
+  scrtools de_analysis [--fold-change <threshold> --labels <attr>] <input_h5ad_file> <output_name>
   scrtools de_analysis -h
 
 Arguments:
@@ -15,6 +15,7 @@ Arguments:
 
 Options:
   --fold-change <threshold>        Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene. [default: 1.5]
+  --labels <attr>                  <attr> used as cluster labels. [default: louvain_labels]
   -h, --help                       Print out help information.
 
 Examples:
@@ -22,4 +23,4 @@ Examples:
 	"""
 
 	def execute(self):
-		run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_name>'], float(self.args['--fold-change']))
+		run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_name>'], float(self.args['--fold-change']), self.args['--labels'])

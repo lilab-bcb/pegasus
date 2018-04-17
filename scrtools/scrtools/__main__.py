@@ -29,6 +29,9 @@ Description:
 
 """
 
+import matplotlib
+matplotlib.use('Agg')
+
 from docopt import docopt
 from docopt import DocoptExit
 from . import __version__ as VERSION

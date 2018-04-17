@@ -15,6 +15,8 @@ Arguments:
 
 Options:
   --attribute <attr>        Use attribute <attr> as labels in the plot.
+  --real                    <attr> is real valued.
+  --log10                   If take log10 of real values.
 
   -h, --help             Print out help information.
 
@@ -23,7 +25,9 @@ Examples:
 	"""
 	def execute(self):
 		kwargs = {
-			'attr' : self.args['--attribute']
+			'attr' : self.args['--attribute'],
+			'real' : self.args['--real'],
+			'log10' : self.args['--log10']
 		}
 
 		keyword = ''

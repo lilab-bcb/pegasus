@@ -8,21 +8,21 @@ import scipy.stats as ss
 import xlsxwriter
 
 # assume louvain_labels always start from 1 and continuous
-def collect_contingency_table(adata):	
-	clusts = adata.obs['louvain_labels'].value_counts()
+def collect_contingency_table(adata, labels = 'louvain_labels'):	
+	clusts = adata.obs[labels].value_counts()
 	ct = np.zeros((adata.var_names.size, clusts.size, 2), dtype = np.uint)
 	for i in range(clusts.size):
 		label = str(i + 1)
 		count = clusts[label]
-		mask = np.isin(adata.obs['louvain_labels'], label)
+		mask = np.isin(adata.obs[labels], label)
 		ct[:, i, 0] = adata.X[mask].getnnz(axis = 0)
 		ct[:, i, 1] = count - ct[:, i, 0]
 	adata.uns["contingency_table"] = ct
 
 # clusts is a list of strings
-def fisher_test(adata, clusts = None, token = ""):
+def fisher_test(adata, clusts = None, labels = 'louvain_labels', token = ""):
 	if "contingency_table" not in adata.uns:
-		collect_contingency_table(adata)
+		collect_contingency_table(adata, labels = labels)
 		print("Contingency table is collected.")
 
 	ct = adata.uns["contingency_table"]
@@ -30,7 +30,7 @@ def fisher_test(adata, clusts = None, token = ""):
 	if clusts is not None:
 		ct = ct[:, [int(x) - 1 for x in clusts], :]
 	else:
-		clusts = [str(x + 1) for x in range(adata.obs['louvain_labels'].nunique())]
+		clusts = [str(x + 1) for x in range(adata.obs[labels].nunique())]
 
 	nclust = len(clusts)
 	total = ct.sum(axis = 1)
@@ -63,17 +63,17 @@ def fisher_test(adata, clusts = None, token = ""):
 
 
 
-def t_test(adata, clusts = None, token = ""):
+def t_test(adata, clusts = None, labels = 'louvain_labels', token = ""):
 	dtypes = [('mean_log_expression', np.dtype('float64')), ('log_fold_change', np.dtype('float64')), ('pval', np.dtype('float64')), ('qval', np.dtype('float64'))]
 
 	if clusts is None:
-		clusts = [str(x + 1) for x in range(adata.obs['louvain_labels'].nunique())]
+		clusts = [str(x + 1) for x in range(adata.obs[labels].nunique())]
 
 	nclust = len(clusts)
 	
 	n = n1 = n2 = 0
 
-	mask = np.isin(adata.obs['louvain_labels'], clusts)
+	mask = np.isin(adata.obs[labels], clusts)
 	mat = adata.X[mask]
 	n = mat.shape[0]
 	v = n - 2 # degree of freedom
@@ -83,7 +83,7 @@ def t_test(adata, clusts = None, token = ""):
 
 	tvar = ss.t(v)
 	for clust_id in clusts:
-		mask = np.isin(adata.obs['louvain_labels'], clust_id)
+		mask = np.isin(adata.obs[labels], clust_id)
 		mat = adata.X[mask]
 		n1 = mat.shape[0]
 		n2 = n - n1
@@ -115,9 +115,9 @@ def t_test(adata, clusts = None, token = ""):
 
 		print("Cluster {0} is processed.".format(clust_id))
 
-def write_results_to_excel(output_file, adata, test, clusts = None, token = "", threshold = 1.5):
+def write_results_to_excel(output_file, adata, test, clusts = None, labels = 'louvain_labels', token = "", threshold = 1.5):
 	if clusts is None:
-		clusts = [str(x + 1) for x in range(adata.obs['louvain_labels'].nunique())]
+		clusts = [str(x + 1) for x in range(adata.obs[labels].nunique())]
 
 	thre_kw = 'fold_change' if test == 'fisher' else 'log_fold_change'
 	sort_kw = 'percentage' if test == 'fisher' else 'mean_log_expression'

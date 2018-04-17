@@ -82,6 +82,38 @@ def plot_diffmap(df, output_file):
 	fig = dict(data=data, layout=layout)
 	py.plot(fig, filename = output_file)
 
+def plot_diffmap_real(df, output_file, log10 = False):
+	if log10:
+		df['Annotation'] = np.log10(df['Annotation'])
+	
+	trace = dict(
+		x = df['x'],
+		y = df['y'],
+		z = df['z'],
+		type = 'scatter3d',
+		mode = 'markers',
+		marker = dict(
+			size = 5, 
+			color = df['Annotation'], 
+			colorscale = 'Jet',
+			colorbar = dict(title = 'Density'), 
+			line = dict(width=0)
+			)
+		)
+	data = [trace]
+	layout = dict(
+		title = 'test',
+		scene = dict(
+			xaxis = dict(title = 'DC1'),
+			yaxis = dict(title = 'DC2'),
+			zaxis = dict(title = 'DC3')
+			),
+		margin = dict(l = 0, r = 0, b = 0, t = 0)
+		)
+	fig = dict(data=data, layout=layout)
+	py.plot(fig, filename = output_file)
+
+
 
 
 def plot_kde(clust_labels, count_vector, clust_id, outfile, doublet_rate = 0.031, count_type = 'gene', format = None):

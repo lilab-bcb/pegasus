@@ -37,6 +37,8 @@ Options:
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
   --output-diagnosis-plots                         Output some diagnosis plots.
 
+  --input-h5ad                                     Input is one h5ad file.
+
   -h, --help       Print out help information.
 
 Examples:
@@ -61,7 +63,8 @@ Examples:
 			'percent_cells' : float(self.args['--gene-percent-cells']),
 			'norm_count' : float(self.args['--counts-per-cell-after']),
 			'resolution' : float(self.args['--louvain-resolution']),
-			'diagnosis' : self.args['--output-diagnosis-plots']
+			'diagnosis' : self.args['--output-diagnosis-plots'],
+			'input_h5ad' : self.args['--input-h5ad']
 		}
 
 		cluster(self.args['<input_name>'], self.args['<output_name>'], **kwargs)

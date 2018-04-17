@@ -20,7 +20,10 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 	if plot_type == 'diffmap':
 		df = pd.DataFrame(adata.obsm['X_diffmap'][:, 0:3], index = adata.obs.index, columns = ['x', 'y', 'z'])
 		df.insert(0, 'Annotation', adata.obs[kwargs['attr']])
-		plot_library.plot_diffmap(df, output_file)
+		if not kwargs['real']:
+			plot_library.plot_diffmap(df, output_file)
+		else:
+			plot_library.plot_diffmap_real(df, output_file, kwargs['log10'])
 
 def plot_diffusion_map(adata, color, output_name, ext = 'png', which = 'all', projection = '3d', legend_loc = 'right margin', legend_fontsize = None, legend_fontweight = None, size = None, title = None):
 	proj2d = ['1,2', '2,3', '1,3']
