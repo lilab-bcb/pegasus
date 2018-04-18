@@ -19,7 +19,8 @@ Sub-commands:
     annotate_cluster        Annotate clusters.
   Plotting:
     plot                    Make some plots.
-
+    iplot                   Make interactive plots.
+    
 Options:
   -h, --help          Show help information.
   -v, --version       Show version.
