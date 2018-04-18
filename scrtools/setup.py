@@ -29,7 +29,7 @@ requires = ['scanpy>=0.4',
 
 setup(
 	name='scrtools',
-	version='0.1.0',
+	version='0.2.0',
 	description='scRNA-Seq analysis tools that scale to millions of cells, built upon scanpy',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scrtools',
