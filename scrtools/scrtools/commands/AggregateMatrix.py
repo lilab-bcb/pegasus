@@ -6,7 +6,7 @@ class AggregateMatrix(Base):
 Aggregate 10x matrices from each channel into one big matrix.
 
 Usage:
-  scrtools aggregate_matrix <csv_file> <output_name> [--genome <genome> --restriction <restriction>... --attributes <attributes>]
+  scrtools aggregate_matrix <csv_file> <output_name> [--genome <genome> --restriction <restriction>... --attributes <attributes> --google-cloud]
   scrtools aggregate_matrix -h
 
 Arguments:
@@ -17,6 +17,7 @@ Options:
   --genome <genome>                Genome reference. [default: GRCh38]
   --restriction <restriction>...   Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. You can specifiy multiple restrictions by setting this option multiple times.
   --attributes <attributes>        Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file.
+  --google-cloud                   If files are stored in google cloud. Assuming google cloud sdk is installed.
   -h, --help                       Print out help information.
 
 Examples:
@@ -31,4 +32,6 @@ Examples:
 			self.args['--genome'], 
 			self.args['--restriction'], 
 			self.split_string(self.args['--attributes']), 
-			self.args['<output_name>'])
+			self.args['<output_name>'],
+			self.args['--google-cloud'])
+		

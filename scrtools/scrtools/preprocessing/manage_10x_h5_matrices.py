@@ -5,6 +5,7 @@ import pandas as pd
 from scipy.sparse import csc_matrix, hstack
 import tables
 import copy
+from subprocess import check_call
 
 def load_10x_h5_file(input_h5, genome):
 	with tables.open_file(input_h5) as h5_in:
@@ -58,7 +59,7 @@ def parse_restriction_string(rstr):
 				content.add(prefix + str(i))
 	return (name, content)
 
-def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_name):
+def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_name, google_cloud = False):
 	df = pd.read_csv(csv_file, header = 0, index_col = 0)
 	restrictions.append("Reference:{}".format(genome))
 	rvec = [parse_restriction_string(x) for x in restrictions]
@@ -78,6 +79,10 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 	out_hd5 = None
 	for sample_name, row in df.iterrows():
 		input_hd5_file = "{location}/{sample}/filtered_gene_bc_matrices_h5.h5".format(location = row['Location'], sample = sample_name)
+		if google_cloud:
+			call_args = ['gsutil', '-m', 'cp', input_hd5_file, '{0}_filtered_gene_bc_matrices_h5.h5'.format(sample_name)]
+			check_call(call_args)
+			input_hd5_file = '{0}_filtered_gene_bc_matrices_h5.h5'.format(sample_name)
 		channel = load_10x_h5_file(input_hd5_file, genome)
 		channel["barcodes"] = [sample_name + '-' + x.decode() for x in channel["barcodes"]]
 		
