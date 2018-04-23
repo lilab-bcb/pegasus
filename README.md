@@ -1,6 +1,40 @@
 # scRNA-Seq
 
-Cell Ranger mkfastq/count inputs:
+## First Time Running - Authenticate with Google
+
+1. Ensure the Google Cloud SDK is installed. 
+    
+    Note: Broad users can type *use Google-Cloud-SDK* to make the Google Cloud tools available. 
+
+1. Type *gcloud auth login*
+
+1. Open link in browser
+
+1. Enter authorization code in unix terminal
+
+
+## Run Cell Ranger mkfastq/count
+1. Create a FireCloud workspace or use an existing workspace.
+
+1. Upload your sequencing output to the workspace.
+
+    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/VK18WBC6Z4*
+
+1. Upload your CSV file to the workspace
+
+    Example: *gsutil cp /foo/bar/projects/VK18WBC6Z4/my_bcl.csv gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/*
+
+1. Upload "fake" data module required by FireCloud
+
+    Create a text file that contains the following 2 lines:
+
+    entity:participant_id
+    foo
+
+    In FireCloud select the "Data" tab. Click "Import Metadata". Select "Import From File". Select the file and click "Upload"
+
+
+### Cell Ranger mkfastq/count inputs:
 
 Name | Description | Example | Default
 --- | --- | --- | ---
