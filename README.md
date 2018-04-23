@@ -26,23 +26,22 @@
 
 1. Upload "fake" data module required by FireCloud
 
-    Create a text file that contains the following 2 lines:
-
-    entity:participant_id
-    foo
+    Download https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt
 
     In FireCloud select the "Data" tab. Click "Import Metadata". Select "Import From File". Select the file and click "Upload"
-
+1. Import cellranger_mkfastq_count method.
+    
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Copy from another workspace". Type cellranger_mkfastq_count.
 
 ### Cell Ranger mkfastq/count inputs:
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-input_csv_file | # 3 columns (Lane, Sample, Index) | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_file.csv"
+input_csv_file | 3 column CSV (Lane, Sample, Index) | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_file.csv"
 input_directory | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_dir" | 
 fastq_output_directory | Fastq output directory | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_dir" |
 mkfastq_disk_space | Optional disk space for mkfastq. | 500 | 500 
-version | Cell ranger version | "2.1.1" | "2.1.1"
+cell_ranger_version | Cell ranger version | "2.1.1" | "2.1.1"
 transcriptome | mm10, GRCh38, or a gs URL to a transcriptome directory tar.gz | "mm10" | 
 secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
 do_force_cells | force cells | true | true
