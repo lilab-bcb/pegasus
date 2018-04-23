@@ -1,17 +1,19 @@
-workflow cellranger_count {
+workflow cellranger_mkfastq_count {
     # 3 columns (Lane, Sample, Index). gs URL
 	File input_csv_file
     # Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. gs URL
     String input_directory
     # Fastq output directory, gs URL
     String fastq_output_directory
-    # Disk space for mkfastq. If you don't know leave blank.
+    # Optional disk space for mkfastq.
     Int? mkfastq_disk_space = 500
     # 2.1.1 only currently available
-    String? version = "2.1.1"
+    String? cell_ranger_version = "2.1.1"
 
-	# mm10, GRCh38, or a gs URL to a transcriptome directory tar.gz
-	File transcriptome
+	# gs URL to a transcriptome directory tar.gz
+	# "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz"
+	# "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz"
+	String transcriptome
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
@@ -21,7 +23,7 @@ workflow cellranger_count {
 	Int? force_cells = 6000
 	# Expected number of recovered cells. Default: 3,000 cells. Mutually exclusive with force_cells
 	Int? expect_cells = 3000
-	# Disk space needed for cell ranger count. If you don't know leave blank.
+	# Optional disk space needed for cell ranger count.
 	Int? count_disk_space = 250
 
 
@@ -37,12 +39,7 @@ workflow cellranger_count {
 		input:
 			input_csv_file = input_csv_file
 	}
-    if(transcriptome == 'mm10') {
-        transcriptome = 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz'
-    }
-    if(transcriptome == 'GRCh38') {
-        transcriptome = 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
-    }
+
 	scatter (sample_id in parse_csv.sample_ids) {
 		call cell_ranger_count {
 			input:
@@ -53,8 +50,8 @@ workflow cellranger_count {
 				force_cells = force_cells,
 				secondary = secondary,
 				expect_cells = expect_cells,
-				disk_space = disk_space,
-				version = version
+				disk_space = count_disk_space,
+				cell_ranger_version = cell_ranger_version
 		}
 	}
 }
@@ -77,7 +74,7 @@ task parse_csv {
 	}
 
 	runtime {
-		docker: "regevlab/cellranger-${version}"
+		docker: "regevlab/cellranger-${cell_ranger_version}"
 		preemptible: 2
 	}
 }
@@ -90,7 +87,7 @@ task cell_ranger_count {
 	Int? expect_cells
 	Boolean? secondary
 	Int? disk_space
-	String? version
+	String? cell_ranger_version
 	Int? force_cells
 
 	command {
@@ -115,7 +112,7 @@ task cell_ranger_count {
 	}
 
 	runtime {
-		docker: "regevlab/cellranger-${version}"
+		docker: "regevlab/cellranger-${cell_ranger_version}"
 		memory: "384 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
@@ -147,7 +144,7 @@ task cellranger_mkfastq {
 	}
 
 	runtime {
-		docker: "regevlab/cellranger-${version}"
+		docker: "regevlab/cellranger-${cell_ranger_version}"
 		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
