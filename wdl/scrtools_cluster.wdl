@@ -255,7 +255,7 @@ task run_scrtools_cluster {
 	}
 
 	runtime {
-		docker: "bigbadbo/scrtools"
+		docker: "regevlab/scrtools"
 		memory: "200 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"

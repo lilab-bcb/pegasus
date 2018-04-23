@@ -35,7 +35,7 @@ task run_cellranger_mkfastq {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger_2.1.1"
+		docker: "regevlab/cellranger_2.1.1"
 		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"

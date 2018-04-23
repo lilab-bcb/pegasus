@@ -58,7 +58,7 @@ task run_scrtools_annotate {
 	}
 
 	runtime {
-		docker: "bigbadbo/scrtools"
+		docker: "regevlab/scrtools"
 		memory: "30 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"

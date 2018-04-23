@@ -75,7 +75,7 @@ task run_scrtools_merge_matrices {
 	}
 
 	runtime {
-		docker: "bigbadbo/scrtools"
+		docker: "regevlab/scrtools"
 		memory: "30 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"

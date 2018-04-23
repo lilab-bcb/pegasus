@@ -5,7 +5,8 @@ workflow cellranger_count {
 
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
-	File transcriptomeTarGz
+	# mm10, GRCh38, or a URL to a tar.gz file
+	File transcriptome
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
@@ -24,13 +25,18 @@ workflow cellranger_count {
 		input:
 			input_csv_file = input_csv_file
 	}
-
+    if(transcriptome=='mm10') {
+        transcriptome = 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz'
+    }
+    if(transcriptome=='GRCh38') {
+        transcriptome = 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+    }
 	scatter (sampleId in parse_csv.sampleIds) {
 		call CellRangerCount {
 			input:
 				sampleId = sampleId,
 				data_directory = data_directory,
-				transcriptomeTarGz = transcriptomeTarGz,
+				transcriptome = transcriptome,
 				do_force_cells = do_force_cells,
 				forceCells = forceCells,
 				secondary = secondary,
@@ -59,7 +65,7 @@ task parse_csv {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger_2.1.1"
+		docker: "regevlab/cellranger-${version}"
 		preemptible: 2
 	}
 }
@@ -67,7 +73,7 @@ task parse_csv {
 task CellRangerCount {
 	String sampleId
 	String data_directory
-	File transcriptomeTarGz
+	File transcriptome
 	Boolean? do_force_cells 
 	Int? expectCells
 	Boolean? secondary
@@ -79,7 +85,7 @@ task CellRangerCount {
 		set -e
 		export TMPDIR=/tmp
 		mkdir -p transcriptome_dir
-		tar xf ${transcriptomeTarGz} -C transcriptome_dir --strip-components 1
+		tar xf ${transcriptome} -C transcriptome_dir --strip-components 1
 		gsutil -m cp -r ${data_directory}/fastqs/fastq_path/*/${sampleId} .
 		python <<CODE
 		from subprocess import check_call
@@ -97,7 +103,7 @@ task CellRangerCount {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger_2.1.1"
+		docker: "regevlab/cellranger-${version}"
 		memory: "384 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"
