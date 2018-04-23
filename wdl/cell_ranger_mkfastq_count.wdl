@@ -13,7 +13,7 @@ workflow cellranger_mkfastq_count {
 	# gs URL to a transcriptome directory tar.gz
 	# "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz"
 	# "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz"
-	String transcriptome
+	File transcriptome
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
