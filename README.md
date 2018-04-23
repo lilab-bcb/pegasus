@@ -24,7 +24,7 @@
 
     Example: *gsutil cp /foo/bar/projects/VK18WBC6Z4/my_bcl.csv gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/*
 
-1. Upload "fake" data module required by FireCloud
+1. Upload "dummy" data model required by FireCloud
 
     Download https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt
 
