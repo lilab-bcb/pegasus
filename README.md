@@ -152,6 +152,7 @@ diskSpace | Disk space needed for this task | 250 | 250
 Here are the description of outputs.
 
 Name | Description | Required output
+--- | --- | --- 
 output_name.tsne.png | tSNE plots colored by louvain cluster labels and user-specified attribute | Yes
 output_name.h5ad | Results in Scanpy's anndata format | Yes
 output_name_var.h5ad | Results containing only variable genes in Scanpy's anndata format | Yes
