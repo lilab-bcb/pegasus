@@ -206,9 +206,13 @@ task run_scrtools_cluster {
 			check_call(call_args)
 
 		if '${plot_diffusion_map}' is 'true':
-			call_args = ['scrtools', 'iplot', 'diffmap', '--attribute', plot_by_side, output_name + '_var.h5ad', output_name + '.diffmap.html']
+			call_args = ['scrtools', 'iplot', 'diffmap', '--attribute', 'louvain_labels', output_name + '_var.h5ad', output_name + '.diffmap_cluster.html']
 			print(' '.join(call_args))
 			check_call(call_args)
+			if plot_by_side is not '':
+				call_args = ['scrtools', 'iplot', 'diffmap', '--attribute', plot_by_side, output_name + '_var.h5ad', output_name + '.diffmap_condition.html']
+				print(' '.join(call_args))
+				check_call(call_args)
 		CODE
 		gsutil -m mv ${output_name}.h5ad ${data_folder}
 		gsutil -m mv ${output_name}_var.h5ad ${data_folder}
@@ -233,9 +237,13 @@ task run_scrtools_cluster {
 			gsutil -m mv ${output_name}.composition.frequency.png ${data_folder}
 			gsutil -m mv ${output_name}.composition.normalized.png ${data_folder}
 		fi
-		if [ -f ${output_name}.diffmap.html ]
+		if [ -f ${output_name}.diffmap_cluster.html ]
 		then
-			gsutil -m mv ${output_name}.diffmap.html ${data_folder}
+			gsutil -m mv ${output_name}.diffmap_cluster.html ${data_folder}
+		fi
+		if [ -f ${output_name}.diffmap_condition.html ]
+		then
+			gsutil -m mv ${output_name}.diffmap_condition.html ${data_folder}
 		fi
 	}
 
@@ -251,7 +259,8 @@ task run_scrtools_cluster {
 		String output_de_t = '${data_folder}/${output_name}_de_analysis_t.xlsx'
 		String output_composition_frequency_png = '${data_folder}/${output_name}.composition.frequency.png'
 		String output_composition_normalized_png = '${data_folder}/${output_name}.composition.normalized.png'
-		String output_diffmap_html = '${data_folder}/${output_name}.diffmap.html'
+		String output_diffmap_cluster_html = '${data_folder}/${output_name}.diffmap_cluster.html'
+		String output_diffmap_condition_html = '${data_folder}/${output_name}.diffmap_condition.html'
 	}
 
 	runtime {
