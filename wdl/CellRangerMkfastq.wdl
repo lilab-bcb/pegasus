@@ -4,6 +4,7 @@ workflow cellranger_mkfastq {
 	String output_directory
 	Int? diskSpace = 500
 	Int? numCPU = 64
+	String? version = "2.1.1"
 
 	call run_cellranger_mkfastq {
 		input:
@@ -11,7 +12,8 @@ workflow cellranger_mkfastq {
 			input_csv_file = input_csv_file,
 			output_directory = output_directory,
 			diskSpace = diskSpace,
-			numCPU = numCPU
+			numCPU = numCPU,
+			version = version
 	}
 }
 
@@ -21,6 +23,7 @@ task run_cellranger_mkfastq {
 	String output_directory
 	Int? diskSpace
 	Int? numCPU
+	String? version
 
 	String input_name = basename(input_directory)
 
@@ -37,7 +40,7 @@ task run_cellranger_mkfastq {
 	}
 
 	runtime {
-		docker: "regevlab/cellranger_2.1.1"
+		docker: "regevlab/cellranger-${version}"
 		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"

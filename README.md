@@ -114,3 +114,54 @@ symbols | A comma-separated list of symbols representing each input matrix, this
 attributes | A comma-separated list of attributes. When merging matrices, the matrix symbol defined in 'symbols' will be added in front of these attributes | "Donor" | 
 diskSpace | Disk space needed for this task | 100 | 100
 
+### <a name="cluster"></a> scrtools_cluster
+
+*scrtools_cluster* performs PCA, tSNE visualization, diffusion map, Louvain clustering, and differential expression analysis (fisher's exact test and t test). This is the main step people want to know. Please see inputs below.
+
+Note: currently, this step uses Scanpy as its backend engine. In the future, we will use more optimized codes to replace Scanpy.
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools_aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**input_name** | Input name of the aggreagated/merged matric | "my_aggr_mat" | 
+**output_name** | Output file name of this task | "results" | 
+genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
+num_cpu | Number of CPUs to use | 64 | 64
+output_filtration_results | A boolean value indicating if you want to output QC metrics into a spreadsheet | "true" | "false"
+correct_batch_effect | A boolean value indicating if you want to correct for batch effects | "true" | "false"
+batch_group_by | If correct for batch effects, if you want to correct it separately for each group. Group is defined by this input. It should be an attribute (e.g. GroupBy) | "Source" | 
+plot_by_side | By default, this step will generate one tSNE plot colored by louvain cluster labels. If you provide an attribute name here, it will put the same tSNE colored by the attribute on the right-hand side | "Source" | 
+legend_on_data | A boolean value indicating if we should put legends on data | "true" | "false"
+plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | "true" | "false"
+figure_size | Sizes of the composition plots in inches | "10,8" | "6,4"
+plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | "true" | "false" 
+de_analysis | A boolean value indicating if you want to perform differential expression analysis | "true" | "true"
+fold_change | Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene in spreadsheets | 2 | 1.5
+labels | Cluster labels that help de_analysis identify clusters | "louvain_labels" | "louvain_labels"
+output_loom | A boolean value indicating if you want to output loom-formatted files | "false" | "false"
+import_attributes | Import attributes contained in the comma-separated list into the analysis object | "Donor" | 
+min_genes | The minimum number of expressed genes to be consider a valid cell | 500 | 500
+max_genes | *max_genes* - 1 is the maximum number of expressed genes to be consider a valid cell | 6000 | 6000
+mito_prefix | Prefix of mitochondrial genes | "MT-" | "MT-"
+percent_mito | Only keep cells with mitochondrial ratio less than *percent_mito* | 0.1 | 0.1
+gene_percent_cells | Genes expressed in with less than *gene_percent_cells* * *number_of_cells* cells will be excluded from variable gene selection step. The default value requires a gene expressed in at least 3 cells when there are 6,000 cells | 0.0005 | 0.0005
+counts_per_cell_after | Normalize each cell so that the sum of its normalized counts is equal to *counts_per_cell_after* | 1e5 | 1e5
+louvain_resolution | Resolution parameter of the louvain clustering algorithm | 1 | 1.3
+diskSpace | Disk space needed for this task | 250 | 250
+
+Here are the description of outputs.
+
+Name | Description | Required output
+output_name.tsne.png | tSNE plots colored by louvain cluster labels and user-specified attribute | Yes
+output_name.h5ad | Results in Scanpy's anndata format | Yes
+output_name_var.h5ad | Results containing only variable genes in Scanpy's anndata format | Yes
+output_name.filt.xlsx | Spreadsheet containing number of cells kept for each channel after filtering | No, only present if *output_filtration_results* is set
+output_name.composition.frequency.png | Composition plot. Each cluster has a stacked bar showing the frequency of cells from each condition in this cluster | No, only present if *plot_composition* is set
+output_name.composition.normalized.png | Computation plot. Each cluster has non-stacked bars showing the percentage of cells within each condition that belong to this cluster | No, only present if *plot_composition* is set
+output_name.diffmap_cluster.html | Interactive 3D diffusion map colored by louvain cluster labels | No, only present if *plot_diffusion_map* is set
+output_name.diffmap_condition.html | Interactive 3D diffusion map colored by the attribute in *plot_by_side* | No, only present if both *plot_diffusion_map* and *plot_by_side* are set
+output_name_de.h5ad | Differential expression results stored in Scanpy's anndata format | No, only present if *de_analysis* is set
+output_name_de_analysis_fisher.xlsx | Spreadsheet shows up-regulated and down-regulated genes for each cluster, calculated by Fisher's exact test | No, only present if *de_analysis* is set
+output_name_de_analysis_t.xlsx | Spreadsheet shows up-regulated and down-regulated genes for each cluster, calculated by T test | No, only present if *de_analysis* is set
+output_name.loom | Results in loom format | No, only present if *output_loom* is set
+output_name_var.loom | Results containing only variable genes in loom format | No, only present if *output_loom* is set
