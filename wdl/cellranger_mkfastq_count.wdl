@@ -1,14 +1,14 @@
 workflow cellranger_mkfastq_count {
-    # 3 columns (Lane, Sample, Index). gs URL
+	# 3 columns (Lane, Sample, Index). gs URL
 	File input_csv_file
-    # Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. gs URL
-    String input_directory
-    # Fastq output directory, gs URL
-    String fastq_output_directory
-    # Optional disk space for mkfastq.
-    Int? mkfastq_disk_space = 500
-    # 2.1.1 only currently available
-    String? cell_ranger_version = "2.1.1"
+	# Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. gs URL
+	String input_directory
+	# CellRanger output directory, gs URL
+	String cellranger_output_directory
+	# Optional disk space for mkfastq.
+	Int? mkfastq_disk_space = 500
+	# 2.1.1 only currently available
+	String? cellranger_version = "2.1.1"
 
 	# gs URL to a transcriptome directory tar.gz
 	# "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz"
@@ -27,59 +27,70 @@ workflow cellranger_mkfastq_count {
 	Int? count_disk_space = 250
 
 
-    call cellranger_mkfastq {
-        input:
-            input_directory = input_directory,
-            input_csv_file = input_csv_file,
-            disk_space = mkfastq_disk_space,
-            output_directory = fastq_output_directory
-    }
-
-	call parse_csv {
+	call cellranger_mkfastq {
 		input:
-			input_csv_file = input_csv_file
+			input_directory = input_directory,
+			input_csv_file = input_csv_file,
+			output_directory = cellranger_output_directory,
+			disk_space = mkfastq_disk_space,
+			cellranger_version =cellranger_version
 	}
 
-	scatter (sample_id in parse_csv.sample_ids) {
-		call cell_ranger_count {
+	scatter (sample_id in cellranger_mkfastq.sample_ids) {
+		call cellranger_count {
 			input:
 				sample_id = sample_id,
-				data_directory = cellranger_mkfastq.output_fastqs_directory,
+				data_directory = cellranger_output_directory,
 				transcriptome = transcriptome,
 				do_force_cells = do_force_cells,
 				force_cells = force_cells,
 				secondary = secondary,
 				expect_cells = expect_cells,
 				disk_space = count_disk_space,
-				cell_ranger_version = cell_ranger_version
+				cellranger_version = cellranger_version
 		}
 	}
 }
 
-task parse_csv {
+task cellranger_mkfastq {
+	String input_directory
 	File input_csv_file
+	String output_directory
+	Int? disk_space
+	String? cellranger_version
+
+	String input_name = basename(input_directory)
 
 	command {
 		set -e
+		export TMPDIR=/tmp
 		python <<CODE
-		with open('${input_csv_file}') as fin:
+		with open('${input_csv_file}') as fin, open('sample_ids.txt', 'w') as fout:
 			next(fin)
 			for line in fin:
-				print(line.strip().split(',')[1])
+				fout.write(line.strip().split(',')[1] + '\n')
 		CODE
+		gsutil -m cp -r ${input_directory} .
+		cellranger mkfastq --id=results --run=${input_name} --csv=${input_csv_file} --jobmode=local
+		gsutil -m mv results/outs ${output_directory}/fastqs
 	}
 
 	output {
-		Array[String] sample_ids = read_lines(stdout())
+		String output_fastqs_directory = "${output_directory}/fastqs"
+		Array[String] sample_ids = read_lines("sample_ids.txt")
 	}
 
 	runtime {
-		docker: "regevlab/cellranger-${cell_ranger_version}"
+		docker: "regevlab/cellranger-${cellranger_version}"
+		memory: "192 GB"
+		bootDiskSizeGb: 12
+		disks: "local-disk ${disk_space} HDD"
+		cpu: 64
 		preemptible: 2
 	}
 }
 
-task cell_ranger_count {
+task cellranger_count {
 	String sample_id
 	String data_directory
 	File transcriptome
@@ -87,7 +98,7 @@ task cell_ranger_count {
 	Int? expect_cells
 	Boolean? secondary
 	Int? disk_space
-	String? cell_ranger_version
+	String? cellranger_version
 	Int? force_cells
 
 	command {
@@ -112,40 +123,8 @@ task cell_ranger_count {
 	}
 
 	runtime {
-		docker: "regevlab/cellranger-${cell_ranger_version}"
+		docker: "regevlab/cellranger-${cellranger_version}"
 		memory: "384 GB"
-		bootDiskSizeGb: 12
-		disks: "local-disk ${disk_space} HDD"
-		cpu: 64
-		preemptible: 2
-	}
-}
-
-
-task cellranger_mkfastq {
-	String input_directory
-	File input_csv_file
-	String output_directory
-	Int? disk_space
-
-	String input_name = basename(input_directory)
-
-	command {
-		set -e
-		export TMPDIR=/tmp
-		echo ${input_name}
-		gsutil -m cp -r ${input_directory} .
-		cellranger mkfastq --id=results --run=${input_name} --csv=${input_csv_file} --jobmode=local
-		gsutil -m mv results/outs ${output_directory}/fastqs
-	}
-
-	output {
-		String output_fastqs_directory = "${output_directory}/fastqs"
-	}
-
-	runtime {
-		docker: "regevlab/cellranger-${cell_ranger_version}"
-		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
 		cpu: 64

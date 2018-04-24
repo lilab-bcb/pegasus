@@ -24,7 +24,6 @@ task run_cellranger_mkfastq {
 	command {
 		set -e
 		export TMPDIR=/tmp
-		echo ${input_name}
 		gsutil -m cp -r ${input_directory} .
 		cellranger mkfastq --id=results --run=${input_name} --csv=${input_csv_file} --jobmode=local
 		gsutil -m mv results/outs ${output_directory}/fastqs

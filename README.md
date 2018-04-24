@@ -1,6 +1,13 @@
 # scRNA-Seq
 
-## First Time Running - Authenticate with Google
+Table of Contents
+-----------------
+
+* [First Time Running - Authenticate with Google](#first_time)
+* [Run Cell Ranger mkfastq/count](#run_cellranger)
+* [Run Single Cell RNA-Seq analysis tools](#run_scrtools)
+
+## <a name="first_time"></a> First Time Running - Authenticate with Google
 
 1. Ensure the Google Cloud SDK is installed. 
     
@@ -13,16 +20,16 @@
 1. Enter authorization code in unix terminal
 
 
-## Run Cell Ranger mkfastq/count
+## <a name="run_cellranger"></a> Run Cell Ranger mkfastq/count
 1. Create a FireCloud workspace or use an existing workspace.
 
 1. Upload your sequencing output to the workspace.
 
-    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/VK18WBC6Z4*
+    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
 
-1. Upload your CSV file to the workspace
+1. Upload your BCL CSV file to the workspace
 
-    Example: *gsutil cp /foo/bar/projects/VK18WBC6Z4/my_bcl.csv gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/*
+    Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
 1. Upload "dummy" data model required by FireCloud
 
@@ -37,15 +44,39 @@
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-input_csv_file | 3 column CSV (Lane, Sample, Index) | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_file.csv"
-input_directory | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_dir" | 
-fastq_output_directory | Fastq output directory | "gs://fc-e7760257-20a8-46ae-8358-93a83f02a0ba/my_dir" |
-mkfastq_disk_space | Optional disk space for mkfastq. | 500 | 500 
-cell_ranger_version | Cell ranger version | "2.1.1" | "2.1.1"
+input_csv_file | 3 column CSV (Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv"
+input_directory | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" | 
+cellranger_output_directory | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
 transcriptome | gs URL to a transcriptome tar.gz ("gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" for mm10, "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz" for GRCh38 | "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" | 
+mkfastq_disk_space | Optional disk space for mkfastq. | 500 | 500 
+cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
 secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
 do_force_cells | force cells | true | true
 force_cells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
 expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
 count_disk_space | Disk space needed for cell ranger count | 500 | 250
+
+## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
+
+Before we run the scrtools, we need to first prepare a CSV file, *count_matrix.csv*, which describes the metadata for each 10x channel.
+
+### count_matrix.csv
+
+```
+Sample,Source,Platform,Donor,Reference,Location
+S1,bone_marrow,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
+S2,bone_marrow,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
+S3,pbmc,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
+S4,pbmc,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
+```
+
+In the above CSV file, fileds *Sample*, *Reference*, and *Location* are required. *Sample* refers to the sample names listed in the BCL CSV file, *Reference* refers to the genome name, and *Location* refers to the cellranger output folder. The cellranger count outputs are expected to locate at *Location/Sample* (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/S1). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In this example, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to donor ID.
+
+You should upload **count_matrix.csv** to your workspace
+
+    Example: *gsutil cp /foo/bar/projects/my_count_matrix.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
+
+Then you can aggregate 10x count matrices into a single count matrix using **scrtools_merge_matrix**
+
+### scrtools_merge_matrix
 
