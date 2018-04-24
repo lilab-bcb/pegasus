@@ -5,11 +5,11 @@ Table of Contents
 
 * [First Time Running - Authenticate with Google](#first_time)
 * [Run Cell Ranger mkfastq/count](#run_cellranger)
-    *[Cell Ranger mkfastq/count inputs](#cellranger_mkfastq_count)
+  *[Cell Ranger mkfastq/count inputs](#cellranger_mkfastq_count)
 * [Run Single Cell RNA-Seq analysis tools](#run_scrtools)
-    *[Prepare count_matrix.csv](#count_matrix_csv)
-    *[scrtools_aggregate_matrix](#aggr_mat)
-    *[scrtools_merge_matrix](#merge_mat)
+  *[Prepare count_matrix.csv](#count_matrix_csv)
+  *[scrtools_aggregate_matrix](#aggr_mat)
+  *[scrtools_merge_matrix](#merge_mat)
 
 ## <a name="first_time"></a> First Time Running - Authenticate with Google
 
