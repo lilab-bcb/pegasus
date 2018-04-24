@@ -6,7 +6,13 @@ workflow cellranger_count {
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
 	# mm10, GRCh38, or a URL to a tar.gz file
-	File transcriptome
+	String transcriptome
+	
+	File transcriptome_file = (if transcriptome == 'GRCh38' 
+								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+								else (if transcriptome == 'mm10' 
+										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
+										else transcriptome))
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
@@ -20,28 +26,27 @@ workflow cellranger_count {
 	String? version = "2.1.1"
 	# Disk space needed per task. If you don't know enter "250"
 	Int? diskSpace = 250
+	# Number of cpus per cellranger count job
+	Int? numCPU = 64
 
 	call parse_csv {
 		input:
-			input_csv_file = input_csv_file
+			input_csv_file = input_csv_file,
+			version = version
 	}
-    if(transcriptome=='mm10') {
-        transcriptome = 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz'
-    }
-    if(transcriptome=='GRCh38') {
-        transcriptome = 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
-    }
+
 	scatter (sampleId in parse_csv.sampleIds) {
 		call CellRangerCount {
 			input:
 				sampleId = sampleId,
 				data_directory = data_directory,
-				transcriptome = transcriptome,
+				transcriptome = transcriptome_file,
 				do_force_cells = do_force_cells,
 				forceCells = forceCells,
 				secondary = secondary,
 				expectCells = expectCells,
 				diskSpace = diskSpace,
+				numCPU = numCPU,
 				version = version
 		}
 	}
@@ -49,6 +54,7 @@ workflow cellranger_count {
 
 task parse_csv {
 	File input_csv_file
+	String? version
 	
 	command {
 		set -e
@@ -78,6 +84,7 @@ task CellRangerCount {
 	Int? expectCells
 	Boolean? secondary
 	Int? diskSpace
+	Int? numCPU
 	String? version
 	Int? forceCells
 
@@ -107,7 +114,7 @@ task CellRangerCount {
 		memory: "384 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"
-		cpu: 64
+		cpu: "${numCPU}"
 		preemptible: 2
 	}
 }

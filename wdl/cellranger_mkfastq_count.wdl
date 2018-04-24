@@ -10,10 +10,16 @@ workflow cellranger_mkfastq_count {
 	# 2.1.1 only currently available
 	String? cellranger_version = "2.1.1"
 
-	# gs URL to a transcriptome directory tar.gz
-	# "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz"
-	# "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz"
-	File transcriptome
+	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
+	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
+	# mm10, GRCh38, or a URL to a tar.gz file
+	String transcriptome
+	
+	File transcriptome_file = (if transcriptome == 'GRCh38' 
+								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+								else (if transcriptome == 'mm10' 
+										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
+										else transcriptome))
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
@@ -26,6 +32,9 @@ workflow cellranger_mkfastq_count {
 	# Optional disk space needed for cell ranger count.
 	Int? count_disk_space = 250
 
+	# Number of cpus per cellranger job
+	Int? num_cpu = 64
+
 
 	call cellranger_mkfastq {
 		input:
@@ -33,6 +42,7 @@ workflow cellranger_mkfastq_count {
 			input_csv_file = input_csv_file,
 			output_directory = cellranger_output_directory,
 			disk_space = mkfastq_disk_space,
+			num_cpu = num_cpu,
 			cellranger_version =cellranger_version
 	}
 
@@ -41,12 +51,13 @@ workflow cellranger_mkfastq_count {
 			input:
 				sample_id = sample_id,
 				data_directory = cellranger_output_directory,
-				transcriptome = transcriptome,
+				transcriptome = transcriptome_file,
 				do_force_cells = do_force_cells,
 				force_cells = force_cells,
 				secondary = secondary,
 				expect_cells = expect_cells,
 				disk_space = count_disk_space,
+				num_cpu = num_cpu,
 				cellranger_version = cellranger_version
 		}
 	}
@@ -57,6 +68,7 @@ task cellranger_mkfastq {
 	File input_csv_file
 	String output_directory
 	Int? disk_space
+	Int? num_cpu
 	String? cellranger_version
 
 	String input_name = basename(input_directory)
@@ -85,7 +97,7 @@ task cellranger_mkfastq {
 		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
-		cpu: 64
+		cpu: "${num_cpu}"
 		preemptible: 2
 	}
 }
@@ -98,6 +110,7 @@ task cellranger_count {
 	Int? expect_cells
 	Boolean? secondary
 	Int? disk_space
+	Int? num_cpu
 	String? cellranger_version
 	Int? force_cells
 
@@ -127,7 +140,7 @@ task cellranger_count {
 		memory: "384 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
-		cpu: 64
+		cpu: "${num_cpu}"
 		preemptible: 2
 	}
 }

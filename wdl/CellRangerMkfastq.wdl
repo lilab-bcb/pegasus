@@ -3,13 +3,15 @@ workflow cellranger_mkfastq {
 	File input_csv_file
 	String output_directory
 	Int? diskSpace = 500
+	Int? numCPU = 64
 
 	call run_cellranger_mkfastq {
 		input:
 			input_directory = input_directory,
 			input_csv_file = input_csv_file,
+			output_directory = output_directory,
 			diskSpace = diskSpace,
-			output_directory = output_directory
+			numCPU = numCPU
 	}
 }
 
@@ -18,6 +20,7 @@ task run_cellranger_mkfastq {
 	File input_csv_file
 	String output_directory
 	Int? diskSpace
+	Int? numCPU
 
 	String input_name = basename(input_directory)
 
@@ -38,7 +41,7 @@ task run_cellranger_mkfastq {
 		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"
-		cpu: 64
+		cpu: "${numCPU}"
 		preemptible: 2
 	}
 }

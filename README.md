@@ -44,10 +44,10 @@ Table of Contents
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**input_csv_file** | 3 column CSV (Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv"
-input_directory | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" | 
-cellranger_output_directory | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
-transcriptome | gs URL to a transcriptome tar.gz ("gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" for mm10, "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz" for GRCh38 | "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" | 
+**input_csv_file** | 3 column CSV (Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv" | 
+**input_directory** | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" | 
+**cellranger_output_directory** | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
+**transcriptome** | gs URL to a transcriptome tar.gz ("gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" for mm10, "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz" for GRCh38 | "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" | 
 mkfastq_disk_space | Optional disk space for mkfastq. | 500 | 500 
 cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
 secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
@@ -55,6 +55,8 @@ do_force_cells | force cells | true | true
 force_cells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
 expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
 count_disk_space | Disk space needed for cell ranger count | 500 | 250
+
+Note: Required inputs are shown in bold.
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
 
@@ -79,4 +81,15 @@ You should upload **count_matrix.csv** to your workspace
 Then you can aggregate 10x count matrices into a single count matrix using **scrtools_merge_matrix**
 
 ### scrtools_merge_matrix
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+**input_count_matrix_csv** | Input CSV file describing metadata of each 10x channel | "my_count_matrix.csv" | 
+**output_folder** | This is the folder for all analysis results | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**output_name** | Output file name of *scrtools_merge_matrix*, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat" | 
+genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
+restrictions | Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. Multiple restrictions are separated by ';'. If not restrictions are provided, all channels in the *count_matrix.csv* will be selected | "Source:bone_marrow" | 
+attributes | Specify a comma-separated list of outputted attributes (i.e. column names in *count_matrix.csv*). These attributes will be imported to *output_name.attr.csv* | "Source,Donor" | 
+groupby | When we know there are different groups in the study, such as bone_marrow and pbmc, we could perform batch correction separately for each group. This optional field is used to create a new attribute, GroupBy, that helps to identify groups. It takes the format of 'value' or 'attribute=value' or 'attr1+attr2+....' | "Source+Donor" | 
+diskSpace | Disk space needed for this task | 100 | 100
 
