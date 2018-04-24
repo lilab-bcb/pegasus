@@ -66,7 +66,8 @@ task run_scrtools_merge_matrices {
 		print(' '.join(call_args))
 		check_call(call_args)
 		CODE
-		gsutil -m mv ${output_name}* ${data_folder}
+		gsutil -m mv ${output_name}_10x.h5 ${data_folder}
+		gsutil -m mv ${output_name}.attr.csv ${data_folder}
 	}
 
 	output {

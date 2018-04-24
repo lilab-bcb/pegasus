@@ -5,7 +5,11 @@ Table of Contents
 
 * [First Time Running - Authenticate with Google](#first_time)
 * [Run Cell Ranger mkfastq/count](#run_cellranger)
+    *[Cell Ranger mkfastq/count inputs](#cellranger_mkfastq_count)
 * [Run Single Cell RNA-Seq analysis tools](#run_scrtools)
+    *[Prepare count_matrix.csv](#count_matrix_csv)
+    *[scrtools_aggregate_matrix](#aggr_mat)
+    *[scrtools_merge_matrix](#merge_mat)
 
 ## <a name="first_time"></a> First Time Running - Authenticate with Google
 
@@ -40,7 +44,9 @@ Table of Contents
     
     In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Copy from another workspace". Type cellranger_mkfastq_count.
 
-### Cell Ranger mkfastq/count inputs:
+### <a name="cellranger_mkfastq_count"></a> Cell Ranger mkfastq/count inputs:
+
+*Cell Ranger mkfastq/count* takes Illumina outputs as its input and run *cellranger mkfastq* and *cellranger count* for you. Please see the description of inputs below. Note that required inputs are shown in bold.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
@@ -56,13 +62,12 @@ force_cells | Force pipeline to use this number of cells, bypassing the cell det
 expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
 count_disk_space | Disk space needed for cell ranger count | 500 | 250
 
-Note: Required inputs are shown in bold.
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
 
 Before we run the scrtools, we need to first prepare a CSV file, *count_matrix.csv*, which describes the metadata for each 10x channel.
 
-### count_matrix.csv
+### <a name="count_matrix_csv"></a> count_matrix.csv
 
 ```
 Sample,Source,Platform,Donor,Reference,Location
@@ -78,18 +83,34 @@ You should upload **count_matrix.csv** to your workspace
 
     Example: *gsutil cp /foo/bar/projects/my_count_matrix.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
-Then you can aggregate 10x count matrices into a single count matrix using **scrtools_merge_matrix**
+Then you can aggregate 10x count matrices into a single count matrix using **scrtools_aggregate_matrix**
 
-### scrtools_merge_matrix
+### <a name="aggr_mat"></a> scrtools_aggregate_matrix
+
+*scrtools_aggregate_matrix* is used to aggregate individual 10x channels into a big count matrix for downstream analysis. Please see the inputs below.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
 **input_count_matrix_csv** | Input CSV file describing metadata of each 10x channel | "my_count_matrix.csv" | 
 **output_folder** | This is the folder for all analysis results | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**output_name** | Output file name of *scrtools_merge_matrix*, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat" | 
+**output_name** | Output file name of this task, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat_bm" | 
 genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
 restrictions | Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. Multiple restrictions are separated by ';'. If not restrictions are provided, all channels in the *count_matrix.csv* will be selected | "Source:bone_marrow" | 
 attributes | Specify a comma-separated list of outputted attributes (i.e. column names in *count_matrix.csv*). These attributes will be imported to *output_name.attr.csv* | "Source,Donor" | 
 groupby | When we know there are different groups in the study, such as bone_marrow and pbmc, we could perform batch correction separately for each group. This optional field is used to create a new attribute, GroupBy, that helps to identify groups. It takes the format of 'value' or 'attribute=value' or 'attr1+attr2+....' | "Source+Donor" | 
+diskSpace | Disk space needed for this task | 100 | 100
+
+### <a name="merge_mat"></a> scrtools_merge_matrix
+
+*scrtools_merge_matrix* is used to combine two or more aggregated matrices produced by *scrtools_aggregate_matrix* into one big count matrix. This step is optional. 
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools_aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**input_names** | A comma-separated list of input names for count matrices that you want to merge | "my_aggr_mat_bm,my_aggr_mat_pbmc" | 
+**output_name** | Output file name of this task, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat" | 
+genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
+symbols | A comma-separated list of symbols representing each input matrix, this input is used with 'attributes' | "bm,pbmc" | 
+attributes | A comma-separated list of attributes. When merging matrices, the matrix symbol defined in 'symbols' will be added in front of these attributes | "Donor" | 
 diskSpace | Disk space needed for this task | 100 | 100
 
