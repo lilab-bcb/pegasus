@@ -44,7 +44,7 @@ Table of Contents
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-input_csv_file | 3 column CSV (Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv"
+**input_csv_file** | 3 column CSV (Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv"
 input_directory | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" | 
 cellranger_output_directory | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
 transcriptome | gs URL to a transcriptome tar.gz ("gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" for mm10, "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz" for GRCh38 | "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" | 
