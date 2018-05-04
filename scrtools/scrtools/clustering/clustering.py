@@ -68,12 +68,6 @@ def cluster(input_name, output_name, **kwargs):
 	mito_genes = [name for name in adata.var_names if name.startswith(kwargs['mito_prefix'])]
 	adata.obs['percent_mito'] = adata[:, mito_genes].X.sum(axis=1).A1 / adata.obs['n_counts'].values
 
-	# if kwargs['diagnosis']:
-	# 	sc.pl.violin(adata, ['n_genes', 'n_counts', 'percent_mito'], jitter=0.4, multi_panel=True, save=output_base)
-	# 	sc.pl.scatter(adata, x='n_counts', y='percent_mito', save=output_base + ".1")
-	# 	sc.pl.scatter(adata, x='n_counts', y='n_genes', save=output_base + ".2")
-	# 	print("Plotted QC figures.")
-
 	# Filter cells	
 	if kwargs['filtr_xlsx'] is not None:
 		writer = pd.ExcelWriter(kwargs['filtr_xlsx'], engine='xlsxwriter')
