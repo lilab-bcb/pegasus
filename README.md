@@ -80,7 +80,7 @@ S3,pbmc,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
 S4,pbmc,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
 ```
 
-In the above CSV file, fileds *Sample*, *Reference*, and *Location* are required. *Sample* refers to the sample names listed in the BCL CSV file, *Reference* refers to the genome name, and *Location* refers to the cellranger output folder. The cellranger count outputs are expected to locate at *Location/Sample* (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/S1). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In this example, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to donor ID.
+In the above CSV file, *Sample*, *Reference*, and *Location* are required. *Sample* refers to the sample names listed in the BCL CSV file, *Reference* refers to the genome name, and *Location* refers to the cellranger output folder. The cellranger count outputs are expected to locate at *Location/Sample* (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/S1). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In this example, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to donor ID.
 
 You should upload **count_matrix.csv** to your workspace
 
