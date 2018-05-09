@@ -121,7 +121,6 @@ diskSpace | Disk space needed for this task | 100 | 100
 
 *scrtools cluster* performs PCA, tSNE visualization, diffusion map, Louvain clustering, and differential expression analysis (fisher's exact test and t test). This is the main step people want to know. Please see inputs below.
 
-Note: currently, this step uses Scanpy as its backend engine. In the future, we will use more optimized codes to replace Scanpy.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
