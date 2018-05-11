@@ -1,16 +1,11 @@
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
-import scanpy.api as sc
 from scipy.sparse import issparse
 from scipy.stats.mstats import gmean
 from collections import defaultdict
 
-def normalization(data, norm_count):
-	assert issparse(data.X)
-	mat = data.X[:, data.var['robust'].values]
-	scale = norm_count / mat.sum(axis = 1).A1
-	data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
+
 
 def estimate_adjustment_matrices(data):
 	channels = data.obs['Channel'].unique()
