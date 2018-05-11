@@ -18,42 +18,50 @@ Table of Contents
 
 1. Ensure the Google Cloud SDK is installed. 
     
-    Note: Broad users can type *use Google-Cloud-SDK* to make the Google Cloud tools available. 
+    Note: Broad users do not have to install this-they can type *use Google-Cloud-SDK* to make the Google Cloud tools available. 
 
-1. Type *gcloud auth login*
+1. Type *gcloud auth login* to login to Google Cloud.
 
-1. Open link in browser
+1. Copy and paste the link in your unix terminal into your web browser.
 
 1. Enter authorization code in unix terminal
 
 
 ## <a name="run_cellranger"></a> Run Cell Ranger mkfastq/count
-1. Create a FireCloud workspace or use an existing workspace.
+1. [Create](https://software.broadinstitute.org/firecloud/documentation/article?id=10746) a [FireCloud](https://portal.firecloud.org/) workspace or use an existing workspace.
 
-1. Upload your sequencing output to the workspace.
+1. Copy your sequencing output to the workspace using gsutil in your unix terminal. 
+
+    Note that your **BCL files will be automatically deleted** by the mkfastq/count pipeline.
 
     Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
+    
+    -m means copy in parallel, -r means copy the directory recursively.
+    
+    Note: Broad users need to be on an UGER node (not a login node) in order to use the -m flag
+    
+    You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
 
-1. Upload your BCL CSV file to the workspace
+1. Upload your Sample Sheet (CSV file) to the workspace.  
 
-    Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
+    Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/
 
-1. Upload "dummy" data model required by FireCloud
+1. Upload "fake" data model to FireCloud. FireCloud requires a [data model](https://software.broadinstitute.org/firecloud/documentation/article?id=9769) that describes data entities and how they relate to each other. Our pipelines do not use the data model and therefore we must upload a "fake" data model to satisfy FireCloud.
 
-    Download https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt
+    Download [https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt](https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt) to your computer.
 
-    In FireCloud select the "Data" tab. Click "Import Metadata". Select "Import From File". Select the file and click "Upload"
+    In FireCloud select the "Data" tab in your workspace. Click "Import Metadata". Select "Import From File". Select the participant_model.txt file and click "Upload"
 1. Import cellranger_mkfastq_count method.
     
-    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Copy from another workspace". Type cellranger_mkfastq_count.
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_mkfastq_count.
 
 ### <a name="cellranger_mkfastq_count"></a> Cell Ranger mkfastq/count inputs:
 
-*Cell Ranger mkfastq/count* takes Illumina outputs as its input and run *cellranger mkfastq* and *cellranger count* for you. Please see the description of inputs below. Note that required inputs are shown in bold.
+*Cell Ranger mkfastq/count* takes Illumina outputs as input and runs *cellranger mkfastq* and *cellranger count*. Please see the description of inputs below. Note that required inputs are shown in bold.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**input_csv_file** | 3 column CSV (Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv" | 
+**input_csv_file** | Sample Sheet (contains Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv" | 
 **input_directory** | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" | 
 **cellranger_output_directory** | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
 **transcriptome** | gs URL to a transcriptome tar.gz ("gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" for mm10, "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz" for GRCh38 | "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" | 
