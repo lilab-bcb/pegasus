@@ -1,16 +1,11 @@
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
-import scanpy.api as sc
 from scipy.sparse import issparse
 from scipy.stats.mstats import gmean
 from collections import defaultdict
 
-def normalization(data, norm_count):
-	assert issparse(data.X)
-	mat = data.X[:, data.var['robust'].values]
-	scale = norm_count / mat.sum(axis = 1).A1
-	data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
+
 
 def estimate_adjustment_matrices(data):
 	channels = data.obs['Channel'].unique()
@@ -135,11 +130,18 @@ def collect_variable_gene_matrix(data, gene_subset):
 
 def correct_batch_effects(data):
 	if issparse(data.X):
-		data.X = data.X.toarray()
-
-	m = data.shape[1]
-	for i, channel in enumerate(data.uns['Channels']):
-		idx = np.isin(data.obs['Channel'], channel)
-		if idx.sum() == 0:
-			continue
-		data.X[idx] = data.X[idx] * np.reshape(data.varm['stds'][:, i], newshape = (1, m)) + np.reshape(data.varm['means'][:, i], newshape = (1, m))
+		for i, channel in enumerate(data.uns['Channels']):
+			idx = np.isin(data.obs['Channel'], channel)
+			if idx.sum() == 0:
+				continue
+			idx = np.repeat(idx, np.diff(data.X.indptr))
+			data.X.data[idx] = data.X.data[idx] * data.varm['stds'][:,i][data.X.indices[idx]] + data.varm['means'][:, i][data.X.indices[idx]]
+		data.X.data[data.X.data < 0.0] = 0.0
+	else:		
+		m = data.shape[1]
+		for i, channel in enumerate(data.uns['Channels']):
+			idx = np.isin(data.obs['Channel'], channel)
+			if idx.sum() == 0:
+				continue
+			data.X[idx] = data.X[idx] * np.reshape(data.varm['stds'][:, i], newshape = (1, m)) + np.reshape(data.varm['means'][:, i], newshape = (1, m))
+		data.X[data.X < 0.0] = 0.0

@@ -84,14 +84,16 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
     for sample_name, row in df.iterrows():
         input_hd5_file = "{location}/{sample}/filtered_gene_bc_matrices_h5.h5".format(location=row['Location'],
                                                                                       sample=sample_name)
+        if not os.path.exists(input_hd5_file):
+            input_hd5_file = "{location}/filtered_gene_bc_matrices_h5.h5".format(location=row['Location'])
+            assert os.path.exists(input_hd5_file)
+
         if google_cloud:
             call_args = ['gsutil', '-m', 'cp', input_hd5_file,
                          '{0}_filtered_gene_bc_matrices_h5.h5'.format(sample_name)]
             check_call(call_args)
             input_hd5_file = '{0}_filtered_gene_bc_matrices_h5.h5'.format(sample_name)
-        elif not os.path.exists(input_hd5_file):
-            input_hd5_file = "{location}/filtered_gene_bc_matrices_h5.h5".format(location=row['Location'])
-
+        
         channel = load_10x_h5_file(input_hd5_file, genome)
         channel["barcodes"] = [sample_name + '-' + x.decode() for x in channel["barcodes"]]
 

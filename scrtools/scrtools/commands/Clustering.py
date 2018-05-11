@@ -1,5 +1,5 @@
 from .Base import Base
-from ..clustering import cluster
+from ..clustering import cluster, cluster2
 
 class Clustering(Base):
 	"""
@@ -38,6 +38,7 @@ Options:
   --output-diagnosis-plots                         Output some diagnosis plots.
 
   --input-h5ad                                     Input is one h5ad file.
+  --nPC <number>                                   Number of PCs.
 
   -h, --help       Print out help information.
 
@@ -64,7 +65,12 @@ Examples:
 			'norm_count' : float(self.args['--counts-per-cell-after']),
 			'resolution' : float(self.args['--louvain-resolution']),
 			'diagnosis' : self.args['--output-diagnosis-plots'],
-			'input_h5ad' : self.args['--input-h5ad']
+			'input_h5ad' : self.args['--input-h5ad'],
+			'nPC' : self.args['--nPC']
 		}
 
-		cluster(self.args['<input_name>'], self.args['<output_name>'], **kwargs)
+		if kwargs['nPC'] is not None:
+			kwargs['nPC'] = int(kwargs['nPC'])
+			cluster2(self.args['<input_name>'], self.args['<output_name>'], **kwargs)
+		else:
+			cluster(self.args['<input_name>'], self.args['<output_name>'], **kwargs)
