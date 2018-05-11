@@ -8,11 +8,11 @@ Table of Contents
   * [Cell Ranger mkfastq/count inputs](#cellranger_mkfastq_count)
 * [Run Single Cell RNA-Seq analysis tools](#run_scrtools)
   * [Prepare count_matrix.csv](#count_matrix_csv)
-  * [scrtools_aggregate_matrix](#aggr_mat)
-  * [scrtools_merge_matrix](#merge_mat)
-  * [scrtools_cluster](#cluster)
-  * [scrtools_annotate](#annotate)
-  * [scrtools_subcluster](#subcluster)
+  * [scrtools aggregate_matrix](#aggr_mat)
+  * [scrtools merge_matrix](#merge_mat)
+  * [scrtools cluster](#cluster)
+  * [scrtools annotate](#annotate)
+  * [scrtools subcluster](#subcluster)
 
 ## <a name="first_time"></a> First Time Running - Authenticate with Google
 
@@ -80,17 +80,17 @@ S3,pbmc,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
 S4,pbmc,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir
 ```
 
-In the above CSV file, fileds *Sample*, *Reference*, and *Location* are required. *Sample* refers to the sample names listed in the BCL CSV file, *Reference* refers to the genome name, and *Location* refers to the cellranger output folder. The cellranger count outputs are expected to locate at *Location/Sample* (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/S1). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In this example, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to donor ID.
+Please note that *Sample*, *Reference*, and *Location* are required. *Sample* refers to the sample names listed in the BCL CSV file, *Reference* refers to the genome name, and *Location* refers to the cellranger output folder. The cellranger count output file filtered_gene_bc_matrices_h5.h5 is expected to be located at *Location/Sample* (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/S1). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In this example, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to donor ID.
 
 You should upload **count_matrix.csv** to your workspace
 
     Example: *gsutil cp /foo/bar/projects/my_count_matrix.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
-Then you can aggregate 10x count matrices into a single count matrix using **scrtools_aggregate_matrix**
+Then you can aggregate 10x count matrices into a single count matrix using **scrtools aggregate_matrix**
 
-### <a name="aggr_mat"></a> scrtools_aggregate_matrix
+### <a name="aggr_mat"></a> scrtools aggregate_matrix
 
-*scrtools_aggregate_matrix* is used to aggregate individual 10x channels into a big count matrix for downstream analysis. Please see the inputs below.
+*scrtools aggregate_matrix* is used to aggregate individual 10x channels into a big count matrix for downstream analysis. Please see the inputs below.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
@@ -103,13 +103,13 @@ attributes | Specify a comma-separated list of outputted attributes (i.e. column
 groupby | When we know there are different groups in the study, such as bone_marrow and pbmc, we could perform batch correction separately for each group. This optional field is used to create a new attribute, GroupBy, that helps to identify groups. It takes the format of 'value' or 'attribute=value' or 'attr1+attr2+....' | "Source+Donor" | 
 diskSpace | Disk space needed for this task | 100 | 100
 
-### <a name="merge_mat"></a> scrtools_merge_matrix
+### <a name="merge_mat"></a> scrtools merge_matrix
 
-*scrtools_merge_matrix* is used to combine two or more aggregated matrices produced by *scrtools_aggregate_matrix* into one big count matrix. This step is optional. 
+*scrtools merge_matrix* is used to combine two or more aggregated matrices produced by *scrtools aggregate_matrix* into one big count matrix. This step is optional. 
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools_aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
 **input_names** | A comma-separated list of input names for count matrices that you want to merge | "my_aggr_mat_bm,my_aggr_mat_pbmc" | 
 **output_name** | Output file name of this task, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat" | 
 genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
@@ -117,15 +117,14 @@ symbols | A comma-separated list of symbols representing each input matrix, this
 attributes | A comma-separated list of attributes. When merging matrices, the matrix symbol defined in 'symbols' will be added in front of these attributes | "Donor" | 
 diskSpace | Disk space needed for this task | 100 | 100
 
-### <a name="cluster"></a> scrtools_cluster
+### <a name="cluster"></a> scrtools cluster
 
-*scrtools_cluster* performs PCA, tSNE visualization, diffusion map, Louvain clustering, and differential expression analysis (fisher's exact test and t test). This is the main step people want to know. Please see inputs below.
+*scrtools cluster* performs PCA, tSNE visualization, diffusion map, Louvain clustering, and differential expression analysis (fisher's exact test and t test). This is the main step people want to know. Please see inputs below.
 
-Note: currently, this step uses Scanpy as its backend engine. In the future, we will use more optimized codes to replace Scanpy.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools_aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
 **input_name** | Input name of the aggreagated/merged matric | "my_aggr_mat" | 
 **output_name** | Output file name of this task | "results" | 
 num_cpu | Number of CPUs to use | 64 | 64
@@ -170,26 +169,26 @@ output_name_de_analysis_t.xlsx | Spreadsheet shows up-regulated and down-regulat
 output_name.loom | Results in loom format | No, only present if *output_loom* is set
 output_name_var.loom | Results containing only variable genes in loom format | No, only present if *output_loom* is set
 
-### <a name="annotate"></a> scrtools_annotate
+### <a name="annotate"></a> scrtools annotate
 
-This step outputs putative cell type annotations for each cluster based on known markers. It required differential expression analyses performed in *scrtools_cluster* step. This step is optional and currently it only works for human immune cells. Please see the inputs below.
+This step outputs putative cell type annotations for each cluster based on known markers. It required differential expression analyses performed in *scrtools cluster* step. This step is optional and currently it only works for human immune cells. Please see the inputs below.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools_aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
 **file_name** | Input file name, *file_name_de.h5ad* should exist | "results" | 
 minimum_report_score | This step calculates a score between [0, 1] for each pair of cluster and putative cell type. It only report putative cell types with a minimum score of *minimum_report_score* | 0.1 | 0.5
 no_use_non_de | Do not consider non-differentially-expressed genes as down-regulated | "true" | "false"
 diskSpace | Disk space needed for this task | 100 | 100
 
-### <a name="subcluster"></a> scrtools_subcluster
+### <a name="subcluster"></a> scrtools subcluster
 
-This step performs subcluster analysis based on *scrtools_cluster* outputs. Please see the inputs below.
+This step performs subcluster analysis based on *scrtools cluster* outputs. Please see the inputs below.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools_aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**input_name** | Input name of *scrtools_cluster* result | "results" | 
+**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
+**input_name** | Input name of *scrtools cluster* result | "results" | 
 **output_name** | Output file name of this task | "results_sub" | 
 **cluster_ids** | A comma-separated list of cluster IDs (numbered from 1) for subcluster | "1,3,9" | 
 num_cpu | Number of CPUs to use | 64 | 64
