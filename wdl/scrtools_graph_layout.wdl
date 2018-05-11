@@ -47,11 +47,11 @@ task run_scrtools_graph_layout {
         n_obs = f['obs'].shape[0]
         group = f['uns/neighbors/connectivities']
         x = csr_matrix((group['data'][()], group['indices'][()], group['indptr'][()]), shape=(n_obs, n_obs))
-        obs_ids = f['obs']['index']
+        #obs_ids = f['obs']['index']
         writer = open('graph.net', 'w')
         writer.write('*Vertices ' + str(n_obs) + '\n')
         for i in range(n_obs):
-            writer.write(str(i + 1) + ' "' + str(obs_ids[i]) + '"\n')
+            writer.write(str(i + 1) + ' "' + str(i + 1) + '"\n')
         writer.write('*Edges\n')
         rows, cols = x.nonzero()
         for i, j in zip(rows, cols):
@@ -62,7 +62,6 @@ task run_scrtools_graph_layout {
 
         df = pd.read_table('coords.txt', index_col=0)
         adata = anndata.read_h5ad('${input_file}', backed='r+')
-        # add coordinates to h5 file
         adata.obsm['X_draw_graph_' + '${layout}'] = np.array(list(zip(df.x, df.y)))
         adata.write('${output_name}')
         CODE
