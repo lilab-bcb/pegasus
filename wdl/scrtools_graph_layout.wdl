@@ -36,12 +36,14 @@ task run_scrtools_graph_layout {
         python <<CODE
         import h5py
         import pandas as pd
+        import anndata
         import os
+        import numpy as np
         from subprocess import check_call
         from scipy.sparse import csr_matrix
         # neighbors is at /uns/neighbors/connectivities
         # n_obs by n_obs
-        f = h5py.File('${input_file}', 'a')
+        f = h5py.File('${input_file}', 'r')
         n_obs = f['obs'].shape[0]
         group = f['uns/neighbors/connectivities']
         x = csr_matrix((group['data'][()], group['indices'][()], group['indptr'][()]), shape=(n_obs, n_obs))
@@ -55,18 +57,14 @@ task run_scrtools_graph_layout {
         for i, j in zip(rows, cols):
             if j < i:
                 writer.write(str(i + 1) + ' ' + str(j + 1) + ' ' + str(x[i, j]) + '\n')
-
+        f.close()
         check_call(['java', '-Djava.awt.headless=true', '-Xmx${memory}g', '-cp', '/software/graph_layout/:/software/graph_layout/gephi-toolkit-0.9.2-all.jar', 'GraphLayout', 'graph.net', 'coords.txt', '${layout}', '${nsteps}'])
 
         df = pd.read_table('coords.txt', index_col=0)
+        adata = anndata.read_h5ad('${input_file}', backed='r+')
         # add coordinates to h5 file
-        obsm = f.get('obsm')
-        if obsm is None:
-            obsm = f.create_group('obsm')
-        obsm['X_draw_graph_' + '${layout}'] = list(zip(df.x, df.y))
-
-        f.close()
-        os.rename('${input_file}', '${output_name}')
+        adata.obsm['X_draw_graph_' + '${layout}'] = np.array(list(zip(df.x, df.y)))
+        adata.write('${output_name}')
         CODE
 	}
 
