@@ -34,7 +34,7 @@ Table of Contents
 
     Note that your **BCL files will be automatically deleted** by the mkfastq/count pipeline.
 
-    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
+    Example: *gsutil -m rsync -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
     
     -m means copy in parallel, -r means copy the directory recursively.
     
@@ -42,7 +42,18 @@ Table of Contents
     
     You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
 
-1. Upload your Sample Sheet (CSV file) to the workspace.  
+1. Create a sample sheet. A sample sheet is a simple CSV with lane, sample, and index columns, which describe the way to demultiplex the flowcell. The index column should contain a 10x sample set name (e.g., SI-GA-A12).
+   
+   Example: 
+    ```
+    Lane,Sample,Index
+    *,pbmc_whole_cell,SI-GA-A8
+    *,pbmc_nuclei_nst,SI-GA-B8
+    *,pbmc_nuclei_tst,SI-GA-C8
+    *,pbmc_nuclei_cst,SI-GA-D8
+    ```
+
+1. Upload your sample sheet to the workspace.  
 
     Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/
 
