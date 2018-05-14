@@ -9,6 +9,8 @@ workflow cellranger_mkfastq_count {
 	Int? mkfastq_disk_space = 500
 	# 2.1.1 only currently available
 	String? cellranger_version = "2.1.1"
+	# Whether to delete input_directory. If false, you should delete this folder yourself so as to not incur storage charges.
+	Boolean? delete_input_directory = false
 
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
@@ -43,6 +45,7 @@ workflow cellranger_mkfastq_count {
 			output_directory = cellranger_output_directory,
 			disk_space = mkfastq_disk_space,
 			num_cpu = num_cpu,
+			delete_input_directory=delete_input_directory,
 			cellranger_version =cellranger_version
 	}
 
@@ -70,6 +73,7 @@ task cellranger_mkfastq {
 	Int? disk_space
 	Int? num_cpu
 	String? cellranger_version
+	Boolean? delete_input_directory
 
 	String input_name = basename(input_directory)
 
@@ -77,14 +81,17 @@ task cellranger_mkfastq {
 		set -e
 		export TMPDIR=/tmp
 		python <<CODE
+		import os
 		with open('${input_csv_file}') as fin, open('sample_ids.txt', 'w') as fout:
 			next(fin)
 			for line in fin:
 				fout.write(line.strip().split(',')[1] + '\n')
 		CODE
-		gsutil -m cp -r ${input_directory} .
+		gsutil -q -m cp -r ${input_directory} .
 		cellranger mkfastq --id=results --run=${input_name} --csv=${input_csv_file} --jobmode=local
-		gsutil -m mv results/outs ${output_directory}/fastqs
+		gsutil -q -m mv results/outs ${output_directory}/fastqs
+		if delete_input_directory and os.path.exists("${output_directory}/fastqs"):
+		    gsutil -q rm -r ${input_directory}
 	}
 
 	output {
@@ -119,7 +126,7 @@ task cellranger_count {
 		export TMPDIR=/tmp
 		mkdir -p transcriptome_dir
 		tar xf ${transcriptome} -C transcriptome_dir --strip-components 1
-		gsutil -m cp -r ${data_directory}/fastqs/fastq_path/*/${sample_id} .
+		gsutil -q -m cp -r ${data_directory}/fastqs/fastq_path/*/${sample_id} .
 		python <<CODE
 		from subprocess import check_call
 		call_args = ['cellranger', 'count', '--id=results', '--transcriptome=transcriptome_dir', '--fastqs=${sample_id}', '--sample=${sample_id}', '--jobmode=local']
@@ -128,7 +135,7 @@ task cellranger_count {
 			call_args.append('--nosecondary')
 		check_call(call_args)
 		CODE
-		gsutil -m mv results/outs ${data_directory}/${sample_id}
+		gsutil -q -m mv results/outs ${data_directory}/${sample_id}
 	}
 
 	output {
