@@ -73,7 +73,7 @@ def fisher_test(data, clusts = None, labels = 'louvain_labels', token = "", n_jo
 	results = [None] * n_jobs
 	for i in range(n_jobs):
 		t = threading.Thread(target=calc_fisher_per_thread, args=(i, results, n_jobs, data, clusts, ct, total, dtypes, token))
-		threads.appent(t)
+		threads.append(t)
 		t.start()
 
 	for i in range(n_jobs):
@@ -144,7 +144,7 @@ def t_test(data, clusts = None, labels = 'louvain_labels', token = "", n_jobs = 
 	results = [None] * n_jobs
 	for i in range(n_jobs):
 		t = threading.Thread(target=calc_t_per_thread, args=(i, results, n_jobs, data, clusts, n, v, sm1, sm2, dtypes, token))
-		threads.appent(t)
+		threads.append(t)
 		t.start()
 
 	for i in range(n_jobs):

@@ -1,5 +1,5 @@
 from .Base import Base
-from ..de_analysis import run_de_analysis
+from ..tools import run_de_analysis
 
 class DeAnalysis(Base):
 	"""
