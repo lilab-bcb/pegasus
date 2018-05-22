@@ -9,8 +9,6 @@ Usage:
 Sub-commands:
   Preprocessing related:
     aggregate_matrix        Aggregate hdf5-formatted 10x channel matrices into one big matrix. 
-    add_attribute           Add one attribute for each channel.
-    merge_matrix            Merge several 10x-hdf5-formatted matrices into one big matrix.
   Clustering related:
     cluster                 Cluster initial gene count matrix.
     subcluster              Do sub-cluster analysis.

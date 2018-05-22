@@ -5,23 +5,30 @@ import anndata
 import tables
 import xlsxwriter
 
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.extmath import randomized_svd
 
+
+
+obs_not = set(["data", "indices", "indptr", "shape", "gene_names", "genes", "barcodes"])
+
 def read_10x_h5_file(input_h5, genome):
 	with tables.open_file(input_h5) as h5_in:
-		attrs = {}
+		inpmat = {}
 		for node in h5_in.walk_nodes("/" + genome, "Array"):
-			attrs[node.name] = node.read()
+			inpmat[node.name] = node.read()
 
-	X = csr_matrix((attrs["data"], attrs["indices"], attrs["indptr"]), shape = (attrs["shape"][1], attrs["shape"][0]))
-	data = anndata.AnnData(X = X, 
-							obs = {"obs_names" : attrs["barcodes"].astype(str)},
-							var = {"var_names" : attrs["gene_names"].astype(str),
-								   "gene_ids": attrs["genes"].astype(str)})
+	X = csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0]))
+	
+	obs_dict = {"obs_names" : inpmat["barcodes"].astype(str)}
+	for key, value in inpmat.items():
+		if key not in obs_not:
+			obs_dict[key] = value.astype(str)
+
+	data = anndata.AnnData(X = X, obs = obs_dict, var = {"var_names" : inpmat["gene_names"].astype(str), "gene_ids": inpmat["genes"].astype(str)})
 
 	return data
 
@@ -58,7 +65,7 @@ def update_var_names(data, genome):
 
 
 
-def filter_data(data, mito_prefix = 'MT-', filt_xlsx = None):
+def filter_data(data, mito_prefix = 'MT-', filt_xlsx = None, min_genes = 500, max_genes = 6000, percent_mito = 0.1, percent_cells = 0.0005):
 	data.obs['n_genes'] = data.X.getnnz(axis = 1)
 	data.obs['n_counts'] = data.X.sum(axis = 1).A1
 	mito_genes = [name for name in data.var_names if name.startswith(mito_prefix)]
@@ -69,9 +76,9 @@ def filter_data(data, mito_prefix = 'MT-', filt_xlsx = None):
 		writer = pd.ExcelWriter(filt_xlsx, engine='xlsxwriter')
 		tot_c = data.obs['Channel'].value_counts()
 	
-	obs_index = np.logical_and.reduce((data.obs['n_genes'] >= kwargs['min_genes'], 
-									   data.obs['n_genes'] < kwargs['max_genes'],
-									   data.obs['percent_mito'] < kwargs['percent_mito']))
+	obs_index = np.logical_and.reduce((data.obs['n_genes'] >= min_genes, 
+									   data.obs['n_genes'] < max_genes,
+									   data.obs['percent_mito'] < percent_mito))
 	data._inplace_subset_obs(obs_index)
 
 	if filt_xlsx is not None:
@@ -84,7 +91,7 @@ def filter_data(data, mito_prefix = 'MT-', filt_xlsx = None):
 	# Filter genes
 	data.var['n_cells'] = data.X.getnnz(axis = 0)
 	data.var['percent_cells'] = data.var['n_cells'] / data.shape[0]
-	data.var['robust'] = data.var['percent_cells'] >= kwargs['percent_cells']
+	data.var['robust'] = data.var['percent_cells'] >= percent_cells
 
 	if filt_xlsx is not None:
 		idx = data.var['robust'] == False
@@ -105,7 +112,7 @@ def log_norm(data, norm_count):
 	mat = data.X[:, data.var['robust'].values]
 	scale = norm_count / mat.sum(axis = 1).A1
 	data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
-	data.X.log1p()
+	data.X = data.X.log1p()
 
 def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0):
 	start = time.time()

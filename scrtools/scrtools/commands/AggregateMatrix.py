@@ -1,5 +1,5 @@
 from .Base import Base
-from ..preprocessing import aggregate_10x_matrices
+from ..tools import aggregate_10x_matrices
 
 class AggregateMatrix(Base):
 	"""
@@ -10,22 +10,19 @@ Usage:
   scrtools aggregate_matrix -h
 
 Arguments:
-  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder of 10x Run; Reference, genome reference used for 10x cellranger. scrtools will look for {Location}/{Sample}/filtered_gene_bc_matrices_h5.h5.
+  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder of 10x Run; Reference, genome reference used for 10x cellranger. Count matrix locates at {Location}.
   output_name       The output file prefix. Two files will be generated: the aggregated data matrix, output_name_10x.h5, and the channel attribute file, output_name.attr.csv.
 
 Options:
   --genome <genome>                Genome reference. [default: GRCh38]
-  --restriction <restriction>...   Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. You can specifiy multiple restrictions by setting this option multiple times.
+  --restriction <restriction>...   Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value or name:~value,..,value, where ~ refers to not. You can specifiy multiple restrictions by setting this option multiple times.
   --attributes <attributes>        Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file.
   --google-cloud                   If files are stored in google cloud. Assuming google cloud sdk is installed.
   -h, --help                       Print out help information.
 
 Examples:
-  scrtools aggregate_matrix --genome GRCh38 --restrictions Source:BM,CB;Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
+  scrtools aggregate_matrix --genome GRCh38 --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
 	"""
-
-	def parse_attributes(self, attributes):
-		return attributes.split(',') if attributes is not None else []
 
 	def execute(self):
 		aggregate_10x_matrices(self.args['<csv_file>'], 

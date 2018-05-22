@@ -1,5 +1,5 @@
 from .Base import Base
-from ..clustering import subcluster
+# from ..clustering import subcluster
 
 class SubClustering(Base):
 	"""
@@ -42,4 +42,4 @@ Examples:
 			'diagnosis' : self.args['--output-diagnosis-plots']
 		}
 
-		subcluster(self.args['<input_h5ad_file>'], self.split_string(self.args['<cluster_ids>']), self.args['<output_name>'], **kwargs)
+		# subcluster(self.args['<input_h5ad_file>'], self.split_string(self.args['<cluster_ids>']), self.args['<output_name>'], **kwargs)

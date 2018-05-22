@@ -1,5 +1,5 @@
 from .Base import Base
-from ..clustering import cluster, cluster2
+# from ..clustering import cluster, cluster2
 
 class Clustering(Base):
 	"""
@@ -69,8 +69,8 @@ Examples:
 			'nPC' : self.args['--nPC']
 		}
 
-		if kwargs['nPC'] is not None:
-			kwargs['nPC'] = int(kwargs['nPC'])
-			cluster2(self.args['<input_name>'], self.args['<output_name>'], **kwargs)
-		else:
-			cluster(self.args['<input_name>'], self.args['<output_name>'], **kwargs)
+		# if kwargs['nPC'] is not None:
+		# 	kwargs['nPC'] = int(kwargs['nPC'])
+		# 	cluster2(self.args['<input_name>'], self.args['<output_name>'], **kwargs)
+		# else:
+		# 	cluster(self.args['<input_name>'], self.args['<output_name>'], **kwargs)

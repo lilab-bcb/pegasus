@@ -1,6 +1,10 @@
 import time 
 import numpy as np
 import pandas as pd
+
+import logging
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger('nmslib').setLevel(logging.WARNING)
 import nmslib 
 
 from scipy.sparse import issparse, csr_matrix
