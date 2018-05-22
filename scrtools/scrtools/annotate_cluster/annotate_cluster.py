@@ -120,17 +120,17 @@ class Annotator:
 					self.report(fout, ct.subtypes, 0.5, space + 4)
 
 
-def annotate_clusters(adata, test, json_file, thre, fout = stdout, ignoreNA = False):
-	anno = Annotator(json_file, adata.var_names)
+def annotate_clusters(data, test, json_file, thre, fout = stdout, ignoreNA = False, labels = 'louvain_labels'):
+	anno = Annotator(json_file, data.var_names)
 	if test == "fisher":
 		kwds = {'fc' : 'fold_change', 'expr' : 'percentage'}
 	else:
 		kwds = {'fc' : 'log_fold_change', 'expr' : 'mean_log_expression'}
-	size = adata.obs['louvain_groups'].cat.categories.size
+	size = data.obs[labels].nunique()
 	for i in range(size):
 		clust_str = "de_{test}_{clust}".format(test = test, clust = i + 1)
-		de_up = pd.DataFrame(data = adata.uns[clust_str + "_up_stats"], index = pd.Index(data = adata.uns[clust_str + "_up_genes"], name = "gene"))
-		de_down = pd.DataFrame(data = adata.uns[clust_str + "_down_stats"], index = pd.Index(data = adata.uns[clust_str + "_down_genes"], name = "gene"))
+		de_up = pd.DataFrame(data = data.uns[clust_str + "_up_stats"], index = pd.Index(data = data.uns[clust_str + "_up_genes"], name = "gene"))
+		de_down = pd.DataFrame(data = data.uns[clust_str + "_down_stats"], index = pd.Index(data = data.uns[clust_str + "_down_genes"], name = "gene"))
 		results = anno.evaluate(de_up, de_down, kwds, ignoreNA = ignoreNA)
 		fout.write("Cluster {0}:\n".format(i + 1))
 		anno.report(fout, results, thre)

@@ -73,11 +73,11 @@ def fisher_test(data, clusts = None, labels = 'louvain_labels', token = "", n_jo
 	results = [None] * n_jobs
 	for i in range(n_jobs):
 		t = threading.Thread(target=calc_fisher_per_thread, args=(i, results, n_jobs, data, clusts, ct, total, dtypes, token))
-		threads.append(t)
+		threads[i] = t
 		t.start()
 
 	for i in range(n_jobs):
-		t.join()
+		threads[i].join()
 		for key, value in results[i]:
 			data.uns[key] = value
 
@@ -86,7 +86,7 @@ def fisher_test(data, clusts = None, labels = 'louvain_labels', token = "", n_jo
 
 
 
-def calc_t_per_thread(thread_no, results, n_jobs, data, clusts, n, v, sm1, sm2, dtypes, token):
+def calc_t_per_thread(thread_no, results, n_jobs, data, labels, clusts, n, v, sm1, sm2, dtypes, token):
 	nclust = len(clusts)
 	results[thread_no] = []
 	tvar = ss.t(v)
@@ -143,12 +143,12 @@ def t_test(data, clusts = None, labels = 'louvain_labels', token = "", n_jobs = 
 	threads = [None] * n_jobs
 	results = [None] * n_jobs
 	for i in range(n_jobs):
-		t = threading.Thread(target=calc_t_per_thread, args=(i, results, n_jobs, data, clusts, n, v, sm1, sm2, dtypes, token))
-		threads.append(t)
+		t = threading.Thread(target=calc_t_per_thread, args=(i, results, n_jobs, data, labels, clusts, n, v, sm1, sm2, dtypes, token))
+		threads[i] = t
 		t.start()
 
 	for i in range(n_jobs):
-		t.join()
+		threads[i].join()
 		for key, value in results[i]:
 			data.uns[key] = value
 

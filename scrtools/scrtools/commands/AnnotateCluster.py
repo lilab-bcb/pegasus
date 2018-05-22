@@ -6,7 +6,7 @@ class AnnotateCluster(Base):
 Annotate potential cell types for each cluster.
 
 Usage:
-  scrtools annotate_cluster [--minimum-report-score <score> --do-not-use-non-de-genes] <input_de_h5ad_file> <output_name>
+  scrtools annotate_cluster [--labels <labels> --minimum-report-score <score> --do-not-use-non-de-genes] <input_de_h5ad_file> <output_name>
   scrtools annotate_cluster -h
 
 Arguments:
@@ -14,6 +14,7 @@ Arguments:
   output_name               Output name. output_name_fisher.anno.txt and output_name_t.anno.txt will be generated.
 
 Options:
+  --labels <labels>                     Cluster labels. [default: louvain_labels]
   --minimum-report-score <score>        Minimum cell type score to report a potential cell type. [default: 0.5]
   --do-not-use-non-de-genes             Do not count non DE genes as down regulated.
   -h, --help                            Print out help information.
@@ -23,4 +24,4 @@ Examples:
 	"""
 
 	def execute(self):
-		run_annotate_cluster(self.args['<input_de_h5ad_file>'], self.args['<output_name>'], float(self.args['--minimum-report-score']), self.args['--do-not-use-non-de-genes'])
+		run_annotate_cluster(self.args['<input_de_h5ad_file>'], self.args['<output_name>'], float(self.args['--minimum-report-score']), self.args['--do-not-use-non-de-genes'], self.args['--labels'])
