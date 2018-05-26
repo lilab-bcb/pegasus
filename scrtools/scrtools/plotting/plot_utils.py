@@ -61,4 +61,7 @@ def transform_basis(basis):
 		return 'PC'
 	elif basis == 'diffmap_pca':
 		return 'DPC'
+	elif basis == 'fle':
+		return 'FLE'
+
 

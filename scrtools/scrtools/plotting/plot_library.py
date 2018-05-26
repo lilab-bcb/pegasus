@@ -150,9 +150,16 @@ def plot_scatter_groups(data, basis, cluster, group, nrows = None, ncols = None,
 
 	marker_size = 120000.0 / df.shape[0]
 
-	groups = data.obs[group].astype('category')
-	ngroup = groups.cat.categories.size
-	nrows, ncols = get_nrows_and_ncols(ngroup + 1, nrows, ncols)
+
+	if type(group) is str:		
+		groups = data.obs[group].astype('category')
+		df_g = pd.DataFrame(np.ones(groups.shape[0], dtype = bool), columns = ['All'])
+		for cat in groups.cat.categories:
+			df_g[cat] = np.isin(groups, cat)
+	else:
+		df_g = group
+
+	nrows, ncols = get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
 
 	labels = data.obs[cluster].astype('category')
 	label_size = labels.cat.categories.size
@@ -173,14 +180,9 @@ def plot_scatter_groups(data, basis, cluster, group, nrows = None, ncols = None,
 			ax.set_yticks([])
 
 			gid = i * ncols + j
-			if gid <= ngroup:
-				if gid == 0:
-					idx_g = np.ones(groups.shape[0], dtype = bool)
-				else:
-					idx_g = np.isin(groups, groups.cat.categories[gid - 1])
-	
+			if gid < df_g.shape[1]:
 				for k, cat in enumerate(labels.cat.categories):
-					idx = np.logical_and(idx_g, np.isin(labels, cat))
+					idx = np.logical_and(df_g.iloc[:, gid].values, np.isin(labels, cat))
 					ax.scatter(df.iloc[idx, 0], df.iloc[idx, 1],
 						   c = palettes[k],
 						   s = marker_size,
@@ -190,7 +192,7 @@ def plot_scatter_groups(data, basis, cluster, group, nrows = None, ncols = None,
 						   label = cat,
 						   rasterized = True)
 				
-				ax.set_title("All" if gid == 0 else str(groups.cat.categories[gid - 1]))
+				ax.set_title(df_g.columns[gid])
 				legend = ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5), frameon = False, fontsize = legend_fontsize, ncol = legend_ncol)
 
 				for handle in legend.legendHandles:

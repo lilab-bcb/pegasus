@@ -1,10 +1,12 @@
 import time
 import numpy as np
 import pandas as pd
+from subprocess import check_call
 
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from umap import UMAP
 from fitsne import FItSNE
+from .diffusion_map import calculate_affinity_matrix
 
 def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0):
 	start = time.time()
@@ -32,8 +34,32 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 	end = time.time()
 	print("UMAP is done. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, rep_key, n_jobs):
+def run_force_directed_layout(data, file_name, n_jobs, K = 25, layout = 'fa', n_steps = 500, memory = 2):
 	start = time.time()
-	# important codes
+	W = calculate_affinity_matrix(data.obsm['X_diffmap'], n_jobs, K = K)
+
+	input_graph_file = '{file_name}.net'.format(file_name = file_name)
+	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
+
+	with open(input_graph_file, 'w') as writer:	
+		n_obs = W.shape[0]
+		writer.write("*Vertices {n_obs}\n".format(n_obs = n_obs))
+		for i in range(n_obs):
+			writer.write("{node} \"{node}\"\n".format(node = i + 1))
+		writer.write("*Edges\n")
+		rows, cols = W.nonzero()
+		for i, j in zip(rows, cols):
+			if i < j:
+				writer.write("{u} {v} {w:.6g}\n".format(u = i + 1, v = j + 1, w = W[i, j]))
+	print(input_graph_file + ' is written.')			
+
+	check_call(['java', '-Djava.awt.headless=true', '-Xmx{memory}g'.format(memory = memory), \
+				'-cp', '/ahg/regevdata/users/libo/packages/scRNA-Seq/docker/graph_layout:/ahg/regevdata/users/libo/packages/scRNA-Seq/docker/graph_layout/gephi-toolkit-0.9.2-all.jar', \
+				'GraphLayout', input_graph_file, output_coord_file, layout, str(n_steps), str(n_jobs)])
+	print("Force-directed layout is generated.")
+
+	data.obsm['X_fle'] = pd.read_table(output_coord_file, header = 0, index_col = 0).values
+	print("X_fle is written.")
+
 	end = time.time()
 	print("Force-directed layout is done. Time spent = {:.2f}s.".format(end - start))
