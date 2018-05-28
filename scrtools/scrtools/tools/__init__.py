@@ -4,4 +4,4 @@ from .batch_correction import estimate_adjustment_matrices, filter_genes_dispers
 from .diffusion_map import run_diffmap, calculate_affinity_matrix, calculate_normalized_affinity
 from .clustering import run_louvain, run_hdbscan, run_kmeans
 from .visualization import run_tsne, run_fitsne, run_umap, run_force_directed_layout
-from .de_analysis import run_de_analysis
+from .de_analysis import run_de_analysis, write_results_to_excel, collect_stat_and_t_test, fisher_test, mwu_test, calc_roc_stats
