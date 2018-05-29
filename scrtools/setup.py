@@ -6,8 +6,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
-requires = ['scanpy>=0.4',
-			'anndata>=0.5',
+requires = ['anndata>=0.5',
 			'matplotlib>=2.0.0',
 			'pandas>=0.21',
 			'scipy',
@@ -24,7 +23,12 @@ requires = ['scanpy>=0.4',
 			'MulticoreTSNE',
 			'docopt',
 			'setuptools',
-			'plotly'
+			'plotly',
+			'nmslib',
+			'umap-learn',
+			'Cython',
+			'fitsne',
+			'hdbscan'
 		  ]
 
 setup(
