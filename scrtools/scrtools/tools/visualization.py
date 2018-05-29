@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 from subprocess import check_call
 
+import os
+import pkg_resources
+
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from umap import UMAP
 from fitsne import FItSNE
@@ -34,7 +37,7 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 	end = time.time()
 	print("UMAP is done. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 25, layout = 'fa', n_steps = 500, memory = 2):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20):
 	start = time.time()
 	W = calculate_affinity_matrix(data.obsm['X_diffmap'], n_jobs, K = K)
 
@@ -53,13 +56,17 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 25, layout = 'fa', n_
 				writer.write("{u} {v} {w:.6g}\n".format(u = i + 1, v = j + 1, w = W[i, j]))
 	print(input_graph_file + ' is written.')			
 
-	check_call(['java', '-Djava.awt.headless=true', '-Xmx{memory}g'.format(memory = memory), \
-				'-cp', '/ahg/regevdata/users/libo/packages/scRNA-Seq/docker/graph_layout:/ahg/regevdata/users/libo/packages/scRNA-Seq/docker/graph_layout/gephi-toolkit-0.9.2-all.jar', \
+	classpath = os.path.dirname(pkg_resources.resource_filename('scrtools.ext', 'GraphLayout.class')) + ':' + \
+				pkg_resources.resource_filename('scrtools.ext', 'gephi-toolkit-0.9.2-all.jar')
+	check_call(['java', '-Djava.awt.headless=true', '-Xmx{memory}g'.format(memory = memory), '-cp', classpath, \
 				'GraphLayout', input_graph_file, output_coord_file, layout, str(n_steps), str(n_jobs)])
 	print("Force-directed layout is generated.")
 
 	data.obsm['X_fle'] = pd.read_table(output_coord_file, header = 0, index_col = 0).values
 	print("X_fle is written.")
+
+	check_call(['rm', '-f', input_graph_file])
+	check_call(['rm', '-f', output_coord_file])
 
 	end = time.time()
 	print("Force-directed layout is done. Time spent = {:.2f}s.".format(end - start))

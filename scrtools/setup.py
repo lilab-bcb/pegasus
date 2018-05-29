@@ -15,7 +15,7 @@ requires = ['scanpy>=0.4',
 			'scikit-learn>=0.19.1',
 			'statsmodels',
 			'natsort',
-			'numpy',
+			'numpy<1.14',
 			'tables',
 			'xlsxwriter',
 			'fisher',
@@ -29,11 +29,11 @@ requires = ['scanpy>=0.4',
 
 setup(
 	name='scrtools',
-	version='0.2.0',
-	description='scRNA-Seq analysis tools that scale to millions of cells, built upon scanpy',
+	version='0.3.0',
+	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scrtools',
-	author='Bo Li, Marcin Tabaka, Joshua Gould',
+	author='Bo Li, Joshua Gould, Siranush Sarkizova, Marcin Tabaka, Orr Ashenberg, and et al.',
 	author_email='libo@broadinstitute.org',
 	classifiers=[ # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 		'Development Status :: 3 - Alpha',
@@ -56,6 +56,7 @@ setup(
 	python_requires='~=3.5',
 	package_data={
 		'scrtools.annotate_cluster': ['cell_type_markers.json'],
+		'scrtools.ext': ['GraphLayout.java', 'GraphLayout.class', 'gephi-toolkit-0.9.2-all.jar']
 	},
 	entry_points={
 		'console_scripts': [

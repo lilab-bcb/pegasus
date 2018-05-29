@@ -32,8 +32,8 @@ def read_10x_h5_file(input_h5, genome):
 
 	return data
 
-def read_input(input_name, genome = 'GRCh38', is_10x = True):
-	data = read_10x_h5_file(input_name + '_10x.h5', genome) if is_10x else anndata.read_h5ad(input_name + '.h5ad')
+def read_input(input_file, genome = 'GRCh38'):
+	data = read_10x_h5_file(input_file, genome) if not input_file.endswith('.h5ad') else anndata.read_h5ad(input_file)
 	data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]
 	return data
 
@@ -157,3 +157,29 @@ def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
 
 	end = time.time()
 	print("RPCA is done. Time spent = {:.2f}s.".format(end - start))
+
+
+
+def get_anndata_for_subclustering(data, cluster_labels, cluster_ids):
+	obs_index = np.isin(data.obs[cluster_labels], cluster_ids)
+	data = data[obs_index, :]
+	
+	obs_dict = {"obs_names" : data.obs_names.values}
+	for attr in data.obs.columns:
+		if attr.find("_labels") < 0:
+			obs_dict[attr] = data.obs[attr].values
+
+	var_dict = {"var_names" : data.var_names.values, "gene_ids": data.var["gene_ids"].values, "robust": data.var["robust"]}
+
+	newdata = anndata.AnnData(X = data.X, obs = obs_dict, var = var_dict)
+	if "Channels" in data.uns:
+		newdata.uns["Channels"] = data.uns["Channels"]
+	if "Groups" in data.uns:
+		newdata.uns["Groups"] = data.uns["Groups"]
+	if "means" in data.varm.keys():
+		newdata.varm["means"] = data.varm["means"]
+	if "stds" in data.varm.keys():
+		newdata.varm["stds"] = data.varm["stds"]
+
+	return newdata
+

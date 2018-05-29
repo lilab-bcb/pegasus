@@ -362,7 +362,7 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc):
 	data = anndata.read_h5ad(input_file, backed = 'r+')
 	print("{0} is loaded.".format(input_file))
-	non_de = [x for x in ['gene_ids', 'n_cells', 'percent_cells', 'robust'] if x in data.var]	
+	non_de = [x for x in ['gene_ids', 'n_cells', 'percent_cells', 'robust', 'selected'] if x in data.var]
 	de_results = [data.var[non_de]]
 
 	print("Begin t_test.")

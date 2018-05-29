@@ -2,6 +2,7 @@ import numpy as np
 import json
 import pandas as pd
 from sys import stdout
+from natsort import natsorted
 
 class CellType:
 	def __init__(self, name, ignoreNA = False):
@@ -12,7 +13,7 @@ class CellType:
 		self.subtypes = None
 		self.ignoreNA = ignoreNA
 
-	def evaluate(self, obj, de_up, de_down, kwds, thre):
+	def evaluate(self, obj, de_up, de_down, thre):
 		self.score = self.avgp = 0.0
 		self.weak_support = []
 		self.strong_support = []
@@ -30,8 +31,8 @@ class CellType:
 
 				if sign == '+':
 					if gsym in de_up.index:
-						fc = de_up.at[gsym, kwds['fc']]
-						expr = de_up.at[gsym, kwds['expr']]
+						fc = de_up.at[gsym, 'fc']
+						expr = de_up.at[gsym, 'expr']
 						self.avgp += expr
 						nump += 1
 
@@ -45,8 +46,8 @@ class CellType:
 					assert sign == '-'
 					if gsym not in de_up.index:
 						if gsym in de_down.index:
-							fc = (1.0 / de_down.at[gsym, kwds['fc']]) if de_down.at[gsym, kwds['fc']] > 0.0 else np.inf
-							expr = de_down.at[gsym, kwds['expr']]
+							fc = (1.0 / de_down.at[gsym, 'fc']) if de_down.at[gsym, 'fc'] > 0.0 else np.inf
+							expr = de_down.at[gsym, 'expr']
 							if fc >= thre:
 								numer += 2.0
 								self.strong_support.append((marker, "{0:.2f}".format(expr)))
@@ -94,18 +95,18 @@ class Annotator:
 			if sub_obj is not None:
 				self.recalibrate(sub_obj, genes)
 	
-	def evaluate(self, de_up, de_down, kwds, thre = 1.5, obj = None, ignoreNA = False):
+	def evaluate(self, de_up, de_down, thre = 1.5, obj = None, ignoreNA = False):
 		if obj is None:
 			obj = self.object
 
 		results = []
 		for celltype in obj['cell_types']:
 			ct = CellType(celltype['name'], ignoreNA)
-			ct.evaluate(celltype, de_up, de_down, kwds, thre)
+			ct.evaluate(celltype, de_up, de_down, thre)
 			if ct.score > 0.5:
 				sub_obj = celltype.get('subtypes', None)
 				if sub_obj is not None:
-					ct.subtypes = self.evaluate(de_up, de_down, kwds, thre, sub_obj, ignoreNA = ignoreNA)
+					ct.subtypes = self.evaluate(de_up, de_down, thre, sub_obj, ignoreNA = ignoreNA)
 			results.append(ct)
 
 		results.sort(key = lambda x: x.score, reverse = True)
@@ -120,17 +121,26 @@ class Annotator:
 					self.report(fout, ct.subtypes, 0.5, space + 4)
 
 
-def annotate_clusters(data, test, json_file, thre, fout = stdout, ignoreNA = False, labels = 'louvain_labels'):
+
+def annotate_clusters(data, json_file, thre, fout = stdout, ignoreNA = False):
 	anno = Annotator(json_file, data.var_names)
-	if test == "fisher":
-		kwds = {'fc' : 'fold_change', 'expr' : 'percentage'}
-	else:
-		kwds = {'fc' : 'log_fold_change', 'expr' : 'mean_log_expression'}
-	size = data.obs[labels].nunique()
-	for i in range(size):
-		clust_str = "de_{test}_{clust}".format(test = test, clust = i + 1)
-		de_up = pd.DataFrame(data = data.uns[clust_str + "_up_stats"], index = pd.Index(data = data.uns[clust_str + "_up_genes"], name = "gene"))
-		de_down = pd.DataFrame(data = data.uns[clust_str + "_down_stats"], index = pd.Index(data = data.uns[clust_str + "_down_genes"], name = "gene"))
-		results = anno.evaluate(de_up, de_down, kwds, ignoreNA = ignoreNA)
-		fout.write("Cluster {0}:\n".format(i + 1))
+	
+	clusts = natsorted([x[10:] for x in data.var.columns if x.startswith("WAD_score_")])
+	tests = [x for x in ['t', 'fisher', 'mwu'] if "{0}_qval_{1}".format(x, clusts[0]) in data.var.columns]
+	for clust_id in clusts:
+		idx = data.var["{0}_qval_{1}".format(tests[0], clust_id)] <= 0.05
+		for test in tests[1:]:
+			idx = idx & (data.var["{0}_qval_{1}".format(test, clust_id)] <= 0.05)
+
+		idx_up = idx & (data.var["WAD_score_{0}".format(clust_id)] > 0.0)
+		idx_down = idx & (data.var["WAD_score_{0}".format(clust_id)] < 0.0)
+		assert idx_up.sum() + idx_down.sum() == idx.sum()
+
+		cols = ["{0}_{1}".format(x, clust_id) for x in ["percentage_fold_change", "percentage"]]
+		de_up = pd.DataFrame(data.var.loc[idx_up.values, cols])
+		de_up.rename(columns = {cols[0]: "fc", cols[1]: "expr"}, inplace = True)
+		de_down = pd.DataFrame(data.var.loc[idx_down.values, cols])
+		de_down.rename(columns = {cols[0]: "fc", cols[1]: "expr"}, inplace = True)
+		results = anno.evaluate(de_up, de_down, ignoreNA = ignoreNA)
+		fout.write("Cluster {0}:\n".format(clust_id))
 		anno.report(fout, results, thre)

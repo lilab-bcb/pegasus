@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
@@ -5,9 +6,29 @@ from scipy.sparse import issparse
 from scipy.stats.mstats import gmean
 from collections import defaultdict
 
-
+def set_group_attribute(data, attribute_string):
+	if attribute_string is None:
+		data.obs['Group'] = 'one_group'
+	elif attribute_string.find('=') >= 0:
+		attr, value_str = attribute_string.split('=')
+		assert attr in data.obs.columns
+		values = value_str.split(';')
+		data.obs['Group'] = '0'
+		for group_id, value in enumerate(values):
+			vals = value.split(',')
+			idx = np.isin(data.obs[attr], vals)
+			data.obs.loc[idx, 'Group'] = str(group_id + 1)
+	elif attribute_string.find('+') >= 0:
+		attrs = attribute_string.split('+')
+		assert np.isin(attrs, data.obs.columns).sum() == len(attrs)
+		data.obs['Group'] = data.obs[attrs].apply(lambda x: '+'.join(x), axis = 1)
+	else:
+		assert attribute_string in data.obs.columns
+		data.obs['Group'] = data.obs[attribute_string]
 
 def estimate_adjustment_matrices(data):
+	start = time.time()
+
 	channels = data.obs['Channel'].unique()
 	means = np.zeros((data.shape[1], channels.size))
 	stds = np.zeros((data.shape[1], channels.size))
@@ -56,7 +77,8 @@ def estimate_adjustment_matrices(data):
 	data.varm['means'] = means
 	data.varm['stds'] = stds
 
-	print("batch_correction.estimate_adjustment_matrices is done.")
+	end = time.time()
+	print("batch_correction.estimate_adjustment_matrices is done. Time spent = {:.2f}s.".format(end - start))
 
 def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, min_mean=0.0125, max_mean=7):	
 	X = data.X[:,data.var['robust'].values].expm1()
@@ -125,10 +147,13 @@ def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, m
 def collect_variable_gene_matrix(data, gene_subset):
 	variable_gene_index = np.zeros(data.shape[1], dtype = bool)
 	variable_gene_index[data.var['robust'].values] = gene_subset
+	data.var['selected'] = variable_gene_index
 	data_c = data[:, variable_gene_index].copy()
 	return data_c
 
 def correct_batch_effects(data):
+	start = time.time()
+
 	if issparse(data.X):
 		for i, channel in enumerate(data.uns['Channels']):
 			idx = np.isin(data.obs['Channel'], channel)
@@ -145,3 +170,6 @@ def correct_batch_effects(data):
 				continue
 			data.X[idx] = data.X[idx] * np.reshape(data.varm['stds'][:, i], newshape = (1, m)) + np.reshape(data.varm['means'][:, i], newshape = (1, m))
 		data.X[data.X < 0.0] = 0.0
+
+	end = time.time()
+	print("batch_correction.correct_batch_effects done. Time spent = {:.2f}s".format(end - start))

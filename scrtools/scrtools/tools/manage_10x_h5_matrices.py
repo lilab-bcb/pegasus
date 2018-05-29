@@ -97,10 +97,9 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 	for sample_name, row in df.iterrows():
 		input_hd5_file = row['Location']
 		if google_cloud:
-			call_args = ['gsutil', '-m', 'cp', input_hd5_file,
-						 '{0}_filtered_gene_bc_matrices_h5.h5'.format(sample_name)]
+			call_args = ['gsutil', '-m', 'cp', input_hd5_file, '{0}_tmp_h5.h5'.format(sample_name)]
 			check_call(call_args)
-			input_hd5_file = '{0}_filtered_gene_bc_matrices_h5.h5'.format(sample_name)
+			input_hd5_file = '{0}_tmp_h5.h5'.format(sample_name)
 		
 		channel, tmp_attrs = load_10x_h5_file(input_hd5_file, genome)
 		channel["barcodes"] = np.array([(sample_name + '-' + x.decode()).encode() for x in channel["barcodes"]])
@@ -122,6 +121,10 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 
 		print("Processed {}.".format(input_hd5_file))
 		tot += 1
+
+	# delete temporary file
+	if google_cloud: 
+		check_call(['rm', '-f', input_h5d_file])
 
 	out_hd5["matrix"] = hstack(out_hd5["matrix"], "csc")
 	out_hd5["barcodes"] = np.concatenate(out_hd5["barcodes"])

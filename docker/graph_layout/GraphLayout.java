@@ -24,60 +24,55 @@ import java.io.PrintWriter;
 
 public class GraphLayout {
 
-	public static void main(String[] args) throws IOException {
-		File file = new File(args[0]);
-		String output = args[1];
-		String layoutString = args[2];
-		int nsteps = Integer.parseInt(args[3]);
-		int njobs = Integer.parseInt(args[4]); // Add an argument for number of jobs
-		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
+    public static void main(String[] args) throws IOException {
+        File file = new File(args[0]);
+        String output = args[1];
+        String layoutString = args[2];
+        int nsteps = Integer.parseInt(args[3]);
+        ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 
-		pc.newProject();
-		Workspace workspace = pc.getCurrentWorkspace();
-		ImportController importController = Lookup.getDefault().lookup(ImportController.class);
-		GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+        pc.newProject();
+        Workspace workspace = pc.getCurrentWorkspace();
+        ImportController importController = Lookup.getDefault().lookup(ImportController.class);
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
 
-		Container container = importController.importFile(file);
-		container.getLoader().setEdgeDefault(EdgeDirectionDefault.UNDIRECTED);
-		Graph g = graphModel.getUndirectedGraph();
-		importController.process(container, new DefaultProcessor(), workspace);
-
-		if (layoutString.equals("fa")) {
-			ForceAtlas2 fa = new ForceAtlas2(null);
-			fa.setGraphModel(graphModel);
-			fa.resetPropertiesValues();
-			fa.setBarnesHutOptimize(true);
-			fa.setThreadsCount(njobs);
-			fa.initAlgo();
-			for (int i = 0; i < nsteps && fa.canAlgo(); i++) {
-				fa.goAlgo();
-				if ((i + 1) % 100 == 0) System.out.println("Finished " + String.valueOf(i + 1) + " iterations.");
-			}
-			fa.endAlgo();
-		} else if (layoutString.equals("oo")) {
-			OpenOrdLayout oo = new OpenOrdLayout(null);
-			oo.setGraphModel(graphModel);
-			oo.resetPropertiesValues();
-			oo.setNumThreads(njobs);
-			oo.setNumIterations(nsteps);
-			oo.initAlgo();
-			oo.goAlgo();
-			oo.endAlgo();
-		} else {
-			System.err.println("Unknown layout");
-		}
-
-		ExportController ec = Lookup.getDefault().lookup(ExportController.class);
-		PrintWriter pw = new PrintWriter(new FileWriter(output));
-		pw.print("id\tx\ty\n");
-		for (Node n : g.getNodes()) {
-			pw.print(n.getId());
-			pw.print("\t");
-			pw.print(n.x());
-			pw.print("\t");
-			pw.print(n.y());
-			pw.print("\n");
-		}
-		pw.close();
-	}
+        Container container = importController.importFile(file);
+        container.getLoader().setEdgeDefault(EdgeDirectionDefault.UNDIRECTED);
+        Graph g = graphModel.getUndirectedGraph();
+        importController.process(container, new DefaultProcessor(), workspace);
+        Layout layout = null;
+        if (layoutString.equals("fa")) {
+            ForceAtlas2 fa = new ForceAtlas2(null);
+            fa.setBarnesHutOptimize(true);
+            fa.setThreadsCount(Runtime.getRuntime().availableProcessors());
+            layout = fa;
+        } else if (layoutString.equals("fr")) {
+            FruchtermanReingold fr = new FruchtermanReingold(null);
+            layout = fr;
+        } else if (layoutString.equals("oo")) {
+            OpenOrdLayout oo = new OpenOrdLayout(null);
+            layout = oo;
+        } else {
+            System.err.println("Unknown layout");
+        }
+        layout.setGraphModel(graphModel);
+        layout.initAlgo();
+        layout.resetPropertiesValues();
+        for (int i = 0; i < nsteps && layout.canAlgo(); i++) {
+            layout.goAlgo();
+        }
+        layout.endAlgo();
+        ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+        PrintWriter pw = new PrintWriter(new FileWriter(output));
+        pw.print("id\tx\ty\n");
+        for (Node n : g.getNodes()) {
+            pw.print(n.getId());
+            pw.print("\t");
+            pw.print(n.x());
+            pw.print("\t");
+            pw.print(n.y());
+            pw.print("\n");
+        }
+        pw.close();
+    }
 }
