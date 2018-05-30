@@ -1,8 +1,10 @@
+import os
 from .Base import Base
 from ..annotate_cluster import run_annotate_cluster
+from ..tools import Logging
 
 class AnnotateCluster(Base):
-  """
+    """
 Annotate potential cell types for each cluster.
 
 Usage:
@@ -20,7 +22,10 @@ Options:
 
 Examples:
   scrtools annotate_cluster manton_bm_de.h5ad manton_bm.anno.txt
-  """
+    """
 
-  def execute(self):
-    run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), self.args['--do-not-use-non-de-genes'])
+    def execute(self):
+        run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), self.args['--do-not-use-non-de-genes'])
+
+        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logging.add_output(self.args['<output_file>'])

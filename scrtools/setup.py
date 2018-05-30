@@ -9,12 +9,13 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 requires = ['anndata>=0.5',
 			'matplotlib>=2.0.0',
 			'pandas>=0.21',
+			'Cython',
 			'scipy',
 			'seaborn',
 			'scikit-learn>=0.19.1',
 			'statsmodels',
 			'natsort',
-			'numpy<1.14',
+			'numpy',
 			'tables',
 			'xlsxwriter',
 			'fisher',
@@ -26,7 +27,6 @@ requires = ['anndata>=0.5',
 			'plotly',
 			'nmslib',
 			'umap-learn',
-			'Cython',
 			'fitsne',
 			'hdbscan'
 		  ]
@@ -60,7 +60,7 @@ setup(
 	python_requires='~=3.5',
 	package_data={
 		'scrtools.annotate_cluster': ['cell_type_markers.json'],
-		'scrtools.ext': ['GraphLayout.java', 'GraphLayout.class', 'gephi-toolkit-0.9.2-all.jar']
+		'scrtools': ['ext/GraphLayout.java', 'ext/GraphLayout.class', 'ext/gephi-toolkit-0.9.2-all.jar']
 	},
 	entry_points={
 		'console_scripts': [

@@ -51,7 +51,7 @@ public class GraphLayout {
 			fa.initAlgo();
 			for (int i = 0; i < nsteps && fa.canAlgo(); i++) {
 				fa.goAlgo();
-				if ((i + 1) % 100 == 0) System.out.println("Finished " + String.valueOf(i + 1) + " iterations.");
+				if ((i + 1) % 500 == 0) System.out.println("Finished " + String.valueOf(i + 1) + " iterations.");
 			}
 			fa.endAlgo();
 		} else if (layoutString.equals("oo")) {

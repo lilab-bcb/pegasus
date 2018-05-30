@@ -1,8 +1,10 @@
+import os
 from .Base import Base
 from ..plotting import make_static_plots
+from ..tools import Logging
 
 class Plotting(Base):
-	"""
+    """
 Generate cluster composition plots.
 
 Usage:
@@ -50,31 +52,34 @@ Examples:
   scrtools plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP Manton_BM.h5ad test.png
   scrtools plot scatter_gene_groups --gene CD8A --group Individual Manton_BM.h5ad test.png
   scrtools plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' Manton_BM.h5ad test.png
-	"""
-	def execute(self):
-		kwargs = {
-			'cluster' : self.args['--cluster-labels'],
-			'attr' : self.args['--attribute'],
-			'basis' : self.args['--basis'],
-			'attrs' : self.split_string(self.args['--attributes']) if self.args['--attributes'] is not None else None,
-			'group' : self.args['--group'],
-			'genes' : self.split_string(self.args['--genes']) if self.args['--genes'] is not None else None,
-			'gene' : self.args['--gene'],
-			'style' : self.args['--style'],
-			'stacked' : not self.args['--not-stacked'],
-			'logy' : self.args['--log-y'],
-			'nrows' : int(self.args['--nrows']) if self.args['--nrows'] is not None else None,
-			'ncols' : int(self.args['--ncols']) if self.args['--ncols'] is not None else None,
-			'subplot_size' : [float(x) for x in self.args['--subplot-size'].split(',')] if self.args['--subplot-size'] is not None else None,
-			'left' : float(self.args['--left']) if self.args['--left'] is not None else None,
-			'bottom' : float(self.args['--bottom']) if self.args['--bottom'] is not None else None,
-			'wspace' : float(self.args['--wspace']) if self.args['--wspace'] is not None else None,
-			'hspace' : float(self.args['--hspace']) if self.args['--hspace'] is not None else None,
-			'alpha' : float(self.args['--alpha']) if self.args['--alpha'] is not None else None,
-			'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
-			'use_raw' : self.args['--use-raw'],
-			'showzscore' : self.args['--show-zscore'],
-			'title' : self.args['--heatmap-title']
-		}
-		print(kwargs)
-		make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], **kwargs)
+    """
+    def execute(self):
+        kwargs = {
+            'cluster' : self.args['--cluster-labels'],
+            'attr' : self.args['--attribute'],
+            'basis' : self.args['--basis'],
+            'attrs' : self.split_string(self.args['--attributes']) if self.args['--attributes'] is not None else None,
+            'group' : self.args['--group'],
+            'genes' : self.split_string(self.args['--genes']) if self.args['--genes'] is not None else None,
+            'gene' : self.args['--gene'],
+            'style' : self.args['--style'],
+            'stacked' : not self.args['--not-stacked'],
+            'logy' : self.args['--log-y'],
+            'nrows' : int(self.args['--nrows']) if self.args['--nrows'] is not None else None,
+            'ncols' : int(self.args['--ncols']) if self.args['--ncols'] is not None else None,
+            'subplot_size' : [float(x) for x in self.args['--subplot-size'].split(',')] if self.args['--subplot-size'] is not None else None,
+            'left' : float(self.args['--left']) if self.args['--left'] is not None else None,
+            'bottom' : float(self.args['--bottom']) if self.args['--bottom'] is not None else None,
+            'wspace' : float(self.args['--wspace']) if self.args['--wspace'] is not None else None,
+            'hspace' : float(self.args['--hspace']) if self.args['--hspace'] is not None else None,
+            'alpha' : float(self.args['--alpha']) if self.args['--alpha'] is not None else None,
+            'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
+            'use_raw' : self.args['--use-raw'],
+            'showzscore' : self.args['--show-zscore'],
+            'title' : self.args['--heatmap-title']
+        }
+        
+        make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], **kwargs)
+
+        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logging.add_output(self.args['<output_file>'])

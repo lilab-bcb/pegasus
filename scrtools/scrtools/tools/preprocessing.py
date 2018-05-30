@@ -32,9 +32,13 @@ def read_10x_h5_file(input_h5, genome):
 
 	return data
 
-def read_input(input_file, genome = 'GRCh38'):
-	data = read_10x_h5_file(input_file, genome) if not input_file.endswith('.h5ad') else anndata.read_h5ad(input_file)
-	data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]
+def read_input(input_file, is_raw = True, genome = 'GRCh38'):
+	if is_raw:
+		data = read_10x_h5_file(input_file, genome)
+		data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]
+	else:
+		data = anndata.read_h5ad(input_file, backed = 'r+')
+
 	return data
 
 

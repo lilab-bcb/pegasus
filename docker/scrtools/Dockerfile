@@ -28,3 +28,9 @@ RUN git clone https://github.com/DmitryUlyanov/Multicore-TSNE.git /software/Mult
 COPY scrtools-0.2.0.tar.gz /software
 RUN tar -xzf /software/scrtools-0.2.0.tar.gz -C /software && \
 	cd /software/scrtools-0.2.0 && pip install . && cd ../..
+
+
+pip install numpy
+pip install Cython
+conda install -c conda-forge fftw
+export CPATH=$CPATH:/ahg/regevdata/users/libo/miniconda3/envs/scrtools/include

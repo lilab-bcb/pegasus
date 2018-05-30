@@ -1,16 +1,23 @@
 import os
 from .. import tools 
+from ..tools import Logging
 
 def run_pipeline(input_file, output_name, **kwargs):
 	# load input data
-	adata = tools.read_input(input_file, kwargs['genome'])
-	processed = 'robust' in adata.var
+	is_raw = not (kwargs['processed'] or kwargs['subcluster'])
+	adata = tools.read_input(input_file, is_raw, kwargs['genome'])
 
-	if not processed:
+	# generate output log file
+	logging = Logging(output_name + ".log")
+
+	# preprocessing
+	if is_raw:
 		# make gene names unique
 		tools.update_var_names(adata, kwargs['genome'])
 		# filter out low quality cells/genes
 		tools.filter_data(adata, mito_prefix = kwargs['mito_prefix'], filt_xlsx = kwargs['filt_xlsx'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], percent_mito = kwargs['percent_mito'], percent_cells = kwargs['percent_cells'])
+		if kwargs['filt_xlsx'] is not None:
+			logging.add_output(kwargs['filt_xlsx'])
 		# normailize counts and then transform to log space
 		tools.log_norm(adata, kwargs['norm_count'])
 		# estimate bias factors
@@ -19,16 +26,18 @@ def run_pipeline(input_file, output_name, **kwargs):
 			tools.estimate_adjustment_matrices(adata)
 	elif kwargs['subcluster']:
 		adata = get_anndata_for_subclustering(adata, kwargs['cluster_labels'], kwargs['cluster_ids'])
+		is_raw = True # get submat and then set is_raw to True
 
 	# dimension reduction --- select variable genes or not
 	pca_key = kwargs['pca_key']
-	if kwargs['run_dimension_reduction']:	
+	if is_raw:	
 		if kwargs['select_variable_genes']:
 			filter_result = tools.filter_genes_dispersion(adata, kwargs['batch_correction'])
 			adata_c = tools.collect_variable_gene_matrix(adata, filter_result.gene_subset)
 			if kwargs['submat_to_dense']:
 				adata_c.X = adata_c.X.toarray()
-			tools.correct_batch_effects(adata_c)
+			if kwargs['batch_correction']:
+				tools.correct_batch_effects(adata_c)
 		
 			# dimension reduction
 			if pca_key == 'X_pca':
@@ -38,12 +47,14 @@ def run_pipeline(input_file, output_name, **kwargs):
 			adata.obsm[pca_key] = adata_c.obsm[pca_key]
 		else:
 			assert pca_key == 'X_rpca'
+			if kwargs['batch_correction']:
+				tools.correct_batch_effects(adata)
 			tools.run_rpca(adata, nPC = kwargs['nPC'], random_state = kwargs['random_state'])
 	else:
 		assert pca_key in adata.obsm.keys()
 
 	# diffusion map
-	if kwargs['run_diffmap']:
+	if is_raw:
 		tools.run_diffmap(adata, pca_key, n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'])
 	else:
 		assert 'X_diffmap' in adata.obsm.keys()
@@ -68,21 +79,13 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
 	if kwargs['run_fle']:
 		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'])	
-
-	# Generate output log file
-	output_log = output_name + ".log"
-	if os.path.exists(output_log):
-		fout = open(output_log, 'a')
-	else:
-		fout = open(output_log, 'w')
 	
 	adata.write(output_name + ".h5ad")
-	fout.write(output_name + ".h5ad\n")
+	logging.add_output(output_name + ".h5ad")
 
 	if kwargs['output_loom']:
 		adata.write_loom(output_name + ".loom")
-		fout.write(output_name + ".loom\n")
+		logging.add_output(output_name + ".loom")
 
 	print("Results are written.")
-
 	fout.close()

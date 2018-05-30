@@ -1,8 +1,9 @@
+import os
 from .Base import Base
-from ..tools import run_de_analysis
+from ..tools import run_de_analysis, Logging
 
 class DeAnalysis(Base):
-  """
+    """
 Perform DE analysis.
 
 Usage:
@@ -24,8 +25,11 @@ Options:
 
 Examples:
   scrtools de_analysis --labels louvain_labels -p 26 --fisher --mwu --roc manton_bm.h5ad manton_bm_de.xlsx
-  """
+    """
 
-  def execute(self):
-    print(self.args['--mwu'])
-    run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'])
+    def execute(self):
+        run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'])
+
+        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logging.add_output(self.args['<input_h5ad_file>'])
+        logging.add_output(self.args['<output_spreadsheet>'])

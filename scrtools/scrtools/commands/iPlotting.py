@@ -1,8 +1,10 @@
+import os
 from .Base import Base
 from ..plotting import make_interactive_plots
+from ..tools import Logging
 
 class iPlotting(Base):
-	"""
+    """
 Generate cluster composition plots.
 
 Usage:
@@ -25,13 +27,16 @@ Options:
 Examples:
   scrtools iplot --attribute louvain_labels tsne Manton_BM.h5ad test.html
   scrtools iplot --attribute louvain_labels diffmap 
-	"""
-	def execute(self):
-		kwargs = {
-			'attr' : self.args['--attribute'],
-			'isreal' : self.args['--is-real'],
-      'isgene' : self.args['--is-gene'],
-			'log10' : self.args['--log10']
-		}
+    """
+    def execute(self):
+        kwargs = {
+            'attr' : self.args['--attribute'],
+            'isreal' : self.args['--is-real'],
+            'isgene' : self.args['--is-gene'],
+            'log10' : self.args['--log10']
+        }
 
-		make_interactive_plots(self.args['<input_h5ad_file>'], self.args['<basis>'], self.args['<output_html_file>'], **kwargs)
+        make_interactive_plots(self.args['<input_h5ad_file>'], self.args['<basis>'], self.args['<output_html_file>'], **kwargs)
+
+        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logging.add_output(self.args['<output_html_file>'])

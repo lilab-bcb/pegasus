@@ -6,7 +6,7 @@ class Clustering(Base):
 Run scrtools.pipeline to obtain top-level clusters.
 
 Usage:
-  scrtools cluster [options] <input_name> <output_name>
+  scrtools cluster [options] <input_file> <output_name>
   scrtools cluster -h
 
 Arguments:
@@ -16,7 +16,8 @@ Arguments:
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --genome <genome>                                Genome name. [default: GRCh38]
-  
+  --processed                                      Input file is processed and thus no PCA & diffmap will be run.
+
   --output-filtration-results <spreadsheet>        Output filtration results into <spreadsheet>.
   --output-loom                                    Output loom-formatted file.
   --correct-batch-effect                           Correct for batch effects.
@@ -30,15 +31,13 @@ Options:
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
   
-  --random-state                                   Random number generator seed. [default: 0]
+  --random-state <seed>                            Random number generator seed. [default: 0]
 
-  --do-not-run-dimension-deduction                 Do not run dimension deduction.
   --run-uncentered-pca                             Run uncentered PCA.
   --no-variable-gene-selection                     Do not select variable genes.
   --no-submat-to-dense                             Do not convert variable-gene-selected submatrix to a dense matrix.
   --nPC <number>                                   Number of PCs. [default: 50]
 
-  --do-not-run-diffusion-map                       Do not run diffusion map.
   --nDC <number>                                   Number of diffusion components. [default: 50]
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
   --diffmap-K <K>                                  Number of neighbors used for constructing affinity matrix. [default: 100]
@@ -47,11 +46,11 @@ Options:
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
 
   --run-kmeans                                     Run KMeans clustering algorithm on diffusion components.
-  --kmeans-n-clusters <number>                     Target at <number> clusters for K means.
+  --kmeans-n-clusters <number>                     Target at <number> clusters for K means. [default: 20]
 
   --run-hdbscan                                    Run hdbscan clustering algorithm on diffusion components.
-  --hdbscan-min-cluster-size <number>              Minimum cluster size for hdbscan.
-  --hdbscan-min-samples <number>                   Minimum number of samples for hdbscan.
+  --hdbscan-min-cluster-size <number>              Minimum cluster size for hdbscan. [default: 50]
+  --hdbscan-min-samples <number>                   Minimum number of samples for hdbscan. [default: 50]
 
   --run-tsne                                       Run multi-core tSNE for visualization.
   --tsne-perplexity <perplexity>                   tSNE's perplexity parameter. [default: 30]
@@ -78,7 +77,10 @@ Examples:
             'n_jobs' : int(self.args['--threads']),
             'genome' : self.args['--genome'],
 
-            'filtr_xlsx' : self.args['--output-filtration-results'],
+            'processed' : self.args['--processed'],
+            'subcluster' : False,
+
+            'filt_xlsx' : self.args['--output-filtration-results'],
             'output_loom' : self.args['--output-loom'],
             'batch_correction' : self.args['--correct-batch-effect'],
             'group_attribute' : self.args['--batch-group-by'],
@@ -93,13 +95,11 @@ Examples:
 
             'random_state' : int(self.args['--random-state']),
             
-            'run_dimension_reduction' : not self.args['--do-not-run-dimension-deduction'],
             'pca_key' : 'X_pca' if not self.args['--run-uncentered-pca'] else 'X_rpca',
             'select_variable_genes' : not self.args['--no-variable-gene-selection'],
             'submat_to_dense' : not self.args['--no-submat-to-dense'],
             'nPC' : int(self.args['--nPC']),
 
-            'run_diffmap' : not self.args['--do-not-run-diffusion-map'],
             'nDC' : int(self.args['--nDC']),
             'diffmap_alpha' : float(self.args['--diffmap-alpha']),
             'diffmap_K' : int(self.args['--diffmap-K']),

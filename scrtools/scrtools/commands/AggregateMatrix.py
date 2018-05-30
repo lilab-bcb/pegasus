@@ -1,5 +1,5 @@
 from .Base import Base
-from ..tools import aggregate_10x_matrices
+from ..tools import aggregate_10x_matrices, Logging
 
 class AggregateMatrix(Base):
 	"""
@@ -11,7 +11,7 @@ Usage:
 
 Arguments:
   csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder of 10x Run; Reference, genome reference used for 10x cellranger. Count matrix locates at {Location}.
-  output_name       The output file prefix. Two files will be generated: the aggregated data matrix, output_name_10x.h5, and the channel attribute file, output_name.attr.csv.
+  output_name       The output file name. output_name_10x.h5 will be generated. 
 
 Options:
   --genome <genome>                Genome reference. [default: GRCh38]
@@ -29,6 +29,8 @@ Examples:
 			self.args['--genome'], 
 			self.args['--restriction'], 
 			self.split_string(self.args['--attributes']), 
-			self.args['<output_name>'],
+			self.args['<output_name>'] + '_10x.h5',
 			self.args['--google-cloud'])
 		
+		logging = Logging(self.args['<output_name>'] + ".log", start_new = True)
+		logging.add_output(self.args['<output_name>'] + "_10x.h5")
