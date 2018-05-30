@@ -4,7 +4,7 @@ from ..tools import Logging
 
 def run_pipeline(input_file, output_name, **kwargs):
 	# load input data
-	is_raw = not (kwargs['processed'] or kwargs['subcluster'])
+	is_raw = not kwargs['processed']
 	adata = tools.read_input(input_file, is_raw, kwargs['genome'])
 
 	# generate output log file
@@ -25,7 +25,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 			tools.set_group_attribute(adata, kwargs['group_attribute'])
 			tools.estimate_adjustment_matrices(adata)
 	elif kwargs['subcluster']:
-		adata = get_anndata_for_subclustering(adata, kwargs['cluster_labels'], kwargs['cluster_ids'])
+		adata = tools.get_anndata_for_subclustering(adata, kwargs['cluster_labels'], kwargs['cluster_ids'])
 		is_raw = True # get submat and then set is_raw to True
 
 	# dimension reduction --- select variable genes or not

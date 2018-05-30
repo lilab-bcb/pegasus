@@ -16,7 +16,7 @@ Arguments:
 
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
-  --cluster-labels                                 Which cluster results to use. [default: louvain_labels]
+  --cluster-labels <labels>                        Which cluster results to use. [default: louvain_labels]
   --correct-batch-effect                           Correct for batch effects for subclustering task.
   --output-loom                                    Output loom-formatted file.
 
@@ -65,7 +65,9 @@ Examples:
 
     def execute(self):
         kwargs = {
+            'processed' : True,
             'subcluster' : True,
+            
             'cluster_labels' : self.args['--cluster-labels'],
             'cluster_ids' : self.split_string(self.args['<cluster_ids>']),
 

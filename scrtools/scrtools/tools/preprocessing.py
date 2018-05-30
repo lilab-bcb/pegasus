@@ -167,10 +167,9 @@ def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
 def get_anndata_for_subclustering(data, cluster_labels, cluster_ids):
 	obs_index = np.isin(data.obs[cluster_labels], cluster_ids)
 	data = data[obs_index, :]
-	
 	obs_dict = {"obs_names" : data.obs_names.values}
 	for attr in data.obs.columns:
-		if attr.find("_labels") < 0:
+		if attr.find("_labels") < 0 and attr != "pseudotime":
 			obs_dict[attr] = data.obs[attr].values
 
 	var_dict = {"var_names" : data.var_names.values, "gene_ids": data.var["gene_ids"].values, "robust": data.var["robust"]}
@@ -185,5 +184,7 @@ def get_anndata_for_subclustering(data, cluster_labels, cluster_ids):
 	if "stds" in data.varm.keys():
 		newdata.varm["stds"] = data.varm["stds"]
 
+	print("{0} cells are selected from {1} clusters.".format(newdata.shape[0], len(cluster_ids)))
+	
 	return newdata
 
