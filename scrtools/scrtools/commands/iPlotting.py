@@ -22,11 +22,11 @@ Options:
   --is-gene                 <attr> is a gene name.
   --log10                   If take log10 of real values.
 
-  -h, --help             Print out help information.
+  -h, --help                Print out help information.
 
 Examples:
   scrtools iplot --attribute louvain_labels tsne Manton_BM.h5ad test.html
-  scrtools iplot --attribute louvain_labels diffmap 
+  scrtools iplot --attribute louvain_labels diffmap Manton_BM.h5ad test.html
     """
     def execute(self):
         kwargs = {

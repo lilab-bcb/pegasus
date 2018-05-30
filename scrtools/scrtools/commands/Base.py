@@ -8,7 +8,7 @@ class Base:
 		self.args = docopt(self.__doc__, argv = command_args)
 
 	def split_string(self, astring, sep = ','):
-		return astring.split(sep) if astring is not None else []
+		return astring.split(sep) if astring is not None else None
 
 	def execute(self):
 		raise NotImplementedError

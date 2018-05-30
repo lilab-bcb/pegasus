@@ -59,7 +59,6 @@ def run_hdbscan(data, rep_key, n_jobs = 1, min_cluster_size = 50, min_samples = 
 def run_kmeans(data, rep_key, n_clusters, n_jobs = 1, random_state = 0):
 	start = time.time()
 	n_init = max(10, n_jobs)
-	print("n_init = {}".format(n_init))
 	km = KMeans(n_clusters = n_clusters, n_init = n_init, n_jobs = n_jobs, random_state = random_state)
 	km.fit(data.obsm[rep_key].astype('float64'))
 	

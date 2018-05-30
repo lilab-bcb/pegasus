@@ -80,6 +80,11 @@ def run_pipeline(input_file, output_name, **kwargs):
 	if kwargs['run_fle']:
 		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'])	
 	
+	# calculate diffusion-based pseudotime from roots
+	if kwargs['pseudotime'] is not None:
+		assert 'X_diffmap' in adata.obsm.keys()
+		tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
+	
 	adata.write(output_name + ".h5ad")
 	logging.add_output(output_name + ".h5ad")
 
@@ -88,4 +93,3 @@ def run_pipeline(input_file, output_name, **kwargs):
 		logging.add_output(output_name + ".loom")
 
 	print("Results are written.")
-	fout.close()

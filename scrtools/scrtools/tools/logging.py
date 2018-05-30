@@ -3,7 +3,7 @@ import atexit
 
 class Logging:
 	def __init__(self, log_file, start_new = False):
-		self.outputs = {}
+		self.outputs = set()
 
 		if start_new or not os.path.exists(log_file):
 			self.fout = open(log_file, 'w')
@@ -18,7 +18,7 @@ class Logging:
 	def add_output(self, output_file):
 		if output_file not in self.outputs:
 			self.outputs.add(output_file)
-			fout.write(output_file + '\n')
+			self.fout.write(output_file + '\n')
 
 	def close(self):
 		self.fout.close()

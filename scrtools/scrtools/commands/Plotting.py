@@ -17,13 +17,15 @@ Arguments:
   output_file            Output image file name.
 
 Options:
-  --cluster-labels <attr>        Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
-  --attribute <attr>             Plot <attr> against cluster labels. This option is only used in 'composition'.
-  --basis <basis>                Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
-  --attributes <attrs>           <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
-  --group <attr>                 <attr> is used to make group plots. In group plots, the first one contains all components in the group and the following plots show each component separately. This option is iused in 'scatter_groups' and 'scatter_gene_groups'.
-  --genes <genes>                <genes> is a comma-separated list of gene names to visualize. This option is used in 'scatter_genes' and 'heatmap'.
-  --gene <gene>                  Visualize <gene> in group plots. This option is only used in 'scatter_gene_groups'.
+  --dpi <dpi>                        DPI value for the figure. [default: 500]
+
+  --cluster-labels <attr>            Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
+  --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition'.
+  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+  --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
+  --group <attr>                     <attr> is used to make group plots. In group plots, the first one contains all components in the group and the following plots show each component separately. This option is iused in 'scatter_groups' and 'scatter_gene_groups'.
+  --genes <genes>                    <genes> is a comma-separated list of gene names to visualize. This option is used in 'scatter_genes' and 'heatmap'.
+  --gene <gene>                      Visualize <gene> in group plots. This option is only used in 'scatter_gene_groups'.
 
   --style <style>                    Composition plot styles. Can be either 'frequency', 'count', or 'normalized'. [default: frequency]
   --not-stacked                      Do not stack bars in composition plot.
@@ -58,9 +60,9 @@ Examples:
             'cluster' : self.args['--cluster-labels'],
             'attr' : self.args['--attribute'],
             'basis' : self.args['--basis'],
-            'attrs' : self.split_string(self.args['--attributes']) if self.args['--attributes'] is not None else None,
+            'attrs' : self.split_string(self.args['--attributes']),
             'group' : self.args['--group'],
-            'genes' : self.split_string(self.args['--genes']) if self.args['--genes'] is not None else None,
+            'genes' : self.split_string(self.args['--genes']),
             'gene' : self.args['--gene'],
             'style' : self.args['--style'],
             'stacked' : not self.args['--not-stacked'],
@@ -79,7 +81,7 @@ Examples:
             'title' : self.args['--heatmap-title']
         }
         
-        make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], **kwargs)
+        make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)
 
         logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
         logging.add_output(self.args['<output_file>'])

@@ -56,8 +56,8 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_
 				writer.write("{u} {v} {w:.6g}\n".format(u = i + 1, v = j + 1, w = W[i, j]))
 	print(input_graph_file + ' is written.')			
 
-	classpath = os.path.dirname(pkg_resources.resource_filename('scrtools.ext', 'GraphLayout.class')) + ':' + \
-				pkg_resources.resource_filename('scrtools.ext', 'gephi-toolkit-0.9.2-all.jar')
+	classpath = os.path.dirname(pkg_resources.resource_filename('scrtools', 'ext/GraphLayout.class')) + ':' + \
+				pkg_resources.resource_filename('scrtools', 'ext/gephi-toolkit-0.9.2-all.jar')
 	check_call(['java', '-Djava.awt.headless=true', '-Xmx{memory}g'.format(memory = memory), '-cp', classpath, \
 				'GraphLayout', input_graph_file, output_coord_file, layout, str(n_steps), str(n_jobs)])
 	print("Force-directed layout is generated.")

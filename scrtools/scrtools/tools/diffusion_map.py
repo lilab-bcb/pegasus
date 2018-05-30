@@ -12,6 +12,10 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
 from sklearn.utils.extmath import randomized_svd
 from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import PCA
+from sklearn.metrics.pairwise import euclidean_distances
+
+
 
 def get_symmetric_matrix(csr_mat):
 	tp_mat = csr_mat.transpose().tocsr()
@@ -99,7 +103,7 @@ def calculate_normalized_affinity(W):
 
 	return W_norm, diag, diag_half
 
-def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = None):
+def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = 0):
 	assert issparse(W)
 
 	start = time.time()
@@ -134,14 +138,34 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', r
 
 	return Phi_pt, U_pt, S, W_norm
 
+def reduce_diffmap_to_3d(Phi_pt, random_state = 0):
+	pca = PCA(n_components = 3, random_state = random_state)
+	Phi_reduced = pca.fit_transform(Phi_pt)
+	print("Reduce diffmap to 3D is done.")
+
+	return Phi_reduced
+
 def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'nmslib', eigen_solver = 'randomized', M = 15, efC = 100, efS = 100):
 	start = time.time()
 	W = calculate_affinity_matrix(data.obsm[rep_key], n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS)
 	Phi_pt, U_pt, S, W_norm = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
+	Phi_reduced = reduce_diffmap_to_3d(Phi_pt, random_state = random_state)
 	data.uns['W'] = W
 	data.uns['W_norm'] = W_norm
 	data.uns['diffmap_evals'] = S
 	data.obsm['X_diffmap'] = Phi_pt
 	data.obsm['X_diffmap_sym'] = U_pt
+	data.obsm['X_diffmap_pca'] = Phi_reduced
 	end = time.time()
 	print("run_diffmap finished. Time spent = {:.2f}s.".format(end - start))
+
+def run_pseudotime_calculation(data, roots):
+	start = time.time()
+	data.uns['roots'] = roots
+	mask = np.isin(data.obs_names, data.uns['roots'])
+	distances = np.mean(euclidean_distances(data.obsm['X_diffmap'][mask, :], data.obsm['X_diffmap']), axis = 0)
+	dmin = distances.min()
+	dmax = distances.max()
+	data.obs['pseudotime'] = (distances - dmin) / (dmax - dmin)
+	end = time.time()
+	print("run_pseudotime_calculation finished. Time spent = {:.2f}s".format(end - start))

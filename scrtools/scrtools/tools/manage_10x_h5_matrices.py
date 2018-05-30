@@ -78,6 +78,8 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 	df = pd.read_csv(csv_file, header=0, index_col='Sample')
 	restrictions.append("Reference:{}".format(genome))
 	rvec = [parse_restriction_string(x) for x in restrictions]
+	if attributes is None:
+		attributes = []
 	idx = pd.Series([True] * df.shape[0], index=df.index, name='selected')
 	for name, isin, content in rvec:
 		assert name in df.columns
