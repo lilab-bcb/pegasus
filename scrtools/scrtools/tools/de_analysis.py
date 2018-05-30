@@ -204,8 +204,12 @@ def calc_mwu_per_thread(thread_no, results, n_jobs, clusts, labels, gene_names, 
 		for j in range(ngene):
 			exprs[:] = 0.0
 			vec = csc_mat[:, j]
-			exprs[vec.indices] = vec.data
-			U_stats[j], pvals[j] = ss.mannwhitneyu(exprs[idx_x], exprs[idx_y], alternative = 'two-sided')
+			if vec.size > 0:
+				exprs[vec.indices] = vec.data
+				U_stats[j], pvals[j] = ss.mannwhitneyu(exprs[idx_x], exprs[idx_y], alternative = 'two-sided')
+			else:
+				U_stats[j] = 0.0
+				pvals[j] = 1.0
 
 		passed, qvals = fdr(pvals)
 
@@ -379,7 +383,7 @@ def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fi
 	if run_roc:
 		print("Begin calculating ROC statistics.")
 		de_results.extend(calc_roc_stats(data, labels = labels, n_jobs = n_jobs))
-
+		
 	data.var = pd.concat(de_results, axis = 1)
 	data.write(input_file)
 
