@@ -36,7 +36,10 @@ godsnot_64 = [
 
 
 
-def get_palettes(n_labels):
+def get_palettes(n_labels, with_background = False):
+	if with_background:
+		n_labels -= 1
+
 	if n_labels <= 20:
 		palettes = vega_20_scanpy
 	elif n_labels <= 26:
@@ -44,7 +47,11 @@ def get_palettes(n_labels):
 	else:
 		assert n_labels <= 64
 		palettes = godsnot_64
-	palettes = np.array(palettes)
+
+	if with_background:
+		palettes = np.array(["gainsboro"] + palettes[: n_labels])
+	else:
+		palettes = np.array(palettes[: n_labels])
 
 	return palettes
 

@@ -51,10 +51,17 @@ def get_subplot_layouts(nrows = 1, ncols = 1, subplot_size = (4, 4), left = 0.2,
 
 	return fig, axes
 
-
-
 def get_legend_ncol(label_size):
 	return (1 if label_size <= 14 else (2 if label_size <= 30 else 3))
+
+def parse_restrictions(restrictions):
+	rest_dict = {}
+	for rest_str in restrictions:
+		attr, value_str = rest_str.split(':')
+		rest_dict[attr] = value_str.split(',')
+	return rest_dict
+
+
 
 ### Sample usage:
 ###    fig = plot_composition(data, 'louvain_labels', 'Individual', style = 'normalized', stacked = False)
@@ -68,15 +75,17 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 		df = df.div(df.sum(axis = 1), axis = 0) * 100.0
 	elif style == 'normalized':
 		df = df.div(df.sum(axis = 0), axis = 1) * 100.0
-
+	
+	palettes = get_palettes(df.shape[1])
+	
 	if logy and not stacked:
 		df_sum = df.sum(axis = 1)
 		df_new = df.cumsum(axis = 1)
 		df_new = 10 ** df_new.div(df_sum, axis = 0).mul(np.log10(df_sum), axis = 0)
 		df = df_new.diff(axis = 1).fillna(value = df_new.iloc[:, 0:1], axis = 1)
-		df.plot(kind = 'bar', stacked = False, legend = False, logy = True, ylim = (1.01, df_sum.max() * 1.7), ax = ax)
+		df.plot(kind = 'bar', stacked = False, legend = False, logy = True, ylim = (1.01, df_sum.max() * 1.7), color = palettes, ax = ax)
 	else:
-		df.plot(kind = 'bar', stacked = stacked, legend = False, logy = logy, ax = ax)
+		df.plot(kind = 'bar', stacked = stacked, legend = False, logy = logy, color = palettes, ax = ax)
 
 	ax.grid(False)
 	ax.set_xlabel('Cluster ID')
@@ -87,11 +96,14 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 	return fig
 
 
+
 ### Sample usage:
 ###    fig = plot_scatter(data, 'tsne', ['louvain_labels', 'hdbscan_labels_soft'], nrows = 1, ncols = 2, alpha = 0.5)
-def plot_scatter(data, basis, attrs, nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None):
+def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None):
 	df = pd.DataFrame(data.obsm['X_' + basis][:, 0:2], columns = [basis + c for c in ['1', '2']])
 	basis = transform_basis(basis)
+
+	rest_dict = parse_restrictions(restrictions)
 
 	nattrs = len(attrs)
 	nrows, ncols = get_nrows_and_ncols(nattrs, nrows, ncols)
@@ -112,11 +124,21 @@ def plot_scatter(data, basis, attrs, nrows = None, ncols = None, subplot_size = 
 
 			if i * ncols + j < nattrs:
 				attr = attrs[i * ncols + j]
-				labels = data.obs[attr].astype('category')
-				label_size = labels.cat.categories.size
-				palettes = get_palettes(label_size)
 
-				for k, cat in enumerate(labels.cat.categories):
+				if attr in rest_dict:
+					rest_vec = rest_dict[attr]
+					labels = data.obs[attr].astype(str)
+					idx = ~np.isin(labels, rest_vec)
+					labels[idx] = ''
+					labels = pd.Categorical(labels, categories = natsorted(np.unique(labels)))
+					label_size = labels.categories.size
+					palettes = get_palettes(label_size, with_background = True)
+				else:
+					labels = data.obs[attr].astype('category').values
+					label_size = labels.categories.size
+					palettes = get_palettes(label_size)
+
+				for k, cat in enumerate(labels.categories):
 					idx = np.isin(labels, cat)
 					ax.scatter(df.iloc[idx, 0], df.iloc[idx, 1],
 						   c = palettes[k],
@@ -150,21 +172,21 @@ def plot_scatter_groups(data, basis, cluster, group, nrows = None, ncols = None,
 
 	marker_size = 120000.0 / df.shape[0]
 
-
-	if type(group) is str:		
-		groups = data.obs[group].astype('category')
-		df_g = pd.DataFrame(np.ones(groups.shape[0], dtype = bool), columns = ['All'])
-		for cat in groups.cat.categories:
-			df_g[cat] = np.isin(groups, cat)
-	else:
-		df_g = group
-
-	nrows, ncols = get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
-
-	labels = data.obs[cluster].astype('category')
-	label_size = labels.cat.categories.size
+	labels = data.obs[cluster].astype('category').values
+	label_size = labels.categories.size
 	palettes = get_palettes(label_size)
 	legend_ncol = get_legend_ncol(label_size)
+
+	df_g = pd.DataFrame(np.ones(data.shape[0], dtype = bool), columns = ['All'])
+	if group in data.obs:
+		groups = data.obs[group].astype('category').values
+		for cat in groups.categories:
+			df_g[cat] = np.isin(groups, cat)
+	else:
+		rest_dict = parse_restrictions(group.split(';'))
+		for key, value in rest_dict.items():
+			df_g[key] = np.isin(labels, value)
+	nrows, ncols = get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
 
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, axes = get_subplot_layouts(nrows = nrows, ncols = ncols, squeeze = False, **kwargs)
@@ -181,7 +203,7 @@ def plot_scatter_groups(data, basis, cluster, group, nrows = None, ncols = None,
 
 			gid = i * ncols + j
 			if gid < df_g.shape[1]:
-				for k, cat in enumerate(labels.cat.categories):
+				for k, cat in enumerate(labels.categories):
 					idx = np.logical_and(df_g.iloc[:, gid].values, np.isin(labels, cat))
 					ax.scatter(df.iloc[idx, 0], df.iloc[idx, 1],
 						   c = palettes[k],
@@ -267,8 +289,8 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 	basis = transform_basis(basis)
 
 	marker_size = 120000.0 / df.shape[0]
-	groups = data.obs[group].astype('category')
-	ngroup = groups.cat.categories.size
+	groups = data.obs[group].astype('category').values
+	ngroup = groups.categories.size
 	nrows, ncols = get_nrows_and_ncols(ngroup + 1, nrows, ncols)
 
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
@@ -288,7 +310,7 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 				if gid == 0:
 					idx_g = np.ones(groups.shape[0], dtype = bool)
 				else:
-					idx_g = np.isin(groups, groups.cat.categories[gid - 1])
+					idx_g = np.isin(groups, groups.categories[gid - 1])
 
 				img = ax.scatter(df.iloc[idx_g, 0], df.iloc[idx_g, 1],
 					   s = marker_size,
@@ -304,7 +326,7 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 				ax_colorbar = fig.add_axes(rect)
 				fig.colorbar(img, cax = ax_colorbar)
 
-				ax.set_title("All" if gid == 0 else str(groups.cat.categories[gid - 1]))
+				ax.set_title("All" if gid == 0 else str(groups.categories[gid - 1]))
 			else:
 				ax.set_frame_on(False)
 
@@ -328,14 +350,14 @@ def plot_heatmap(data, cluster, genes, use_raw = False, showzscore = False, titl
 	if showzscore:
 		df = df.apply(zscore, axis = 0)
 
-	cluster_ids = data.obs[cluster].astype('category')
+	cluster_ids = data.obs[cluster].astype('category').values
 	idx = cluster_ids.argsort().values
 	df = df.iloc[idx, :] # organize df by category order
 	row_colors = np.zeros(df.shape[0], dtype = object) 
-	palettes = get_palettes(cluster_ids.cat.categories.size)
+	palettes = get_palettes(cluster_ids.categories.size)
 
 	cluster_ids = cluster_ids[idx]
-	for k, cat in enumerate(cluster_ids.cat.categories):
+	for k, cat in enumerate(cluster_ids.categories):
 		row_colors[np.isin(cluster_ids, cat)] = palettes[k]
 
 	cg = sns.clustermap(data = df,
@@ -358,7 +380,7 @@ def plot_heatmap(data, cluster, genes, use_raw = False, showzscore = False, titl
 	cg.cax.tick_params(labelsize = 10)
 	# draw a legend for the cluster groups
 	cg.ax_col_dendrogram.clear()
-	for k, cat in enumerate(cluster_ids.cat.categories):
+	for k, cat in enumerate(cluster_ids.categories):
 		cg.ax_col_dendrogram.bar(0, 0, color = palettes[k], label = cat, linewidth = 0)
 	cg.ax_col_dendrogram.legend(loc = "center", ncol = 15, fontsize = 10)
 	cg.ax_col_dendrogram.grid(False)
