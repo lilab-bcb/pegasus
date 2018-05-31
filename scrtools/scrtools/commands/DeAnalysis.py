@@ -30,6 +30,6 @@ Examples:
     def execute(self):
         run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'])
 
-        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logging.add_output(self.args['<input_h5ad_file>'])
-        logging.add_output(self.args['<output_spreadsheet>'])
+        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logger.add_output(self.args['<input_h5ad_file>'])
+        logger.add_output(self.args['<output_spreadsheet>'])

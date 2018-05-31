@@ -83,5 +83,5 @@ Examples:
         
         make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)
 
-        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logging.add_output(self.args['<output_file>'])
+        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logger.add_output(self.args['<output_file>'])

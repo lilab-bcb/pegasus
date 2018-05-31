@@ -32,5 +32,5 @@ Examples:
 			self.args['<output_name>'] + '_10x.h5',
 			self.args['--google-cloud'])
 		
-		logging = Logging(self.args['<output_name>'] + ".log", start_new = True)
-		logging.add_output(self.args['<output_name>'] + "_10x.h5")
+		logger = Logging(self.args['<output_name>'] + ".log", start_new = True)
+		logger.add_output(self.args['<output_name>'] + "_10x.h5")

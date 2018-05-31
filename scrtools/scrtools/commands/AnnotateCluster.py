@@ -27,5 +27,5 @@ Examples:
     def execute(self):
         run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), self.args['--do-not-use-non-de-genes'])
 
-        logging = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logging.add_output(self.args['<output_file>'])
+        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
+        logger.add_output(self.args['<output_file>'])

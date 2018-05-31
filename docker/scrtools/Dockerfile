@@ -18,8 +18,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 	apt-get update && apt-get install -y google-cloud-sdk
 
 RUN pip install --upgrade pip && \
-	pip install numpy>=1.14 && \
+	pip install numpy && \
 	pip install Cython && \
+	pip install pybind11 && \
 	mkdir /software
 
 COPY scrtools-0.3.0.tar.gz /software
