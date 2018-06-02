@@ -4,6 +4,7 @@ import pandas as pd
 import anndata
 import tables
 import xlsxwriter
+from collections import Counter
 
 from scipy.sparse import issparse, csr_matrix
 from sklearn.preprocessing import StandardScaler
