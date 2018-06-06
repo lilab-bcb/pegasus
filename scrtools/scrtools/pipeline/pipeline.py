@@ -60,10 +60,12 @@ def run_pipeline(input_file, output_name, **kwargs):
 		assert 'X_diffmap' in adata.obsm.keys()
 
 	# clustering
-	if kwargs['run_louvain']:
-		tools.run_louvain(adata, resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
+	if kwargs['run_approx_louvain']:
+		tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'])
 	if kwargs['run_kmeans']:
 		tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
+	if kwargs['run_louvain']:
+		tools.run_louvain(adata, resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
 	if kwargs['run_hdbscan']:
 		tools.run_hdbscan(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], min_cluster_size = kwargs['hdbscan_min_cluster_size'], min_samples = kwargs['hdbscan_min_samples'])
 

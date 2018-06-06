@@ -54,6 +54,11 @@ Options:
   --hdbscan-min-cluster-size <number>              Minimum cluster size for hdbscan. [default: 50]
   --hdbscan-min-samples <number>                   Minimum number of samples for hdbscan. [default: 50]
 
+  --run-approximated-louvain                       Run approximated louvain clustering algorithm.
+  --approx-louvain-ninit <number>                  Number of Kmeans tries. [default: 20]
+  --approx-louvain-nclusters <number>              Number of clusters for Kmeans initialization. [default: 30]
+  --approx-louvain-resolution <resolution>.        Resolution parameter for louvain. [default: 1.3]
+
   --run-tsne                                       Run multi-core tSNE for visualization.
   --tsne-perplexity <perplexity>                   tSNE's perplexity parameter. [default: 30]
   --run-fitsne                                     Run FItSNE for visualization.
@@ -115,6 +120,11 @@ Examples:
             'run_hdbscan' : self.args['--run-hdbscan'],
             'hdbscan_min_cluster_size' : int(self.args['--hdbscan-min-cluster-size']),
             'hdbscan_min_samples' : int(self.args['--hdbscan-min-samples']),
+
+            'run_approx_louvain' : self.args['--run-approximated-louvain'],
+            'approx_louvain_ninit' : int(self.args['--approx-louvain-ninit']),
+            'approx_louvain_nclusters' : int(self.args['--approx-louvain-nclusters']),
+            'approx_louvain_resolution' : float(self.args['--approx-louvain-resolution']),
 
             'run_tsne' : self.args['--run-tsne'],
             'run_fitsne' : self.args['--run-fitsne'],

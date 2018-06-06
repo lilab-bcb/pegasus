@@ -107,7 +107,7 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 
 	nattrs = len(attrs)
 	nrows, ncols = get_nrows_and_ncols(nattrs, nrows, ncols)
-	marker_size = 120000.0 / df.shape[0]
+	marker_size = 240000.0 / df.shape[0]
 
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, axes = get_subplot_layouts(nrows = nrows, ncols = ncols, squeeze = False, **kwargs)
@@ -166,26 +166,27 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 
 ### Sample usage:
 ###    fig = plot_scatter_groups(data, 'tsne', 'louvain_labels', 'Individual', nrows = 2, ncols = 4, alpha = 0.5)
-def plot_scatter_groups(data, basis, cluster, group, nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None):
+def plot_scatter_groups(data, basis, cluster, group, restrictions = [], nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None):
 	df = pd.DataFrame(data.obsm['X_' + basis][:, 0:2], columns = [basis + c for c in ['1', '2']])
 	basis = transform_basis(basis)
 
-	marker_size = 120000.0 / df.shape[0]
+	marker_size = 240000.0 / df.shape[0]
 
 	labels = data.obs[cluster].astype('category').values
 	label_size = labels.categories.size
 	palettes = get_palettes(label_size)
 	legend_ncol = get_legend_ncol(label_size)
 
+	assert group in data.obs
+	groups = data.obs[group].astype('category').values
 	df_g = pd.DataFrame(np.ones(data.shape[0], dtype = bool), columns = ['All'])
-	if group in data.obs:
-		groups = data.obs[group].astype('category').values
+	if len(restrictions) == 0:
 		for cat in groups.categories:
 			df_g[cat] = np.isin(groups, cat)
 	else:
-		rest_dict = parse_restrictions(group.split(';'))
+		rest_dict = parse_restrictions(restrictions)
 		for key, value in rest_dict.items():
-			df_g[key] = np.isin(labels, value)
+			df_g[key] = np.isin(groups, value)
 	nrows, ncols = get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
 
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
