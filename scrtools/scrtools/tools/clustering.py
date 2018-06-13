@@ -82,7 +82,7 @@ def run_kmeans(data, rep_key, n_clusters, n_init = 10, n_jobs = 1, random_state 
 	data.obs['kmeans_labels'] = pd.Categorical(values = labels, categories = categories)
 
 	end = time.time()
-	print("Spectral clustering is done. Time spent = {:.2f}".format(end - start))
+	print("Spectral clustering is done. Time spent = {:.2f}s".format(end - start))
 
 
 def run_one_instance_of_kmeans(thread_no, results, n_init, n_clusters, n_jobs, X, seeds):

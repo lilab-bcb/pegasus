@@ -8,12 +8,12 @@ from . import plot_library, iplot_library
 
 
 pop_list = {
-	'composition' : {'basis', 'attrs', 'restrictions', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title'},
-	'scatter' : {'cluster', 'attr', 'group', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
+	'composition' : {'basis', 'attrs', 'restrictions', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall'},
+	'scatter' : {'cluster', 'attr', 'group', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title', 'showall'},
 	'scatter_groups' : {'attr', 'attrs', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
-	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title'},
-	'scatter_gene_groups' : {'cluster', 'attr', 'attrs', 'restrictions', 'genes', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title'},
-	'heatmap' : {'attr', 'basis', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'nrows', 'ncols', 'subplot_size', 'left', 'bottom', 'wspace', 'hspace', 'alpha', 'legend_fontsize'}
+	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
+	'scatter_gene_groups' : {'cluster', 'attr', 'attrs', 'restrictions', 'genes', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
+	'heatmap' : {'attr', 'basis', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'nrows', 'ncols', 'subplot_size', 'left', 'bottom', 'wspace', 'hspace', 'alpha', 'legend_fontsize', 'showall'}
 }
 
 def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):

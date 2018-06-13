@@ -168,7 +168,7 @@ def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
 def get_anndata_for_subclustering(data, cluster_labels, cluster_ids):
 	obs_index = np.isin(data.obs[cluster_labels], cluster_ids)
 	data = data[obs_index, :]
-	obs_dict = {"obs_names" : data.obs_names.values}
+	obs_dict = {"obs_names" : data.obs_names.values, "parent_cluster_labels" : data.obs[cluster_labels]}
 	for attr in data.obs.columns:
 		if attr.find("_labels") < 0 and attr != "pseudotime":
 			obs_dict[attr] = data.obs[attr].values

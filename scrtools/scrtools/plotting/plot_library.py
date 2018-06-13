@@ -61,7 +61,15 @@ def parse_restrictions(restrictions):
 		rest_dict[attr] = value_str.split(',')
 	return rest_dict
 
+def as_category(labels):
+	if isinstance(labels, pd.Series):
+		labels = labels.values
+		# if labels.dtype.name == "category":
+		# 	return labels
+	return pd.Categorical(labels, categories = natsorted(np.unique(labels)))
 
+def get_marker_size(nsamples):
+	return (240000.0 if nsamples > 300000 else 120000.0) / nsamples
 
 ### Sample usage:
 ###    fig = plot_composition(data, 'louvain_labels', 'Individual', style = 'normalized', stacked = False)
@@ -107,7 +115,7 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 
 	nattrs = len(attrs)
 	nrows, ncols = get_nrows_and_ncols(nattrs, nrows, ncols)
-	marker_size = 240000.0 / df.shape[0]
+	marker_size = get_marker_size(df.shape[0])
 
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, axes = get_subplot_layouts(nrows = nrows, ncols = ncols, squeeze = False, **kwargs)
@@ -130,11 +138,11 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 					labels = data.obs[attr].astype(str)
 					idx = ~np.isin(labels, rest_vec)
 					labels[idx] = ''
-					labels = pd.Categorical(labels, categories = natsorted(np.unique(labels)))
+					labels = as_category(labels)
 					label_size = labels.categories.size
 					palettes = get_palettes(label_size, with_background = True)
 				else:
-					labels = data.obs[attr].astype('category').values
+					labels = as_category(data.obs[attr])
 					label_size = labels.categories.size
 					palettes = get_palettes(label_size)
 
@@ -166,20 +174,22 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 
 ### Sample usage:
 ###    fig = plot_scatter_groups(data, 'tsne', 'louvain_labels', 'Individual', nrows = 2, ncols = 4, alpha = 0.5)
-def plot_scatter_groups(data, basis, cluster, group, restrictions = [], nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None):
+def plot_scatter_groups(data, basis, cluster, group, restrictions = [], nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None, showall = True):
 	df = pd.DataFrame(data.obsm['X_' + basis][:, 0:2], columns = [basis + c for c in ['1', '2']])
 	basis = transform_basis(basis)
 
-	marker_size = 240000.0 / df.shape[0]
+	marker_size = get_marker_size(df.shape[0])
 
-	labels = data.obs[cluster].astype('category').values
+	labels = as_category(data.obs[cluster])
 	label_size = labels.categories.size
 	palettes = get_palettes(label_size)
 	legend_ncol = get_legend_ncol(label_size)
 
 	assert group in data.obs
-	groups = data.obs[group].astype('category').values
-	df_g = pd.DataFrame(np.ones(data.shape[0], dtype = bool), columns = ['All'])
+	groups = as_category(data.obs[group])
+	df_g = pd.DataFrame()
+	if showall:
+		df_g['All'] = np.ones(data.shape[0], dtype = bool)
 	if len(restrictions) == 0:
 		for cat in groups.categories:
 			df_g[cat] = np.isin(groups, cat)
@@ -290,7 +300,7 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 	basis = transform_basis(basis)
 
 	marker_size = 120000.0 / df.shape[0]
-	groups = data.obs[group].astype('category').values
+	groups = as_category(data.obs[group])
 	ngroup = groups.categories.size
 	nrows, ncols = get_nrows_and_ncols(ngroup + 1, nrows, ncols)
 
@@ -351,7 +361,7 @@ def plot_heatmap(data, cluster, genes, use_raw = False, showzscore = False, titl
 	if showzscore:
 		df = df.apply(zscore, axis = 0)
 
-	cluster_ids = data.obs[cluster].astype('category').values
+	cluster_ids = as_category(data.obs[cluster])
 	idx = cluster_ids.argsort().values
 	df = df.iloc[idx, :] # organize df by category order
 	row_colors = np.zeros(df.shape[0], dtype = object) 

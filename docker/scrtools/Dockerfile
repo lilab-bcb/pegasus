@@ -21,7 +21,9 @@ RUN pip install --upgrade pip && \
 	pip install numpy && \
 	pip install Cython && \
 	pip install pybind11 && \
-	mkdir /software
+	mkdir /software && \
+	git clone https://github.com/nmslib/hnsw.git /software/hnswlib && \
+	cd /software/hnswlib/python_bindings && pip install . && cd ../../..
 
 COPY scrtools-0.3.0.tar.gz /software
 RUN tar -xzf /software/scrtools-0.3.0.tar.gz -C /software && \

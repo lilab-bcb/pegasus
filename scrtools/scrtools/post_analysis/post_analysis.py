@@ -2,8 +2,8 @@
 
 import numpy as np
 import pandas as pd
-import scanpy as sc
 from natsort import natsorted
+from scipy.stats import f_oneway
 
 def search_genes(adata, gene_list, measure = 'percentage'):
 	if not isinstance(gene_list, np.ndarray):
@@ -85,3 +85,8 @@ def calc_gene_stat(adata, clust_id):
 					   columns = ['percentage', 'mean_log_expression'])
 	df.sort_values(by = 'percentage', ascending = False, inplace = True)
 	return df
+
+	
+
+
+

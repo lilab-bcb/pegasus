@@ -26,10 +26,10 @@ requires = ['anndata>=0.5',
 			'setuptools',
 			'plotly',
 			'pybind11',
-			'nmslib',
 			'umap-learn',
 			'fitsne',
-			'hdbscan'
+			'hdbscan',
+			'hnswlib'
 		  ]
 
 setup(

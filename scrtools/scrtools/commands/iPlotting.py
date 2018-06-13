@@ -12,8 +12,8 @@ Usage:
   scrtools iplot -h
 
 Arguments:
-  basis                  Basis can be either 'tsne', 'fitsne', 'umap', 'diffmap', 'pca' or 'rpca'.
-  input_h5ad_file        Single cell data with clustering done by Scanpy in h5ad file format.
+  basis                  Basis can be either 'tsne', 'fitsne', 'umap', 'diffmap', 'pca', 'rpca' or 'diffmap_pca'.
+  input_h5ad_file        Single cell data with clustering done in h5ad file format.
   output_html_file       Output interactive htl plot file name.
 
 Options:

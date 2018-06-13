@@ -43,6 +43,8 @@ Options:
   --legend-fontsize <fontsize>       Legend font size.
   --use-raw                          Use anndata stored raw expression matrix. Only used by 'scatter_genes' and 'scatter_gene_groups'.
 
+  --do-not-show-all                  Do not show all components in group for scatter_groups.
+
   --show-zscore                      If show zscore in heatmap.
   --heatmap-title <title>            Title for heatmap.
 
@@ -80,7 +82,8 @@ Examples:
             'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
             'use_raw' : self.args['--use-raw'],
             'showzscore' : self.args['--show-zscore'],
-            'title' : self.args['--heatmap-title']
+            'title' : self.args['--heatmap-title'],
+            'showall' : not self.args['--do-not-show-all']
         }
         
         make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)

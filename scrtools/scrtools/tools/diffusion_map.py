@@ -2,10 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 
-import logging
-logging.basicConfig(level=logging.WARNING)
-logging.getLogger('nmslib').setLevel(logging.WARNING)
-import nmslib 
+import hnswlib
 
 from scipy.sparse import issparse, csr_matrix
 from scipy.sparse.csgraph import connected_components
@@ -29,38 +26,28 @@ def get_symmetric_matrix(csr_mat):
 	sym_mat.data[idx] /= 2.0
 	return sym_mat
 
-def calculate_affinity_matrix(X, num_threads, method = 'nmslib', K = 100, M = 15, efC = 100, efS = 100):
+def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, efC = 200, efS = 200):
 	"""X is the sample by feature matrix, could be either dense or sparse"""
 	nsample = X.shape[0]
 	
-	if method == 'nmslib':
-		if issparse(X):
-			knn_index = nmslib.init(method = 'hnsw', space = 'l2_sparse', data_type = nmslib.DataType.SPARSE_VECTOR)
-		else:
-			knn_index = nmslib.init(method = 'hnsw', space = 'l2', data_type = nmslib.DataType.DENSE_VECTOR)
-
-		knn_index.addDataPointBatch(X)
+	if method == 'hnsw':
+		assert not issparse(X)
 		start = time.time()
-		knn_index.createIndex({'M': M, 'indexThreadQty': num_threads, 'efConstruction': efC}) 
-		end = time.time() 
-		print("Indexing time = {0:.6f}".format(end - start))
-		
-		knn_index.setQueryTimeParams({'efSearch': efS})
-		start = time.time() 
-		results = knn_index.knnQueryBatch(X, k = K, num_threads = num_threads)
-		end = time.time() 
-		print("kNN time total={0:.6f} (sec), per query={1:.6f} (sec), per query adjusted for thread number={2:.6f} (sec)".format(end - start, float(end - start) / nsample, num_threads * (float(end - start) / nsample)))
-
+		knn_index = hnswlib.Index(space = 'l2', dim = X.shape[1])
+		knn_index.init_index(max_elements = nsample, ef_construction = efC, M = M)
+		knn_index.set_ef(efS)
+		knn_index.set_num_threads(num_threads)
+		knn_index.add_items(X)
+		indices, distances = knn_index.knn_query(X, k = K)
 		K = K - 1 # eliminate the first neighbor, which is the node itself
-		indices = np.zeros((nsample, K), dtype = int)
-		distances = np.zeros((nsample, K))
 		for i in range(nsample):
-			if results[i][0][0] == i:
-				indices[i,:] = results[i][0][1:]
-				distances[i,:] = results[i][1][1:]
-			else:
-				indices[i,:] = results[i][0][:K]
-				distances[i,:] = results[i][1][:K]
+			if indices[i, 0] != i:
+				indices[i, 1:] = indices[i, 0:-1]
+				distances[i, 1:] = distances[i, 0:-1]
+		indices = indices[:, 1:].astype(int)
+		distances = np.sqrt(distances[:, 1:])
+		end = time.time() 
+		print("hnsw kNN time = {:.2f}s.".format(end - start))
 	else:
 		assert method == 'sklearn'
 		K = K - 1
@@ -78,7 +65,7 @@ def calculate_affinity_matrix(X, num_threads, method = 'nmslib', K = 100, M = 15
 		numers = 2.0 * sigmas[i] * sigmas[indices[i,:]]
 		denoms = sigmas_sq[i] + sigmas_sq[indices[i,:]]
 		distances[i,:] = np.sqrt(numers / denoms) * np.exp(-np.square(distances[i,:]) / denoms)
-		
+	
 	W = csr_matrix((distances.ravel(), (np.repeat(range(nsample), K), indices.ravel())))
 	W = get_symmetric_matrix(W)
 
@@ -145,7 +132,7 @@ def reduce_diffmap_to_3d(Phi_pt, random_state = 0):
 
 	return Phi_reduced
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'nmslib', eigen_solver = 'randomized', M = 15, efC = 100, efS = 100):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 15, efC = 100, efS = 100):
 	start = time.time()
 	W = calculate_affinity_matrix(data.obsm[rep_key], n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS)
 	Phi_pt, U_pt, S, W_norm = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
