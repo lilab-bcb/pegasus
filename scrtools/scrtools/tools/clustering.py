@@ -22,10 +22,10 @@ def construct_graph(W, directed = True):
 
 	return G
 
-def run_louvain(data, resolution = 1.3, random_state = 0):
+def run_louvain(data, affinity = 'W_norm', resolution = 1.3, random_state = 0):
 	start = time.time()
 	louvain.set_rng_seed(random_state)
-	G = construct_graph(data.uns['W_norm'])
+	G = construct_graph(data.uns[affinity])
 	partition = louvain.find_partition(G, louvain.RBConfigurationVertexPartition, resolution_parameter = resolution)
 	labels = np.array([str(x + 1) for x in partition.membership])
 	categories = natsorted(np.unique(labels))

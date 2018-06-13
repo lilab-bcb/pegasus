@@ -46,6 +46,7 @@ Options:
 
   --run-louvain                                    Run louvain clustering algorithm.
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
+  --louvain-affinity <affinity>                    Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
 
   --run-kmeans                                     Run KMeans clustering algorithm on diffusion components.
   --kmeans-n-clusters <number>                     Target at <number> clusters for K means. [default: 20]
@@ -72,6 +73,7 @@ Options:
   --run-fle                                        Run force-directed layout embedding.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-n-steps <nstep>                            Number of iterations for FLE. [default: 10000]
+  --fle-affinity <affinity>                        Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
 
   -h, --help                                       Print out help information.
 
@@ -113,6 +115,7 @@ Examples:
 
             'run_louvain' : self.args['--run-louvain'],
             'louvain_resolution' : float(self.args['--louvain-resolution']),
+            'louvain_affinity' : self.args['--louvain-affinity'],
 
             'run_kmeans' : self.args['--run-kmeans'],
             'kmeans_n_clusters' : int(self.args['--kmeans-n-clusters']),
@@ -139,6 +142,7 @@ Examples:
             'run_fle' : self.args['--run-fle'],
             'fle_K' : int(self.args['--fle-K']),
             'fle_n_steps' : int(self.args['--fle-n-steps']),
+            'fle_affinity' : self.args['--fle-affinity'],
 
             'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])
         }

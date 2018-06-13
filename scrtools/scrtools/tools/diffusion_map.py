@@ -137,9 +137,15 @@ def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 
 	W = calculate_affinity_matrix(data.obsm[rep_key], n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS)
 	Phi_pt, U_pt, S, W_norm = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
 	Phi_reduced = reduce_diffmap_to_3d(Phi_pt, random_state = random_state)
+	W_diffmap = calculate_affinity_matrix(Phi_pt, n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS)
+	W_diffmap_norm, diag_tmp, diag_half_tmp = calculate_normalized_affinity(W_diffmap)
+
 	data.uns['W'] = W
 	data.uns['W_norm'] = W_norm
 	data.uns['diffmap_evals'] = S
+	data.uns['W_diffmap'] = W_diffmap
+	data.uns['W_diffmap_norm'] = W_diffmap_norm
+
 	data.obsm['X_diffmap'] = Phi_pt
 	data.obsm['X_diffmap_sym'] = U_pt
 	data.obsm['X_diffmap_pca'] = Phi_reduced

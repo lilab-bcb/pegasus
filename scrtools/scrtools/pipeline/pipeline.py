@@ -65,7 +65,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 	if kwargs['run_kmeans']:
 		tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
 	if kwargs['run_louvain']:
-		tools.run_louvain(adata, resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
+		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
 	if kwargs['run_hdbscan']:
 		tools.run_hdbscan(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], min_cluster_size = kwargs['hdbscan_min_cluster_size'], min_samples = kwargs['hdbscan_min_samples'])
 
@@ -80,7 +80,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 			adata.obsm['X_umap_diffmap'] = adata.obsm['X_umap']
 		tools.run_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
 	if kwargs['run_fle']:
-		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'])	
+		tools.run_force_directed_layout(adata, output_name, affinity = kwargs['fle_affinity'], n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'])	
 	
 	# calculate diffusion-based pseudotime from roots
 	if kwargs['pseudotime'] is not None:

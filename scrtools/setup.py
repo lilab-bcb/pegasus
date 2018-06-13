@@ -60,7 +60,7 @@ setup(
 	install_requires=requires,
 	python_requires='~=3.5',
 	package_data={
-		'scrtools.annotate_cluster': ['cell_type_markers.json'],
+		'scrtools.annotate_cluster': ['cell_type_markers.json', 'mouse_markers.json'],
 		'scrtools': ['ext/GraphLayout.java', 'ext/GraphLayout.class', 'ext/gephi-toolkit-0.9.2-all.jar']
 	},
 	entry_points={

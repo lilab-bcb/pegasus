@@ -37,9 +37,9 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 	end = time.time()
 	print("UMAP is done. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20):
+def run_force_directed_layout(data, file_name, n_jobs, affinity = 'W_diffmap', K = 50, layout = 'fa', n_steps = 10000, memory = 20):
 	start = time.time()
-	W = calculate_affinity_matrix(data.obsm['X_diffmap'], n_jobs, K = K)
+	W = data.uns[affinity]
 
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
 	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
