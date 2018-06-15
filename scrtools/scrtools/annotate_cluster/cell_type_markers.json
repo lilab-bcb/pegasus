@@ -393,6 +393,22 @@
 					"comment" : "important markers"
 				}
 			]
-		}		
+		},
+
+		{
+			"name" : "Megakaryocyte",
+			"markers" : [
+				{
+					"genes" : ["PF4+", "PPBP+", "GP5+"],
+					"weight" : 0.6,
+					"comment" : "key markers"
+				},
+				{
+					"genes" : ["CXCR4+", "SLAMF1+", "MPL+", "ITGA2B+"],
+					"weight" : 0.4,
+					"comment" : "important markers"
+				}
+			]
+		}				
 	]
 }

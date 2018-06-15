@@ -36,7 +36,8 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 	if plot_type == 'diffmap' or plot_type == 'diffmap_pca':
 		df = pd.DataFrame(adata.obsm['X_{}'.format(plot_type)][:, 0:3], index = adata.obs.index, columns = [basis + i for i in ['1', '2', '3']])
 		if kwargs['isgene']:
-			df.insert(0, 'Annotation', adata[:, kwargs['attr']].X)
+			coln = adata.var.index.get_loc(kwargs['attr'])
+			df.insert(0, 'Annotation', adata.X[:, coln].toarray().ravel())
 		else:
 			df.insert(0, 'Annotation', adata.obs[kwargs['attr']])
 		if not kwargs['isreal']:
@@ -46,7 +47,8 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 	else:
 		df = pd.DataFrame(adata.obsm['X_{}'.format(plot_type)], index = adata.obs.index, columns = [basis + i for i in ['1', '2']])
 		if kwargs['isgene']:
-			df.insert(0, 'Annotation', adata[:, kwargs['attr']].X)
+			coln = adata.var.index.get_loc(kwargs['attr'])
+			df.insert(0, 'Annotation', adata.X[:, coln].toarray().ravel())
 		else:
 			df.insert(0, 'Annotation', adata.obs[kwargs['attr']])
 		if not kwargs['isreal']:

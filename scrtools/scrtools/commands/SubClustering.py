@@ -62,7 +62,7 @@ Options:
   --run-fle                                        Run force-directed layout embedding.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-n-steps <nstep>                            Number of iterations for FLE. [default: 10000]
-  --fle-affinity <affinity>                        Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
+  --fle-affinity <affinity>                        Affinity matrix to be used. Could be 'W_diffmap', or 'W_diffmap_norm'. [default: W_diffmap]
 
   -h, --help                                       Print out help information.
 
