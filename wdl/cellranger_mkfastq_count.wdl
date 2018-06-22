@@ -10,18 +10,18 @@ workflow cellranger_mkfastq_count {
 	# Whether to delete input_directory. If false, you should delete this folder yourself so as to not incur storage charges.
 	Boolean delete_input_directory
 
-	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
-	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
-	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
+	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
+	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
+	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
 	# GRCh38, mm10, GRCh38_and_mm10, or a URL to a tar.gz file
 	String transcriptome
 	
 	File transcriptome_file = (if transcriptome == 'GRCh38' 
-								then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
 								else (if transcriptome == 'mm10' 
-										then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
+										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
 										else (if transcriptome == 'GRCh38_and_mm10'
-												then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
+												then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
 												else transcriptome)))
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
