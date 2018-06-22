@@ -6,6 +6,8 @@ workflow cellranger {
     Boolean? secondary
     Int? expectCells
     String diskSpace
+    Int? forceCells
+    Boolean? do_force_cells
 
     call CellRanger {
         input:
@@ -15,7 +17,9 @@ workflow cellranger {
         transcriptomeTarGz = transcriptomeTarGz,
         secondary = secondary,
         expectCells = expectCells,
-        diskSpace = diskSpace
+        diskSpace = diskSpace,
+        forceCells = forceCells,
+        do_force_cells = do_force_cells
    }
    
    call ConvertCellRangerOutput {
@@ -45,6 +49,8 @@ task CellRanger {
     Int? expectCells
     Boolean? secondary
     String diskSpace
+    Int? forceCells
+    Boolean? do_force_cells
 
     command {
         set -e
@@ -54,11 +60,22 @@ task CellRanger {
         export PATH=$PATH:.
         python <<CODE
         import os
+        import tarfile
         from subprocess import call
         dirs = dict()
         for f in ["${sep='","' fastqs}"]:
-            dirs.setdefault(os.path.dirname(f), True)
+            file = os.path.dirname(f)
+            try:
+                tarfile.is_tarfile(f)
+                tar = tarfile.open(f)
+                tar.extractall()
+                names = tar.getnames()
+                tar.close()
+                dirs.setdefault(names[0], True)
+            except:
+                dirs.setdefault(file, True)
         expect_cells = '${expectCells}'
+        force_cells = '${forceCells}'
         secondary = '${secondary}'
         call_args = list()
         call_args.append('cellranger')
@@ -69,7 +86,9 @@ task CellRanger {
         call_args.append('--fastqs=' + ','.join(list(dirs.keys())))
         if secondary is not 'true':
             call_args.append('--nosecondary')
-        if expect_cells is not '':
+        if force_cells is not '':
+            call_args.append('--force-cells=' + str(force_cells))
+        elif expect_cells is not '':
             call_args.append('--expect-cells=' + str(expect_cells))
         call(call_args)
         CODE
