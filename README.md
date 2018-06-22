@@ -35,7 +35,7 @@ Table of Contents
 
 1. Copy your sequencing output to the workspace using gsutil in your unix terminal. 
 
-    Note that your **BCL files will be automatically deleted** by the mkfastq/count pipeline.
+    It is highly recommended that you delete the **BCL files** after the pipeline is finished by turning on the **delete_input_directory** option.
 
     Example: *gsutil -m rsync -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
     
@@ -98,6 +98,7 @@ preemptible | Number of preemptible tries | 2 | 2
 See the table below for important *Cell Ranger mkfastq/count* outputs.
 
 Name | Type | Description
+--- | --- | ---
 output_fastqs_directory | Array[String] | A list of google bucket urls containing FASTQ files, one url per flowcell.
 output_count_directory | Array[String] | A list of google bucket urls containing count matrices, one url per sample.
 metrics_summaries | File | A excel spreadsheet containing QCs for each sample.
@@ -166,6 +167,7 @@ version | Cellranger version | "2.1.1" | "2.1.1"
 See the table below for important *Cell Ranger count* outputs.
 
 Name | Type | Description
+--- | --- | ---
 output_count_directory | Array[String] | A list of google bucket urls containing count matrices, one url per sample.
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
