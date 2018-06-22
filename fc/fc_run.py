@@ -4,19 +4,22 @@ import json
 import subprocess
 import os
 import warnings
+import pandas as pd
+import tempfile
 
 warnings.filterwarnings('ignore', 'Your application has authenticated', UserWarning, 'google')
 
 
-def firecloud_run(method, config_name, workspace, wdl_inputs, method_version, upload):
+def firecloud_run(method, config_name, workspace, wdl_inputs, method_version):
     if type(wdl_inputs) != dict:
         with open(args.wdl_inputs, 'r') as f:
-            inputs_json = json.loads(f.read())
+            inputs = json.loads(f.read())
             # Filter out any key/values that contain #, and escape strings with quotes as MCs need this to not be treated as expressions
-            inputs = {k: "\"{}\"".format(v) for k, v in inputs_json.items() if '#' not in k}
+            # inputs = {k: "\"{}\"".format(v) for k, v in inputs_json.items() if '#' not in k}
 
     else:
         inputs = wdl_inputs
+
     sep = workspace.index('/')
     workspace_namespace = workspace[0:sep]
     workspace_name = workspace[sep + 1:]
@@ -34,17 +37,44 @@ def firecloud_run(method, config_name, workspace, wdl_inputs, method_version, up
         ws = fapi.create_workspace(workspace_namespace, workspace_name)
         if ws.status_code != 201:
             raise ValueError('Unable to create workspace')
-        workspace_id = ws.json()['workspaceId']
+        bucket = ws.json()['bucketName']
     else:
-        workspace_id = ws.json()['workspace']['workspaceId']
+        bucket = ws.json()['workspace']['bucketName']
 
-    if upload is not None:
-        for path in upload:
-            path = os.path.abspath(path)
-            if not os.path.exists(path):
-                raise ValueError(path + ' does not exist.')
+    for k, v in inputs.items():
+        input_path = v
+        if os.path.exists(input_path):
+            input_path = os.path.abspath(input_path)
+            original_path = input_path
+            gs_url = 'gs://' + bucket + '/' + os.path.basename(input_path)
+            changed_file_contents = False
+            # look inside file to see if there are file paths
+            try:
+                df = pd.read_table(input_path, sep=None, engine='python', header=None, index_col=False)
+            except Exception:
+                pass
+            for c in df.columns:
+                values = df[c].values
+                for i in range(len(values)):
+                    if os.path.exists(values[i]):
+                        sub_gs_url = 'gs://' + bucket + '/' + os.path.basename(os.path.abspath(values[i]))
+                        print('Uploading ' + str(values[i]) + ' to ' + sub_gs_url)
+                        subprocess.check_call(
+                            ['gsutil', '-q', '-m', 'cp', '-r', str(values[i]), sub_gs_url])
+                        values[i] = sub_gs_url
+                        changed_file_contents = True
+                df[c] = values
 
-            subprocess.check_call(['gsutil', '-m', 'rsync', '-r', f, 'gs://' + workspace_id])
+            if changed_file_contents:
+                input_path = tempfile.mkstemp()[1]
+                print('Rewriting file paths in ' + original_path + ' to ' + input_path)
+                df.to_csv(input_path, sep='\t', index=False, header=False)
+            print('Uploading ' + input_path + ' to ' + gs_url)
+            subprocess.check_call(
+                ['gsutil', '-q', '-m', 'cp', input_path, gs_url])
+            inputs[k] = gs_url
+            if input_path:
+                os.remove(input_path)
 
     if method_version is None:
         version = -1
@@ -86,27 +116,26 @@ def firecloud_run(method, config_name, workspace, wdl_inputs, method_version, up
 
     launch_submission = fapi.create_submission(workspace_namespace, workspace_name, config_namespace, config_name,
                                                launch_entity, root_entity, "")
+
     if launch_submission.status_code == 201:
         submission_id = launch_submission.json()['submissionId']
         print('https://portal.firecloud.org/#workspaces/{}/{}/monitor/{}'.format(workspace_namespace, workspace_name,
                                                                                  submission_id))
     else:
-        print(launch_submission.json())
         raise ValueError('Unable to launch submission - ' + launch_submission.json())
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Upload files to a Google bucket and run a WDL')
+    parser = argparse.ArgumentParser(
+        description='Upload files to a Google bucket and run a WDL on FireCloud.')
     parser.add_argument('-m', '--method', dest='method', action='store', required=True,
-                        help='Method name (e.g. regevlab/cellranger)')
+                        help='Method name (e.g. regev/cellranger_mkfastq_count)')
     parser.add_argument('-c', '--config_name', dest='config_name', action='store', required=False,
                         help='Method configuration name')
     parser.add_argument('-w', '--workspace', dest='workspace', action='store', required=True,
-                        help='Workspace name (foo/bar). The workspace will be created if it does not exist')
+                        help='Workspace name (e.g. foo/bar). The workspace will be created if it does not exist')
     parser.add_argument('-i', '--wdl-inputs', dest='wdl_inputs', action='store', required=True, help='WDL input JSON')
     parser.add_argument('-v', '--method_version', dest='method_version', action='store',
-                        help='Method version. If not specified the latest version of the method will be used.')
-    parser.add_argument('-u', '--upload', dest='upload', action='append',
-                        help='Files or directories to upload to the workspace. Directories will be uploaded recursively.')
+                        help='Method version. If not specified the latest version of the method is used.')
     args = parser.parse_args()
-    firecloud_run(args.method, args.config_name, args.workspace, args.wdl_inputs, args.method_version, args.upload)
+    firecloud_run(args.method, args.config_name, args.workspace, args.wdl_inputs, args.method_version)
