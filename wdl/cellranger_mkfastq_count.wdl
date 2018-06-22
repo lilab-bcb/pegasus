@@ -10,18 +10,18 @@ workflow cellranger_mkfastq_count {
 	# Whether to delete input_directory. If false, you should delete this folder yourself so as to not incur storage charges.
 	Boolean? delete_input_directory = false
 
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
+	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
+	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
+	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
 	# GRCh38, mm10, GRCh38_and_mm10, or a URL to a tar.gz file
 	String transcriptome
 	
 	File transcriptome_file = (if transcriptome == 'GRCh38' 
-								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+								then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
 								else (if transcriptome == 'mm10' 
-										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
+										then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
 										else (if transcriptome == 'GRCh38_and_mm10'
-												then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
+												then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
 												else transcriptome)))
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
@@ -143,7 +143,7 @@ task parse_input_csv {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger-${cellranger_version}"
+		docker: "regevlab/cellranger-${cellranger_version}"
 		preemptible: "${preemptible}"
 	}
 }
@@ -164,9 +164,9 @@ task cellranger_mkfastq {
 	command {
 		set -e
 		export TMPDIR=/tmp
-		# gsutil -q -m cp -r ${input_directory} .
-		# cellranger mkfastq --id=results --run=${input_name} --csv=${input_csv_file} --jobmode=local
-		# gsutil -q -m mv results/outs ${output_directory}/${run_id}
+		gsutil -q -m cp -r ${input_directory} .
+		cellranger mkfastq --id=results --run=${input_name} --csv=${input_csv_file} --jobmode=local
+		gsutil -q -m mv results/outs ${output_directory}/${run_id}
 		
 		python <<CODE
 
@@ -189,7 +189,7 @@ task cellranger_mkfastq {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger-${cellranger_version}"
+		docker: "regevlab/cellranger-${cellranger_version}"
 		memory: "192 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
@@ -249,7 +249,7 @@ task cellranger_count {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger-${cellranger_version}"
+		docker: "regevlab/cellranger-${cellranger_version}"
 		memory: "384 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${disk_space} HDD"
@@ -294,7 +294,7 @@ task collect_summaries {
 	}
 
 	runtime {
-		docker: "bigbadbo/cellranger-${cellranger_version}"
+		docker: "regevlab/cellranger-${cellranger_version}"
 		preemptible: "${preemptible}"
 	}
 }
