@@ -78,12 +78,12 @@ Name | Description | Example | Default
 **input\_csv\_file** | Sample Sheet (contains Sample, Flowcell, Lane, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/sample_sheet.csv" | 
 **transcriptome** | keyword (**GRCh38** for human, **mm10** for mouse, **GRCh38\_and\_mm10** for human and mouse) or gs URL to a transcriptome tar.gz | "GRCh38" | 
 **cellranger\_output\_directory** | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/cellranger_output" |
-**delete\_input\_directory** | If delete BCL directories after demux. If false, you should delete this folder yourself so as to not incur storage charges. | "true" | 
+**delete\_input\_directory** | If delete BCL directories after demux. If false, you should delete this folder yourself so as to not incur storage charges. | true | 
 cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
-do_force_cells | force cells | "true" | "true"
+do_force_cells | force cells | true | true
 force_cells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
 expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
-secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | "false" | "false"
+secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
 mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 1000 | 1000 
 count_disk_space | Disk space in gigabytes needed for cell ranger count | 500 | 500
 num_cpu | Number of cpus to request for one node | 64 | 64
@@ -146,10 +146,10 @@ Name | Description | Example | Default
 **input\_directory** | gs URL containing FASTQ files | "gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4" | 
 **transcriptome** | keyword (**GRCh38** for human, **mm10** for mouse, **GRCh38\_and\_mm10** for human and mouse) or gs URL to a transcriptome tar.gz | "GRCh38" | 
 **output\_directory** | Cellranger count output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
-do_force_cells | force cells | "true" | "true"
+do_force_cells | force cells | true | true
 forceCells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
 expectCells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
-secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | "false" | "false"
+secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
 numCPU | Number of cpus to request for one node | 64 | 64
 diskSpace | Disk space in gigabytes needed for cell ranger count | 500 | 500
 version | Cellranger version | "2.1.1" | "2.1.1"
@@ -226,18 +226,18 @@ Name | Description | Example | Default
 **output_name** | Output file name of this task | "results" | 
 num_cpu | Number of CPUs to use | 64 | 64
 genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
-output_filtration_results | A boolean value indicating if you want to output QC metrics into a spreadsheet | "true" | "false"
-correct_batch_effect | A boolean value indicating if you want to correct for batch effects | "true" | "false"
+output_filtration_results | A boolean value indicating if you want to output QC metrics into a spreadsheet | true | false
+correct_batch_effect | A boolean value indicating if you want to correct for batch effects | true | false
 batch_group_by | If correct for batch effects, if you want to correct it separately for each group. Group is defined by this input. It should be an attribute (e.g. GroupBy) | "Source" | 
 plot_by_side | By default, this step will generate one tSNE plot colored by louvain cluster labels. If you provide an attribute name here, it will put the same tSNE colored by the attribute on the right-hand side | "Source" | 
-legend_on_data | A boolean value indicating if we should put legends on data | "true" | "false"
-plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | "true" | "false"
+legend_on_data | A boolean value indicating if we should put legends on data | true | false
+plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | true | false
 figure_size | Sizes of the composition plots in inches | "10,8" | "6,4"
-plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | "true" | "false" 
-de_analysis | A boolean value indicating if you want to perform differential expression analysis | "true" | "true"
+plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | true | false 
+de_analysis | A boolean value indicating if you want to perform differential expression analysis | true | true
 fold_change | Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene in spreadsheets | 2 | 1.5
 labels | Cluster labels that help de_analysis identify clusters | "louvain_labels" | "louvain_labels"
-output_loom | A boolean value indicating if you want to output loom-formatted files | "false" | "false"
+output_loom | A boolean value indicating if you want to output loom-formatted files | false | false
 import_attributes | Import attributes contained in the comma-separated list into the analysis object | "Donor" | 
 min_genes | The minimum number of expressed genes to be consider a valid cell | 500 | 500
 max_genes | *max_genes* - 1 is the maximum number of expressed genes to be consider a valid cell | 6000 | 6000
@@ -275,7 +275,7 @@ Name | Description | Example | Default
 **data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
 **file_name** | Input file name, *file_name_de.h5ad* should exist | "results" | 
 minimum_report_score | This step calculates a score between [0, 1] for each pair of cluster and putative cell type. It only report putative cell types with a minimum score of *minimum_report_score* | 0.1 | 0.5
-no_use_non_de | Do not consider non-differentially-expressed genes as down-regulated | "true" | "false"
+no_use_non_de | Do not consider non-differentially-expressed genes as down-regulated | true | false
 diskSpace | Disk space in gigabytes needed for this task | 100 | 100
 
 ### <a name="subcluster"></a> scrtools subcluster
@@ -289,17 +289,17 @@ Name | Description | Example | Default
 **output_name** | Output file name of this task | "results_sub" | 
 **cluster_ids** | A comma-separated list of cluster IDs (numbered from 1) for subcluster | "1,3,9" | 
 num_cpu | Number of CPUs to use | 64 | 64
-correct_batch_effect | A boolean value indicating if you want to correct for batch effects | "true" | "false"
+correct_batch_effect | A boolean value indicating if you want to correct for batch effects | true | false
 plot_by_side | By default, this step will generate one tSNE plot colored by louvain cluster labels. If you provide an attribute name here, it will put the same tSNE colored by the attribute on the right-hand side | "Source" | 
-legend_on_data | A boolean value indicating if we should put legends on data | "true" | "false"
-plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | "true" | "false"
+legend_on_data | A boolean value indicating if we should put legends on data | true | false
+plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | true | false
 figure_size | Sizes of the composition plots in inches | "10,8" | "6,4"
-plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | "true" | "false" 
-de_analysis | A boolean value indicating if you want to perform differential expression analysis | "true" | "true"
+plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | true | false 
+de_analysis | A boolean value indicating if you want to perform differential expression analysis | true | true
 fold_change | Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene in spreadsheets | 2 | 1.5
 labels | Cluster labels that help de_analysis identify clusters | "louvain_labels" | "louvain_labels"
 louvain_resolution | Resolution parameter of the louvain clustering algorithm | 1 | 1.3
-output_loom | A boolean value indicating if you want to output loom-formatted files | "false" | "false"
+output_loom | A boolean value indicating if you want to output loom-formatted files | false | false
 diskSpace | Disk space in gigabytes needed for this task | 250 | 250
 
 Here are the outputs.
