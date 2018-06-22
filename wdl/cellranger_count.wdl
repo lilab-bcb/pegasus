@@ -5,16 +5,19 @@ workflow cellranger_count {
 	# A gs link. Each sample will have a subfolder containing 'cellranger count' outputs under output_directory
 	String output_directory
 
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
-	# mm10, GRCh38, or a URL to a tar.gz file
+	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
+	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
+	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
+	# GRCh38, mm10, GRCh38_and_mm10, or a URL to a tar.gz file
 	String transcriptome
 	
 	File transcriptome_file = (if transcriptome == 'GRCh38' 
-								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+								then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
 								else (if transcriptome == 'mm10' 
-										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
-										else transcriptome))
+										then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
+										else (if transcriptome == 'GRCh38_and_mm10'
+												then 'gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
+												else transcriptome)))
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
@@ -27,7 +30,7 @@ workflow cellranger_count {
 	# 2.1.1 or 2.0.2
 	String? version = "2.1.1"
 	# Disk space needed per task. If you don't know enter "250"
-	Int? diskSpace = 250
+	Int? diskSpace = 500
 	# Number of cpus per cellranger count job
 	Int? numCPU = 64
 

@@ -5,7 +5,10 @@ Table of Contents
 
 * [First Time Running - Authenticate with Google](#first_time)
 * [Run Cell Ranger mkfastq/count](#run_cellranger)
-  * [Cell Ranger mkfastq/count inputs](#cellranger_mkfastq_count)
+  * [Cell Ranger mkfastq/count inputs](#cellranger_input)
+  * [Cell Ranger mkfastq/count outputs](#cellranger_output)
+* [Run Cell Ranger count only](#run_cellranger_count)
+  * [Cell Ranger count inputs](#cellranger_count_input)
 * [Run Single Cell RNA-Seq analysis tools](#run_scrtools)
   * [Prepare count_matrix.csv](#count_matrix_csv)
   * [scrtools aggregate_matrix](#aggr_mat)
@@ -42,48 +45,128 @@ Table of Contents
     
     You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
 
-1. Create a sample sheet. A sample sheet is a simple CSV with lane, sample, and index columns, which describe the way to demultiplex the flowcell. The index column should contain a 10x sample set name (e.g., SI-GA-A12).
+1. Create a sample sheet. A sample sheet is a simple CSV with sample, flowcell, lane, and index columns, which describe the way to demultiplex the flowcells. The flowcell column should be google bucket urls obtained in the previous step. The index column should contain a 10x sample set name (e.g., SI-GA-A12). If a sample is sequenced in multiple flowcells, this smaple should be listed multiple times in the CSV (one line per flowcell). In the following example, we have 4 samples sequenced in two flowcells.
+   
+   Example: 
+    ```
+    Sample,Flowcell,Lane,Index
+    sample_1,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,1-2,SI-GA-A8
+    sample_2,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,3-4,SI-GA-B8
+    sample_3,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,5-6,SI-GA-C8
+    sample_4,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,7-8,SI-GA-D8
+    sample_1,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,1-2,SI-GA-A8
+    sample_2,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,3-4,SI-GA-B8
+    sample_3,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,5-6,SI-GA-C8
+    sample_4,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,7-8,SI-GA-D8
+    ```
+1. Upload your sample sheet to the workspace.  
+
+    Example: *gsutil cp /foo/bar/projects/sample_sheet.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
+
+1. Upload "fake" data model to FireCloud. FireCloud requires a [data model](https://software.broadinstitute.org/firecloud/documentation/article?id=9769) that describes data entities and how they relate to each other. Our pipelines do not use the data model and therefore we must upload a "fake" data model to satisfy FireCloud.
+
+    Download [https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt](https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt) to your computer.
+
+    In FireCloud select the "Data" tab in your workspace. Click "Import Metadata". Select "Import From File". Select the participant_model.txt file and click "Upload".
+
+1. Import cellranger_mkfastq_count method.
+    
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_mkfastq_count.
+
+### <a name="cellranger_input"></a> Cell Ranger mkfastq/count inputs:
+
+*Cell Ranger mkfastq/count* takes Illumina outputs as input and runs *cellranger mkfastq* and *cellranger count*. Please see the description of inputs below. Note that required inputs are shown in bold.
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+**input\_csv\_file** | Sample Sheet (contains Sample, Flowcell, Lane, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/sample_sheet.csv" | 
+**transcriptome** | keyword (**GRCh38** for human, **mm10** for mouse, **GRCh38\_and\_mm10** for human and mouse) or gs URL to a transcriptome tar.gz | "GRCh38" | 
+**cellranger\_output\_directory** | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/cellranger_output" |
+**delete\_input\_directory** | If delete BCL directories after demux. If false, you should delete this folder yourself so as to not incur storage charges. | "true" | 
+cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
+do_force_cells | force cells | "true" | "true"
+force_cells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
+expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
+secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | "false" | "false"
+mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 1000 | 1000 
+count_disk_space | Disk space in gigabytes needed for cell ranger count | 500 | 500
+num_cpu | Number of cpus to request for one node | 64 | 64
+preemptible | Number of preemptible tries | 2 | 2
+
+### <a name="cellranger_output"></a> Cell Ranger mkfastq/count outputs:
+
+See the table below for important *Cell Ranger mkfastq/count* outputs.
+
+Name | Type | Description
+output_fastqs_directory | Array[String] | A list of google bucket urls containing FASTQ files, one url per flowcell.
+output_count_directory | Array[String] | A list of google bucket urls containing count matrices, one url per sample.
+metrics_summaries | File | A excel spreadsheet containing QCs for each sample.
+output_web_summary | Array[File] | A list of htmls visualizing QCs for each sample (cellranger count output).
+
+## <a name="run_cellranger_count"></a> Run Cell Ranger count only
+
+Sometimes, people might want to perform demux locally and run **cellranger count** on the cloud. This section describes how to perform counting on cloud.
+
+1. [Create](https://software.broadinstitute.org/firecloud/documentation/article?id=10746) a [FireCloud](https://portal.firecloud.org/) workspace or use an existing workspace.
+
+1. Copy your FASTQ files to the workspace using gsutil in your unix terminal. 
+
+    You should upload a folder, which contains one subfolder per sample. Each subfolder contains all FASTQ files from the corresponding sample.
+
+    Example: *gsutil -m rsync -r /foo/bar/fastq_path/K18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4*
+    
+    -m means copy in parallel, -r means copy the directory recursively.
+    
+    Note: Broad users need to be on an UGER node (not a login node) in order to use the -m flag
+    
+    You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
+
+1. Create a sample sheet. A sample sheet is a simple CSV with lane, sample, and index columns. You should have this CSV file for running **cellranger mkfastq** locally. 
    
    Example: 
     ```
     Lane,Sample,Index
-    *,pbmc_whole_cell,SI-GA-A8
-    *,pbmc_nuclei_nst,SI-GA-B8
-    *,pbmc_nuclei_tst,SI-GA-C8
-    *,pbmc_nuclei_cst,SI-GA-D8
+    *,sample_1,SI-GA-A8
+    *,sample_2,SI-GA-B8
+    *,sample_3,SI-GA-C8
+    *,sample_4,SI-GA-D8
     ```
-
 1. Upload your sample sheet to the workspace.  
 
-    Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/
+    Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
 1. Upload "fake" data model to FireCloud. FireCloud requires a [data model](https://software.broadinstitute.org/firecloud/documentation/article?id=9769) that describes data entities and how they relate to each other. Our pipelines do not use the data model and therefore we must upload a "fake" data model to satisfy FireCloud.
 
     Download [https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt](https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt) to your computer.
 
     In FireCloud select the "Data" tab in your workspace. Click "Import Metadata". Select "Import From File". Select the participant_model.txt file and click "Upload"
-1. Import cellranger_mkfastq_count method.
+
+1. Import cellranger_count method.
     
-    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_mkfastq_count.
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_count.
 
-### <a name="cellranger_mkfastq_count"></a> Cell Ranger mkfastq/count inputs:
-
-*Cell Ranger mkfastq/count* takes Illumina outputs as input and runs *cellranger mkfastq* and *cellranger count*. Please see the description of inputs below. Note that required inputs are shown in bold.
+### <a name="cellranger_count_input"></a> Cell Ranger count inputs:
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**input_csv_file** | Sample Sheet (contains Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv" | 
-**input_directory** | Sequencer output directory containing Config/, Data/, Images/, InterOp/, etc. | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" | 
-**cellranger_output_directory** | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
-**transcriptome** | gs URL to a transcriptome tar.gz ("gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" for mm10, "gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz" for GRCh38 | "gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz" | 
-mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 500 | 500 
-cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
-secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
-do_force_cells | force cells | true | true
-force_cells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
-expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
-count_disk_space | Disk space in gigabytes needed for cell ranger count | 500 | 250
+**input\_csv\_file** | Sample Sheet (contains Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv" | 
+**input\_directory** | gs URL containing FASTQ files | "gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4" | 
+**transcriptome** | keyword (**GRCh38** for human, **mm10** for mouse, **GRCh38\_and\_mm10** for human and mouse) or gs URL to a transcriptome tar.gz | "GRCh38" | 
+**output\_directory** | Cellranger count output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
+do_force_cells | force cells | "true" | "true"
+forceCells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
+expectCells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
+secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | "false" | "false"
+numCPU | Number of cpus to request for one node | 64 | 64
+diskSpace | Disk space in gigabytes needed for cell ranger count | 500 | 500
+version | Cellranger version | "2.1.1" | "2.1.1"
 
+### <a name="cellranger_count_output"></a> Cell Ranger count outputs:
+
+See the table below for important *Cell Ranger count* outputs.
+
+Name | Type | Description
+output_count_directory | Array[String] | A list of google bucket urls containing count matrices, one url per sample.
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
 

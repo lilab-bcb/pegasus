@@ -8,7 +8,7 @@ workflow cellranger_mkfastq_count {
 	# 2.1.1 only currently available
 	String? cellranger_version = "2.1.1"
 	# Whether to delete input_directory. If false, you should delete this folder yourself so as to not incur storage charges.
-	Boolean? delete_input_directory = false
+	Boolean delete_input_directory
 
 	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
 	# gs://regevlab-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
