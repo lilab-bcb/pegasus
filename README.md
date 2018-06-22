@@ -63,15 +63,11 @@ Table of Contents
 
     Example: *gsutil cp /foo/bar/projects/sample_sheet.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
-1. Upload "fake" data model to FireCloud. FireCloud requires a [data model](https://software.broadinstitute.org/firecloud/documentation/article?id=9769) that describes data entities and how they relate to each other. Our pipelines do not use the data model and therefore we must upload a "fake" data model to satisfy FireCloud.
-
-    Download [https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt](https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt) to your computer.
-
-    In FireCloud select the "Data" tab in your workspace. Click "Import Metadata". Select "Import From File". Select the participant_model.txt file and click "Upload".
-
 1. Import cellranger_mkfastq_count method.
     
     In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_mkfastq_count.
+
+1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
 ### <a name="cellranger_input"></a> Cell Ranger mkfastq/count inputs:
 
@@ -136,15 +132,11 @@ Sometimes, people might want to perform demux locally and run **cellranger count
 
     Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
-1. Upload "fake" data model to FireCloud. FireCloud requires a [data model](https://software.broadinstitute.org/firecloud/documentation/article?id=9769) that describes data entities and how they relate to each other. Our pipelines do not use the data model and therefore we must upload a "fake" data model to satisfy FireCloud.
-
-    Download [https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt](https://github.com/broadinstitute/scRNA-Seq/raw/master/wdl/participant_model.txt) to your computer.
-
-    In FireCloud select the "Data" tab in your workspace. Click "Import Metadata". Select "Import From File". Select the participant_model.txt file and click "Upload"
-
 1. Import cellranger_count method.
     
     In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_count.
+
+1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
 ### <a name="cellranger_count_input"></a> Cell Ranger count inputs:
 
