@@ -1,0 +1,13 @@
+{
+  "orchestra.referenceName": "GRCh38",
+  "orchestra.sampleId": "test_sample",
+  "orchestra.expectCells": 1000,
+  "orchestra.csv": "mkfastq_data/cellranger-tiny-bcl-simple-1.2.0.csv",
+  "orchestra.secondary": true,
+  "orchestra.run": "mkfastq_data/tarred.tar",
+  "orchestra.transcriptomeTarGz": "count_data/GRCh38.tar.gz",
+  "orchestra.diskSpace": "100",
+  "orchestra.do_force_cells": false,
+  "orchestra.chemistry": "threeprime",
+  "orchestra.flowcell": "H35KCBCXY"
+}

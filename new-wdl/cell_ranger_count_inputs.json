@@ -1,0 +1,11 @@
+{
+  "cellranger.secondary": false,
+  "cellranger.do_force_cells": false,
+  "cellranger.fastqs": ["count_data/tarred.tar"],
+  "cellranger.sampleId": "test_sample",
+  "cellranger.transcriptomeTarGz": "count_data/GRCh38.tar.gz",
+  "cellranger.diskSpace": "100",
+  "cellranger.referenceName": "GRCh38",
+  "cellranger.expectCells": 1000,
+  "cellranger.chemistry": "threeprime"
+}
