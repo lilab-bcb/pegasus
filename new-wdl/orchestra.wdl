@@ -18,11 +18,11 @@ workflow orchestra {
 	
 	call mkfastq.CellRanger as fq {
 		input:
-		id = id,
-		run = run,
-		csv = csv,
-		diskSpace = diskSpace,
-		flowcell = flowcell
+  		id = id,
+  		run = run,
+  		csv = csv,
+  		diskSpace = diskSpace,
+  		flowcell = flowcell
 	}
 
 	call count.CellRanger as cnt {
@@ -37,10 +37,10 @@ workflow orchestra {
    		forceCells = forceCells,
    		do_force_cells = do_force_cells,
    		chemistry = chemistry
-    }
+  }
 
-    call count.ConvertCellRangerOutput {
-    	input:
+  call count.ConvertCellRangerOutput {
+  	input:
     	sampleId = sampleId,
     	graphclust = cnt.graph_clusters,
     	km2 = cnt.kmeans_clust_2,
@@ -55,5 +55,5 @@ workflow orchestra {
     	pca = cnt.pca_projection,
     	tsne = cnt.tsne,
     	diskSpace = diskSpace
-    }
+  }
 }
