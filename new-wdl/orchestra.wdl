@@ -2,11 +2,11 @@ import "scRNA-Seq/new-wdl/mkfastq.wdl" as mkfastq
 import "scRNA-Seq/new-wdl/count.wdl" as count
 
 workflow orchestra {
-	String id
-	File run
-	File csv
-	String flowcell
-	String sampleId
+  String id
+  File run
+  File csv
+  String flowcell
+  String sampleId
   String referenceName
   File transcriptomeTarGz
   Boolean? secondary
