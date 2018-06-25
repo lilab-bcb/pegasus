@@ -7,14 +7,14 @@ workflow orchestra {
 	File csv
 	String flowcell
 	String sampleId
-    String referenceName
-    File transcriptomeTarGz
-    Boolean? secondary
-    Int? expectCells
-    String diskSpace
-    Int? forceCells
-    Boolean? do_force_cells
-    String? chemistry
+  String referenceName
+  File transcriptomeTarGz
+  Boolean? secondary
+  Int? expectCells
+  String diskSpace
+  Int? forceCells
+  Boolean? do_force_cells
+  String? chemistry
 	
 	call mkfastq.CellRanger as fq {
 		input:
