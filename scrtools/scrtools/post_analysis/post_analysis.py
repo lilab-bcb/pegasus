@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import scanpy as sc
 from natsort import natsorted
 
 def search_genes(adata, gene_list, measure = 'percentage'):

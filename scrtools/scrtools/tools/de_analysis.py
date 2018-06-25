@@ -77,15 +77,9 @@ def calc_stat_and_t_per_thread(thread_no, results, n_jobs, clusts, labels, gene_
 		cpt = total - ct[:, i, :]
 		percents_other = cpt[:, 0] / (cpt[:, 0] + cpt[:, 1]) * 100.0
 		
-		idx = percents > 0.0
-		idx_other = percents_other > 0.0
-		percent_fold_change[(~idx) & (~idx_other)] = 0.0
-		percent_fold_change[idx & (~idx_other)] = np.inf
-		percent_fold_change[idx_other] = percents[idx_other] / percents_other[idx_other]
-
 		df = pd.DataFrame({"percentage_{0}".format(clusts[i]): percents,
+						   "percentage_other_{0}".format(clusts[i]): percents_other,
 						   "mean_log_expression_{0}".format(clusts[i]): mean1,
-						   "percentage_fold_change_{0}".format(clusts[i]): percent_fold_change,
 						   "log_fold_change_{0}".format(clusts[i]): log_fold_change,
 						   "WAD_score_{0}".format(clusts[i]): wads,
 						   "t_pval_{0}".format(clusts[i]): pvals,
@@ -320,6 +314,10 @@ def calc_roc_stats(data, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	return result_list
 
 
+def format_short_output_cols(df, cols_short_format):		
+	cols_short_format_idx = [df.columns.get_loc(c) for c in df.columns if c in cols_short_format]
+	df.iloc[:,cols_short_format_idx] = df.iloc[:,cols_short_format_idx].round(3)
+	return df
 
 test2fields = {'t' : ['t_pval', 't_qval'], 'fisher' : ['fisher_pval', 'fisher_qval'], 'mwu' : ['mwu_U', 'mwu_pval', 'mwu_qval']} 
 
@@ -328,15 +326,17 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 	tests = [x for x in ['t', 'fisher', 'mwu'] if "{0}_qval_{1}".format(x, clusts[0]) in df.columns]
 	has_roc = "auc_{0}".format(clusts[0]) in df.columns
 	
-	cols = ["percentage", "percentage_fold_change", "mean_log_expression", "log_fold_change", "WAD_score"]
+	cols = ["percentage", "percentage_other", "mean_log_expression", "log_fold_change", "WAD_score"]	
 	if has_roc:
-		cols.extend(["auc", "predpower"])
-	for test in tests:
-		cols.extend(test2fields[test])
+		cols.extend(["auc", "predpower"])		
 	if has_roc:
 		cols.extend(["tpr_at_fpr01", "tpr_at_fpr025", "tpr_at_fpr03", "tpr_at_fpr05"])
-
-	writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
+	cols_short_format = cols.copy()
+	for test in tests:
+		cols.extend(test2fields[test])
+	
+	workbook = xlsxwriter.Workbook(output_file, {'nan_inf_to_errors': True})
+	workbook.formats[0].set_font_size(9)
 	for clust_id in clusts:
 		idx = df["{0}_qval_{1}".format(tests[0], clust_id)] <= alpha
 		for test in tests[1:]:
@@ -346,18 +346,35 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 		idx_down = idx & (df["WAD_score_{0}".format(clust_id)] < 0.0)
 		assert idx_up.sum() + idx_down.sum() == idx.sum()
 
-		col_names = ["{0}_{1}".format(x, clust_id) for x in cols]
-
+		col_names = ["{0}_{1}".format(x, clust_id) for x in cols]		
 		df_up = pd.DataFrame(df.loc[idx_up.values, col_names])
 		df_up.rename(columns = lambda x: '_'.join(x.split('_')[:-1]), inplace = True)
-		df_up.sort_values(by = "WAD_score", ascending = False, inplace = True)
-		df_up.to_excel(writer, sheet_name = "Cluster {0}, up-regulated".format(clust_id))
-
+		df_up.sort_values(by = "WAD_score", ascending = False, inplace = True)		
+		# format output as excel table
+		df_up = format_short_output_cols(df_up, cols_short_format)		
+		worksheet = workbook.add_worksheet(name = "{0} up".format(clust_id))
+		df_up.reset_index(inplace=True)
+		df_up.rename(index=str, columns={"index": "gene"}, inplace=True)
+		if len(df_up.index) > 0:
+			worksheet.add_table(0,0,len(df_up.index), len(df_up.columns)-1, {'data': np.array(df_up), 'style': 'Table Style Light 1', 
+								'first_column': True, 'header_row': True, 'columns': [{'header': x} for x in df_up.columns.values]})
+		else:
+			worksheet.write_row(0,0, df_up.columns.values)
+								
 		df_down = pd.DataFrame(df.loc[idx_down.values, col_names])
 		df_down.rename(columns = lambda x: '_'.join(x.split('_')[:-1]), inplace = True)
 		df_down.sort_values(by = "WAD_score", ascending = True, inplace = True)
-		df_down.to_excel(writer, sheet_name = "Cluster {0}, down-regulated".format(clust_id))
-	writer.save()
+		# format output as excel table
+		worksheet = workbook.add_worksheet(name = "{0} dn".format(clust_id))
+		df_down = format_short_output_cols(df_down, cols_short_format)
+		df_down.reset_index(inplace=True)
+		df_down.rename(index=str, columns={"index": "gene"}, inplace=True)
+		if len(df_up.index) > 0:
+			worksheet.add_table(0,0,len(df_down.index), len(df_down.columns)-1, {'data': np.array(df_down), 'style': 'Table Style Light 1', 
+								'first_column': True, 'header_row': True, 'columns': [{'header': x} for x in df_down.columns.values]})
+		else:
+			worksheet.write_row(0,0, df_down.columns.values)
+	workbook.close()
 
 	print("Excel spreadsheet is written.")
 
