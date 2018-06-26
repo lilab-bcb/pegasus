@@ -1,3 +1,6 @@
+.DS_Store
+scrtools/.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -62,7 +65,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+scrtools/docs/_build/
 
 # PyBuilder
 target/

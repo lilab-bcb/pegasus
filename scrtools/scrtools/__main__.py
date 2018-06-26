@@ -7,17 +7,16 @@ Usage:
   scrtools -v | --version
 
 Sub-commands:
-  Preprocessing related:
-    aggregate_matrix        Aggregate hdf5-formatted 10x channel matrices into one big matrix. 
-  Clustering related:
-    cluster                 Cluster initial gene count matrix.
-    subcluster              Do sub-cluster analysis.
-  Post cluster analsis:
-    de_analysis             Differential expression analysis.
-    annotate_cluster        Annotate clusters.
+  Preprocessing:
+    aggregate_matrix        Aggregate cellranger-outputted channel-specific count matrices into a single count matrix. It also enables users to import metadata into the count matrix.
+  Analyzing:
+    cluster                 Perform first-pass analysis using the count matrix generated from 'aggregate_matrix'. This subcommand could perform low quality cell filtration, batch correction, variable gene selection, dimension reduction, diffusion map calculation, graph-based clustering, tSNE visualization. The final results will be written into h5ad-formatted file, which Seurat could load. 
+    subcluster              Perform sub-cluster analyses based on one or several clusters obtained by 'cluster'. 
+    de_analysis             Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene. 
+    annotate_cluster        This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it only works for human and mouse immune cells.
   Plotting:
-    plot                    Make some plots.
-    iplot                   Make interactive plots.
+    plot                    Make static plots, which includes plotting tSNEs by cluster labels and different groups.
+    iplot                   Make interactive plots using plotly. The outputs are HTML pages. You can visualize diffusion maps with this sub-command.
     
 Options:
   -h, --help          Show help information.
