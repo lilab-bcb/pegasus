@@ -25,7 +25,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 			tools.set_group_attribute(adata, kwargs['group_attribute'])
 			tools.estimate_adjustment_matrices(adata)
 	elif kwargs['subcluster']:
-		adata = tools.get_anndata_for_subclustering(adata, kwargs['cluster_labels'], kwargs['cluster_ids'])
+		adata = tools.get_anndata_for_subclustering(adata, kwargs['show_attributes'], kwargs['show_values_for_attributes'], kwargs['subset_selections'])
 		is_raw = True # get submat and then set is_raw to True
 
 	# dimension reduction --- select variable genes or not

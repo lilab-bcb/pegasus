@@ -163,15 +163,37 @@ def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
 	end = time.time()
 	print("RPCA is done. Time spent = {:.2f}s.".format(end - start))
 
+def parse_subset_selections(subset_selections):	
+	subsets_dict = {}
+	for subset_str in subset_selections:
+		print(subset_str)
+		attr, value_str = subset_str.split(':')
+		if attr in subsets_dict:
+			subsets_dict[attr].extend(value_str.split(','))
+		else:
+			subsets_dict[attr] = value_str.split(',')
+	return subsets_dict
 
-
-def get_anndata_for_subclustering(data, cluster_labels, cluster_ids):
-	obs_index = np.isin(data.obs[cluster_labels], cluster_ids)
+def get_anndata_for_subclustering(data, show_attributes, show_values_for_attributes, subset_selections):	
+	if show_attributes:
+		print("Availbele attributes in input dataset: {0}".format(', '.join(data.obs.columns.values)))
+	if not show_values_for_attributes is None:
+		for attr in show_values_for_attributes.split(','):
+			print("Availbele values for attribute {0}: {1}.".format(attr, ', '.join(np.unique(data.obs[attr]))))
+	obs_index = np.full_like(data.obs[data.obs.columns.values[0]], True)
+	if not subset_selections is None:
+		subsets_dict = parse_subset_selections(subset_selections)
+		for key, value in subsets_dict.items():
+			print(key, 'corresponds to', subsets_dict[key])
+			obs_index = obs_index & np.isin(data.obs[key], value)	
 	data = data[obs_index, :]
 	obs_dict = {"obs_names" : data.obs_names.values, "parent_cluster_labels" : data.obs[cluster_labels]}
 	for attr in data.obs.columns:
-		if attr.find("_labels") < 0 and attr != "pseudotime":
-			obs_dict[attr] = data.obs[attr].values
+		if attr != "pseudotime":
+			if attr.find("_labels") < 0:
+				obs_dict[attr] = data.obs[attr].values
+			else:
+				obs_dict[attr + '_parent'] = data.obs[attr].values
 
 	var_dict = {"var_names" : data.var_names.values, "gene_ids": data.var["gene_ids"].values, "robust": data.var["robust"]}
 
@@ -185,7 +207,7 @@ def get_anndata_for_subclustering(data, cluster_labels, cluster_ids):
 	if "stds" in data.varm.keys():
 		newdata.varm["stds"] = data.varm["stds"]
 
-	print("{0} cells are selected from {1} clusters.".format(newdata.shape[0], len(cluster_ids)))
+	print("{0} cells are selected.".format(newdata.shape[0]))
 	
 	return newdata
 

@@ -3,7 +3,9 @@ workflow scrtools_subcluster {
 	String data_folder
 	String input_name
 	String output_name
-	String cluster_ids
+	String subset_selections
+	Boolean? show_attributes
+	String show_values_for_attributes
 
 	Int num_cpu = 64
 	Boolean? correct_batch_effect
@@ -32,7 +34,9 @@ workflow scrtools_subcluster {
 			data_folder = data_folder,
 			input_name = input_name,
 			output_name = output_name,
-			cluster_ids = cluster_ids,
+			subset_selections = subset_selections,			
+			show_attributes = show_attributes,
+			show_values_for_attributes = show_values_for_attributes,
 			num_cpu = num_cpu,
 			correct_batch_effect = correct_batch_effect,
 			output_loom = output_loom,
@@ -53,7 +57,9 @@ task run_scrtools_subcluster {
 	String data_folder
 	String input_name
 	String output_name
-	String cluster_ids
+	String subset_selections
+	Boolean? show_attributes
+	String show_values_for_attributes
 	Int num_cpu
 	Boolean? correct_batch_effect
 	Boolean? output_loom
@@ -76,7 +82,9 @@ task run_scrtools_subcluster {
 
 		input_name = '${input_name}'
 		output_name = '${output_name}'
-		cluster_ids = '${cluster_ids}'
+		subset_selections = '${subset_selections}'		
+		show_attributes = '${show_attributes}'
+		show_values_for_attributes = '${show_values_for_attributes}'
 		plot_by_side = '${plot_by_side}'
 		louvain_resolution = '${louvain_resolution}'		
 
@@ -84,7 +92,13 @@ task run_scrtools_subcluster {
 		print(' '.join(call_args))
 		check_call(call_args)
 
-		call_args = ['scrtools', 'subcluster', input_name + '.h5ad', cluster_ids, output_name, '-p', '${num_cpu}']
+		call_args = ['scrtools', 'subcluster', input_name + '.h5ad', output_name, '-p', '${num_cpu}']
+		if subset_selections is not '' :
+			call_args.extend(['--subset_selections', subset_selections])		
+		if '${show_attributes}' is 'true':
+			call_args.append('--show_attributes')
+		if show_values_for_attributes is not '' :
+			call_args.extend(['--show_values_for_attributes', show_values_for_attributes])		
 		if '${correct_batch_effect}' is 'true':
 			call_args.append('--correct-batch-effect')
 		if '${output_loom}' is 'true':
