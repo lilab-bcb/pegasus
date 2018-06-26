@@ -10,8 +10,8 @@ Usage:
   scrtools cluster -h
 
 Arguments:
-  input_file       Input file in either 10x format or h5ad format.
-  output_name      Output name. output_name.h5ad and output_name.log will be generated.
+  input_file       Input file in 10x format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
+  output_name      Output file name. All outputs will use it as the prefix.
 
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
@@ -77,6 +77,10 @@ Options:
 
   -h, --help                                       Print out help information.
 
+Outputs:
+  output_name.h5ad        Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+  output_name.loom.       Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
+  
 Examples:
   scrtools cluster -p 20 --correct-batch-effect --run-louvain --run-tsne manton_bm_10x.h5 manton_bm
     """

@@ -396,15 +396,15 @@
 		},
 
 		{
-			"name" : "Megakaryocyte",
+			"name" : "Neutrophil",
 			"markers" : [
 				{
-					"genes" : ["PF4+", "PPBP+", "GP5+"],
+					"genes" : ["FUT4+", "MPO+", "CSF3R+"],
 					"weight" : 0.6,
 					"comment" : "key markers"
 				},
 				{
-					"genes" : ["CXCR4+", "SLAMF1+", "MPL+", "ITGA2B+"],
+					"genes" : ["FCGR3A++", "FCGR3B+", "CEACAM8+"],
 					"weight" : 0.4,
 					"comment" : "important markers"
 				}
