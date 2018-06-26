@@ -12,10 +12,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# import scrtools
 
 # -- Project information -----------------------------------------------------
 
@@ -24,9 +24,9 @@ copyright = '2018, Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr A
 author = 'Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.'
 
 # The short X.Y version
-version = ''
+version = '0.3.0'
 # The full version, including alpha/beta/rc tags
-release = '0.3'
+release = '0.3.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -46,7 +46,13 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
 ]
+
+autodoc_member_order = 'bysource'
+autodoc_default_flags = ['members']
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -104,14 +110,23 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-def setup(app):
-    app.add_stylesheet('css/custom.css')
+html_context = dict(
+    display_github = True,      # Integrate GitHub
+    github_user = 'broadinstitute',   # Username
+    github_repo = 'scRNA-Seq',     # Repo name
+    github_version = 'master',  # Version
+    conf_py_path = '/scrtools/docs/',    # Path in the checkout to the docs root
+)
+
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'scrtoolsdoc'
 
+
+def setup(app):
+    app.add_stylesheet('css/custom.css')
 
 # -- Options for LaTeX output ------------------------------------------------
 

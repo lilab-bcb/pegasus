@@ -13,5 +13,5 @@
 
    installation
    usage
-   api
+   api/index
    references
