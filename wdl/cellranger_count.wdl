@@ -1,18 +1,23 @@
 workflow cellranger_count {
 	File input_csv_file
-	# A gs link, assume fastqs is under data_directory; We will also move all cellranger outputs into the data_directory
-	String data_directory
+	# A gs link. We assume each sample has a subfolder containing FASTQs under input_directory
+	String input_directory
+	# A gs link. Each sample will have a subfolder containing 'cellranger count' outputs under output_directory
+	String output_directory
 
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
 	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
-	# mm10, GRCh38, or a URL to a tar.gz file
+	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
+	# GRCh38, mm10, GRCh38_and_mm10, or a URL to a tar.gz file
 	String transcriptome
 	
 	File transcriptome_file = (if transcriptome == 'GRCh38' 
 								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
 								else (if transcriptome == 'mm10' 
 										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
-										else transcriptome))
+										else (if transcriptome == 'GRCh38_and_mm10'
+												then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
+												else transcriptome)))
 
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
@@ -25,7 +30,7 @@ workflow cellranger_count {
 	# 2.1.1 or 2.0.2
 	String? version = "2.1.1"
 	# Disk space needed per task. If you don't know enter "250"
-	Int? diskSpace = 250
+	Int? diskSpace = 500
 	# Number of cpus per cellranger count job
 	Int? numCPU = 64
 
@@ -39,7 +44,8 @@ workflow cellranger_count {
 		call CellRangerCount {
 			input:
 				sampleId = sampleId,
-				data_directory = data_directory,
+				input_directory = input_directory,
+				output_directory = output_directory,
 				transcriptome = transcriptome_file,
 				do_force_cells = do_force_cells,
 				forceCells = forceCells,
@@ -78,7 +84,8 @@ task parse_csv {
 
 task CellRangerCount {
 	String sampleId
-	String data_directory
+	String input_directory
+	String output_directory
 	File transcriptome
 	Boolean? do_force_cells 
 	Int? expectCells
@@ -93,7 +100,7 @@ task CellRangerCount {
 		export TMPDIR=/tmp
 		mkdir -p transcriptome_dir
 		tar xf ${transcriptome} -C transcriptome_dir --strip-components 1
-		gsutil -m cp -r ${data_directory}/fastqs/fastq_path/*/${sampleId} .
+		gsutil -m cp -r ${input_directory}/${sampleId} .
 		python <<CODE
 		from subprocess import check_call
 		call_args = ['cellranger', 'count', '--id=results', '--transcriptome=transcriptome_dir', '--fastqs=${sampleId}', '--sample=${sampleId}', '--jobmode=local']
@@ -102,11 +109,11 @@ task CellRangerCount {
 			call_args.append('--nosecondary')
 		check_call(call_args)
 		CODE
-		gsutil -m mv results/outs ${data_directory}/${sampleId}
+		gsutil -m mv results/outs ${output_directory}/${sampleId}
 	}
 
 	output {
-		String output_count_directory = "${data_directory}/${sampleId}"
+		String output_count_directory = "${output_directory}/${sampleId}"
 	}
 
 	runtime {
