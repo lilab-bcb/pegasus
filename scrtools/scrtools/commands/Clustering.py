@@ -79,7 +79,7 @@ Options:
 
 Outputs:
   output_name.h5ad        Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
-  output_name.loom.       Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
+  output_name.loom        Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
   scrtools cluster -p 20 --correct-batch-effect --run-louvain --run-tsne manton_bm_10x.h5 manton_bm

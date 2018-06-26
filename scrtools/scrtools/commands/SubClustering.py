@@ -12,7 +12,7 @@ Usage:
 Arguments:
   input_file             Single cell data with clustering done in h5ad format.
   cluster_ids            Tell us which clusters (separated by comma) you want to perform subcluster task. IDs start from 1 and must be clusters in input_file.
-  output_name            Output name. output_name.h5ad and output_name.log will be generated.
+  output_name            Output file name. All outputs will use it as the prefix.
 
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
@@ -66,6 +66,10 @@ Options:
 
   -h, --help                                       Print out help information.
 
+Outputs:
+  output_name.h5ad        Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+  output_name.loom        Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
+  
 Examples:
   scrtools subcluster -p 20 --correct-batch-effect manton_bm.h5ad 1 manton_bm_1
     """

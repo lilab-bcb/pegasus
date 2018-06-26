@@ -14,7 +14,7 @@ Usage:
 Arguments:
   plot_type              Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', and 'heatmap'.
   input_h5ad_file        Single cell data with clustering done by Scanpy in h5ad file format.
-  output_file            Output image file name.
+  output_file            Output image file.
 
 Options:
   --dpi <dpi>                        DPI value for the figure. [default: 500]
