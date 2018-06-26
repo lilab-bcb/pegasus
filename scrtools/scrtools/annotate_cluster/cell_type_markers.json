@@ -357,13 +357,18 @@
 			"name" : "Erythrocyte",
 			"markers" : [
 				{
-					"genes" : ["PF4+", "PPBP+", "GPX1+"],
-					"weight" : 0.6,
-					"comment" : "key markers"
+					"genes" : ["GYPA+"], 
+					"weight" : 0.3,
+					"comment" : "key marker"
 				},
 				{
-					"genes" : ["GYPA+", "HBB+", "HBA1+"],
-					"weight" : 0.3,
+					"genes" : ["TFRC+", "ITGA4+"],
+					"weight" : 0.4,
+					"comment" : "CD71 and CD49d"
+				},
+				{
+					"genes" : ["HBB+", "HBA1+"],
+					"weight" : 0.2,
 					"comment" : "important markers"
 				},
 				{
@@ -378,16 +383,32 @@
 			"name" : "Megakaryocyte",
 			"markers" : [
 				{
-					"genes" : ["GP5+"],
-					"weight" : 0.3,
-					"comment" : "important marker"
+					"genes" : ["PF4+", "PPBP+", "GP5+"],
+					"weight" : 0.6,
+					"comment" : "key markers"
 				},
 				{
-					"genes" : ["CXCR4+", "SLAMF1+", "MPL+"],
-					"weight" : 0.7,
-					"comment" : "other markers"
+					"genes" : ["CXCR4+", "SLAMF1+", "MPL+", "ITGA2B+"],
+					"weight" : 0.4,
+					"comment" : "important markers"
 				}
 			]
-		}		
+		},
+
+		{
+			"name" : "Neutrophil",
+			"markers" : [
+				{
+					"genes" : ["FUT4+", "MPO+", "CSF3R+"],
+					"weight" : 0.6,
+					"comment" : "key markers"
+				},
+				{
+					"genes" : ["FCGR3A++", "FCGR3B+", "CEACAM8+"],
+					"weight" : 0.4,
+					"comment" : "important markers"
+				}
+			]
+		}				
 	]
 }

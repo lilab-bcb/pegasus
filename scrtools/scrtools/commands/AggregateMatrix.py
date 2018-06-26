@@ -10,8 +10,8 @@ Usage:
   scrtools aggregate_matrix -h
 
 Arguments:
-  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder of 10x Run; Reference, genome reference used for 10x cellranger. Count matrix locates at {Location}.
-  output_name       The output file name. output_name_10x.h5 will be generated. 
+  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger.
+  output_name       The output file name. 
 
 Options:
   --genome <genome>                Genome reference. [default: GRCh38]
@@ -20,6 +20,9 @@ Options:
   --google-cloud                   If files are stored in google cloud. Assuming google cloud sdk is installed.
   -h, --help                       Print out help information.
 
+Outputs:
+  output_name_10x.h5        A 10x-formatted HDF5 file containing the count matrix and associated attributes.
+       
 Examples:
   scrtools aggregate_matrix --genome GRCh38 --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
 	"""

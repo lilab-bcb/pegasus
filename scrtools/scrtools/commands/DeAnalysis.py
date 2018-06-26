@@ -23,6 +23,10 @@ Options:
   -p <threads>                     Use <threads> threads. [default: 1]
   -h, --help                       Print out help information.
 
+Outputs:
+  input_h5ad_file        DE results would be written back to the 'var' fields.
+  output_spreadsheet     An excel spreadsheet containing DE results. Each cluster has two tabs in the spreadsheet. One is for up-regulated genes and the other is for down-regulated genes.
+
 Examples:
   scrtools de_analysis --labels louvain_labels -p 26 --fisher --mwu --roc manton_bm.h5ad manton_bm_de.xlsx
     """

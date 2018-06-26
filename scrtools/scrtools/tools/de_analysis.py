@@ -13,17 +13,17 @@ import threading
 from natsort import natsorted
 
 
+
 # assume cluster labels from 1 to n
-def collect_contingency_table(data, labels = 'louvain_labels'):	
+def collect_contingency_table(data, X, labels = 'louvain_labels'):	
 	clusts = data.obs[labels].value_counts()
 	ct = np.zeros((data.var_names.size, clusts.size, 2), dtype = np.uint)
 	for label, count in clusts.iteritems():
 		i = int(label) - 1
 		mask = np.isin(data.obs[labels], label)
-		ct[:, i, 0] = data.X[mask].getnnz(axis = 0)
+		ct[:, i, 0] = X[mask].getnnz(axis = 0)
 		ct[:, i, 1] = count - ct[:, i, 0]
 	data.uns["contingency_table"] = ct
-
 
 
 def calc_stat_and_t_per_thread(thread_no, results, n_jobs, clusts, labels, gene_names, mat, sm1, sm2, ct, total):
@@ -90,10 +90,10 @@ def calc_stat_and_t_per_thread(thread_no, results, n_jobs, clusts, labels, gene_
 		print("Cluster {0} is processed.".format(clusts[i]))
 
 
-def collect_stat_and_t_test(data, clusts = None, labels = 'louvain_labels', n_jobs = 1):
+def collect_stat_and_t_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	start = time.time()
 
-	collect_contingency_table(data, labels = labels)
+	collect_contingency_table(data, X, labels = labels)
 	print("Contingency table is collected.")
 
 	ct = data.uns["contingency_table"]
@@ -106,7 +106,7 @@ def collect_stat_and_t_test(data, clusts = None, labels = 'louvain_labels', n_jo
 	total = ct.sum(axis = 1)
 
 	mask = np.isin(data.obs[labels], clusts)
-	mat = data.X[mask]
+	mat = X[mask]
 	sm1 = mat.sum(axis = 0).A1 # sum of moment 1
 	sm2 = mat.power(2).sum(axis = 0).A1 # sum of moment 2
 
@@ -146,11 +146,11 @@ def calc_fisher_per_thread(thread_no, results, n_jobs, clusts, gene_names, ct, t
 
 
 # clusts is a list of strings
-def fisher_test(data, clusts = None, labels = 'louvain_labels', n_jobs = 1):
+def fisher_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	start = time.time()
 	
 	if "contingency_table" not in data.uns:
-		collect_contingency_table(data, labels = labels)
+		collect_contingency_table(data, X, labels = labels)
 		print("Contingency table is collected.")
 
 	ct = data.uns["contingency_table"]
@@ -216,14 +216,14 @@ def calc_mwu_per_thread(thread_no, results, n_jobs, clusts, labels, gene_names, 
 		print("Cluster {0} is processed.".format(clusts[i]))
 
 
-def mwu_test(data, clusts = None, labels = 'louvain_labels', n_jobs = 1):
+def mwu_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	start = time.time()
 
 	if clusts is None:
 		clusts = [str(x + 1) for x in range(data.obs[labels].nunique())]
 	
 	mask = np.isin(data.obs[labels], clusts)
-	csc_mat = data.X[mask].tocsc()
+	csc_mat = X[mask].tocsc()
 
 	threads = [None] * n_jobs
 	results = [None] * n_jobs
@@ -287,14 +287,14 @@ def calc_roc_per_thread(thread_no, results, n_jobs, clusts, labels, gene_names, 
 		print("Cluster {0} is processed.".format(clusts[i]))
 
 
-def calc_roc_stats(data, clusts = None, labels = 'louvain_labels', n_jobs = 1):
+def calc_roc_stats(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	start = time.time()
 
 	if clusts is None:
 		clusts = [str(x + 1) for x in range(data.obs[labels].nunique())]
 	
 	mask = np.isin(data.obs[labels], clusts)
-	csc_mat = data.X[mask].tocsc()
+	csc_mat = X[mask].tocsc()
 
 	threads = [None] * n_jobs
 	results = [None] * n_jobs
@@ -381,25 +381,29 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 
 
 def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc):
+	start = time.time()
 	data = anndata.read_h5ad(input_file, backed = 'r+')
-	print("{0} is loaded.".format(input_file))
+	X = data.X[:]
+	end = time.time()
+	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
+
 	non_de = [x for x in ['gene_ids', 'n_cells', 'percent_cells', 'robust', 'selected'] if x in data.var]
 	de_results = [data.var[non_de]]
 
 	print("Begin t_test.")
-	de_results.extend(collect_stat_and_t_test(data, labels = labels, n_jobs = n_jobs))
+	de_results.extend(collect_stat_and_t_test(data, X, labels = labels, n_jobs = n_jobs))
 
 	if run_fisher:
 		print("Begin Fisher's exact test.")
-		de_results.extend(fisher_test(data, labels = labels, n_jobs = n_jobs))
+		de_results.extend(fisher_test(data, X, labels = labels, n_jobs = n_jobs))
 
 	if run_mwu:
 		print("Begin Mann-Whitney U test.")
-		de_results.extend(mwu_test(data, labels = labels, n_jobs = n_jobs))
+		de_results.extend(mwu_test(data, X, labels = labels, n_jobs = n_jobs))
 
 	if run_roc:
 		print("Begin calculating ROC statistics.")
-		de_results.extend(calc_roc_stats(data, labels = labels, n_jobs = n_jobs))
+		de_results.extend(calc_roc_stats(data, X, labels = labels, n_jobs = n_jobs))
 		
 	data.var = pd.concat(de_results, axis = 1)
 	data.write(input_file)

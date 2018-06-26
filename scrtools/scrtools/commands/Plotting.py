@@ -14,14 +14,14 @@ Usage:
 Arguments:
   plot_type              Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', and 'heatmap'.
   input_h5ad_file        Single cell data with clustering done by Scanpy in h5ad file format.
-  output_file            Output image file name.
+  output_file            Output image file.
 
 Options:
   --dpi <dpi>                        DPI value for the figure. [default: 500]
 
   --cluster-labels <attr>            Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
   --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition'.
-  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
   --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
   --restriction <restriction>...     Multiple <restriction> strings for different attributes. Each <restriction> takes the format of 'attr:value,value'. Only used for scatter. 
   --group <attr>                     <attr> is used to make group plots. In group plots, the first one contains all components in the group and the following plots show each component separately. This option is iused in 'scatter_groups' and 'scatter_gene_groups'. If <attr> is a semi-colon-separated string, parse the string as groups.
@@ -42,6 +42,8 @@ Options:
   --alpha <alpha>                    Point transparent parameter.
   --legend-fontsize <fontsize>       Legend font size.
   --use-raw                          Use anndata stored raw expression matrix. Only used by 'scatter_genes' and 'scatter_gene_groups'.
+
+  --do-not-show-all                  Do not show all components in group for scatter_groups.
 
   --show-zscore                      If show zscore in heatmap.
   --heatmap-title <title>            Title for heatmap.
@@ -80,7 +82,8 @@ Examples:
             'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
             'use_raw' : self.args['--use-raw'],
             'showzscore' : self.args['--show-zscore'],
-            'title' : self.args['--heatmap-title']
+            'title' : self.args['--heatmap-title'],
+            'showall' : not self.args['--do-not-show-all']
         }
         
         make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)

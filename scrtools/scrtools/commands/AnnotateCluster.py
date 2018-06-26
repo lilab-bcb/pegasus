@@ -8,7 +8,7 @@ class AnnotateCluster(Base):
 Annotate potential cell types for each cluster.
 
 Usage:
-  scrtools annotate_cluster [--minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+  scrtools annotate_cluster [--json-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
   scrtools annotate_cluster -h
 
 Arguments:
@@ -16,16 +16,19 @@ Arguments:
   output_file            Output annotation file.
 
 Options:
+  --json-file <file>                    JSON file for markers. Could also be human/mouse. [default: human]
   --minimum-report-score <score>        Minimum cell type score to report a potential cell type. [default: 0.5]
-  --do-not-use-non-de-genes             Do not count non DE genes as down regulated.
+  --do-not-use-non-de-genes             Do not count non DE genes as down-regulated.
   -h, --help                            Print out help information.
 
+Outputs:
+  output_file        This is a text file. For each cluster, all its putative cell types are listed in descending order of the cell type score. For each putative cell type, all markers support this cell type are listed. If one putative cell type has cell subtypes, all subtypes will be listed under this cell type.
 Examples:
   scrtools annotate_cluster manton_bm_de.h5ad manton_bm.anno.txt
     """
 
     def execute(self):
-        run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), self.args['--do-not-use-non-de-genes'])
+        run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), ignoreNA = self.args['--do-not-use-non-de-genes'], json_file = self.args['--json-file'])
 
         logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
         logger.add_output(self.args['<output_file>'])

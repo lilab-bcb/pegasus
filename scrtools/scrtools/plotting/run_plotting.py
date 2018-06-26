@@ -8,12 +8,12 @@ from . import plot_library, iplot_library
 
 
 pop_list = {
-	'composition' : {'basis', 'attrs', 'restrictions', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title'},
-	'scatter' : {'cluster', 'attr', 'group', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
-	'scatter_groups' : {'attr', 'attrs', 'restrictions', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
-	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title'},
-	'scatter_gene_groups' : {'cluster', 'attr', 'attrs', 'restrictions', 'genes', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title'},
-	'heatmap' : {'attr', 'basis', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'nrows', 'ncols', 'subplot_size', 'left', 'bottom', 'wspace', 'hspace', 'alpha', 'legend_fontsize'}
+	'composition' : {'basis', 'attrs', 'restrictions', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall'},
+	'scatter' : {'cluster', 'attr', 'group', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title', 'showall'},
+	'scatter_groups' : {'attr', 'attrs', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
+	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
+	'scatter_gene_groups' : {'cluster', 'attr', 'attrs', 'restrictions', 'genes', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
+	'heatmap' : {'attr', 'basis', 'attrs', 'restrictions', 'group', 'gene', 'style', 'stacked', 'logy', 'nrows', 'ncols', 'subplot_size', 'left', 'bottom', 'wspace', 'hspace', 'alpha', 'legend_fontsize', 'showall'}
 }
 
 def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
@@ -36,7 +36,8 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 	if plot_type == 'diffmap' or plot_type == 'diffmap_pca':
 		df = pd.DataFrame(adata.obsm['X_{}'.format(plot_type)][:, 0:3], index = adata.obs.index, columns = [basis + i for i in ['1', '2', '3']])
 		if kwargs['isgene']:
-			df.insert(0, 'Annotation', adata[:, kwargs['attr']].X)
+			coln = adata.var.index.get_loc(kwargs['attr'])
+			df.insert(0, 'Annotation', adata.X[:, coln].toarray().ravel())
 		else:
 			df.insert(0, 'Annotation', adata.obs[kwargs['attr']])
 		if not kwargs['isreal']:
@@ -46,7 +47,8 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 	else:
 		df = pd.DataFrame(adata.obsm['X_{}'.format(plot_type)], index = adata.obs.index, columns = [basis + i for i in ['1', '2']])
 		if kwargs['isgene']:
-			df.insert(0, 'Annotation', adata[:, kwargs['attr']].X)
+			coln = adata.var.index.get_loc(kwargs['attr'])
+			df.insert(0, 'Annotation', adata.X[:, coln].toarray().ravel())
 		else:
 			df.insert(0, 'Annotation', adata.obs[kwargs['attr']])
 		if not kwargs['isreal']:

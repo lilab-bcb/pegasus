@@ -187,7 +187,7 @@ def get_anndata_for_subclustering(data, show_attributes, show_values_for_attribu
 			print(key, 'corresponds to', subsets_dict[key])
 			obs_index = obs_index & np.isin(data.obs[key], value)	
 	data = data[obs_index, :]
-	obs_dict = {"obs_names" : data.obs_names.values}
+	obs_dict = {"obs_names" : data.obs_names.values, "parent_cluster_labels" : data.obs[cluster_labels]}
 	for attr in data.obs.columns:
 		if attr != "pseudotime":
 			if attr.find("_labels") < 0:
