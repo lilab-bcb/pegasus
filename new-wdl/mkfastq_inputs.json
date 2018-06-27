@@ -1,6 +1,5 @@
 {
   "cellranger.diskSpace": "100",
-  "cellranger.run": "mkfastq_data/tarred.tar",
-  "cellranger.csv": "mkfastq_data/cellranger-tiny-bcl-simple-1.2.0.csv",
-  "cellranger.flowcell": "H35KCBCXY"
+  "cellranger.bcl": "mkfastq_data/bcl.tar",
+  "cellranger.masterCsv": "master.csv"
 }

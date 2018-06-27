@@ -66,17 +66,23 @@ task CellRanger {
         import tarfile
         from subprocess import call
         dirs = dict()
+        sample = '${sampleId}'
+        i = 0
         for f in ["${sep='","' fastqs}"]:
-            file = os.path.dirname(f)
-            try:
-                tarfile.is_tarfile(f)
-                tar = tarfile.open(f)
-                tar.extractall()
-                names = tar.getnames()
-                tar.close()
-                dirs.setdefault(names[0].replace("./._", "./"), True)
-            except:
-                dirs.setdefault(file, True)
+            #TODO what happens when we have multiple flowcells, untarring will overwrite in the exec folder
+            # for now to avoid this lets use a super simple numerical index path to store ir
+            if f.endswith(sample + '.tar'):
+                file = os.path.dirname(f)
+                try:
+                    tarfile.is_tarfile(f)
+                    tar = tarfile.open(f)
+                    tar.extractall(path=str(i))
+                    names = tar.getnames()
+                    tar.close()
+                    dirs.setdefault(str(i) + '/' + names[0].replace("./._", "./"), True)
+                except:
+                    dirs.setdefault(file, True)
+            i+=1
         expect_cells = '${expectCells}'
         force_cells = '${forceCells}'
         secondary = '${secondary}'
@@ -86,7 +92,8 @@ task CellRanger {
         call_args.append('count')
         call_args.append('--jobmode=local')
         call_args.append('--transcriptome=transcriptome_dir')
-        call_args.append('--id=' + '${sampleId}')
+        call_args.append('--sample=' + sample)
+        call_args.append('--id=results_'+sample)
         call_args.append('--fastqs=' + ','.join(list(dirs.keys())))
         if secondary is not 'true':
             call_args.append('--nosecondary')
@@ -100,46 +107,46 @@ task CellRanger {
         CODE
         }
     output {
-        File barcodes = "${sampleId}/outs/filtered_gene_bc_matrices/${reference}/barcodes.tsv"
-        File genes = "${sampleId}/outs/filtered_gene_bc_matrices/${reference}/genes.tsv"
-        File matrix = "${sampleId}/outs/filtered_gene_bc_matrices/${reference}/matrix.mtx"
-        File qc = "${sampleId}/outs/metrics_summary.csv"
-        File report = "${sampleId}/outs/web_summary.html"
-        File sorted_bam = "${sampleId}/outs/possorted_genome_bam.bam"
-        File sorted_bam_index = "${sampleId}/outs/possorted_genome_bam.bam.bai"
-        File filtered_gene_h5 = "${sampleId}/outs/filtered_gene_bc_matrices_h5.h5"
-        File raw_gene_h5 = "${sampleId}/outs/raw_gene_bc_matrices_h5.h5"
-        File raw_barcodes = "${sampleId}/outs/raw_gene_bc_matrices/${reference}/barcodes.tsv"
-        File raw_genes = "${sampleId}/outs/raw_gene_bc_matrices/${reference}/genes.tsv"
-        File raw_matrix = "${sampleId}/outs/raw_gene_bc_matrices/${reference}/matrix.mtx"
-        File mol_info_h5 = "${sampleId}/outs/molecule_info.h5"
-        File cloupe = "${sampleId}/outs/cloupe.cloupe"
-        File tsne = "${sampleId}/outs/analysis/tsne/2_components/projection.csv"
-        File graph_clusters = "${sampleId}/outs/analysis/clustering/graphclust/clusters.csv"
-        File graph_diffexp = "${sampleId}/outs/analysis/diffexp/graphclust/differential_expression.csv"
-        File kmeans_clust_2 = "${sampleId}/outs/analysis/clustering/kmeans_2_clusters/clusters.csv"
-        File kmeans_clust_3 = "${sampleId}/outs/analysis/clustering/kmeans_3_clusters/clusters.csv" 
-        File kmeans_clust_4 = "${sampleId}/outs/analysis/clustering/kmeans_4_clusters/clusters.csv" 
-        File kmeans_clust_5 = "${sampleId}/outs/analysis/clustering/kmeans_5_clusters/clusters.csv" 
-        File kmeans_clust_6 = "${sampleId}/outs/analysis/clustering/kmeans_6_clusters/clusters.csv" 
-        File kmeans_clust_7 = "${sampleId}/outs/analysis/clustering/kmeans_7_clusters/clusters.csv" 
-        File kmeans_clust_8 = "${sampleId}/outs/analysis/clustering/kmeans_8_clusters/clusters.csv" 
-        File kmeans_clust_9 = "${sampleId}/outs/analysis/clustering/kmeans_9_clusters/clusters.csv" 
-        File kmeans_clust_10 = "${sampleId}/outs/analysis/clustering/kmeans_10_clusters/clusters.csv" 
-        File kmeans_diffexp_2 = "${sampleId}/outs/analysis/diffexp/kmeans_2_clusters/differential_expression.csv"
-        File kmeans_diffexp_3 = "${sampleId}/outs/analysis/diffexp/kmeans_3_clusters/differential_expression.csv"
-        File kmeans_diffexp_4 = "${sampleId}/outs/analysis/diffexp/kmeans_4_clusters/differential_expression.csv"
-        File kmeans_diffexp_5 = "${sampleId}/outs/analysis/diffexp/kmeans_5_clusters/differential_expression.csv"
-        File kmeans_diffexp_6 = "${sampleId}/outs/analysis/diffexp/kmeans_6_clusters/differential_expression.csv"
-        File kmeans_diffexp_7 = "${sampleId}/outs/analysis/diffexp/kmeans_7_clusters/differential_expression.csv"
-        File kmeans_diffexp_8 = "${sampleId}/outs/analysis/diffexp/kmeans_8_clusters/differential_expression.csv"
-        File kmeans_diffexp_9 = "${sampleId}/outs/analysis/diffexp/kmeans_9_clusters/differential_expression.csv"
-        File kmeans_diffexp_10 = "${sampleId}/outs/analysis/diffexp/kmeans_10_clusters/differential_expression.csv"
-        File pca_components = "${sampleId}/outs/analysis/pca/10_components/components.csv"
-        File pca_dispersion = "${sampleId}/outs/analysis/pca/10_components/dispersion.csv"
-        File pca_genes = "${sampleId}/outs/analysis/pca/10_components/genes_selected.csv"
-        File pca_projection = "${sampleId}/outs/analysis/pca/10_components/projection.csv"
-        File pca_variance = "${sampleId}/outs/analysis/pca/10_components/variance.csv"   
+        File barcodes = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/barcodes.tsv"
+        File genes = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/genes.tsv"
+        File matrix = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/matrix.mtx"
+        File qc = "results_${sampleId}/outs/metrics_summary.csv"
+        File report = "results_${sampleId}/outs/web_summary.html"
+        File sorted_bam = "results_${sampleId}/outs/possorted_genome_bam.bam"
+        File sorted_bam_index = "results_${sampleId}/outs/possorted_genome_bam.bam.bai"
+        File filtered_gene_h5 = "results_${sampleId}/outs/filtered_gene_bc_matrices_h5.h5"
+        File raw_gene_h5 = "results_${sampleId}/outs/raw_gene_bc_matrices_h5.h5"
+        File raw_barcodes = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/barcodes.tsv"
+        File raw_genes = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/genes.tsv"
+        File raw_matrix = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/matrix.mtx"
+        File mol_info_h5 = "results_${sampleId}/outs/molecule_info.h5"
+        File cloupe = "results_${sampleId}/outs/cloupe.cloupe"
+        File tsne = "results_${sampleId}/outs/analysis/tsne/2_components/projection.csv"
+        File graph_clusters = "results_${sampleId}/outs/analysis/clustering/graphclust/clusters.csv"
+        File graph_diffexp = "results_${sampleId}/outs/analysis/diffexp/graphclust/differential_expression.csv"
+        File kmeans_clust_2 = "results_${sampleId}/outs/analysis/clustering/kmeans_2_clusters/clusters.csv"
+        File kmeans_clust_3 = "results_${sampleId}/outs/analysis/clustering/kmeans_3_clusters/clusters.csv" 
+        File kmeans_clust_4 = "results_${sampleId}/outs/analysis/clustering/kmeans_4_clusters/clusters.csv" 
+        File kmeans_clust_5 = "results_${sampleId}/outs/analysis/clustering/kmeans_5_clusters/clusters.csv" 
+        File kmeans_clust_6 = "results_${sampleId}/outs/analysis/clustering/kmeans_6_clusters/clusters.csv" 
+        File kmeans_clust_7 = "results_${sampleId}/outs/analysis/clustering/kmeans_7_clusters/clusters.csv" 
+        File kmeans_clust_8 = "results_${sampleId}/outs/analysis/clustering/kmeans_8_clusters/clusters.csv" 
+        File kmeans_clust_9 = "results_${sampleId}/outs/analysis/clustering/kmeans_9_clusters/clusters.csv" 
+        File kmeans_clust_10 = "results_${sampleId}/outs/analysis/clustering/kmeans_10_clusters/clusters.csv" 
+        File kmeans_diffexp_2 = "results_${sampleId}/outs/analysis/diffexp/kmeans_2_clusters/differential_expression.csv"
+        File kmeans_diffexp_3 = "results_${sampleId}/outs/analysis/diffexp/kmeans_3_clusters/differential_expression.csv"
+        File kmeans_diffexp_4 = "results_${sampleId}/outs/analysis/diffexp/kmeans_4_clusters/differential_expression.csv"
+        File kmeans_diffexp_5 = "results_${sampleId}/outs/analysis/diffexp/kmeans_5_clusters/differential_expression.csv"
+        File kmeans_diffexp_6 = "results_${sampleId}/outs/analysis/diffexp/kmeans_6_clusters/differential_expression.csv"
+        File kmeans_diffexp_7 = "results_${sampleId}/outs/analysis/diffexp/kmeans_7_clusters/differential_expression.csv"
+        File kmeans_diffexp_8 = "results_${sampleId}/outs/analysis/diffexp/kmeans_8_clusters/differential_expression.csv"
+        File kmeans_diffexp_9 = "results_${sampleId}/outs/analysis/diffexp/kmeans_9_clusters/differential_expression.csv"
+        File kmeans_diffexp_10 = "results_${sampleId}/outs/analysis/diffexp/kmeans_10_clusters/differential_expression.csv"
+        File pca_components = "results_${sampleId}/outs/analysis/pca/10_components/components.csv"
+        File pca_dispersion = "results_${sampleId}/outs/analysis/pca/10_components/dispersion.csv"
+        File pca_genes = "results_${sampleId}/outs/analysis/pca/10_components/genes_selected.csv"
+        File pca_projection = "results_${sampleId}/outs/analysis/pca/10_components/projection.csv"
+        File pca_variance = "results_${sampleId}/outs/analysis/pca/10_components/variance.csv"   
     }
     
     runtime {
