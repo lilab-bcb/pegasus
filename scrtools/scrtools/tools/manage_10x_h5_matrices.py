@@ -75,6 +75,36 @@ def parse_restriction_string(rstr):
 
 
 def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_file, google_cloud=False):
+	"""Aggregate channel-specific 10x count matrices into one big count matrix.
+
+	This function takes as input a csv_file, which contains at least 3 columns — Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. It outputs a 10x-formatted HDF5 file for the big count matrix.
+	
+	Parameters
+	----------
+
+	csv_file : `str`
+		The CSV file containing information about each 10x channel.
+	genome : `str`
+		The genome each sample comes from.
+	restrictions : `list[str]`
+		A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
+	attributes : `list[str]`
+		A list of attributes need to be incorporated into the output count matrix.
+	output_file : `str`
+		The output count matrix file, normally the file name ends with '_10x.h5'.
+	google_cloud : `bool`, optional (default: `False`) 
+		If the channel-specific count matrices are stored in a google bucket. 
+
+	Returns
+	-------
+	
+	None
+
+	Examples
+	--------
+	>>> tools.aggregate_matrix('example.csv', 'GRCh38', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'], 'example_10x.h5')
+	"""
+
 	df = pd.read_csv(csv_file, header=0, index_col='Sample')
 	restrictions.append("Reference:{}".format(genome))
 	rvec = [parse_restriction_string(x) for x in restrictions]
