@@ -175,7 +175,6 @@ for sample in samples:
 	call_args.append(sample)
 	call(call_args)
 CODE
-
 }
 
 	output{
