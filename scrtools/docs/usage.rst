@@ -12,7 +12,7 @@ to see the help information::
 		scrtools -h | --help
 		scrtools -v | --version
 
-``scrtools`` has 7 sub-commands in 3 groups.
+``scrtools`` has 8 sub-commands in 4 groups.
 
 * Preprocessing:
 
@@ -23,9 +23,6 @@ to see the help information::
 	
 	cluster
 		Perform first-pass analysis using the count matrix generated from 'aggregate_matrix'. This subcommand could perform low quality cell filtration, batch correction, variable gene selection, dimension reduction, diffusion map calculation, graph-based clustering, tSNE visualization. The final results will be written into h5ad-formatted file, which Seurat could load.
-    
-    subcluster
-    	Perform sub-cluster analyses based on one or several clusters obtained by 'cluster'.
   		
     de_analysis
     	Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene.
@@ -40,6 +37,14 @@ to see the help information::
 			
 	iplot
 		Make interactive plots using plotly. The outputs are HTML pages. You can visualize diffusion maps with this sub-command.
+
+* Subclustering:
+	
+	view
+		View attribute (e.g. cluster labels) and their values. This subcommand is used to determine cells to run subcluster analysis.
+
+	subcluster
+    	Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
 
 
 
@@ -603,12 +608,54 @@ to see the usage information::
 
 ---------------------------------
 
+``scrtools view``
+^^^^^^^^^^^^^^^^^
+
+We may want to further perform sub-cluster analysis on a subset of cells. This sub-command helps us to define the subset.
+
+Type::
+
+	scrtools view -h
+
+to see the usage information::
+
+	Usage:
+		scrtools view [--show-attributes --show-gene-attributes --show-values-for-attributes <attributes>] <input_h5ad_file>
+		scrtools view -h
+
+* Arguments:
+
+	input_h5ad_file
+		Analyzed single cell data in h5ad format.
+
+* Options:
+
+	-\\-show-attributes
+  		Show the available sample attributes in the input dataset.
+
+	-\\-show-gene-attributes
+		Show the available gene attributes in the input dataset.
+
+	-\\-show-values-for-attributes <attributes>
+		Show the available values for specified attributes in the input dataset. <attributes> should be a comma-separated list of attributes.
+
+	\-h, -\\-help
+		Print out help information.
+
+* Examples::
+
+	scrtools view --show-attributes example.h5ad
+	scrtools view --show-gene-attributes example.h5ad
+	scrtools view --show-values-for-attributes louvain_labels,Donor example.h5ad
+
+
+---------------------------------
 
 
 ``scrtools subcluster``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-If there are clusters that we want to further cluster, we can run ``scrtools subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
+If there is a subset of cells that we want to further cluster, we can run ``scrtools subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
 
 Type::
 
@@ -617,7 +664,7 @@ Type::
 to see the usage information::
 
 	Usage:
-		scrtools subcluster [options] <input_file> <cluster_ids> <output_name>
+		scrtools subcluster [options] --subset-selection <subset-selection>... <input_file> <output_name>
 		scrtools subcluster -h
 
 * Arguments:
@@ -625,13 +672,13 @@ to see the usage information::
 	input_file
 		Single cell data with clustering done in h5ad format.
 
-	cluster_ids
-		Tell us which clusters (separated by comma) you want to perform subcluster task. IDs start from 1 and must be clusters in input_file.
-
   	output_name
   		Output file name. All outputs will use it as the prefix.
 
 * Options:
+
+	-\\-subset-selection <subset-selection>...
+		Specify which cells will be included in the subcluster analysis. Each <subset_selection> string takes the format of 'attr:value,...,value', which means select cells with attr in the values. If multiple <subset_selection> strings are specified, the subset of cells selected is the intersection of these strings.
 
 	\-p <number>, -\\-threads <number>
 		Number of threads. [default: 1]
@@ -757,4 +804,4 @@ to see the usage information::
 
 * Examples::
 
-	scrtools subcluster -p 20 --correct-batch-effect example.h5ad 1,3 example_sub
+	scrtools subcluster --subset_selection louvain_labels:1,3  --subset_selection Donor:1 -p 20 --correct-batch-effect example.h5ad example_sub

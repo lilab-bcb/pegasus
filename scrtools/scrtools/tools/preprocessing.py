@@ -174,26 +174,20 @@ def parse_subset_selections(subset_selections):
 			subsets_dict[attr] = value_str.split(',')
 	return subsets_dict
 
-def get_anndata_for_subclustering(data, show_attributes, show_values_for_attributes, subset_selections):	
-	if show_attributes:
-		print("Availbele attributes in input dataset: {0}".format(', '.join(data.obs.columns.values)))
-	if not show_values_for_attributes is None:
-		for attr in show_values_for_attributes.split(','):
-			print("Availbele values for attribute {0}: {1}.".format(attr, ', '.join(np.unique(data.obs[attr]))))
+def get_anndata_for_subclustering(data, subset_selections):	
 	obs_index = np.full_like(data.obs[data.obs.columns.values[0]], True)
-	if not subset_selections is None:
-		subsets_dict = parse_subset_selections(subset_selections)
-		for key, value in subsets_dict.items():
-			print(key, 'corresponds to', subsets_dict[key])
-			obs_index = obs_index & np.isin(data.obs[key], value)	
+	subsets_dict = parse_subset_selections(subset_selections)
+	for key, value in subsets_dict.items():
+		print(key, 'corresponds to', subsets_dict[key])
+		obs_index = obs_index & np.isin(data.obs[key], value)	
 	data = data[obs_index, :]
-	obs_dict = {"obs_names" : data.obs_names.values, "parent_cluster_labels" : data.obs[cluster_labels]}
+	obs_dict = {"obs_names" : data.obs_names.values}
 	for attr in data.obs.columns:
 		if attr != "pseudotime":
 			if attr.find("_labels") < 0:
 				obs_dict[attr] = data.obs[attr].values
 			else:
-				obs_dict[attr + '_parent'] = data.obs[attr].values
+				obs_dict['parent_' + attr] = data.obs[attr].values
 
 	var_dict = {"var_names" : data.var_names.values, "gene_ids": data.var["gene_ids"].values, "robust": data.var["robust"]}
 
@@ -210,4 +204,3 @@ def get_anndata_for_subclustering(data, show_attributes, show_values_for_attribu
 	print("{0} cells are selected.".format(newdata.shape[0]))
 	
 	return newdata
-

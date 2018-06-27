@@ -6,7 +6,7 @@ class SubClustering(Base):
 Run scrtools to obtain subclusters.
 
 Usage:
-  scrtools subcluster [options] [--subset-selection <subset-selection>...] <input_file> <output_name>
+  scrtools subcluster [options] --subset-selection <subset-selection>... <input_file> <output_name>
   scrtools subcluster -h
 
 Arguments:
@@ -14,9 +14,7 @@ Arguments:
   output_name            Output file name. All outputs will use it as the prefix.
 
 Options:
-  --subset-selection <subset-selection>...         Attributes and values to perform subcluster task on. Multiple <subset_selection> strings can be specified, each <subset_selection> takes the format of 'attr:value,value'. 
-  --show-attributes                                Show the available attributes in the input dataset.
-  --show-values-for-attributes <attributes>        Show the available values for specified attributes in the input dataset. <attributes> should be a comma-separated list of attributes.
+  --subset-selection <subset-selection>...         Specify which cells will be included in the subcluster analysis. Each <subset_selection> string takes the format of 'attr:value,...,value', which means select cells with attr in the values. If multiple <subset_selection> strings are specified, the subset of cells selected is the intersection of these strings.
 
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --correct-batch-effect                           Correct for batch effects for subclustering task.
@@ -74,9 +72,6 @@ Outputs:
   
 Examples:
   scrtools subcluster -p 20 --correct-batch-effect --subset_selection louvain_labels:3,6  --subset_selection Condition:CB_nonmix  manton_bm.h5ad manton_bm_subset
-  scrtools subcluster -p 20 --correct-batch-effect --show_attributes manton_bm.h5ad manton_bm_tmp
-  scrtools subcluster -p 20 --correct-batch-effect --show_attributes --show_values_for_attributes louvain_labels,Condition manton_bm.h5ad manton_bm_tmp
-  scrtools subcluster -p 20 --correct-batch-effect --show_attributes --show_values_for_attributes louvain_labels,Condition --subset_selection Condition:CB_nonmix  manton_bm.h5ad manton_bm_subset
     """
 
     def execute(self):
@@ -85,8 +80,6 @@ Examples:
             'subcluster' : True,
             
             'subset_selections' : self.args['--subset-selection'],
-            'show_attributes' : self.args['--show-attributes'],
-            'show_values_for_attributes' : self.args['--show-values-for-attributes'],
 
             'n_jobs' : int(self.args['--threads']),
             'genome' : None,

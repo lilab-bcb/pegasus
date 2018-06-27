@@ -23,6 +23,7 @@ Options:
 
 Outputs:
   output_file        This is a text file. For each cluster, all its putative cell types are listed in descending order of the cell type score. For each putative cell type, all markers support this cell type are listed. If one putative cell type has cell subtypes, all subtypes will be listed under this cell type.
+  
 Examples:
   scrtools annotate_cluster manton_bm_de.h5ad manton_bm.anno.txt
     """
