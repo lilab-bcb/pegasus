@@ -35,7 +35,6 @@ task getCSV{
 	File masterCsv
 
 	command {
-		set -e
 		# create the CSV File for this flowcell
 		set -e
 		mkdir fastqs
