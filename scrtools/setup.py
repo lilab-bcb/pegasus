@@ -28,8 +28,8 @@ requires = ['anndata>=0.5',
 			'pybind11',
 			'umap-learn',
 			'fitsne',
-			'hdbscan',
-			'hnswlib'
+			'hdbscan'
+			# 'hnswlib'
 		  ]
 
 setup(
