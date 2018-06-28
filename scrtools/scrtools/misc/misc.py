@@ -50,6 +50,7 @@ def search_de_genes(data, gene_list, test = 'fisher', thre = 1.5):
 	test : `str`, optional (default: `fisher`)
 		Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
 	thre : `float`, optional (default: `1.5`)
+		Fold change threshold to determine if the marker is a strong DE (`++` or `--`) or weak DE (`+` or `-`).
 	
 	Returns
 	-------

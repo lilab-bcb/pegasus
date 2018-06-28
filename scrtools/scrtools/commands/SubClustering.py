@@ -71,7 +71,7 @@ Outputs:
   output_name.loom        Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
-  scrtools subcluster -p 20 --correct-batch-effect --subset_selection louvain_labels:3,6  --subset_selection Condition:CB_nonmix  manton_bm.h5ad manton_bm_subset
+  scrtools subcluster -p 20 --correct-batch-effect --subset-selection louvain_labels:3,6 --subset-selection Condition:CB_nonmix --run-tsne --run-louvain manton_bm.h5ad manton_bm_subset
     """
 
     def execute(self):
