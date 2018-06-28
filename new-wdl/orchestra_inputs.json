@@ -1,12 +1,14 @@
 {
   "orchestra.masterCsv":"master.csv",
   "orchestra.referenceName": "GRCh38",
-  "orchestra.sampleIds": ["test_sample"],
   "orchestra.expectCells": 1000,
   "orchestra.secondary": true,
-  "orchestra.bcls": ["mkfastq_data/bcl.tar"],
   "orchestra.transcriptomeTarGz": "count_data/GRCh38.tar.gz",
   "orchestra.diskSpace": "100",
+  "orchestra.cores": "1",
+  "orchestra.memory": "16",
+  "orchestra.preemptible": "2",
   "orchestra.do_force_cells": false,
-  "orchestra.chemistry": "threeprime"
+  "orchestra.chemistry": "threeprime",
+  "orchestra.fastq_output_directory": "~/Desktop/fastqs/"
 }

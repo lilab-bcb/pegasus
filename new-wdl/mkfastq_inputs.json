@@ -1,5 +1,9 @@
 {
   "cellranger.diskSpace": "100",
-  "cellranger.bcl": "mkfastq_data/bcl.tar",
-  "cellranger.masterCsv": "master.csv"
+  "cellranger.bcl": "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/bcl",
+  "cellranger.masterCsv": "master.csv",
+  "cellranger.output_directory": "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/fastqs/",
+  "cellranger.cores": "1",
+  "cellranger.memory": "16",
+  "cellranger.preemptible": "2"
 }

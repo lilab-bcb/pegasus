@@ -1,14 +1,23 @@
 workflow cellranger {
     String sampleId
-    Array[File] fastqs
+    Array[String] fastqs
     String referenceName
-    File transcriptomeTarGz
+    File transcriptome_file = (if referenceName == 'GRCh38' 
+                                then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
+                                else (if referenceName == 'mm10' 
+                                        then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
+                                        else (if referenceName == 'GRCh38_and_mm10'
+                                                then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
+                                                else referenceName)))
     Boolean? secondary
     Int? expectCells
     String diskSpace
     Int? forceCells
     Boolean? do_force_cells
     String? chemistry
+    String memory
+    String cores
+    String preemptible
 
     call CellRanger {
         input:
@@ -21,7 +30,10 @@ workflow cellranger {
         diskSpace = diskSpace,
         forceCells = forceCells,
         do_force_cells = do_force_cells,
-        chemistry = chemistry
+        chemistry = chemistry,
+        memory = memory,
+        cores = cores,
+        preemptible = preemptible
    }
    
    call ConvertCellRangerOutput {
@@ -39,13 +51,16 @@ workflow cellranger {
        km10 = CellRanger.kmeans_clust_10,
        pca = CellRanger.pca_projection,
        tsne = CellRanger.tsne,
-       diskSpace = diskSpace
+       diskSpace = diskSpace,
+       memory = memory,
+       cores = cores,
+       preemptible = preemptible
    }
 }
 
 task CellRanger {
     String sampleId
-    Array[File] fastqs
+    Array[String] fastqs
     String reference
     File transcriptomeTarGz
     Int? expectCells
@@ -54,6 +69,9 @@ task CellRanger {
     Int? forceCells
     Boolean? do_force_cells
     String? chemistry
+    String memory
+    String cores
+    String preemptible
 
     command {
         set -e
@@ -65,23 +83,14 @@ task CellRanger {
         import os
         import tarfile
         from subprocess import call
-        dirs = dict()
-        sample = '${sampleId}'
+        dirs = set()
+        sample = "${sampleId}"
         i = 0
         for f in ["${sep='","' fastqs}"]:
-            #TODO what happens when we have multiple flowcells, untarring will overwrite in the exec folder
-            # for now to avoid this lets use a super simple numerical index path to store ir
-            if f.endswith(sample + '.tar'):
-                file = os.path.dirname(f)
-                try:
-                    tarfile.is_tarfile(f)
-                    tar = tarfile.open(f)
-                    tar.extractall(path=str(i))
-                    names = tar.getnames()
-                    tar.close()
-                    dirs.setdefault(str(i) + '/' + names[0].replace("./._", "./"), True)
-                except:
-                    dirs.setdefault(file, True)
+            # get the fastqs
+            call(["mkdir", str(i)])
+            call(["gsutil", "-q", "-m", "cp", "-r", f, str(i)])
+            dirs.add(str(i)+"/" +sample)
             i+=1
         expect_cells = '${expectCells}'
         force_cells = '${forceCells}'
@@ -94,7 +103,7 @@ task CellRanger {
         call_args.append('--transcriptome=transcriptome_dir')
         call_args.append('--sample=' + sample)
         call_args.append('--id=results_'+sample)
-        call_args.append('--fastqs=' + ','.join(list(dirs.keys())))
+        call_args.append('--fastqs=' + ','.join(dirs))
         if secondary is not 'true':
             call_args.append('--nosecondary')
         if force_cells is not '':
@@ -150,13 +159,13 @@ task CellRanger {
     }
     
     runtime {
-        docker: "singlecellportal/cell-ranger-count-2.1.1"
-        memory: "16 GB"
-        bootDiskSizeGb: 12
-        disks: "local-disk ${diskSpace} HDD"
-        cpu: 1
-        preemptible: 2
-    }
+            docker: "singlecellportal/cell-ranger-count-2.1.1"
+            memory: "${memory} GB"
+            bootDiskSizeGb: 12
+            disks: "local-disk ${diskSpace} HDD"
+            cpu: "${cores}"
+            preemptible: "${preemptible}"
+        }
 }
     
 task ConvertCellRangerOutput {
@@ -174,6 +183,9 @@ task ConvertCellRangerOutput {
     File pca
     File tsne
     String diskSpace
+    String memory
+    String cores
+    String preemptible
     
     command <<<
         python /software/scripts/cell_ranger_to_scp.py \
@@ -201,11 +213,11 @@ task ConvertCellRangerOutput {
     }
 
     runtime {
-        docker: "singlecellportal/cell-ranger-count-2.1.1"
-        memory: "16 GB"
-        bootDiskSizeGb: 12
-        disks: "local-disk ${diskSpace} HDD"
-        cpu: 1
-        preemptible: 2
-    }
+            docker: "singlecellportal/cell-ranger-count-2.1.1"
+            memory: "${memory} GB"
+            bootDiskSizeGb: 12
+            disks: "local-disk ${diskSpace} HDD"
+            cpu: "${cores}"
+            preemptible: "${preemptible}"
+        }
 }
