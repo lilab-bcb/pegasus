@@ -76,10 +76,17 @@ def calc_stat_and_t_per_thread(thread_no, results, n_jobs, clusts, labels, gene_
 		percents = ct[:, i, 0] / (ct[:, i, 0] + ct[:, i, 1]) * 100.0
 		cpt = total - ct[:, i, :]
 		percents_other = cpt[:, 0] / (cpt[:, 0] + cpt[:, 1]) * 100.0
-		
+
+		idx = percents > 0.0
+		idx_other = percents_other > 0.0
+		percent_fold_change[(~idx) & (~idx_other)] = 0.0
+		percent_fold_change[idx & (~idx_other)] = np.inf
+		percent_fold_change[idx_other] = percents[idx_other] / percents_other[idx_other]
+
 		df = pd.DataFrame({"percentage_{0}".format(clusts[i]): percents,
 						   "percentage_other_{0}".format(clusts[i]): percents_other,
 						   "mean_log_expression_{0}".format(clusts[i]): mean1,
+						   "percentage_fold_change_{0}".format(clusts[i]): percent_fold_change,
 						   "log_fold_change_{0}".format(clusts[i]): log_fold_change,
 						   "WAD_score_{0}".format(clusts[i]): wads,
 						   "t_pval_{0}".format(clusts[i]): pvals,
@@ -314,7 +321,8 @@ def calc_roc_stats(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1
 	return result_list
 
 
-def format_short_output_cols(df, cols_short_format):		
+def format_short_output_cols(df, cols_short_format):
+	""" Round related float columns to 3 decimal points."""		
 	cols_short_format_idx = [df.columns.get_loc(c) for c in df.columns if c in cols_short_format]
 	df.iloc[:,cols_short_format_idx] = df.iloc[:,cols_short_format_idx].round(3)
 	return df
@@ -326,7 +334,7 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 	tests = [x for x in ['t', 'fisher', 'mwu'] if "{0}_qval_{1}".format(x, clusts[0]) in df.columns]
 	has_roc = "auc_{0}".format(clusts[0]) in df.columns
 	
-	cols = ["percentage", "percentage_other", "mean_log_expression", "log_fold_change", "WAD_score"]	
+	cols = ["percentage", "percentage_other", "percentage_fold_change", "mean_log_expression", "log_fold_change", "WAD_score"]	
 	if has_roc:
 		cols.extend(["auc", "predpower"])		
 	if has_roc:
