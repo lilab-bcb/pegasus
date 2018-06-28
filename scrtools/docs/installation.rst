@@ -13,9 +13,14 @@ Install **scrtools** locally via Miniconda_::
 	conda install -y -c conda-forge fftw
 	export CPATH=$CPATH:/users/foo/miniconda3/envs/scrtools/include
 	pip install pybind11
+	git clone https://github.com/nmslib/hnsw.git hnswlib
+	cd hnswlib/python_bindings
+	python setup.py install
+	cd ../..
 	git clone https://github.com/broadinstitute/scRNA-Seq.git scRNA-Seq
 	cd scRNA-Seq/scrtools
 	pip install .
+	cd ../..
 
 Use **scrtools** in UGER
 ++++++++++++++++++++++++
