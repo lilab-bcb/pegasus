@@ -34,6 +34,30 @@ def read_10x_h5_file(input_h5, genome):
 	return data
 
 def read_input(input_file, is_raw = True, genome = 'GRCh38'):
+	"""Load either 10x-formatted raw count matrix or h5ad-formatted processed expression matrix into memory.
+
+	This function is used to load input data into memory. If the input is 10x-formatted raw count matrix, the whole matrix will be loaded into the memory. Otherwise, only the sample and gene attributes are loaded.
+	
+	Parameters
+	----------
+
+	input_file : `str`
+		Input file name.
+	is_raw : `bool`, optional (default: `True`)
+		If input file is 10x-formatted raw count matrix.
+	genome : `str`, optional (default: `GRCh38`)
+		The genome used to produce raw count matrices.
+
+	Returns
+	-------
+	`anndata` object
+		An `anndata` object contains the count matrix.
+
+	Examples
+	--------
+	>>> adata = tools.read_input('example_10x.h5', is_raw = True, genome = 'mm10')
+	"""
+
 	if is_raw:
 		data = read_10x_h5_file(input_file, genome)
 		data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]

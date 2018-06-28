@@ -71,11 +71,51 @@ def as_category(labels):
 def get_marker_size(nsamples):
 	return (240000.0 if nsamples > 300000 else 120000.0) / nsamples
 
-### Sample usage:
-###    fig = plot_composition(data, 'louvain_labels', 'Individual', style = 'normalized', stacked = False)
 def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, logy = False, subplot_size = (6, 4), left = 0.15, bottom = None, wspace = 0.2, hspace = None):
+	"""Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
+	
+	This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
+
+	Parameters
+	----------
+
+	data : `anndata` object
+		Single cell expression data as an anndata object.
+	cluster : `str`
+		A string represents cluster labels, e.g. louvain_labels.
+	attr: `str`
+		A sample attribute representing the condition, e.g. Donor.
+	style: `str`, optional (default: `frequency`)
+		Composition plot style. Can be either `frequency`, `count`, or 'normalized'. Within each cluster, the `frequency` style show the ratio of cells from each condition over all cells in the cluster, the `count` style just shows the number of cells from each condition, the `normalized` style shows the percentage of cells from the condition in this cluster over the total number of cells from the condition for each condition. 
+	stacked: `bool`, optional (default: `True`)
+		If stack the bars from each condition.
+	logy: `bool`, optional (default: `False`)
+		If show the y-axis in log10 scale
+	subplot_size: `tuple`, optional (default: `(6, 4)`)
+		The plot size (width, height) in inches.
+	left: `float`, optional (default: `0.15`)
+		This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
+	bottom: `float`, optional (default: `0.15`)
+		This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]),
+	wspace: `float`, optional (default: `0.2`)
+		This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
+	hspace: `float`, optional (defualt: `0.15`)
+		This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
+
+	Returns
+	-------
+
+	`Figure` object
+		A `matplotlib.figure.Figure` object containing the composition plot.
+
+	Examples
+	--------
+	>>> fig = plotting.plot_composition(data, 'louvain_labels', 'Donor', style = 'normalized', stacked = False)
+	"""
+
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, ax = get_subplot_layouts(**kwargs)
+
 	df = pd.crosstab(data.obs[cluster], data.obs[attr])
 	df = df.reindex(index = natsorted(df.index.values), columns = natsorted(df.columns.values))
 
