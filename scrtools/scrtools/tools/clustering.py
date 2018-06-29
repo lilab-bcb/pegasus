@@ -9,7 +9,8 @@ from sklearn.cluster import KMeans
 from natsort import natsorted
 import threading
 
-
+import ctypes
+import ctypes.util
 
 def construct_graph(W, directed = True):
 	s, t = W.nonzero()
@@ -58,20 +59,29 @@ def run_hdbscan(data, rep_key, n_jobs = 1, min_cluster_size = 50, min_samples = 
 
 
 
+def set_numpy_thread(number):
+	old_n = 0
+	openblas_loc = ctypes.util.find_library('openblas')
+	if openblas_loc is not None:
+		openblas_lib = ctypes.cdll.LoadLibrary(openblas_loc)
+		old_n = openblas_lib.openblas_get_num_threads()
+		openblas_lib.openblas_set_num_threads(number)
+	else:
+		mkl_loc = ctypes.util.find_library('mkl_rt')
+		if mkl_loc is not None:
+			mkl_lib = ctypes.cdll.LoadLibrary(mkl_loc)
+			old_n = mkl_lib.mkl_get_max_threads()
+			mkl_lib.mkl_set_num_threads(ctypes.byref(ctypes.c_int(number)))
+	return old_n
+
+
 def run_kmeans(data, rep_key, n_clusters, n_init = 10, n_jobs = 1, random_state = 0):
 	start = time.time()
 
-	# make sure numpy is single threaded here
-	import ctypes
-	openblas_lib = ctypes.cdll.LoadLibrary(ctypes.util.find_library('openblas'))
-	old_n = openblas_lib.openblas_get_num_threads()
-	openblas_lib.openblas_set_num_threads(1)
-
+	old_n = set_numpy_thread(1)
 	km = KMeans(n_clusters = n_clusters, n_init = n_init, n_jobs = n_jobs, random_state = random_state)
 	km.fit(data.obsm[rep_key].astype('float64'))
-
-	openblas_lib.openblas_set_num_threads(old_n)
-	
+	set_numpy_thread(old_n)
 
 	ids, counts = np.unique(km.labels_, return_counts = True)
 	label_map = dict(zip(ids[np.argsort(counts)[::-1]], [str(x + 1) for x in range(len(counts))]))
@@ -100,11 +110,7 @@ def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random
 	np.random.seed(random_state)
 	seeds = np.random.randint(np.iinfo(np.int32).max, size = n_init)
 	
-	# make sure numpy is single threaded here
-	import ctypes
-	openblas_lib = ctypes.cdll.LoadLibrary(ctypes.util.find_library('openblas'))
-	old_n = openblas_lib.openblas_get_num_threads()
-	openblas_lib.openblas_set_num_threads(1)
+	old_n = set_numpy_thread(1)
 
 	threads = [None] * n_jobs
 	results = [None] * n_jobs
@@ -117,8 +123,8 @@ def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random
 	for i in range(n_jobs):
 		threads[i].join()
 
-	openblas_lib.openblas_set_num_threads(old_n)
-
+	set_numpy_thread(old_n)
+	
 	labels = list(zip(*[x for y in results for x in y]))
 	uniqs = np.unique(labels, axis = 0)
 	transfer_dict = {tuple(k):v for k, v in zip(uniqs, range(uniqs.shape[0]))}
