@@ -1,11 +1,10 @@
-import "scRNA-Seq/new-wdl/mkfastq.wdl" as mkfastq
-import "scRNA-Seq/new-wdl/count.wdl" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/10/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/6/plain-WDL/descriptor" as count
 
 workflow orchestra {
   File masterCsv
   String referenceName
   String fastq_output_directory
-  File transcriptomeTarGz
   Boolean? secondary
   Int? expectCells
   String diskSpace
@@ -58,7 +57,6 @@ workflow orchestra {
           sampleId = sampleId,
           fastqs = filter.filteredPaths,
           referenceName = referenceName,
-          transcriptomeTarGz = transcriptomeTarGz,
           secondary = secondary,
           expectCells = expectCells,
           diskSpace = diskSpace,
@@ -81,7 +79,6 @@ task parseCsv {
 
   command {
     set -e
-    mkdir fastqs
     ln -s /usr/bin/python3 python
     export PATH=$PATH:.
     python <<CODE
@@ -94,11 +91,12 @@ task parseCsv {
     for item in bcl_paths:
       bcl_file.write("%s\n" % item)
     bcl_file.close()
-    sampleIds = set(df['sample'].tolist())
+    sampleIds = set(df['Sample'].tolist())
     samples_file = open('samples.txt', 'w+')
     for item in sampleIds:
       samples_file.write("%s\n" % item)
     samples_file.close()
+
     CODE
   }
 
@@ -134,19 +132,22 @@ task filterSamples {
     python <<CODE
     import os
     import pandas as pd
-    from subproccess import run
+    from subprocess import run
+    from subprocess import check_output
 
     # Now we have a list of every sample
     samples = []
     for f in ["${sep='","' paths}"]:
-      samples = samples + run(["gsutil", "ls", f]).split("\n")
+      samples = samples + check_output(["gsutil", "ls", f]).decode("utf-8").split("\n")
 
-    key = "${sample}"
+    key = "${sample}" + "/"
     paths_list = open('paths.txt', 'w+')
     for path in samples:
       if path.endswith(key):
-        bcl_file.write("%s\n" % path)
+        paths_list.write("%s\n" % path)
     paths_list.close()
+
+    CODE
   }
 
   output {

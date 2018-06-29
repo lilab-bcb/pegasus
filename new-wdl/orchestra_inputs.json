@@ -3,7 +3,6 @@
   "orchestra.referenceName": "GRCh38",
   "orchestra.expectCells": 1000,
   "orchestra.secondary": true,
-  "orchestra.transcriptomeTarGz": "count_data/GRCh38.tar.gz",
   "orchestra.diskSpace": "100",
   "orchestra.cores": "1",
   "orchestra.memory": "16",

@@ -24,7 +24,7 @@ workflow cellranger {
         sampleId = sampleId,
         fastqs = fastqs,
         reference = referenceName,
-        transcriptomeTarGz = transcriptomeTarGz,
+        transcriptome_file = transcriptome_file,
         secondary = secondary,
         expectCells = expectCells,
         diskSpace = diskSpace,
@@ -62,7 +62,7 @@ task CellRanger {
     String sampleId
     Array[String] fastqs
     String reference
-    File transcriptomeTarGz
+    File transcriptome_file
     Int? expectCells
     Boolean? secondary
     String diskSpace
@@ -76,7 +76,7 @@ task CellRanger {
     command {
         set -e
         mkdir transcriptome_dir
-        tar xf ${transcriptomeTarGz} -C transcriptome_dir --strip-components 1
+        tar xf ${transcriptome_file} -C transcriptome_dir --strip-components 1
         ln -s /usr/bin/python3 python
         export PATH=$PATH:.
         python <<CODE
@@ -90,7 +90,7 @@ task CellRanger {
             # get the fastqs
             call(["mkdir", str(i)])
             call(["gsutil", "-q", "-m", "cp", "-r", f, str(i)])
-            dirs.add(str(i)+"/" +sample)
+            dirs.add(str(i)+"/" +sample+"/")
             i+=1
         expect_cells = '${expectCells}'
         force_cells = '${forceCells}'
