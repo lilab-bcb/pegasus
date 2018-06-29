@@ -156,7 +156,7 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 
 	# delete temporary file
 	if google_cloud: 
-		check_call(['rm', '-f', input_h5d_file])
+		check_call(['rm', '-f', input_hd5_file])
 
 	out_hd5["matrix"] = hstack(out_hd5["matrix"], "csc")
 	out_hd5["barcodes"] = np.concatenate(out_hd5["barcodes"])

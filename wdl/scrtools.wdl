@@ -1,4 +1,4 @@
-import "../scrtools_tasks.wdl" as tasks
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools_tasks/versions/2/plain-WDL/descriptor" as tasks
 
 workflow scrtools {
 	File input_count_matrix_csv
@@ -108,6 +108,37 @@ workflow scrtools {
 	Int? fle_n_steps
 
 
+	# for de_analysis and annotate_cluster
+
+	# If perform de analysis
+	Boolean? perform_de_analysis
+	# Specify the cluster labels used for differential expression analysis. [default: louvain_labels]
+	String? cluster_labels
+	# Control false discovery rate at <alpha>. [default: 0.05]
+	Float? alpha
+	# Calculate Fisher’s exact test.
+	Boolean? fisher
+	# Calculate Mann-Whitney U test.
+	Boolean? mwu
+	# Calculate area under cuver in ROC curve.
+	Boolean? roc
+
+	# If also annotate cell types for clusters based on DE results.
+	Boolean? annotate_cluster
+	# Organism, could either be "human" or "mouse" [default: human]
+	String? organism
+	# Minimum cell type score to report a potential cell type. [default: 0.5]
+	Float? minimum_report_score
+
+
+	# for plot
+
+	# Takes the format of "label:attr,label:attr,...,label:attr". If non-empty, generate composition plot for each "label:attr" pair. "label" refers to cluster labels and "attr" refers to sample conditions.
+	String? plot_composition
+	# Takes the format of "attr,attr,...,attr". If non-empty, plot attr colored tSNEs side by side. 
+	String? plot_tsne
+	# Takes the format of "attr,attr,...,attr". If non-empty, generate attr colored 3D interactive plot. The 3 coordinates are the first 3 PCs of all diffusion components.
+	String? plot_diffmap
 
 
 
@@ -123,7 +154,7 @@ workflow scrtools {
 			preemptible = preemptible
 	}
 
-	call tasks.run_scrtools_cluster {
+	call tasks.run_scrtools_cluster as cluster {
 		input:
 			input_10x_file = aggregate_matrices.output_10x_h5,
 			output_name = out_name,
@@ -169,5 +200,99 @@ workflow scrtools {
 			memory = memory,
 			diskSpace = diskSpace,
 			preemptible = preemptible
+	}
+
+	call tasks.run_scrtools_de_analysis as de_analysis {
+		input:
+			input_h5ad = cluster.output_h5ad,
+			output_name = out_name,
+			perform_de_analysis = perform_de_analysis,
+			labels = cluster_labels,
+			alpha = alpha,
+			fisher = fisher,
+			mwu = mwu,
+			roc = roc,
+			annotate_cluster = annotate_cluster,
+			organism = organism,
+			minimum_report_score = minimum_report_score,
+			num_cpu = num_cpu,
+			memory = memory,
+			diskSpace = diskSpace,
+			preemptible = preemptible
+
+	}
+
+	call tasks.run_scrtools_plot as plot {
+		input:
+			input_h5ad = cluster.output_h5ad,
+			output_name = out_name,
+			plot_composition = plot_composition,
+			plot_tsne = plot_tsne,
+			plot_diffmap = plot_diffmap,
+			memory = memory,
+			diskSpace = diskSpace,
+			preemptible = preemptible
+	}
+
+	call organize_results {
+		input:
+			output_name = output_name,
+			output_10x_h5 = aggregate_matrices.output_10x_h5,
+			output_h5ad = cluster.output_h5ad,
+			output_filt_xlsx = cluster.output_filt_xlsx,
+			output_loom_file = cluster.output_loom_file,
+			output_de_h5ad = de_analysis.output_de_h5ad,
+			output_de_xlsx = de_analysis.output_de_xlsx,
+			output_anno_file = de_analysis.output_anno_file,
+			output_pngs = plot.output_pngs,
+			output_htmls = plot.output_htmls,
+			diskSpace = diskSpace,
+			preemptible = preemptible
+	}
+}
+
+task organize_results {
+	String output_name
+	Int diskSpace
+	Int preemptible
+	File? output_10x_h5
+	File? output_h5ad
+	File? output_filt_xlsx
+	File? output_loom_file
+	File? output_de_h5ad
+	File? output_de_xlsx
+	File? output_anno_file
+	Array[File]? output_pngs
+	Array[File]? output_htmls
+
+	command {
+		set -e
+		export TMPDIR=/tmp
+
+		python <<CODE
+		import os
+		from subprocess import check_call
+
+		dest = os.path.dirname('${output_name}') + '/'
+		files = ['${output_10x_h5}', '${output_filt_xlsx}', '${output_loom_file}', '${output_de_xlsx}', '${output_anno_file}']
+		files.append('${output_h5ad}' if '${output_de_h5ad}' is '' else '${output_de_h5ad}')
+		files.extend('${sep="," output_pngs}'.split(','))
+		files.extend('${sep="," output_htmls}'.split(','))
+
+		for file in files:
+			if file is not '':
+				call_args = ['gsutil', '-q', 'cp', file, dest]
+				print(' '.join(call_args))
+				check_call(call_args)
+		CODE
+	}
+
+	runtime {
+		docker: "regevlab/scrtools"
+		memory: "30 GB"
+		bootDiskSizeGb: 12
+		disks: "local-disk ${diskSpace} HDD"
+		cpu: 1
+		preemptible: "${preemptible}"
 	}
 }

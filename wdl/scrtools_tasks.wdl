@@ -1,3 +1,6 @@
+workflow scrtools_tasks {
+}
+
 task run_scrtools_aggregate_matrices {
 	File input_count_matrix_csv
 	String output_name
@@ -14,7 +17,7 @@ task run_scrtools_aggregate_matrices {
 
 		python <<CODE
 		from subprocess import check_call
-		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}'] #, '--google-cloud']
+		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}', '--google-cloud']
 		if '${genome}' is not '':
 			call_args.extend(['--genome', '${genome}'])
 		if '${restrictions}' is not '':
@@ -214,6 +217,7 @@ task run_scrtools_de_analysis {
 	Int memory
 	Int diskSpace
 	Int preemptible
+	Boolean? perform_de_analysis
 	String? labels
 	Float? alpha
 	Boolean? fisher
@@ -230,33 +234,37 @@ task run_scrtools_de_analysis {
 
 		python <<CODE
 		from subprocess import check_call
-		call_args = ['scrtools', 'de_analysis', '${input_h5ad}', '${output_name}' + '_de.xlsx', '-p', '${num_cpu}']
-		if '${labels}' is not '':
-			call_args.extend(['--labels', '${labels}'])
-		if '${alpha}' is not '':
-			call_args.extend(['--alpha', '${alpha}'])
-		if '${fisher}' is 'true':
-			call_args.append('--fisher')
-		if '${mwu}' is 'true':
-			call_args.append('--mwu')
-		if '${roc}' is 'true':
-			call_args.append('--roc')
-		print(' '.join(call_args))
-		check_call(call_args)
-		if '${annotate_cluster}' is 'true':
-			call_args = ['scrtools', 'annotate_cluster', '${input_h5ad}', '${output_name}' + '.anno.txt']
-			if '${organism}' is not '':
-				call_args.extend(['--json-file', '${organism}'])
-			if '${minimum_report_score}' is not '':
-				call_args.extend(['--minimum-report-score', '${minimum_report_score}'])
+		if '${perform_de_analysis}' is 'true':
+			call_args = ['mv', '-f', '${input_h5ad}', '${output_name}.h5ad']
 			print(' '.join(call_args))
 			check_call(call_args)			
+			call_args = ['scrtools', 'de_analysis', '${output_name}.h5ad', '${output_name}.de.xlsx', '-p', '${num_cpu}']
+			if '${labels}' is not '':
+				call_args.extend(['--labels', '${labels}'])
+			if '${alpha}' is not '':
+				call_args.extend(['--alpha', '${alpha}'])
+			if '${fisher}' is 'true':
+				call_args.append('--fisher')
+			if '${mwu}' is 'true':
+				call_args.append('--mwu')
+			if '${roc}' is 'true':
+				call_args.append('--roc')
+			print(' '.join(call_args))
+			check_call(call_args)
+			if '${annotate_cluster}' is 'true':
+				call_args = ['scrtools', 'annotate_cluster', '${output_name}.h5ad', '${output_name}' + '.anno.txt']
+				if '${organism}' is not '':
+					call_args.extend(['--json-file', '${organism}'])
+				if '${minimum_report_score}' is not '':
+					call_args.extend(['--minimum-report-score', '${minimum_report_score}'])
+				print(' '.join(call_args))
+				check_call(call_args)			
 		CODE
 	}
 
 	output {
-		File output_de_h5ad = "${input_h5ad}"
-		File output_de_xlsx = "${output_name}_de.xlsx"
+		File? output_de_h5ad = "${output_name}.h5ad"
+		File? output_de_xlsx = "${output_name}.de.xlsx"
 		File? output_anno_file = "${output_name}.anno.txt"
 	}
 
@@ -270,3 +278,53 @@ task run_scrtools_de_analysis {
 	}
 }
 
+task run_scrtools_plot {
+	File input_h5ad
+	String output_name
+	Int memory
+	Int diskSpace
+	Int preemptible
+	String? plot_composition
+	String? plot_tsne
+	String? plot_diffmap
+
+	command {
+		set -e
+		export TMPDIR=/tmp
+
+		python <<CODE
+		from subprocess import check_call
+		if '${plot_composition}' is not '':
+			pairs = '${plot_composition}'.split(',')
+			for pair in pairs:
+				lab, attr = pair.split(':')
+				call_args = ['scrtools', 'plot', 'composition', '--cluster-labels', lab, '--attribute', attr, '--style', 'normalized', '--not-stacked', '${input_h5ad}', '${output_name}.' + pair + '.composition.png']
+				print(' '.join(call_args))
+				check_call(call_args)
+		if '${plot_tsne}' is not '':
+			call_args = ['scrtools', 'plot', 'scatter', '--attributes', '${plot_tsne}', '${input_h5ad}', '${output_name}.tsne.png']
+			print(' '.join(call_args))
+			check_call(call_args)
+		if '${plot_diffmap}' is not '':
+			attrs = '${plot_diffmap}'.split(',')
+			for attr in attrs:
+				call_args = ['scrtools', 'iplot', '--attribute', attr, 'diffmap_pca', '${input_h5ad}', '${output_name}.' + attr + '.diffmap_pca.html']
+				print(' '.join(call_args))
+				check_call(call_args)
+		CODE
+	}
+
+	output {
+		Array[File] output_pngs = glob("*.png")
+		Array[File] output_htmls = glob("*.html")
+	}
+
+	runtime {
+		docker: "regevlab/scrtools"
+		memory: "${memory} GB"
+		bootDiskSizeGb: 12
+		disks: "local-disk ${diskSpace} HDD"
+		cpu: 1
+		preemptible: "${preemptible}"
+	}
+}
