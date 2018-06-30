@@ -230,7 +230,7 @@ to see the usage information::
 		Number of neighbors used for constructing affinity matrix. [default: 100]
 
 	-\\-calculate-pseudotime <roots>
-		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a list of cell barcodes.
+		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
   	-\\-run-louvain
   		Run louvain clustering algorithm.
@@ -683,9 +683,6 @@ to see the usage information::
 	\-p <number>, -\\-threads <number>
 		Number of threads. [default: 1]
 
-	-\\-cluster-labels <labels>
-		Which cluster results to use. [default: louvain_labels]
-
 	-\\-correct-batch-effect
 		Correct for batch effects.
 
@@ -717,7 +714,7 @@ to see the usage information::
 		Number of neighbors used for constructing affinity matrix. [default: 100]
 
 	-\\-calculate-pseudotime <roots>
-		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a list of cell barcodes.
+		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
   	-\\-run-louvain
   		Run louvain clustering algorithm.

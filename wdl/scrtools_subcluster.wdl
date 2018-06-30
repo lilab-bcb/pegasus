@@ -1,202 +1,253 @@
-workflow scrtools_subcluster {
-	# google bucket and subdirectory name
-	String data_folder
-	String input_name
-	String output_name
-	String subset_selections
-	Boolean? show_attributes
-	String show_values_for_attributes
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/3/plain-WDL/descriptor" as tasks
+# import "../scrtools_tasks.wdl" as tasks
 
-	Int num_cpu = 64
+workflow scrtools_subcluster {
+	File input_h5ad
+	# google bucket, subdirectory name and results name prefix
+	String output_name
+	# Specify which cells will be included in the subcluster analysis. This field contains one or more <subset_selection> strings separated by ';'. Each <subset_selection> string takes the format of ‘attr:value,…,value’, which means select cells with attr in the values. If multiple <subset_selection> strings are specified, the subset of cells selected is the intersection of these strings.
+	String subset_selections
+	
+	# Number of cpus per scrtools job
+	Int? num_cpu = 64
+	# Memory size in GB
+	Int? memory = 200
+	# Total disk space
+	Int? diskSpace = 100
+	# Number of preemptible tries 
+	Int? preemptible = 2
+
+
+	String out_name = basename(output_name)
+
+
+	# for subcluster
+
+	# If correct batch effects [default: false]
 	Boolean? correct_batch_effect
+	# If output loom-formatted file [default: false]
 	Boolean? output_loom
-	# Color tSNE by <attribute> and put it at the right side of louvain clusters.
-	String? plot_by_side
-	# Put legends on the tSNE.
-	Boolean? legend_on_data
+	# Random number generator seed. [default: 0]
+	Int? random_state
+	# Number of PCs. [default: 50]
+	Int? nPC
+	# Number of diffusion components. [default: 50]
+	Int? nDC
+	# Power parameter for diffusion-based pseudotime. [default: 0.5]
+	Float? diffmap_alpha
+	# Number of neighbors used for constructing affinity matrix. [default: 100]
+	Float? diffmap_K
+	# Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
+	String? calculate_pseudotime
+	# Run louvain clustering algorithm.
+	Boolean? run_louvain
 	# Resolution parameter for the louvain clustering algorithm. [default: 1.3]
 	Float? louvain_resolution
+	# Run KMeans clustering algorithm on diffusion components.
+	Boolean? run_kmeans
+	# Target at <number> clusters for K means. [default: 20]
+	Int? kmeans_n_clusters
+	# Run hdbscan clustering algorithm on diffusion components.
+	Boolean? run_hdbscan
+	# Minimum cluster size for hdbscan. [default: 50]
+	Int? hdbscan_min_cluster_size
+	# Minimum number of samples for hdbscan. [default: 50]
+	Int? hdbscan_min_samples
+	# Run approximated louvain clustering algorithm.
+	Boolean? run_approximated_louvain
+	# Number of Kmeans tries. [default: 20]
+	Int? approx_louvain_ninit
+	# Number of clusters for Kmeans initialization. [default: 30]
+	Int? approx_louvain_nclusters
+	# Resolution parameter for louvain. [default: 1.3]
+	Float? approx_louvain_resolution
+	# Run multi-core tSNE for visualization.
+	Boolean? run_tsne
+	# tSNE’s perplexity parameter. [default: 30]
+	Float? tsne_perplexity
+	# Run FItSNE for visualization.
+	Boolean? run_fitsne
+	# Run umap for visualization.
+	Boolean? run_umap
+	# Run umap on diffusion components.
+	Boolean? umap_on_diffmap
+	# K neighbors for umap. [default: 15]
+	Int? umap_K
+	# Umap parameter. [default: 0.1]
+	Float? umap_min_dist
+	# Umap parameter. [default: 1.0]
+	Float? umap_spread
+	# Run force-directed layout embedding.
+	Boolean? run_fle
+	# K neighbors for building graph for FLE. [default: 50]
+	Int? fle_K
+	# Number of iterations for FLE. [default: 10000]
+	Int? fle_n_steps
 
-	Boolean? de_analysis = true
-	# Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene. [default: 1.5]
-	Float? fold_change
-	# <attr> used as cluster labels. [default: louvain_labels]
-	String? labels
 
-	Boolean? plot_composition
-	String? figure_size
-	Boolean? plot_diffusion_map
+	# for de_analysis and annotate_cluster
 
-	Int? diskSpace = 250
+	# If perform de analysis
+	Boolean? perform_de_analysis
+	# Specify the cluster labels used for differential expression analysis. [default: louvain_labels]
+	String? cluster_labels
+	# Control false discovery rate at <alpha>. [default: 0.05]
+	Float? alpha
+	# Calculate Fisher’s exact test.
+	Boolean? fisher
+	# Calculate Mann-Whitney U test.
+	Boolean? mwu
+	# Calculate area under cuver in ROC curve.
+	Boolean? roc
 
-	call run_scrtools_subcluster {
+	# If also annotate cell types for clusters based on DE results.
+	Boolean? annotate_cluster
+	# Organism, could either be "human" or "mouse" [default: human]
+	String? organism
+	# Minimum cell type score to report a potential cell type. [default: 0.5]
+	Float? minimum_report_score
+
+
+	# for plot
+
+	# Takes the format of "label:attr,label:attr,...,label:attr". If non-empty, generate composition plot for each "label:attr" pair. "label" refers to cluster labels and "attr" refers to sample conditions.
+	String? plot_composition
+	# Takes the format of "attr,attr,...,attr". If non-empty, plot attr colored tSNEs side by side. 
+	String? plot_tsne
+	# Takes the format of "attr,attr,...,attr". If non-empty, generate attr colored 3D interactive plot. The 3 coordinates are the first 3 PCs of all diffusion components.
+	String? plot_diffmap
+
+
+
+	call tasks.run_scrtools_subcluster as subcluster {
 		input:
-			data_folder = data_folder,
-			input_name = input_name,
-			output_name = output_name,
-			subset_selections = subset_selections,			
-			show_attributes = show_attributes,
-			show_values_for_attributes = show_values_for_attributes,
-			num_cpu = num_cpu,
+			input_h5ad = input_h5ad,
+			output_name = out_name,
+			subset_selections = subset_selections,
 			correct_batch_effect = correct_batch_effect,
 			output_loom = output_loom,
-			plot_by_side = plot_by_side,
-			legend_on_data = legend_on_data,
+			random_state = random_state,
+			nPC = nPC,
+			nDC = nDC,
+			diffmap_alpha = diffmap_alpha,
+			diffmap_K = diffmap_K,
+			calculate_pseudotime = calculate_pseudotime,
+			run_louvain = run_louvain,
 			louvain_resolution = louvain_resolution,
-			de_analysis = de_analysis,
-			fold_change = fold_change,
-			labels = labels,
+			run_kmeans = run_kmeans,
+			kmeans_n_clusters = kmeans_n_clusters,
+			run_hdbscan = run_hdbscan,
+			hdbscan_min_cluster_size = hdbscan_min_cluster_size,
+			hdbscan_min_samples = hdbscan_min_samples,
+			run_approximated_louvain = run_approximated_louvain,
+			approx_louvain_ninit = approx_louvain_ninit,
+			approx_louvain_nclusters = approx_louvain_nclusters,
+			approx_louvain_resolution = approx_louvain_resolution,
+			run_tsne = run_tsne,
+			tsne_perplexity = tsne_perplexity,
+			run_fitsne = run_fitsne,
+			run_umap = run_umap,
+			umap_on_diffmap = umap_on_diffmap,
+			umap_K = umap_K,
+			umap_min_dist = umap_min_dist,
+			umap_spread = umap_spread,
+			run_fle = run_fle,
+			fle_K = fle_K,
+			fle_n_steps = fle_n_steps,
+			num_cpu = num_cpu,
+			memory = memory,
+			diskSpace = diskSpace,
+			preemptible = preemptible
+	}
+
+	call tasks.run_scrtools_de_analysis as de_analysis {
+		input:
+			input_h5ad = subcluster.output_h5ad,
+			output_name = out_name,
+			perform_de_analysis = perform_de_analysis,
+			labels = cluster_labels,
+			alpha = alpha,
+			fisher = fisher,
+			mwu = mwu,
+			roc = roc,
+			annotate_cluster = annotate_cluster,
+			organism = organism,
+			minimum_report_score = minimum_report_score,
+			num_cpu = num_cpu,
+			memory = memory,
+			diskSpace = diskSpace,
+			preemptible = preemptible
+
+	}
+
+	call tasks.run_scrtools_plot as plot {
+		input:
+			input_h5ad = subcluster.output_h5ad,
+			output_name = out_name,
 			plot_composition = plot_composition,
-			figure_size = figure_size,
-			plot_diffusion_map = plot_diffusion_map,
-			diskSpace = diskSpace
+			plot_tsne = plot_tsne,
+			plot_diffmap = plot_diffmap,
+			memory = memory,
+			diskSpace = diskSpace,
+			preemptible = preemptible
+	}
+
+	call organize_results {
+		input:
+			output_name = output_name,
+			output_h5ad = subcluster.output_h5ad,
+			output_loom_file = subcluster.output_loom_file,
+			output_de_h5ad = de_analysis.output_de_h5ad,
+			output_de_xlsx = de_analysis.output_de_xlsx,
+			output_anno_file = de_analysis.output_anno_file,
+			output_pngs = plot.output_pngs,
+			output_htmls = plot.output_htmls,
+			diskSpace = diskSpace,
+			preemptible = preemptible
 	}
 }
 
-task run_scrtools_subcluster {
-	String data_folder
-	String input_name
+task organize_results {
 	String output_name
-	String subset_selections
-	Boolean? show_attributes
-	String show_values_for_attributes
-	Int num_cpu
-	Boolean? correct_batch_effect
-	Boolean? output_loom
-	String? plot_by_side
-	Boolean? legend_on_data
-	Float? louvain_resolution
-	Boolean? de_analysis
-	Float? fold_change
-	String? labels
-	Boolean? plot_composition
-	String? figure_size
-	Boolean? plot_diffusion_map	
-	Int? diskSpace
+	Int diskSpace
+	Int preemptible
+	File? output_h5ad
+	Array[File]? output_loom_file
+	Array[File]? output_de_h5ad
+	Array[File]? output_de_xlsx
+	Array[File]? output_anno_file
+	Array[File]? output_pngs
+	Array[File]? output_htmls
 
 	command {
 		set -e
 		export TMPDIR=/tmp
+
 		python <<CODE
+		import os
 		from subprocess import check_call
 
-		input_name = '${input_name}'
-		output_name = '${output_name}'
-		subset_selections = '${subset_selections}'		
-		show_attributes = '${show_attributes}'
-		show_values_for_attributes = '${show_values_for_attributes}'
-		plot_by_side = '${plot_by_side}'
-		louvain_resolution = '${louvain_resolution}'		
+		dest = os.path.dirname('${output_name}') + '/'
+		files = ['${sep=" " output_loom_file}', '${sep=" " output_de_xlsx}', '${sep=" " output_anno_file}']
+		files.append('${output_h5ad}' if '${sep=" " output_de_h5ad}' is '' else '${sep=" " output_de_h5ad}')
+		files.extend('${sep="," output_pngs}'.split(','))
+		files.extend('${sep="," output_htmls}'.split(','))
 
-		call_args = ['gsutil', '-m', 'cp', '${data_folder}/' + input_name + '.h5ad', '.']
-		print(' '.join(call_args))
-		check_call(call_args)
-
-		call_args = ['scrtools', 'subcluster', input_name + '.h5ad', output_name, '-p', '${num_cpu}']
-		if subset_selections is not '' :
-			call_args.extend(['--subset_selections', subset_selections])		
-		if '${show_attributes}' is 'true':
-			call_args.append('--show_attributes')
-		if show_values_for_attributes is not '' :
-			call_args.extend(['--show_values_for_attributes', show_values_for_attributes])		
-		if '${correct_batch_effect}' is 'true':
-			call_args.append('--correct-batch-effect')
-		if '${output_loom}' is 'true':
-			call_args.append('--output-loom')
-		if plot_by_side is not '':
-			call_args.extend(['--plot-by-side', plot_by_side])
-		if '${legend_on_data}' is 'true':
-			call_args.append('--legend-on-data')
-		if louvain_resolution is not '' :
-			call_args.extend(['--louvain-resolution', louvain_resolution])
-
-		print(' '.join(call_args))
-		check_call(call_args)
-
-		if '${de_analysis}' is 'true':
-			fold_change = '${fold_change}'
-			labels = '${labels}'
-
-			call_args = ['scrtools', 'de_analysis', output_name + '.h5ad', output_name]
-			if fold_change is not '':
-				call_args.extend(['--fold-change', fold_change])
-			if labels is not '':
-				call_args.extend(['--labels', labels])
-			print(' '.join(call_args))
-			check_call(call_args)
-
-		if '${plot_composition}' is 'true':
-			figure_size = '${figure_size}'
-			call_args = ['scrtools', 'plot', 'composition', '--attribute', plot_by_side, output_name + '.h5ad', output_name + '.composition.frequency']
-			if figure_size is not '':
-				call_args.extend(['--sizes', figure_size])
-			print(' '.join(call_args))
-			check_call(call_args)
-			call_args = ['scrtools', 'plot', 'composition', '--style', 'normalized', '--not-stacked', '--attribute', plot_by_side, output_name + '.h5ad', output_name + '.composition.normalized']
-			if figure_size is not '':
-				call_args.extend(['--sizes', figure_size])
-			print(' '.join(call_args))
-			check_call(call_args)
-
-		if '${plot_diffusion_map}' is 'true':
-			call_args = ['scrtools', 'iplot', 'diffmap', '--attribute', 'louvain_labels', output_name + '_var.h5ad', output_name + '.diffmap_cluster.html']
-			print(' '.join(call_args))
-			check_call(call_args)
-			if plot_by_side is not '':
-				call_args = ['scrtools', 'iplot', 'diffmap', '--attribute', plot_by_side, output_name + '_var.h5ad', output_name + '.diffmap_condition.html']
+		for file in files:
+			if file is not '':
+				call_args = ['gsutil', '-q', 'cp', file, dest]
+				# call_args = ['cp', file, dest]
 				print(' '.join(call_args))
 				check_call(call_args)
 		CODE
-		gsutil -m mv ${output_name}.h5ad ${data_folder}
-		gsutil -m mv ${output_name}_var.h5ad ${data_folder}
-		gsutil -m mv tsne.${output_name}.png ${data_folder}/${output_name}.tsne.png
-		if [ -f ${output_name}.loom ]
-		then
-			gsutil -m mv ${output_name}_var.loom ${data_folder}
-			gsutil -m mv ${output_name}.loom ${data_folder}
-		fi
-		if [ -f ${output_name}_de.h5ad ]
-		then
-			gsutil -m mv ${output_name}_de.h5ad ${data_folder}
-			gsutil -m mv ${output_name}_de_analysis_fisher.xlsx ${data_folder}
-			gsutil -m mv ${output_name}_de_analysis_t.xlsx ${data_folder}
-		fi
-		if [ -f ${output_name}.composition.frequency.png ]
-		then
-			gsutil -m mv ${output_name}.composition.frequency.png ${data_folder}
-			gsutil -m mv ${output_name}.composition.normalized.png ${data_folder}
-		fi
-		if [ -f ${output_name}.diffmap_cluster.html ]
-		then
-			gsutil -m mv ${output_name}.diffmap_cluster.html ${data_folder}
-		fi
-		if [ -f ${output_name}.diffmap_condition.html ]
-		then
-			gsutil -m mv ${output_name}.diffmap_condition.html ${data_folder}
-		fi
-	}
-
-	output {
-		String output_h5ad = '${data_folder}/${output_name}.h5ad'
-		String output_var_h5ad = '${data_folder}/${output_name}_var.h5ad'
-		String output_tsne_png = '${data_folder}/${output_name}.tsne.png'
-		String output_loom_file = '${data_folder}/${output_name}.loom'
-		String output_var_loom = '${data_folder}/${output_name}_var.loom'
-		String output_de_h5ad = '${data_folder}/${output_name}_de.h5ad'
-		String output_de_fisher = '${data_folder}/${output_name}_de_analysis_fisher.xlsx'
-		String output_de_t = '${data_folder}/${output_name}_de_analysis_t.xlsx'
-		String output_composition_frequency_png = '${data_folder}/${output_name}.composition.frequency.png'
-		String output_composition_normalized_png = '${data_folder}/${output_name}.composition.normalized.png'
-		String output_diffmap_cluster_html = '${data_folder}/${output_name}.diffmap_cluster.html'
-		String output_diffmap_condition_html = '${data_folder}/${output_name}.diffmap_condition.html'
 	}
 
 	runtime {
 		docker: "regevlab/scrtools"
-		memory: "200 GB"
+		memory: "30 GB"
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"
-		cpu: "${num_cpu}"
-		preemptible: 2
+		cpu: 1
+		preemptible: "${preemptible}"
 	}
 }

@@ -1,4 +1,5 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools_tasks/versions/2/plain-WDL/descriptor" as tasks
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/3/plain-WDL/descriptor" as tasks
+# import "../scrtools_tasks.wdl" as tasks
 
 workflow scrtools {
 	File input_count_matrix_csv
@@ -257,11 +258,11 @@ task organize_results {
 	Int preemptible
 	File? output_10x_h5
 	File? output_h5ad
-	File? output_filt_xlsx
-	File? output_loom_file
-	File? output_de_h5ad
-	File? output_de_xlsx
-	File? output_anno_file
+	Array[File]? output_filt_xlsx
+	Array[File]? output_loom_file
+	Array[File]? output_de_h5ad
+	Array[File]? output_de_xlsx
+	Array[File]? output_anno_file
 	Array[File]? output_pngs
 	Array[File]? output_htmls
 
@@ -274,13 +275,14 @@ task organize_results {
 		from subprocess import check_call
 
 		dest = os.path.dirname('${output_name}') + '/'
-		files = ['${output_10x_h5}', '${output_filt_xlsx}', '${output_loom_file}', '${output_de_xlsx}', '${output_anno_file}']
-		files.append('${output_h5ad}' if '${output_de_h5ad}' is '' else '${output_de_h5ad}')
+		files = ['${output_10x_h5}', '${sep=" " output_filt_xlsx}', '${sep=" " output_loom_file}', '${sep=" " output_de_xlsx}', '${sep=" " output_anno_file}']
+		files.append('${output_h5ad}' if '${sep=" " output_de_h5ad}' is '' else '${sep=" " output_de_h5ad}')
 		files.extend('${sep="," output_pngs}'.split(','))
 		files.extend('${sep="," output_htmls}'.split(','))
 
 		for file in files:
 			if file is not '':
+				# call_args = ['cp', file, dest]
 				call_args = ['gsutil', '-q', 'cp', file, dest]
 				print(' '.join(call_args))
 				check_call(call_args)
@@ -293,6 +295,6 @@ task organize_results {
 		bootDiskSizeGb: 12
 		disks: "local-disk ${diskSpace} HDD"
 		cpu: 1
-		preemptible: "${preemptible}"
+		preemptible: preemptible
 	}
 }

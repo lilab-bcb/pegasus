@@ -42,7 +42,7 @@ Options:
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
   --diffmap-K <K>                                  Number of neighbors used for constructing affinity matrix. [default: 100]
 
-  --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a list of cell barcodes.
+  --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
   --run-louvain                                    Run louvain clustering algorithm.
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
