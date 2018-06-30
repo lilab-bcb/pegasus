@@ -10,7 +10,7 @@ Usage:
   scrtools aggregate_matrix -h
 
 Arguments:
-  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger.
+  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, location of the channel-specific count matrix in 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger.
   output_name       The output file name. 
 
 Options:

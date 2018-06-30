@@ -56,11 +56,10 @@ Quick guide
 Suppose you have ``example.csv`` ready with the following contents::
 
 	Sample,Source,Platform,Donor,Reference,Location
-	S1,bone_marrow,NextSeq,1,GRCh38,my_dir/S1
-	S2,bone_marrow,NextSeq,2,GRCh38,my_dir/S2
-	S3,pbmc,NextSeq,1,GRCh38,my_dir/S3
-	S4,pbmc,NextSeq,2,GRCh38,my_dir/S4
-
+	sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
+	sample_2,bone_marrow,NextSeq,2,GRCh38,/my_dir/sample_2/filtered_gene_bc_matrices_h5.h5
+	sample_3,pbmc,NextSeq,1,GRCh38,/my_dir/sample_3/filtered_gene_bc_matrices_h5.h5
+	sample_4,pbmc,NextSeq,2,GRCh38,/my_dir/sample_4/filtered_gene_bc_matrices_h5.h5
 
 You want to analyze all four samples but correct batch effects for bone marrow and pbmc samples separately. You can run the following commands::
 
@@ -100,13 +99,13 @@ to see the usage information::
 * Arguments:
 
 	csv_file
-		Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. See below for an example csv::
+		Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, location of the channel-specific count matrix in 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. See below for an example csv::
 
 			Sample,Source,Platform,Donor,Reference,Location
- 			S1,bone_marrow,NextSeq,1,GRCh38,my_dir/S1
-			S2,bone_marrow,NextSeq,2,GRCh38,my_dir/S2
-			S3,pbmc,NextSeq,1,GRCh38,my_dir/S3
-			S4,pbmc,NextSeq,2,GRCh38,my_dir/S4
+ 			sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
+			sample_2,bone_marrow,NextSeq,2,GRCh38,/my_dir/sample_2/filtered_gene_bc_matrices_h5.h5
+			sample_3,pbmc,NextSeq,1,GRCh38,/my_dir/sample_3/filtered_gene_bc_matrices_h5.h5
+			sample_4,pbmc,NextSeq,2,GRCh38,/my_dir/sample_4/filtered_gene_bc_matrices_h5.h5
 
 	output_name
 		The output file name.
@@ -185,8 +184,8 @@ to see the usage information::
 		Correct for batch effects.
 
 	-\\-batch-group-by <expression>
-		Group batches according to <expression>. If <expression> is None, assume all channels are of one group.
-  
+		Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+
   	-\\-min-genes <number>
 		Only keep cells with at least <number> of genes. [default: 500]
 

@@ -21,7 +21,8 @@ Options:
   --output-filtration-results <spreadsheet>        Output filtration results into <spreadsheet>.
   --output-loom                                    Output loom-formatted file.
   --correct-batch-effect                           Correct for batch effects.
-  --batch-group-by <expression>                    Group batches according to <expression>. If <expression> is None, assume all channels are of one group.
+  --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+
   
   --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
