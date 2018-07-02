@@ -5,7 +5,7 @@ task run_scrtools_aggregate_matrices {
 	File input_count_matrix_csv
 	String output_name
 	Int memory
-	Int diskSpace
+	Int disk_space
 	Int preemptible
 	String? genome
 	String? restrictions
@@ -39,7 +39,7 @@ task run_scrtools_aggregate_matrices {
 		docker: "regevlab/scrtools"
 		memory: "${memory} GB"
 		bootDiskSizeGb: 12
-		disks: "local-disk ${diskSpace} HDD"
+		disks: "local-disk ${disk_space} HDD"
 		cpu: 1
 		preemptible: preemptible
 	}
@@ -50,7 +50,7 @@ task run_scrtools_cluster {
 	String output_name
 	Int num_cpu
 	Int memory
-	Int diskSpace
+	Int disk_space
 	Int preemptible
 	String? genome
 	Boolean? output_filtration_results
@@ -204,7 +204,7 @@ task run_scrtools_cluster {
 		docker: "regevlab/scrtools"
 		memory: "${memory} GB"
 		bootDiskSizeGb: 12
-		disks: "local-disk ${diskSpace} HDD"
+		disks: "local-disk ${disk_space} HDD"
 		cpu: num_cpu
 		preemptible: preemptible
 	}
@@ -215,9 +215,8 @@ task run_scrtools_de_analysis {
 	String output_name
 	Int num_cpu
 	Int memory
-	Int diskSpace
+	Int disk_space
 	Int preemptible
-	Boolean? perform_de_analysis
 	String? labels
 	Float? alpha
 	Boolean? fisher
@@ -234,37 +233,36 @@ task run_scrtools_de_analysis {
 
 		python <<CODE
 		from subprocess import check_call
-		if '${perform_de_analysis}' is 'true':
-			call_args = ['mv', '-f', '${input_h5ad}', '${output_name}.h5ad']
+		call_args = ['mv', '-f', '${input_h5ad}', '${output_name}.h5ad']
+		print(' '.join(call_args))
+		check_call(call_args)			
+		call_args = ['scrtools', 'de_analysis', '${output_name}.h5ad', '${output_name}.de.xlsx', '-p', '${num_cpu}']
+		if '${labels}' is not '':
+			call_args.extend(['--labels', '${labels}'])
+		if '${alpha}' is not '':
+			call_args.extend(['--alpha', '${alpha}'])
+		if '${fisher}' is 'true':
+			call_args.append('--fisher')
+		if '${mwu}' is 'true':
+			call_args.append('--mwu')
+		if '${roc}' is 'true':
+			call_args.append('--roc')
+		print(' '.join(call_args))
+		check_call(call_args)
+		if '${annotate_cluster}' is 'true':
+			call_args = ['scrtools', 'annotate_cluster', '${output_name}.h5ad', '${output_name}' + '.anno.txt']
+			if '${organism}' is not '':
+				call_args.extend(['--json-file', '${organism}'])
+			if '${minimum_report_score}' is not '':
+				call_args.extend(['--minimum-report-score', '${minimum_report_score}'])
 			print(' '.join(call_args))
 			check_call(call_args)			
-			call_args = ['scrtools', 'de_analysis', '${output_name}.h5ad', '${output_name}.de.xlsx', '-p', '${num_cpu}']
-			if '${labels}' is not '':
-				call_args.extend(['--labels', '${labels}'])
-			if '${alpha}' is not '':
-				call_args.extend(['--alpha', '${alpha}'])
-			if '${fisher}' is 'true':
-				call_args.append('--fisher')
-			if '${mwu}' is 'true':
-				call_args.append('--mwu')
-			if '${roc}' is 'true':
-				call_args.append('--roc')
-			print(' '.join(call_args))
-			check_call(call_args)
-			if '${annotate_cluster}' is 'true':
-				call_args = ['scrtools', 'annotate_cluster', '${output_name}.h5ad', '${output_name}' + '.anno.txt']
-				if '${organism}' is not '':
-					call_args.extend(['--json-file', '${organism}'])
-				if '${minimum_report_score}' is not '':
-					call_args.extend(['--minimum-report-score', '${minimum_report_score}'])
-				print(' '.join(call_args))
-				check_call(call_args)			
 		CODE
 	}
 
 	output {
-		Array[File] output_de_h5ad = glob("${output_name}.h5ad")
-		Array[File] output_de_xlsx = glob("${output_name}.de.xlsx")
+		File output_de_h5ad = "${output_name}.h5ad"
+		File output_de_xlsx = "${output_name}.de.xlsx"
 		Array[File] output_anno_file = glob("${output_name}.anno.txt")
 	}
 
@@ -272,7 +270,7 @@ task run_scrtools_de_analysis {
 		docker: "regevlab/scrtools"
 		memory: "${memory} GB"
 		bootDiskSizeGb: 12
-		disks: "local-disk ${diskSpace} HDD"
+		disks: "local-disk ${disk_space} HDD"
 		cpu: num_cpu
 		preemptible: preemptible
 	}
@@ -282,7 +280,7 @@ task run_scrtools_plot {
 	File input_h5ad
 	String output_name
 	Int memory
-	Int diskSpace
+	Int disk_space
 	Int preemptible
 	String? plot_composition
 	String? plot_tsne
@@ -323,7 +321,7 @@ task run_scrtools_plot {
 		docker: "regevlab/scrtools"
 		memory: "${memory} GB"
 		bootDiskSizeGb: 12
-		disks: "local-disk ${diskSpace} HDD"
+		disks: "local-disk ${disk_space} HDD"
 		cpu: 1
 		preemptible: preemptible
 	}
@@ -334,7 +332,7 @@ task run_scrtools_subcluster {
 	String output_name
 	Int num_cpu
 	Int memory
-	Int diskSpace
+	Int disk_space
 	Int preemptible
 	String subset_selections 
 	Boolean? correct_batch_effect
@@ -468,8 +466,55 @@ task run_scrtools_subcluster {
 		docker: "regevlab/scrtools"
 		memory: "${memory} GB"
 		bootDiskSizeGb: 12
-		disks: "local-disk ${diskSpace} HDD"
+		disks: "local-disk ${disk_space} HDD"
 		cpu: num_cpu
+		preemptible: preemptible
+	}
+}
+
+task organize_results {
+	String output_name
+	Int disk_space
+	Int preemptible
+	File? output_10x_h5
+	File? output_h5ad
+	Array[File]? output_filt_xlsx
+	Array[File]? output_loom_file
+	File? output_de_h5ad
+	File? output_de_xlsx
+	Array[File]? output_anno_file
+	Array[File]? output_pngs
+	Array[File]? output_htmls
+
+	command {
+		set -e
+		export TMPDIR=/tmp
+
+		python <<CODE
+		import os
+		from subprocess import check_call
+
+		dest = os.path.dirname('${output_name}') + '/'
+		files = ['${output_10x_h5}', '${sep=" " output_filt_xlsx}', '${sep=" " output_loom_file}', '${output_de_xlsx}', '${sep=" " output_anno_file}']
+		files.append('${output_h5ad}' if '${output_de_h5ad}' is '' else '${output_de_h5ad}')
+		files.extend('${sep="," output_pngs}'.split(','))
+		files.extend('${sep="," output_htmls}'.split(','))
+
+		for file in files:
+			if file is not '':
+				# call_args = ['cp', file, dest]
+				call_args = ['gsutil', '-q', 'cp', file, dest]
+				print(' '.join(call_args))
+				check_call(call_args)
+		CODE
+	}
+
+	runtime {
+		docker: "regevlab/scrtools"
+		memory: "30 GB"
+		bootDiskSizeGb: 12
+		disks: "local-disk ${disk_space} HDD"
+		cpu: 1
 		preemptible: preemptible
 	}
 }

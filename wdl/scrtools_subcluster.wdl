@@ -1,4 +1,4 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/3/plain-WDL/descriptor" as tasks
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/4/plain-WDL/descriptor" as tasks
 # import "../scrtools_tasks.wdl" as tasks
 
 workflow scrtools_subcluster {
@@ -13,7 +13,7 @@ workflow scrtools_subcluster {
 	# Memory size in GB
 	Int? memory = 200
 	# Total disk space
-	Int? diskSpace = 100
+	Int? disk_space = 100
 	# Number of preemptible tries 
 	Int? preemptible = 2
 
@@ -88,7 +88,7 @@ workflow scrtools_subcluster {
 	# for de_analysis and annotate_cluster
 
 	# If perform de analysis
-	Boolean? perform_de_analysis
+	Boolean perform_de_analysis = true
 	# Specify the cluster labels used for differential expression analysis. [default: louvain_labels]
 	String? cluster_labels
 	# Control false discovery rate at <alpha>. [default: 0.05]
@@ -156,43 +156,45 @@ workflow scrtools_subcluster {
 			fle_n_steps = fle_n_steps,
 			num_cpu = num_cpu,
 			memory = memory,
-			diskSpace = diskSpace,
+			disk_space = disk_space,
 			preemptible = preemptible
 	}
 
-	call tasks.run_scrtools_de_analysis as de_analysis {
-		input:
-			input_h5ad = subcluster.output_h5ad,
-			output_name = out_name,
-			perform_de_analysis = perform_de_analysis,
-			labels = cluster_labels,
-			alpha = alpha,
-			fisher = fisher,
-			mwu = mwu,
-			roc = roc,
-			annotate_cluster = annotate_cluster,
-			organism = organism,
-			minimum_report_score = minimum_report_score,
-			num_cpu = num_cpu,
-			memory = memory,
-			diskSpace = diskSpace,
-			preemptible = preemptible
-
+	if (perform_de_analysis) {
+		call tasks.run_scrtools_de_analysis as de_analysis {
+			input:
+				input_h5ad = subcluster.output_h5ad,
+				output_name = out_name,
+				labels = cluster_labels,
+				alpha = alpha,
+				fisher = fisher,
+				mwu = mwu,
+				roc = roc,
+				annotate_cluster = annotate_cluster,
+				organism = organism,
+				minimum_report_score = minimum_report_score,
+				num_cpu = num_cpu,
+				memory = memory,
+				disk_space = disk_space,
+				preemptible = preemptible
+		}
 	}
 
-	call tasks.run_scrtools_plot as plot {
-		input:
-			input_h5ad = subcluster.output_h5ad,
-			output_name = out_name,
-			plot_composition = plot_composition,
-			plot_tsne = plot_tsne,
-			plot_diffmap = plot_diffmap,
-			memory = memory,
-			diskSpace = diskSpace,
-			preemptible = preemptible
+	if (defined(plot_composition) || defined(plot_tsne) || defined(plot_diffmap)) {
+		call tasks.run_scrtools_plot as plot {
+			input:
+				input_h5ad = subcluster.output_h5ad,
+				output_name = out_name,
+				plot_composition = plot_composition,
+				plot_tsne = plot_tsne,
+				plot_diffmap = plot_diffmap,
+				memory = memory,
+				disk_space = disk_space,
+				preemptible = preemptible
+		}	
 	}
 
-	call organize_results {
+	call tasks.organize_results {
 		input:
 			output_name = output_name,
 			output_h5ad = subcluster.output_h5ad,
@@ -202,52 +204,7 @@ workflow scrtools_subcluster {
 			output_anno_file = de_analysis.output_anno_file,
 			output_pngs = plot.output_pngs,
 			output_htmls = plot.output_htmls,
-			diskSpace = diskSpace,
+			disk_space = disk_space,
 			preemptible = preemptible
-	}
-}
-
-task organize_results {
-	String output_name
-	Int diskSpace
-	Int preemptible
-	File? output_h5ad
-	Array[File]? output_loom_file
-	Array[File]? output_de_h5ad
-	Array[File]? output_de_xlsx
-	Array[File]? output_anno_file
-	Array[File]? output_pngs
-	Array[File]? output_htmls
-
-	command {
-		set -e
-		export TMPDIR=/tmp
-
-		python <<CODE
-		import os
-		from subprocess import check_call
-
-		dest = os.path.dirname('${output_name}') + '/'
-		files = ['${sep=" " output_loom_file}', '${sep=" " output_de_xlsx}', '${sep=" " output_anno_file}']
-		files.append('${output_h5ad}' if '${sep=" " output_de_h5ad}' is '' else '${sep=" " output_de_h5ad}')
-		files.extend('${sep="," output_pngs}'.split(','))
-		files.extend('${sep="," output_htmls}'.split(','))
-
-		for file in files:
-			if file is not '':
-				call_args = ['gsutil', '-q', 'cp', file, dest]
-				# call_args = ['cp', file, dest]
-				print(' '.join(call_args))
-				check_call(call_args)
-		CODE
-	}
-
-	runtime {
-		docker: "regevlab/scrtools"
-		memory: "30 GB"
-		bootDiskSizeGb: 12
-		disks: "local-disk ${diskSpace} HDD"
-		cpu: 1
-		preemptible: "${preemptible}"
 	}
 }

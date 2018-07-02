@@ -20,7 +20,7 @@ Table of Contents
   * [scrtools_subcluster steps](#subcluster_steps)
   * [scrtools_subcluster's inputs](#subcluster_input)
   * [scrtools_subcluster's outputs](#subcluster_output)
-  
+
 ## <a name="first_time"></a> First Time Running - Authenticate with Google
 
 1. Ensure the Google Cloud SDK is installed. 
@@ -214,7 +214,7 @@ Name | Description | Example | Default
 genome | Reference genome name | "mm10" | "GRCh38"
 num_cpu | Number of cpus per scrtools job | 32 | 64
 memory | Memory size in GB | 200 | 200
-diskSpace | Total disk space | 100 | 100
+disk_space | Total disk space | 100 | 100
 preemptible | Number of preemptible tries | 2 | 2
 
 ### <a name="aggr_mat"></a> aggregate_matrix
@@ -284,7 +284,7 @@ output_loom_file | File | Outputted loom file (output_name.loom)
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-perform_de_analysis | If perform de analysis | "true" | "false"
+perform_de_analysis | If perform de analysis | "true" | "true"
 cluster_labels | Specify the cluster labels used for differential expression analysis | "louvain_labels" | "louvain_labels" 
 alpha | Control false discovery rate at <alpha> | 0.05 | 0.05
 fisher | Calculate Fisher’s exact test | "true" | "false"
@@ -354,7 +354,7 @@ Name | Description | Example | Default
 calculate_pseudotime | Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes | "sample_1-ACCCGGGTTT-1" | None
 num_cpu | Number of cpus per scrtools job | 32 | 64
 memory | Memory size in GB | 200 | 200
-diskSpace | Total disk space | 100 | 100
+disk_space | Total disk space | 100 | 100
 preemptible | Number of preemptible tries | 2 | 2
 
 ### <a name="subcluster_output"></a> scrtools_subcluster's outputs
