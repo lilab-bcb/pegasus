@@ -18,6 +18,7 @@ workflow cellranger {
     String memory
     String cores
     String preemptible
+    String countOutPath
 
     call CellRanger {
         input:
@@ -33,7 +34,8 @@ workflow cellranger {
         chemistry = chemistry,
         memory = memory,
         cores = cores,
-        preemptible = preemptible
+        preemptible = preemptible,
+        countOutPath = countOutPath
    }
    
    call ConvertCellRangerOutput {
@@ -54,7 +56,8 @@ workflow cellranger {
        diskSpace = diskSpace,
        memory = memory,
        cores = cores,
-       preemptible = preemptible
+       preemptible = preemptible,
+       countOutPath = countOutPath
    }
 }
 
@@ -72,6 +75,7 @@ task CellRanger {
     String memory
     String cores
     String preemptible
+    String countOutPath
 
     command {
         set -e
@@ -113,49 +117,13 @@ task CellRanger {
         if chemistry is not '':
             call_args.append('--chemistry='+chemistry)
         call(call_args)
+
+        # Move the outputs to the output directory
+        call(["gsutil", "-q", "-m", "cp", "-r", "results_"+sample+"/", "${countOutPath}"])
         CODE
         }
     output {
-        File barcodes = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/barcodes.tsv"
-        File genes = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/genes.tsv"
-        File matrix = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/matrix.mtx"
-        File qc = "results_${sampleId}/outs/metrics_summary.csv"
-        File report = "results_${sampleId}/outs/web_summary.html"
-        File sorted_bam = "results_${sampleId}/outs/possorted_genome_bam.bam"
-        File sorted_bam_index = "results_${sampleId}/outs/possorted_genome_bam.bam.bai"
-        File filtered_gene_h5 = "results_${sampleId}/outs/filtered_gene_bc_matrices_h5.h5"
-        File raw_gene_h5 = "results_${sampleId}/outs/raw_gene_bc_matrices_h5.h5"
-        File raw_barcodes = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/barcodes.tsv"
-        File raw_genes = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/genes.tsv"
-        File raw_matrix = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/matrix.mtx"
-        File mol_info_h5 = "results_${sampleId}/outs/molecule_info.h5"
-        File cloupe = "results_${sampleId}/outs/cloupe.cloupe"
-        File tsne = "results_${sampleId}/outs/analysis/tsne/2_components/projection.csv"
-        File graph_clusters = "results_${sampleId}/outs/analysis/clustering/graphclust/clusters.csv"
-        File graph_diffexp = "results_${sampleId}/outs/analysis/diffexp/graphclust/differential_expression.csv"
-        File kmeans_clust_2 = "results_${sampleId}/outs/analysis/clustering/kmeans_2_clusters/clusters.csv"
-        File kmeans_clust_3 = "results_${sampleId}/outs/analysis/clustering/kmeans_3_clusters/clusters.csv" 
-        File kmeans_clust_4 = "results_${sampleId}/outs/analysis/clustering/kmeans_4_clusters/clusters.csv" 
-        File kmeans_clust_5 = "results_${sampleId}/outs/analysis/clustering/kmeans_5_clusters/clusters.csv" 
-        File kmeans_clust_6 = "results_${sampleId}/outs/analysis/clustering/kmeans_6_clusters/clusters.csv" 
-        File kmeans_clust_7 = "results_${sampleId}/outs/analysis/clustering/kmeans_7_clusters/clusters.csv" 
-        File kmeans_clust_8 = "results_${sampleId}/outs/analysis/clustering/kmeans_8_clusters/clusters.csv" 
-        File kmeans_clust_9 = "results_${sampleId}/outs/analysis/clustering/kmeans_9_clusters/clusters.csv" 
-        File kmeans_clust_10 = "results_${sampleId}/outs/analysis/clustering/kmeans_10_clusters/clusters.csv" 
-        File kmeans_diffexp_2 = "results_${sampleId}/outs/analysis/diffexp/kmeans_2_clusters/differential_expression.csv"
-        File kmeans_diffexp_3 = "results_${sampleId}/outs/analysis/diffexp/kmeans_3_clusters/differential_expression.csv"
-        File kmeans_diffexp_4 = "results_${sampleId}/outs/analysis/diffexp/kmeans_4_clusters/differential_expression.csv"
-        File kmeans_diffexp_5 = "results_${sampleId}/outs/analysis/diffexp/kmeans_5_clusters/differential_expression.csv"
-        File kmeans_diffexp_6 = "results_${sampleId}/outs/analysis/diffexp/kmeans_6_clusters/differential_expression.csv"
-        File kmeans_diffexp_7 = "results_${sampleId}/outs/analysis/diffexp/kmeans_7_clusters/differential_expression.csv"
-        File kmeans_diffexp_8 = "results_${sampleId}/outs/analysis/diffexp/kmeans_8_clusters/differential_expression.csv"
-        File kmeans_diffexp_9 = "results_${sampleId}/outs/analysis/diffexp/kmeans_9_clusters/differential_expression.csv"
-        File kmeans_diffexp_10 = "results_${sampleId}/outs/analysis/diffexp/kmeans_10_clusters/differential_expression.csv"
-        File pca_components = "results_${sampleId}/outs/analysis/pca/10_components/components.csv"
-        File pca_dispersion = "results_${sampleId}/outs/analysis/pca/10_components/dispersion.csv"
-        File pca_genes = "results_${sampleId}/outs/analysis/pca/10_components/genes_selected.csv"
-        File pca_projection = "results_${sampleId}/outs/analysis/pca/10_components/projection.csv"
-        File pca_variance = "results_${sampleId}/outs/analysis/pca/10_components/variance.csv"   
+        String out_path = "${countOutPath}results_${sampleId}"
     }
     
     runtime {
@@ -186,6 +154,7 @@ task ConvertCellRangerOutput {
     String memory
     String cores
     String preemptible
+    String countOutPath
     
     command <<<
         python /software/scripts/cell_ranger_to_scp.py \
@@ -203,13 +172,14 @@ task ConvertCellRangerOutput {
                 --tsne ${tsne} \
                 --metadata_file "${sampleId}_metadata.txt" \
                 --pca_coordinates_file "${sampleId}_pca.txt" \
-                --tsne_coordinates_file "${sampleId}_tsne.txt" \
+                --tsne_coordinates_file "${sampleId}_tsne.txt" 
+        gsutil -q -m cp -r "${sampleId}_metadata.txt" "${countOutPath}results_${sampleId}"
+        gsutil -q -m cp -r "${sampleId}_pca.txt" "${countOutPath}results_${sampleId}" 
+        gsutil -q -m cp -r "${sampleId}_tsne.txt" "${countOutPath}results_${sampleId}"  
     >>>
     
     output {
-        File metadata = "${sampleId}_metadata.txt"
-        File pca_coords = "${sampleId}_pca.txt"
-        File tsne_coords = "${sampleId}_tsne.txt"
+        String out_path = "${countOutPath}results_${sampleId}"
     }
 
     runtime {

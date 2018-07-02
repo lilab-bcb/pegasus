@@ -61,6 +61,7 @@ task mkfastq {
 		df = df.drop(columns=['Flowcell'])
 		df.to_csv('sample.csv',index=False)
 
+		# run mkfastq command
 		call_args = list()
 		call_args.append('cellranger')
 		call_args.append('mkfastq')
@@ -69,7 +70,7 @@ task mkfastq {
 		call_args.append('--output-dir=fastqs')
 		call(call_args)
 
-		# output the fastqs
+		# move the fastqs to the output directory
 		call(["gsutil", "-q", "-m", "mv", 'fastqs/'+flowcell, "${output_directory}"])
 		call(["gsutil", "-q", "-m", "mv", flowcell+"/outs/qc_summary.json", "${output_directory}"])
 		

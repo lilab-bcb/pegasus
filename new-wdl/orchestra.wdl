@@ -1,10 +1,13 @@
 import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/10/plain-WDL/descriptor" as mkfastq
 import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/6/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as scrtools
 
 workflow orchestra {
   File masterCsv
   String referenceName
-  String fastq_output_directory
+  String fastqOutputDirectory
+  String analysisOutDirectory
+  String countOutPath
   Boolean? secondary
   Int? expectCells
   String diskSpace
@@ -18,6 +21,7 @@ workflow orchestra {
   call parseCsv as parse {
     input:
       masterCsv = masterCsv,
+      countOutPath = countOutPath,
       diskSpace = diskSpace,
       preemptible = preemptible,
       cores = cores,
@@ -31,7 +35,7 @@ workflow orchestra {
           bcl = bcl,
           masterCsv = masterCsv,
           diskSpace = diskSpace,
-          output_directory = fastq_output_directory,
+          output_directory = fastqOutputDirectory,
           preemptible = preemptible,
           cores = cores,
           memory = memory
@@ -67,12 +71,21 @@ workflow orchestra {
           cores = cores,
           memory = memory
       }
-    }	
+
+    }
+
+    call scrtools as tools {
+      input:
+         input_count_matrix_csv = parse.analysis_csv,
+         output_name = analysisOutDirectory
+    }
+
 }
 
 task parseCsv {
   File masterCsv
   String diskSpace
+  String countOutPath
   String memory
   String cores
   String preemptible
@@ -96,6 +109,11 @@ task parseCsv {
     for item in sampleIds:
       samples_file.write("%s\n" % item)
     samples_file.close()
+    count_output_path = "${countOutPath}"
+    df = df.drop(columns=["Flowcell"])
+    locations = [count_output_path+"results_"s+"/filtered_gene_bc_matrices_h5.h5" for s in sampleIds]
+    df["Location"] = locations
+    df.to_csv("analysis.csv")
 
     CODE
   }
@@ -103,6 +121,7 @@ task parseCsv {
   output {
     Array[String] bcls = read_lines('bcls.txt')
     Array[String] sampleIds = read_lines('samples.txt')
+    File analysis_csv = "analysis.csv"
   }
 
   runtime {
