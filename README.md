@@ -9,14 +9,18 @@ Table of Contents
   * [Cell Ranger mkfastq/count outputs](#cellranger_output)
 * [Run Cell Ranger count only](#run_cellranger_count)
   * [Cell Ranger count inputs](#cellranger_count_input)
-* [Run Single Cell RNA-Seq analysis tools](#run_scrtools)
-  * [Prepare count_matrix.csv](#count_matrix_csv)
-  * [scrtools aggregate_matrix](#aggr_mat)
-  * [scrtools merge_matrix](#merge_mat)
-  * [scrtools cluster](#cluster)
-  * [scrtools annotate](#annotate)
-  * [scrtools subcluster](#subcluster)
-
+* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run_scrtools)
+  * [scrtools steps](#scrtools_steps)
+  * [global inputs](#global_input)
+  * [aggregate_matrix](#aggr_mat)
+  * [cluster](#cluster)
+  * [de_analysis](#de_analysis)
+  * [plot](#plot)
+* [Run subcluster analysis](#subcluster)
+  * [scrtools_subcluster steps](#subcluster_steps)
+  * [scrtools_subcluster's inputs](#subcluster_input)
+  * [scrtools_subcluster's outputs](#subcluster_output)
+  
 ## <a name="first_time"></a> First Time Running - Authenticate with Google
 
 1. Ensure the Google Cloud SDK is installed. 
@@ -164,7 +168,7 @@ output_count_directory | Array[String] | A list of google bucket urls containing
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
 
-1. Create a sample sheet, *count_matrix.csv*, which describes the metadata for each 10x channel. The sample sheet should at least contain 3 columns --- *Sample*, *Reference*, and *Location*. *Sample* refers to sample names, *Reference* refers to the genome name, and *Location* refers to the location of the channel-specific count matrix in 10x format (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In the example below, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to the donor ID.
+1. Create a sample sheet, **count_matrix.csv**, which describes the metadata for each 10x channel. The sample sheet should at least contain 3 columns --- *Sample*, *Reference*, and *Location*. *Sample* refers to sample names, *Reference* refers to the genome name, and *Location* refers to the location of the channel-specific count matrix in 10x format (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In the example below, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to the donor ID.
 
     Example:
     ```
@@ -178,30 +182,30 @@ output_count_directory | Array[String] | A list of google bucket urls containing
 
     Example: *gsutil cp /foo/bar/projects/my_count_matrix.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
-1. Import *scrtools* method.
+1. Import **scrtools** method.
     
-    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type *scrtools*.
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type **scrtools**.
 
 1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
 ### <a name="scrtools_steps"></a> scrtools steps:
 
-*scrtools* processes single cell data in the following steps:
+**scrtools** processes single cell data in the following steps:
 
-1. *aggregate_matrix*. This step aggregates channel-specific count matrices into one big count matrix. Users could specify which channels they want to analyze and which sample attributes they want to import to the count matrix in this step.
+1. **aggregate_matrix**. This step aggregates channel-specific count matrices into one big count matrix. Users could specify which channels they want to analyze and which sample attributes they want to import to the count matrix in this step.
 
-1. *cluster*. This step is the main analysis step. In this step, *scrtools* performs low quality cell filtration, variable gene selection, batch correction, dimension reduction, diffusion map calculation, graph-based clustering and 2D visualization calculation (e.g. tSNE/FLE).
+1. **cluster**. This step is the main analysis step. In this step, **scrtools** performs low quality cell filtration, variable gene selection, batch correction, dimension reduction, diffusion map calculation, graph-based clustering and 2D visualization calculation (e.g. tSNE/FLE).
 
-1. *de_analysis*. This step is optional. In this step, *scrtools* could calculate potential markers for each cluster by performing a variety of differential expression (DE) analysis. The available DE tests include Welch's t test, Fisher's exact test, and Mann-Whitney U test. *scrtools* could also calculate the area under ROC curve values for putative markers. If the samples are human or mouse immune cells, *scrtools* could also optionally annotate putative cell types for each cluster based on known markers.
+1. **de_analysis**. This step is optional. In this step, **scrtools** could calculate potential markers for each cluster by performing a variety of differential expression (DE) analysis. The available DE tests include Welch's t test, Fisher's exact test, and Mann-Whitney U test. **scrtools** could also calculate the area under ROC curve values for putative markers. If the samples are human or mouse immune cells, **scrtools** could also optionally annotate putative cell types for each cluster based on known markers.
 
-1. *plot*. This step is optional. In this step, *scrtools* could generate 3 types of figures based on the *cluster* step results. First, *composition* plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, *tsne* plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, *diffmap* plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
+1. **plot**. This step is optional. In this step, **scrtools** could generate 3 types of figures based on the **cluster** step results. First, **composition** plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, **tsne** plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, **diffmap** plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
 
 In the following, we will first introduce global inputs and then introduce the WDL inputs and outputs for each step separately. But please note that you need to set inputs from all steps simultaneously in the FireCloud WDL. 
 
 Note that we will make the required inputs/outputs bold and all other inputs/outputs are optional.
 
 
-### <a name="global_input"</a> global inputs
+### <a name="global_input"></a> global inputs
 
 Name | Description | Example | Default
 --- | --- | --- | ---
@@ -232,7 +236,7 @@ Name | Type | Description
 
 #### cluster inputs
 
-Note that we will only list important inputs here. For other inputs, please refer to *scrtools* package documentation.
+Note that we will only list important inputs here. For other inputs, please refer to **scrtools** package documentation.
 
 Name | Description | Example | Default
 --- | --- | --- | ---
@@ -318,11 +322,11 @@ output_htmls | Array[File] | Outputted html files
 
 ## <a name="subcluster"></a> Run subcluster analysis
 
-Once we have *scrtools* outputs, we could further analyze a subset of cells by running *scrtools_subcluster*. To run *scrtools_subcluster*, follow the following steps:
+Once we have **scrtools** outputs, we could further analyze a subset of cells by running **scrtools_subcluster**. To run **scrtools_subcluster**, follow the following steps:
 
-1. Import *scrtools_subcluster* method.
+1. Import **scrtools_subcluster** method.
     
-    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type *scrtools_subcluster*.
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type **scrtools_subcluster**.
 
 1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
@@ -330,15 +334,15 @@ Once we have *scrtools* outputs, we could further analyze a subset of cells by r
 
 *scrtools_subcluster* processes the subset of single cells in the following steps:
 
-1. *subcluster*. In this step, *scrtools_subcluster* first select the subset of cells from *scrtools* outputs according to user-provided criteria. It then performs batch correction, dimension reduction, diffusion map calculation, graph-based clustering and 2D visualization calculation (e.g. tSNE/FLE).
+1. **subcluster**. In this step, **scrtools_subcluster** first select the subset of cells from **scrtools** outputs according to user-provided criteria. It then performs batch correction, dimension reduction, diffusion map calculation, graph-based clustering and 2D visualization calculation (e.g. tSNE/FLE).
 
-1. *de_analysis*. This step is optional. In this step, *scrtools_subcluster* could calculate potential markers for each cluster by performing a variety of differential expression (DE) analysis. The available DE tests include Welch's t test, Fisher's exact test, and Mann-Whitney U test. *scrtools_subcluster* could also calculate the area under ROC curve values for putative markers. If the samples are human or mouse immune cells, *scrtools_subcluster* could also optionally annotate putative cell types for each cluster based on known markers.
+1. **de_analysis**. This step is optional. In this step, **scrtools_subcluster** could calculate potential markers for each cluster by performing a variety of differential expression (DE) analysis. The available DE tests include Welch's t test, Fisher's exact test, and Mann-Whitney U test. **scrtools_subcluster** could also calculate the area under ROC curve values for putative markers. If the samples are human or mouse immune cells, **scrtools_subcluster** could also optionally annotate putative cell types for each cluster based on known markers.
 
-1. *plot*. This step is optional. In this step, *scrtools_subcluster* could generate 3 types of figures based on the *subcluster* step results. First, *composition* plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, *tsne* plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, *diffmap* plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
+1. **plot**. This step is optional. In this step, **scrtools_subcluster** could generate 3 types of figures based on the **subcluster** step results. First, **composition** plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, **tsne** plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, **diffmap** plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
 
-### <a name="subcluster_input"></a> *scrtools_subcluster*'s inputs
+### <a name="subcluster_input"></a> scrtools_subcluster's inputs
 
-Since *scrtools_subcluster* shares many inputs/outputs with *scrtools*, we will only cover inputs/outputs that are specific to *scrtools_subcluster*.
+Since **scrtools_subcluster** shares many inputs/outputs with **scrtools**, we will only cover inputs/outputs that are specific to **scrtools_subcluster**.
 
 Note that we will make the required inputs/outputs bold and all other inputs/outputs are optional.
 
@@ -353,7 +357,7 @@ memory | Memory size in GB | 200 | 200
 diskSpace | Total disk space | 100 | 100
 preemptible | Number of preemptible tries | 2 | 2
 
-### <a name="subcluster_output"></a> *scrtools_subcluster*'s outputs
+### <a name="subcluster_output"></a> scrtools_subcluster's outputs
 
 Name | Type | Description
 --- | --- | --- 
