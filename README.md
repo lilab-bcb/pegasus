@@ -164,158 +164,203 @@ output_count_directory | Array[String] | A list of google bucket urls containing
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
 
-Before we run the scrtools, we need to first prepare a CSV file, *count_matrix.csv*, which describes the metadata for each 10x channel.
+1. Create a sample sheet, *count_matrix.csv*, which describes the metadata for each 10x channel. The sample sheet should at least contain 3 columns --- *Sample*, *Reference*, and *Location*. *Sample* refers to sample names, *Reference* refers to the genome name, and *Location* refers to the location of the channel-specific count matrix in 10x format (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In the example below, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to the donor ID.
 
-### <a name="count_matrix_csv"></a> count_matrix.csv
-
-```
-Sample,Source,Platform,Donor,Reference,Location
-sample_1,bone_marrow,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
-sample_2,bone_marrow,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_2/filtered_gene_bc_matrices_h5.h5
-sample_3,pbmc,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_3/filtered_gene_bc_matrices_h5.h5
-sample_4,pbmc,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_4/filtered_gene_bc_matrices_h5.h5
-```
-
-Please note that *Sample*, *Reference*, and *Location* are required. *Sample* refers to the sample names listed in the BCL CSV file, *Reference* refers to the genome name, and *Location* refers to the cellranger output folder. The cellranger count output file filtered_gene_bc_matrices_h5.h5 is expected to be located at *Location/Sample* (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/S1). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In this example, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to donor ID.
-
-You should upload **count_matrix.csv** to your workspace
+    Example:
+    ```
+    Sample,Source,Platform,Donor,Reference,Location
+    sample_1,bone_marrow,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
+    sample_2,bone_marrow,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_2/filtered_gene_bc_matrices_h5.h5
+    sample_3,pbmc,NextSeq,1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_3/filtered_gene_bc_matrices_h5.h5
+    sample_4,pbmc,NextSeq,2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_4/filtered_gene_bc_matrices_h5.h5
+    ```    
+1. Upload your sample sheet to the workspace.  
 
     Example: *gsutil cp /foo/bar/projects/my_count_matrix.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
-Then you can aggregate 10x count matrices into a single count matrix using **scrtools aggregate_matrix**
+1. Import *scrtools* method.
+    
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type *scrtools*.
 
-### <a name="aggr_mat"></a> scrtools aggregate_matrix
+1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
-*scrtools aggregate_matrix* is used to aggregate individual 10x channels into a big count matrix for downstream analysis. Please see the inputs below.
+### <a name="scrtools_steps"></a> scrtools steps:
+
+*scrtools* processes single cell data in the following steps:
+
+1. *aggregate_matrix*. This step aggregates channel-specific count matrices into one big count matrix. Users could specify which channels they want to analyze and which sample attributes they want to import to the count matrix in this step.
+
+1. *cluster*. This step is the main analysis step. In this step, *scrtools* performs low quality cell filtration, variable gene selection, batch correction, dimension reduction, diffusion map calculation, graph-based clustering and 2D visualization calculation (e.g. tSNE/FLE).
+
+1. *de_analysis*. This step is optional. In this step, *scrtools* could calculate potential markers for each cluster by performing a variety of differential expression (DE) analysis. The available DE tests include Welch's t test, Fisher's exact test, and Mann-Whitney U test. *scrtools* could also calculate the area under ROC curve values for putative markers. If the samples are human or mouse immune cells, *scrtools* could also optionally annotate putative cell types for each cluster based on known markers.
+
+1. *plot*. This step is optional. In this step, *scrtools* could generate 3 types of figures based on the *cluster* step results. First, *composition* plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, *tsne* plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, *diffmap* plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
+
+In the following, we will first introduce global inputs and then introduce the WDL inputs and outputs for each step separately. But please note that you need to set inputs from all steps simultaneously in the FireCloud WDL. 
+
+Note that we will make the required inputs/outputs bold and all other inputs/outputs are optional.
+
+
+### <a name="global_input"</a> global inputs
 
 Name | Description | Example | Default
 --- | --- | --- | ---
 **input_count_matrix_csv** | Input CSV file describing metadata of each 10x channel | "my_count_matrix.csv" | 
-**output_folder** | This is the folder for all analysis results | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**output_name** | Output file name of this task, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat_bm" | 
-genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
-restrictions | Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. Multiple restrictions are separated by ';'. If not restrictions are provided, all channels in the *count_matrix.csv* will be selected | "Source:bone_marrow" | 
-attributes | Specify a comma-separated list of outputted attributes (i.e. column names in *count_matrix.csv*). These attributes will be imported to *output_name.attr.csv* | "Source,Donor" | 
-groupby | When we know there are different groups in the study, such as bone_marrow and pbmc, we could perform batch correction separately for each group. This optional field is used to create a new attribute, GroupBy, that helps to identify groups. It takes the format of 'value' or 'attribute=value' or 'attr1+attr2+....' | "Source+Donor" | 
-diskSpace | Disk space in gigabytes needed for this task | 100 | 100
+**output_name** | This is the prefix for all output files. It should contain the google bucket url, subdirectory name and output name prefix | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir/my_results" | 
+genome | Reference genome name | "mm10" | "GRCh38"
+num_cpu | Number of cpus per scrtools job | 32 | 64
+memory | Memory size in GB | 200 | 200
+diskSpace | Total disk space | 100 | 100
+preemptible | Number of preemptible tries | 2 | 2
 
-### <a name="merge_mat"></a> scrtools merge_matrix
+### <a name="aggr_mat"></a> aggregate_matrix
 
-*scrtools merge_matrix* is used to combine two or more aggregated matrices produced by *scrtools aggregate_matrix* into one big count matrix. This step is optional. 
-
-Name | Description | Example | Default
---- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**input_names** | A comma-separated list of input names for count matrices that you want to merge | "my_aggr_mat_bm,my_aggr_mat_pbmc" | 
-**output_name** | Output file name of this task, the count matrix *output_name_10x.h5* and metadata file *output_name.attr.csv* will be generated | "my_aggr_mat" | 
-genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
-symbols | A comma-separated list of symbols representing each input matrix, this input is used with 'attributes' | "bm,pbmc" | 
-attributes | A comma-separated list of attributes. When merging matrices, the matrix symbol defined in 'symbols' will be added in front of these attributes | "Donor" | 
-diskSpace | Disk space in gigabytes needed for this task | 100 | 100
-
-### <a name="cluster"></a> scrtools cluster
-
-*scrtools cluster* performs PCA, tSNE visualization, diffusion map, Louvain clustering, and differential expression analysis (fisher's exact test and t test). This is the main step people want to know. Please see inputs below.
-
+#### aggregate_matrix inputs
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**input_name** | Input name of the aggreagated/merged matric | "my_aggr_mat" | 
-**output_name** | Output file name of this task | "results" | 
-num_cpu | Number of CPUs to use | 64 | 64
-genome | The genome cellranger used to generate count matrices | "GRCh38" | "GRCh38"
-output_filtration_results | A boolean value indicating if you want to output QC metrics into a spreadsheet | true | false
-correct_batch_effect | A boolean value indicating if you want to correct for batch effects | true | false
-batch_group_by | If correct for batch effects, if you want to correct it separately for each group. Group is defined by this input. It should be an attribute (e.g. GroupBy) | "Source" | 
-plot_by_side | By default, this step will generate one tSNE plot colored by louvain cluster labels. If you provide an attribute name here, it will put the same tSNE colored by the attribute on the right-hand side | "Source" | 
-legend_on_data | A boolean value indicating if we should put legends on data | true | false
-plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | true | false
-figure_size | Sizes of the composition plots in inches | "10,8" | "6,4"
-plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | true | false 
-de_analysis | A boolean value indicating if you want to perform differential expression analysis | true | true
-fold_change | Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene in spreadsheets | 2 | 1.5
-labels | Cluster labels that help de_analysis identify clusters | "louvain_labels" | "louvain_labels"
-output_loom | A boolean value indicating if you want to output loom-formatted files | false | false
-import_attributes | Import attributes contained in the comma-separated list into the analysis object | "Donor" | 
-min_genes | The minimum number of expressed genes to be consider a valid cell | 500 | 500
-max_genes | *max_genes* - 1 is the maximum number of expressed genes to be consider a valid cell | 6000 | 6000
-mito_prefix | Prefix of mitochondrial genes | "MT-" | "MT-"
-percent_mito | Only keep cells with mitochondrial ratio less than *percent_mito* | 0.1 | 0.1
-gene_percent_cells | Genes expressed in with less than *gene_percent_cells* * *number_of_cells* cells will be excluded from variable gene selection step. The default value requires a gene expressed in at least 3 cells when there are 6,000 cells | 0.0005 | 0.0005
-counts_per_cell_after | Normalize each cell so that the sum of its normalized counts is equal to *counts_per_cell_after* | 1e5 | 1e5
-louvain_resolution | Resolution parameter of the louvain clustering algorithm | 1 | 1.3
-diskSpace | Disk space in gigabytes needed for this task | 250 | 250
+restrictions | Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. Multiple restrictions are separated by ';' | "Source:bone_marrow;Platform:NextSeq" | 
+attributes | Specify a comma-separated list of outputted attributes. These attributes should be column names in the count_matrix.csv file | "Source,Platform,Donor" | 
 
-Here are the description of outputs.
+#### aggregate_matrix output
 
-Name | Description | Required output
+Name | Type | Description
+--- | --- | ---
+**output_10x_h5** | File | Aggregated count matrix in 10x format
+
+### <a name="cluster"></a> cluster
+
+#### cluster inputs
+
+Note that we will only list important inputs here. For other inputs, please refer to *scrtools* package documentation.
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+output_filtration_results | If output cell and gene filtration results to a spreadsheet | "true" | "true"
+output_loom | If output loom-formatted file | "false" | "false"
+correct_batch_effect | If correct batch effects | "false" | "false"
+batch_group_by | Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either ‘attr’, or ‘attr1+attr2+…+attrn’, or ‘attr=value11,…,value1n_1;value21,…,value2n_2;…;valuem1,…,valuemn_m’. In the first form, ‘attr’ should be an existing sample attribute, and groups are defined by ‘attr’. In the second form, ‘attr1’,…,’attrn’ are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute ‘attr’ has a value among valuei1,…,valuein_i. A cell belongs to group 0 if it does not belong to any other groups | "Donor" | None
+min_genes | Only keep cells with at least <number> of genes | 500 | 500
+max_genes | Only keep cells with less than <number> of genes | 6000 | 6000
+mito_prefix | Prefix for mitochondrial genes | "mt-" | "MT-"
+percent_mito | Only keep cells with mitochondrial ratio less than <ratio> | 0.1 | 0.1 
+gene_percent_cells | Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes | 0.0005 | 0.0005
+counts_per_cell_after | Total counts per cell after normalization | 1e5 | 1e5
+random_state | Random number generator seed | 0 | 0
+nPC | Number of principal components | 50 | 50
+nDC | Number of diffusion components | 50 | 50
+diffmap_K | Number of neighbors used for constructing affinity matrix | 100 | 100
+diffmap_alpha | Power parameter for diffusion-based pseudotime | 0.5 | 0.5 
+run_louvain | Run louvain clustering algorithm | "true" | "false"
+louvain_resolution | Resolution parameter for the louvain clustering algorithm | 1.3 | 1.3
+run_approximated_louvain | Run approximated louvain clustering algorithm | "true" | "false"
+approx_louvain_ninit | Number of Kmeans tries | 30 | 20 
+approx_louvain_nclusters | Number of clusters for Kmeans initialization | 40 | 30
+approx_louvain_resolution | Resolution parameter for louvain | 1.3 | 1.3
+run_tsne | Run multi-core tSNE for visualization | "true" | "false"
+tsne_perplexity | tSNE’s perplexity parameter | 30 | 30
+run_fitsne | Run FItSNE for visualization | "true" | "false"
+run_umap | Run umap for visualization | "true" | "false"
+umap_on_diffmap | Run umap on diffusion components | "ture" | "false"
+run_fle | Run force-directed layout embedding | "true" | "false"
+fle_K | K neighbors for building graph for FLE | 50 | 50
+fle_n_steps | Number of iterations for FLE | 10000 | 10000
+
+#### cluster outputs
+
+Name | Type | Description
+--- | --- | ---
+**output_h5ad** | File | h5ad-formatted HDF5 file containing all results (output_name.h5ad)
+output_filt_xlsx | File | Spreadsheet containing filtration results (output_name.filt.xlsx)
+output_loom_file | File | Outputted loom file (output_name.loom)
+
+### <a name="de_analysis"></a> de_analysis
+
+#### de_analysis inputs
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+perform_de_analysis | If perform de analysis | "true" | "false"
+cluster_labels | Specify the cluster labels used for differential expression analysis | "louvain_labels" | "louvain_labels" 
+alpha | Control false discovery rate at <alpha> | 0.05 | 0.05
+fisher | Calculate Fisher’s exact test | "true" | "false"
+mwu | Calculate Mann-Whitney U test | "true" | "false"
+roc | Calculate area under cuver in ROC curve | "true" | "false"
+annotate_cluster | If also annotate cell types for clusters based on DE results | "true" | "false"
+organism | Organism, could either be "human" or "mouse" | "mouse" | "human"
+minimum_report_score | Minimum cell type score to report a potential cell type | 0.5 | 0.5
+
+#### de_analysis outputs
+
+Name | Type | Description
+--- | --- | ---
+output_de_h5ad | File | h5ad-formatted results with DE results updated (output_name.h5ad)
+output_de_xlsx | File | Spreadsheet reporting DE results (output_name.de.xlsx)
+output_anno_file | File | Annotation file (output_name.anno.txt)
+
+### <a name="plot"></a> plot
+
+#### plot inputs
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+plot_composition | Takes the format of "label:attr,label:attr,...,label:attr". If non-empty, generate composition plot for each "label:attr" pair. "label" refers to cluster labels and "attr" refers to sample conditions | "louvain_labels:Donor" | None
+plot_tsne | Takes the format of "attr,attr,...,attr". If non-empty, plot attr colored tSNEs side by side | "louvain_labels,Donor" | None
+plot_diffmap | Takes the format of "attr,attr,...,attr". If non-empty, generate attr colored 3D interactive plot. The 3 coordinates are the first 3 PCs of all diffusion components | "louvain_labels,Donor" | None
+
+#### plot outputs
+
+Name | Type | Description
+--- | --- | ---
+output_pngs | Array[File] | Outputted png files
+output_htmls | Array[File] | Outputted html files
+
+
+## <a name="subcluster"></a> Run subcluster analysis
+
+Once we have *scrtools* outputs, we could further analyze a subset of cells by running *scrtools_subcluster*. To run *scrtools_subcluster*, follow the following steps:
+
+1. Import *scrtools_subcluster* method.
+    
+    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type *scrtools_subcluster*.
+
+1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
+
+### <a name="subcluster_steps"></a> scrtools_subcluster steps:
+
+*scrtools_subcluster* processes the subset of single cells in the following steps:
+
+1. *subcluster*. In this step, *scrtools_subcluster* first select the subset of cells from *scrtools* outputs according to user-provided criteria. It then performs batch correction, dimension reduction, diffusion map calculation, graph-based clustering and 2D visualization calculation (e.g. tSNE/FLE).
+
+1. *de_analysis*. This step is optional. In this step, *scrtools_subcluster* could calculate potential markers for each cluster by performing a variety of differential expression (DE) analysis. The available DE tests include Welch's t test, Fisher's exact test, and Mann-Whitney U test. *scrtools_subcluster* could also calculate the area under ROC curve values for putative markers. If the samples are human or mouse immune cells, *scrtools_subcluster* could also optionally annotate putative cell types for each cluster based on known markers.
+
+1. *plot*. This step is optional. In this step, *scrtools_subcluster* could generate 3 types of figures based on the *subcluster* step results. First, *composition* plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, *tsne* plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, *diffmap* plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
+
+### <a name="subcluster_input"></a> *scrtools_subcluster*'s inputs
+
+Since *scrtools_subcluster* shares many inputs/outputs with *scrtools*, we will only cover inputs/outputs that are specific to *scrtools_subcluster*.
+
+Note that we will make the required inputs/outputs bold and all other inputs/outputs are optional.
+
+Name | Description | Example | Default
+--- | --- | --- | ---
+**input_h5ad** | Input h5ad file containing *scrtools* results | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir/my_results.h5ad" | 
+**output_name** | This is the prefix for all output files. It should contain the google bucket url, subdirectory name and output name prefix | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir/my_results_sub" | 
+**subset_selections** | Specify which cells will be included in the subcluster analysis. This field contains one or more <subset_selection> strings separated by ';'. Each <subset_selection> string takes the format of ‘attr:value,…,value’, which means select cells with attr in the values. If multiple <subset_selection> strings are specified, the subset of cells selected is the intersection of these strings | "louvain_labels:3,6" | 
+calculate_pseudotime | Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes | "sample_1-ACCCGGGTTT-1" | None
+num_cpu | Number of cpus per scrtools job | 32 | 64
+memory | Memory size in GB | 200 | 200
+diskSpace | Total disk space | 100 | 100
+preemptible | Number of preemptible tries | 2 | 2
+
+### <a name="subcluster_output"></a> *scrtools_subcluster*'s outputs
+
+Name | Type | Description
 --- | --- | --- 
-output_name.tsne.png | tSNE plots colored by louvain cluster labels and user-specified attribute | Yes
-output_name.h5ad | Results in Scanpy's anndata format | Yes
-output_name_var.h5ad | Results containing only variable genes in Scanpy's anndata format | Yes
-output_name.filt.xlsx | Spreadsheet containing number of cells kept for each channel after filtering | No, only present if *output_filtration_results* is set
-output_name.composition.frequency.png | Composition plot. Each cluster has a stacked bar showing the frequency of cells from each condition in this cluster | No, only present if *plot_composition* is set
-output_name.composition.normalized.png | Computation plot. Each cluster has non-stacked bars showing the percentage of cells within each condition that belong to this cluster | No, only present if *plot_composition* is set
-output_name.diffmap_cluster.html | Interactive 3D diffusion map colored by louvain cluster labels | No, only present if *plot_diffusion_map* is set
-output_name.diffmap_condition.html | Interactive 3D diffusion map colored by the attribute in *plot_by_side* | No, only present if both *plot_diffusion_map* and *plot_by_side* are set
-output_name_de.h5ad | Differential expression results stored in Scanpy's anndata format | No, only present if *de_analysis* is set
-output_name_de_analysis_fisher.xlsx | Spreadsheet shows up-regulated and down-regulated genes for each cluster, calculated by Fisher's exact test | No, only present if *de_analysis* is set
-output_name_de_analysis_t.xlsx | Spreadsheet shows up-regulated and down-regulated genes for each cluster, calculated by T test | No, only present if *de_analysis* is set
-output_name.loom | Results in loom format | No, only present if *output_loom* is set
-output_name_var.loom | Results containing only variable genes in loom format | No, only present if *output_loom* is set
-
-### <a name="annotate"></a> scrtools annotate
-
-This step outputs putative cell type annotations for each cluster based on known markers. It required differential expression analyses performed in *scrtools cluster* step. This step is optional and currently it only works for human immune cells. Please see the inputs below.
-
-Name | Description | Example | Default
---- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**file_name** | Input file name, *file_name_de.h5ad* should exist | "results" | 
-minimum_report_score | This step calculates a score between [0, 1] for each pair of cluster and putative cell type. It only report putative cell types with a minimum score of *minimum_report_score* | 0.1 | 0.5
-no_use_non_de | Do not consider non-differentially-expressed genes as down-regulated | true | false
-diskSpace | Disk space in gigabytes needed for this task | 100 | 100
-
-### <a name="subcluster"></a> scrtools subcluster
-
-This step performs subcluster analysis based on *scrtools cluster* outputs. Please see the inputs below.
-
-Name | Description | Example | Default
---- | --- | --- | ---
-**data_folder** | This is the folder for all analysis results. It should be the same one used in *scrtools aggregate_matrix* | "gs://fc-e0000000-0000-0000-0000-000000000000/my_results_dir" | 
-**input_name** | Input name of *scrtools cluster* result | "results" | 
-**output_name** | Output file name of this task | "results_sub" | 
-**cluster_ids** | A comma-separated list of cluster IDs (numbered from 1) for subcluster | "1,3,9" | 
-num_cpu | Number of CPUs to use | 64 | 64
-correct_batch_effect | A boolean value indicating if you want to correct for batch effects | true | false
-plot_by_side | By default, this step will generate one tSNE plot colored by louvain cluster labels. If you provide an attribute name here, it will put the same tSNE colored by the attribute on the right-hand side | "Source" | 
-legend_on_data | A boolean value indicating if we should put legends on data | true | false
-plot_composition | A boolean value indicating if you want to generate composition plots for the attribute in *plot_by_side*, which for each cluster shows the percentage of cells in each attribute value | true | false
-figure_size | Sizes of the composition plots in inches | "10,8" | "6,4"
-plot_diffusion_map | A boolean value indicating if interactive 3D diffusion maps should be generated | true | false 
-de_analysis | A boolean value indicating if you want to perform differential expression analysis | true | true
-fold_change | Minimum fold change in either percentage (fisher test) or log expression (t test) to report a DE gene in spreadsheets | 2 | 1.5
-labels | Cluster labels that help de_analysis identify clusters | "louvain_labels" | "louvain_labels"
-louvain_resolution | Resolution parameter of the louvain clustering algorithm | 1 | 1.3
-output_loom | A boolean value indicating if you want to output loom-formatted files | false | false
-diskSpace | Disk space in gigabytes needed for this task | 250 | 250
-
-Here are the outputs.
-
-Name | Description | Required output
---- | --- | --- 
-output_name.tsne.png | tSNE plots colored by louvain cluster labels and user-specified attribute | Yes
-output_name.h5ad | Results in Scanpy's anndata format | Yes
-output_name_var.h5ad | Results containing only variable genes in Scanpy's anndata format | Yes
-output_name.filt.xlsx | Spreadsheet containing number of cells kept for each channel after filtering | No, only present if *output_filtration_results* is set
-output_name.composition.frequency.png | Composition plot. Each cluster has a stacked bar showing the frequency of cells from each condition in this cluster | No, only present if *plot_composition* is set
-output_name.composition.normalized.png | Computation plot. Each cluster has non-stacked bars showing the percentage of cells within each condition that belong to this cluster | No, only present if *plot_composition* is set
-output_name.diffmap_cluster.html | Interactive 3D diffusion map colored by louvain cluster labels | No, only present if *plot_diffusion_map* is set
-output_name.diffmap_condition.html | Interactive 3D diffusion map colored by the attribute in *plot_by_side* | No, only present if both *plot_diffusion_map* and *plot_by_side* are set
-output_name_de.h5ad | Differential expression results stored in Scanpy's anndata format | No, only present if *de_analysis* is set
-output_name_de_analysis_fisher.xlsx | Spreadsheet shows up-regulated and down-regulated genes for each cluster, calculated by Fisher's exact test | No, only present if *de_analysis* is set
-output_name_de_analysis_t.xlsx | Spreadsheet shows up-regulated and down-regulated genes for each cluster, calculated by T test | No, only present if *de_analysis* is set
-output_name.loom | Results in loom format | No, only present if *output_loom* is set
-output_name_var.loom | Results containing only variable genes in loom format | No, only present if *output_loom* is set
+**output_h5ad** | File | h5ad-formatted HDF5 file containing all results (output_name.h5ad)
+output_loom_file | File | Outputted loom file (output_name.loom)
+output_de_h5ad | File | h5ad-formatted results with DE results updated (output_name.h5ad)
+output_de_xlsx | File | Spreadsheet reporting DE results (output_name.de.xlsx)
+output_pngs | Array[File] | Outputted png files
+output_htmls | Array[File] | Outputted html files
 
