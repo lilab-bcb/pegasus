@@ -7,8 +7,7 @@ Table of Contents
 * [Run Cell Ranger mkfastq/count](#run_cellranger)
   * [Cell Ranger mkfastq/count inputs](#cellranger_input)
   * [Cell Ranger mkfastq/count outputs](#cellranger_output)
-* [Run Cell Ranger count only](#run_cellranger_count)
-  * [Cell Ranger count inputs](#cellranger_count_input)
+  * [Only run *cellranger count*](#cellranger_only_count)
 * [Run Single Cell RNA-Seq analysis tools (scrtools)](#run_scrtools)
   * [scrtools steps](#scrtools_steps)
   * [global inputs](#global_input)
@@ -41,7 +40,7 @@ Table of Contents
 
     It is highly recommended that you delete the **BCL files** after the pipeline is finished by turning on the **delete_input_directory** option.
 
-    Example: *gsutil -m rsync -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
+    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
     
     -m means copy in parallel, -r means copy the directory recursively.
     
@@ -49,20 +48,23 @@ Table of Contents
     
     You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
 
-1. Create a sample sheet. A sample sheet is a simple CSV with sample, flowcell, lane, and index columns, which describe the way to demultiplex the flowcells. The flowcell column should be google bucket urls obtained in the previous step. The index column should contain a 10x sample set name (e.g., SI-GA-A12). If a sample is sequenced in multiple flowcells, this smaple should be listed multiple times in the CSV (one line per flowcell). In the following example, we have 4 samples sequenced in two flowcells.
+1. Create a sample sheet. A sample sheet is a simple CSV with sample, reference, flowcell, lane, index columns. It can optionally contain a chemistry column. This sample sheet describe the ways to demultiplex flowcells and generate channel-specific count matrices. *Sample* column gives sample names and each 10x channel should have a unique sample name. *Reference* provides the reference genome used by *cellranger count* for each 10x channel. The elements of the *reference* column are either google bucket urls pointing to reference tarballs or keywords such as **GRCh38** for human, **mm10** for mouse, and **GRCh38\_and\_mm10** for human and mouse). *Flowcell* column records the google bucket urls of uploaded BCL folders. *Lane* column tells which lanes the current sample were pooled into. *Index* column contains 10x sample index set names (e.g. SI-GA-A12). *Chemistry* column is optional and it describes the 10x chemistry used for the sample. If this column is omitted, *cellranger count* will try to determine the chemistry automatically. Note that *Sample*, *Lane*, and *Index* columns are defined exactly the same as in 10x's simple CSV layout file.
+
+This sample sheet supports sequencing the same 10x channels across multiple flowcells. If a sample is sequenced across multiple flowcells, just list it in multiple rows, with one flowcell per row. In the following example, we have 4 samples sequenced in two flowcells.
    
    Example: 
     ```
-    Sample,Flowcell,Lane,Index
-    sample_1,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,1-2,SI-GA-A8
-    sample_2,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,3-4,SI-GA-B8
-    sample_3,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,5-6,SI-GA-C8
-    sample_4,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,7-8,SI-GA-D8
-    sample_1,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,1-2,SI-GA-A8
-    sample_2,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,3-4,SI-GA-B8
-    sample_3,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,5-6,SI-GA-C8
-    sample_4,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,7-8,SI-GA-D8
+    Sample,Reference,Flowcell,Lane,Index,Chemistry
+    sample_1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,1-2,SI-GA-A8,threeprime
+    sample_2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,3-4,SI-GA-B8,threeprime
+    sample_3,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,5-6,SI-GA-C8,fiveprime
+    sample_4,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,7-8,SI-GA-D8,fiveprime
+    sample_1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,1-2,SI-GA-A8,threeprime
+    sample_2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,3-4,SI-GA-B8,threeprime
+    sample_3,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,5-6,SI-GA-C8,fiveprime
+    sample_4,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,7-8,SI-GA-D8,fiveprime
     ```
+
 1. Upload your sample sheet to the workspace.  
 
     Example: *gsutil cp /foo/bar/projects/sample_sheet.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
@@ -80,17 +82,19 @@ Table of Contents
 Name | Description | Example | Default
 --- | --- | --- | ---
 **input\_csv\_file** | Sample Sheet (contains Sample, Flowcell, Lane, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/sample_sheet.csv" | 
-**transcriptome** | keyword (**GRCh38** for human, **mm10** for mouse, **GRCh38\_and\_mm10** for human and mouse) or gs URL to a transcriptome tar.gz | "GRCh38" | 
 **cellranger\_output\_directory** | Cellranger output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/cellranger_output" |
-**delete\_input\_directory** | If delete BCL directories after demux. If false, you should delete this folder yourself so as to not incur storage charges. | true | 
-cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
+run_mkfastq | If you want to run *cellranger mkfastq* | true | true
+run_count | If you want to run *cellranger count* | true | true
+delete\_input\_directory | If delete BCL directories after demux. If false, you should delete this folder yourself so as to not incur storage charges. | true | false
 do_force_cells | force cells | true | true
 force_cells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
 expect_cells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
 secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
+cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
+num_cpu | Number of cpus to request for one node | 64 | 64
+memory | Memory in GB | 128 | 128
 mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 1000 | 1000 
 count_disk_space | Disk space in gigabytes needed for cell ranger count | 500 | 500
-num_cpu | Number of cpus to request for one node | 64 | 64
 preemptible | Number of preemptible tries | 2 | 2
 
 ### <a name="cellranger_output"></a> Cell Ranger mkfastq/count outputs:
@@ -104,17 +108,15 @@ output_count_directory | Array[String] | A list of google bucket urls containing
 metrics_summaries | File | A excel spreadsheet containing QCs for each sample.
 output_web_summary | Array[File] | A list of htmls visualizing QCs for each sample (cellranger count output).
 
-## <a name="run_cellranger_count"></a> Run Cell Ranger count only
+### <a name="cellranger_only_count"></a> Only run *cellranger count*
 
-Sometimes, people might want to perform demux locally and run **cellranger count** on the cloud. This section describes how to perform counting on cloud.
-
-1. [Create](https://software.broadinstitute.org/firecloud/documentation/article?id=10746) a [FireCloud](https://portal.firecloud.org/) workspace or use an existing workspace.
+Sometimes, people might want to perform demux locally and only run *cellranger count* on the cloud. This section describes how to perform count only use *cellranger_mkfastq_count*.
 
 1. Copy your FASTQ files to the workspace using gsutil in your unix terminal. 
 
-    You should upload a folder, which contains one subfolder per sample. Each subfolder contains all FASTQ files from the corresponding sample.
+    You should upload folders of FASTQS. Each foloder contains one subfolder per sample. Each subfolder contains all FASTQ files from the corresponding sample.
 
-    Example: *gsutil -m rsync -r /foo/bar/fastq_path/K18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4*
+    Example: *gsutil -m cp -r /foo/bar/fastq_path/K18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4_fastq*
     
     -m means copy in parallel, -r means copy the directory recursively.
     
@@ -122,49 +124,22 @@ Sometimes, people might want to perform demux locally and run **cellranger count
     
     You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
 
-1. Create a sample sheet. A sample sheet is a simple CSV with lane, sample, and index columns. You should have this CSV file for running **cellranger mkfastq** locally. 
+1. Replace the *Flowcell* column in the sample sheet with the locations of FASTQ folders and upload it into your workspace.
    
    Example: 
     ```
     Lane,Sample,Index
-    *,sample_1,SI-GA-A8
-    *,sample_2,SI-GA-B8
-    *,sample_3,SI-GA-C8
-    *,sample_4,SI-GA-D8
+    Sample,Reference,Flowcell,Lane,Index,Chemistry
+    sample_1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4_fastq,1-2,SI-GA-A8,threeprime
+    sample_2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4_fastq,3-4,SI-GA-B8,threeprime
+    sample_3,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4_fastq,5-6,SI-GA-C8,fiveprime
+    sample_4,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4_fastq,7-8,SI-GA-D8,fiveprime
+    sample_1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/K10WBC9Z2_fastq,1-2,SI-GA-A8,threeprime
+    sample_2,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/K10WBC9Z2_fastq,3-4,SI-GA-B8,threeprime
+    sample_3,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/K10WBC9Z2_fastq,5-6,SI-GA-C8,fiveprime
+    sample_4,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/K10WBC9Z2_fastq,7-8,SI-GA-D8,fiveprime
     ```
-1. Upload your sample sheet to the workspace.  
-
-    Example: *gsutil cp /foo/bar/projects/my_bcl.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
-
-1. Import cellranger_count method.
-    
-    In FireCloud, select the "Method Configurations" tab then click "Import Configuration". Click "Import From Method Repository". Type cellranger_count.
-
-1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
-
-### <a name="cellranger_count_input"></a> Cell Ranger count inputs:
-
-Name | Description | Example | Default
---- | --- | --- | ---
-**input\_csv\_file** | Sample Sheet (contains Lane, Sample, Index) | "gs://fc-e0000000-0000-0000-0000-000000000000/my_file.csv" | 
-**input\_directory** | gs URL containing FASTQ files | "gs://fc-e0000000-0000-0000-0000-000000000000/K18WBC6Z4" | 
-**transcriptome** | keyword (**GRCh38** for human, **mm10** for mouse, **GRCh38\_and\_mm10** for human and mouse) or gs URL to a transcriptome tar.gz | "GRCh38" | 
-**output\_directory** | Cellranger count output directory | "gs://fc-e0000000-0000-0000-0000-000000000000/my_dir" |
-do_force_cells | force cells | true | true
-forceCells | Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells | 3000 | 6000
-expectCells | Expected number of recovered cells. Mutually exclusive with force_cells | 1000 | 3000
-secondary | Perform cell ranger secondary analysis (dimensionality reduction, clustering, etc.) | false | false
-numCPU | Number of cpus to request for one node | 64 | 64
-diskSpace | Disk space in gigabytes needed for cell ranger count | 500 | 500
-version | Cellranger version | "2.1.1" | "2.1.1"
-
-### <a name="cellranger_count_output"></a> Cell Ranger count outputs:
-
-See the table below for important *Cell Ranger count* outputs.
-
-Name | Type | Description
---- | --- | ---
-output_count_directory | Array[String] | A list of google bucket urls containing count matrices, one url per sample.
+1. Set optional input **run_mkfastq** to **false**.
 
 ## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
 
@@ -240,9 +215,9 @@ Note that we will only list important inputs here. For other inputs, please refe
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-output_filtration_results | If output cell and gene filtration results to a spreadsheet | "true" | "true"
-output_loom | If output loom-formatted file | "false" | "false"
-correct_batch_effect | If correct batch effects | "false" | "false"
+output_filtration_results | If output cell and gene filtration results to a spreadsheet | true | true
+output_loom | If output loom-formatted file | false | false
+correct_batch_effect | If correct batch effects | false | false
 batch_group_by | Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either ‘attr’, or ‘attr1+attr2+…+attrn’, or ‘attr=value11,…,value1n_1;value21,…,value2n_2;…;valuem1,…,valuemn_m’. In the first form, ‘attr’ should be an existing sample attribute, and groups are defined by ‘attr’. In the second form, ‘attr1’,…,’attrn’ are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute ‘attr’ has a value among valuei1,…,valuein_i. A cell belongs to group 0 if it does not belong to any other groups | "Donor" | None
 min_genes | Only keep cells with at least <number> of genes | 500 | 500
 max_genes | Only keep cells with less than <number> of genes | 6000 | 6000
@@ -255,18 +230,18 @@ nPC | Number of principal components | 50 | 50
 nDC | Number of diffusion components | 50 | 50
 diffmap_K | Number of neighbors used for constructing affinity matrix | 100 | 100
 diffmap_alpha | Power parameter for diffusion-based pseudotime | 0.5 | 0.5 
-run_louvain | Run louvain clustering algorithm | "true" | "false"
+run_louvain | Run louvain clustering algorithm | true | false
 louvain_resolution | Resolution parameter for the louvain clustering algorithm | 1.3 | 1.3
-run_approximated_louvain | Run approximated louvain clustering algorithm | "true" | "false"
+run_approximated_louvain | Run approximated louvain clustering algorithm | true | false
 approx_louvain_ninit | Number of Kmeans tries | 30 | 20 
 approx_louvain_nclusters | Number of clusters for Kmeans initialization | 40 | 30
 approx_louvain_resolution | Resolution parameter for louvain | 1.3 | 1.3
-run_tsne | Run multi-core tSNE for visualization | "true" | "false"
+run_tsne | Run multi-core tSNE for visualization | true | false
 tsne_perplexity | tSNE’s perplexity parameter | 30 | 30
-run_fitsne | Run FItSNE for visualization | "true" | "false"
-run_umap | Run umap for visualization | "true" | "false"
-umap_on_diffmap | Run umap on diffusion components | "ture" | "false"
-run_fle | Run force-directed layout embedding | "true" | "false"
+run_fitsne | Run FItSNE for visualization | true | false
+run_umap | Run umap for visualization | true | false
+umap_on_diffmap | Run umap on diffusion components | "ture" | false
+run_fle | Run force-directed layout embedding | true | false
 fle_K | K neighbors for building graph for FLE | 50 | 50
 fle_n_steps | Number of iterations for FLE | 10000 | 10000
 
@@ -284,13 +259,13 @@ output_loom_file | File | Outputted loom file (output_name.loom)
 
 Name | Description | Example | Default
 --- | --- | --- | ---
-perform_de_analysis | If perform de analysis | "true" | "true"
+perform_de_analysis | If perform de analysis | true | true
 cluster_labels | Specify the cluster labels used for differential expression analysis | "louvain_labels" | "louvain_labels" 
 alpha | Control false discovery rate at <alpha> | 0.05 | 0.05
-fisher | Calculate Fisher’s exact test | "true" | "false"
-mwu | Calculate Mann-Whitney U test | "true" | "false"
-roc | Calculate area under cuver in ROC curve | "true" | "false"
-annotate_cluster | If also annotate cell types for clusters based on DE results | "true" | "false"
+fisher | Calculate Fisher’s exact test | true | false
+mwu | Calculate Mann-Whitney U test | true | false
+roc | Calculate area under cuver in ROC curve | true | false
+annotate_cluster | If also annotate cell types for clusters based on DE results | true | false
 organism | Organism, could either be "human" or "mouse" | "mouse" | "human"
 minimum_report_score | Minimum cell type score to report a potential cell type | 0.5 | 0.5
 

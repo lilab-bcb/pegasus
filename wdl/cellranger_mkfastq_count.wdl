@@ -1,6 +1,6 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerMkfastq/versions/11/plain-WDL/descriptor" as crm 
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerMkfastq/versions/12/plain-WDL/descriptor" as crm 
 # import "../CellRangerMkfastq.wdl" as crm 
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerCount/versions/15/plain-WDL/descriptor" as crc
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerCount/versions/16/plain-WDL/descriptor" as crc
 # import "../CellRangerCount.wdl" as crc
 
 workflow cellranger_mkfastq_count {
@@ -74,7 +74,7 @@ workflow cellranger_mkfastq_count {
 			input:
 				input_csv_file = input_csv_file,
 				run_ids = generate_bcl_csv.run_ids,
-				fastq_dirs = cellranger_mkfastq.output_fastqs_directory,
+				fastq_dirs = cellranger_mkfastq.output_fastqs_flowcell_directory,
 				cellranger_version = cellranger_version,
 				preemptible = preemptible			
 		}
@@ -130,6 +130,7 @@ task generate_bcl_csv {
 				bcl_df = df.loc[df['Flowcell'] == input_dir, ['Lane', 'Sample', 'Index']]
 				bcl_df.to_csv(run_id + '_bcl.csv', index = False)
 				call_args = ['gsutil', '-q', 'cp', run_id + '_bcl.csv', '${output_dir}/']
+				# call_args = ['cp', run_id + '_bcl.csv', '${output_dir}/']
 				print(' '.join(call_args))
 				check_call(call_args)
 				fo1.write(run_id + '\n')

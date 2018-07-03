@@ -35,6 +35,7 @@ workflow cellranger_mkfastq {
 
 	output {
 		String output_fastqs_directory = run_cellranger_mkfastq.output_fastqs_directory
+		String output_fastqs_flowcell_directory = run_cellranger_mkfastq.output_fastqs_flowcell_directory
 	}
 }
 
@@ -55,11 +56,18 @@ task run_cellranger_mkfastq {
 		set -e
 		export TMPDIR=/tmp
 		gsutil -q -m cp -r ${input_bcl_directory} .
+		# cp -r ${input_bcl_directory} .
 		cellranger mkfastq --id=results --run=${run_id} --csv=${input_csv_file} --jobmode=local
 		gsutil -q -m cp -r results/outs ${output_directory}/${run_id}_fastqs
+		# cp -r results/outs ${output_directory}/${run_id}_fastqs
+
 
 		python <<CODE
+		import os
 		from subprocess import check_call, check_output, CalledProcessError
+		with open("output_fastqs_flowcell_directory.txt", "w") as fout:
+			flowcell = [name for name in os.listdir('results/outs/fastq_path') if name != 'Reports' and name != 'Stats' and os.path.isdir('results/outs/fastq_path/' + name)][0]
+			fout.write('${output_directory}/${run_id}_fastqs/fastq_path/' + flowcell + '\n')
 		if '${delete_input_bcl_directory}' is 'true':
 			try:
 				call_args = ['gsutil', '-q', 'stat', '${output_directory}/${run_id}_fastqs/qc_summary.json']
@@ -75,6 +83,7 @@ task run_cellranger_mkfastq {
 
 	output {
 		String output_fastqs_directory = "${output_directory}/${run_id}_fastqs"
+		String output_fastqs_flowcell_directory = select_first(read_lines("output_fastqs_flowcell_directory.txt"))
 	}
 
 	runtime {
