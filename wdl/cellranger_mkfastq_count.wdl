@@ -1,4 +1,4 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerMkfastq/versions/12/plain-WDL/descriptor" as crm 
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerMkfastq/versions/13/plain-WDL/descriptor" as crm 
 # import "../CellRangerMkfastq.wdl" as crm 
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerCount/versions/16/plain-WDL/descriptor" as crc
 # import "../CellRangerCount.wdl" as crc

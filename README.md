@@ -52,7 +52,8 @@ Table of Contents
 
 This sample sheet supports sequencing the same 10x channels across multiple flowcells. If a sample is sequenced across multiple flowcells, just list it in multiple rows, with one flowcell per row. In the following example, we have 4 samples sequenced in two flowcells.
    
-   Example: 
+   Example:
+   
     ```
     Sample,Reference,Flowcell,Lane,Index,Chemistry
     sample_1,GRCh38,gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4,1-2,SI-GA-A8,threeprime

@@ -73,7 +73,7 @@ task run_cellranger_mkfastq {
 				call_args = ['gsutil', '-q', 'stat', '${output_directory}/${run_id}_fastqs/qc_summary.json']
 				print(' '.join(call_args))
 				check_output(call_args)
-				call_args = ['gsutil', '-q' 'rm' '-r', '${input_bcl_directory}']
+				call_args = ['gsutil', '-q', 'rm', '-r', '${input_bcl_directory}']
 				print(' '.join(call_args))
 				check_call(call_args)
 			except CalledProcessError:
