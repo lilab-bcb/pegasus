@@ -3,24 +3,24 @@
 Table of Contents
 -----------------
 
-* [First Time Running - Authenticate with Google](#first_time)
+* [First Time Running - Authenticate with Google](#first-time-running-authenticate-with-google)
 * [Run Cell Ranger mkfastq/count](#run-cell-ranger-mkfastqcount)
-  * [Cell Ranger mkfastq/count inputs](#cellranger_input)
-  * [Cell Ranger mkfastq/count outputs](#cellranger_output)
-  * [Only run *cellranger count*](#cellranger_only_count)
-* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run_scrtools)
-  * [scrtools steps](#scrtools_steps)
-  * [global inputs](#global_input)
-  * [aggregate_matrix](#aggr_mat)
+  * [Cell Ranger mkfastq/count inputs](#cell-ranger-mkfastqcount-inputs)
+  * [Cell Ranger mkfastq/count outputs](#cell-ranger-mkfastqcount-outputs)
+  * [Only run *cellranger count*](#only-run-cellranger-count)
+* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run-single-cell-rnaseq-analysis-tools-scrtools)
+  * [scrtools steps](#scrtools-steps)
+  * [global inputs](#global-inputs)
+  * [aggregate_matrix](#aggregate-matrix)
   * [cluster](#cluster)
-  * [de_analysis](#de_analysis)
+  * [de_analysis](#de-analysis)
   * [plot](#plot)
-* [Run subcluster analysis](#subcluster)
-  * [scrtools_subcluster steps](#subcluster_steps)
-  * [scrtools_subcluster's inputs](#subcluster_input)
-  * [scrtools_subcluster's outputs](#subcluster_output)
+* [Run subcluster analysis](#run-subcluster-analysis)
+  * [scrtools_subcluster steps](#scrtools-subcluster-steps)
+  * [scrtools_subcluster's inputs](#scrtools-subclusters-inputs)
+  * [scrtools_subcluster's outputs](#scrtools-subclusters-outputs)
 
-## <a name="first_time"></a> First Time Running - Authenticate with Google
+## First Time Running - Authenticate with Google
 
 1. Ensure the Google Cloud SDK is installed. 
     
@@ -76,7 +76,7 @@ This sample sheet supports sequencing the same 10x channels across multiple flow
 
 1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
-### <a name="cellranger_input"></a> Cell Ranger mkfastq/count inputs:
+### Cell Ranger mkfastq/count inputs:
 
 *Cell Ranger mkfastq/count* takes Illumina outputs as input and runs *cellranger mkfastq* and *cellranger count*. Please see the description of inputs below. Note that required inputs are shown in bold.
 
@@ -98,7 +98,7 @@ mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 1000 | 1000
 count_disk_space | Disk space in gigabytes needed for cell ranger count | 500 | 500
 preemptible | Number of preemptible tries | 2 | 2
 
-### <a name="cellranger_output"></a> Cell Ranger mkfastq/count outputs:
+### Cell Ranger mkfastq/count outputs:
 
 See the table below for important *Cell Ranger mkfastq/count* outputs.
 
@@ -109,7 +109,7 @@ output_count_directory | Array[String] | A list of google bucket urls containing
 metrics_summaries | File | A excel spreadsheet containing QCs for each sample.
 output_web_summary | Array[File] | A list of htmls visualizing QCs for each sample (cellranger count output).
 
-### <a name="cellranger_only_count"></a> Only run *cellranger count*
+### Only run *cellranger count*
 
 Sometimes, people might want to perform demux locally and only run *cellranger count* on the cloud. This section describes how to perform count only use *cellranger_mkfastq_count*.
 
@@ -142,7 +142,7 @@ Sometimes, people might want to perform demux locally and only run *cellranger c
     ```
 1. Set optional input **run_mkfastq** to **false**.
 
-## <a name="run_scrtools"></a> Run Single Cell RNA-Seq analysis tools (scrtools)
+## Run Single Cell RNA-Seq analysis tools (scrtools)
 
 1. Create a sample sheet, **count_matrix.csv**, which describes the metadata for each 10x channel. The sample sheet should at least contain 3 columns --- *Sample*, *Reference*, and *Location*. *Sample* refers to sample names, *Reference* refers to the genome name, and *Location* refers to the location of the channel-specific count matrix in 10x format (e.g. gs://fc-e0000000-0000-0000-0000-000000000000/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5). You are free to add any other columns and these columns will be used in selecting channels for futher analysis. In the example below, we have *Source*, which refers to the tissue of origin, *Platform*, which refers to the sequencing platform, and *Donor*, which refers to the donor ID.
 
@@ -164,7 +164,7 @@ Sometimes, people might want to perform demux locally and only run *cellranger c
 
 1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
-### <a name="scrtools_steps"></a> scrtools steps:
+### scrtools steps:
 
 **scrtools** processes single cell data in the following steps:
 
@@ -181,7 +181,7 @@ In the following, we will first introduce global inputs and then introduce the W
 Note that we will make the required inputs/outputs bold and all other inputs/outputs are optional.
 
 
-### <a name="global_input"></a> global inputs
+### global inputs
 
 Name | Description | Example | Default
 --- | --- | --- | ---
@@ -193,7 +193,7 @@ memory | Memory size in GB | 200 | 200
 disk_space | Total disk space | 100 | 100
 preemptible | Number of preemptible tries | 2 | 2
 
-### <a name="aggr_mat"></a> aggregate_matrix
+### aggregate_matrix
 
 #### aggregate_matrix inputs
 
@@ -208,7 +208,7 @@ Name | Type | Description
 --- | --- | ---
 **output_10x_h5** | File | Aggregated count matrix in 10x format
 
-### <a name="cluster"></a> cluster
+### cluster
 
 #### cluster inputs
 
@@ -254,7 +254,7 @@ Name | Type | Description
 output_filt_xlsx | File | Spreadsheet containing filtration results (output_name.filt.xlsx)
 output_loom_file | File | Outputted loom file (output_name.loom)
 
-### <a name="de_analysis"></a> de_analysis
+### de_analysis
 
 #### de_analysis inputs
 
@@ -278,7 +278,7 @@ output_de_h5ad | File | h5ad-formatted results with DE results updated (output_n
 output_de_xlsx | File | Spreadsheet reporting DE results (output_name.de.xlsx)
 output_anno_file | File | Annotation file (output_name.anno.txt)
 
-### <a name="plot"></a> plot
+### plot
 
 #### plot inputs
 
@@ -296,7 +296,7 @@ output_pngs | Array[File] | Outputted png files
 output_htmls | Array[File] | Outputted html files
 
 
-## <a name="subcluster"></a> Run subcluster analysis
+## Run subcluster analysis
 
 Once we have **scrtools** outputs, we could further analyze a subset of cells by running **scrtools_subcluster**. To run **scrtools_subcluster**, follow the following steps:
 
@@ -306,7 +306,7 @@ Once we have **scrtools** outputs, we could further analyze a subset of cells by
 
 1. Uncheck "Configure inputs/outputs using the Workspace Data Model"
 
-### <a name="subcluster_steps"></a> scrtools_subcluster steps:
+### scrtools_subcluster steps:
 
 *scrtools_subcluster* processes the subset of single cells in the following steps:
 
@@ -316,7 +316,7 @@ Once we have **scrtools** outputs, we could further analyze a subset of cells by
 
 1. **plot**. This step is optional. In this step, **scrtools_subcluster** could generate 3 types of figures based on the **subcluster** step results. First, **composition** plots are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects. Second, **tsne** plot shows the same tSNE colored by different attributes (e.g. cluster labels, conditions) side-by-side. Lastly, **diffmap** plots are 3D interactive plots showing the diffusion maps. The 3 coordinates are the first 3 PCs of all diffusion components.
 
-### <a name="subcluster_input"></a> scrtools_subcluster's inputs
+### scrtools_subcluster's inputs
 
 Since **scrtools_subcluster** shares many inputs/outputs with **scrtools**, we will only cover inputs/outputs that are specific to **scrtools_subcluster**.
 
@@ -333,7 +333,7 @@ memory | Memory size in GB | 200 | 200
 disk_space | Total disk space | 100 | 100
 preemptible | Number of preemptible tries | 2 | 2
 
-### <a name="subcluster_output"></a> scrtools_subcluster's outputs
+### scrtools_subcluster's outputs
 
 Name | Type | Description
 --- | --- | --- 
