@@ -4,7 +4,7 @@ Table of Contents
 -----------------
 
 * [First Time Running - Authenticate with Google](#first_time)
-* [Run Cell Ranger mkfastq/count](#run-cell-ranger-mkfastq/count)
+* [Run Cell Ranger mkfastq/count](#run-cell-ranger-mkfastqcount)
   * [Cell Ranger mkfastq/count inputs](#cellranger_input)
   * [Cell Ranger mkfastq/count outputs](#cellranger_output)
   * [Only run *cellranger count*](#cellranger_only_count)
