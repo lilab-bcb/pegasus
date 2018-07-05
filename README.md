@@ -8,17 +8,17 @@ Table of Contents
   * [Cell Ranger mkfastq/count inputs](#cell-ranger-mkfastqcount-inputs)
   * [Cell Ranger mkfastq/count outputs](#cell-ranger-mkfastqcount-outputs)
   * [Only run *cellranger count*](#only-run-cellranger-count)
-* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run-single-cell-rnaseq-analysis-tools-scrtools)
+* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run-single-cell-rnaseq-analysis-tools-(scrtools))
   * [scrtools steps](#scrtools-steps)
   * [global inputs](#global-inputs)
-  * [aggregate_matrix](#aggregate-matrix)
+  * [aggregate_matrix](#aggregatematrix)
   * [cluster](#cluster)
-  * [de_analysis](#de-analysis)
+  * [de_analysis](#deanalysis)
   * [plot](#plot)
 * [Run subcluster analysis](#run-subcluster-analysis)
-  * [scrtools_subcluster steps](#scrtools-subcluster-steps)
-  * [scrtools_subcluster's inputs](#scrtools-subclusters-inputs)
-  * [scrtools_subcluster's outputs](#scrtools-subclusters-outputs)
+  * [scrtools_subcluster steps](#scrtoolssubcluster-steps)
+  * [scrtools_subcluster's inputs](#scrtoolssubclusters-inputs)
+  * [scrtools_subcluster's outputs](#scrtoolssubclusters-outputs)
 
 ## First Time Running - Authenticate with Google
 
