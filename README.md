@@ -3,22 +3,22 @@
 Table of Contents
 -----------------
 
-* [First Time Running - Authenticate with Google](#first-time-running-authenticate-with-google)
+* [First Time Running - Authenticate with Google](#first-time-running---authenticate-with-google)
 * [Run Cell Ranger mkfastq/count](#run-cell-ranger-mkfastqcount)
   * [Cell Ranger mkfastq/count inputs](#cell-ranger-mkfastqcount-inputs)
   * [Cell Ranger mkfastq/count outputs](#cell-ranger-mkfastqcount-outputs)
   * [Only run *cellranger count*](#only-run-cellranger-count)
-* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run-single-cell-rnaseq-analysis-tools-(scrtools))
+* [Run Single Cell RNA-Seq analysis tools (scrtools)](#run-single-cell-rna-seq-analysis-tools-scrtools)
   * [scrtools steps](#scrtools-steps)
   * [global inputs](#global-inputs)
-  * [aggregate_matrix](#aggregatematrix)
+  * [aggregate_matrix](#aggregate_matrix)
   * [cluster](#cluster)
-  * [de_analysis](#deanalysis)
+  * [de_analysis](#de_analysis)
   * [plot](#plot)
 * [Run subcluster analysis](#run-subcluster-analysis)
-  * [scrtools_subcluster steps](#scrtoolssubcluster-steps)
-  * [scrtools_subcluster's inputs](#scrtoolssubclusters-inputs)
-  * [scrtools_subcluster's outputs](#scrtoolssubclusters-outputs)
+  * [scrtools_subcluster steps](#scrtools_subcluster-steps)
+  * [scrtools_subcluster's inputs](#scrtools_subclusters-inputs)
+  * [scrtools_subcluster's outputs](#scrtools_subclusters-outputs)
 
 ## First Time Running - Authenticate with Google
 
