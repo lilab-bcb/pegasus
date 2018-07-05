@@ -4,7 +4,7 @@ Table of Contents
 -----------------
 
 * [First Time Running - Authenticate with Google](#first_time)
-* [Run Cell Ranger mkfastq/count](#run_cellranger)
+* [Run Cell Ranger mkfastq/count](#run-cell-ranger-mkfastq/count)
   * [Cell Ranger mkfastq/count inputs](#cellranger_input)
   * [Cell Ranger mkfastq/count outputs](#cellranger_output)
   * [Only run *cellranger count*](#cellranger_only_count)
@@ -33,7 +33,7 @@ Table of Contents
 1. Enter authorization code in unix terminal
 
 
-## <a name="run_cellranger"></a> Run Cell Ranger mkfastq/count
+## Run Cell Ranger mkfastq/count
 1. [Create](https://software.broadinstitute.org/firecloud/documentation/article?id=10746) a [FireCloud](https://portal.firecloud.org/) workspace or use an existing workspace.
 
 1. Copy your sequencing output to the workspace using gsutil in your unix terminal. 
