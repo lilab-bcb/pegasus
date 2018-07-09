@@ -1,27 +1,129 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/10/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/6/plain-WDL/descriptor" as count
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as scrtools
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/19/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/13/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as tools
 
 workflow orchestra {
   File masterCsv
-  String referenceName
   String fastqOutputDirectory
-  String analysisOutDirectory
-  String countOutPath
   Boolean? secondary
   Int? expectCells
-  String diskSpace
   Int? forceCells
   Boolean? do_force_cells
-  String? chemistry
-  String memory
-  String cores
-  String preemptible
+  Int diskSpace
+  Int memory
+  Int cores
+  Int preemptible
+  String output_name
+  # Reference genome name [default: GRCh38]
+  String? genome
+  # Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. Multiple restrictions are separated by ';'
+  String? restrictions
+  # Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file
+  String? attributes
+  # If output cell and gene filtration results [default: true]
+  Boolean? output_filtration_results = true
+  # If output loom-formatted file [default: false]
+  Boolean? output_loom
+  # If correct batch effects [default: false]
+  Boolean? correct_batch_effect
+  # Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either ‘attr’, or ‘attr1+attr2+…+attrn’, or ‘attr=value11,…,value1n_1;value21,…,value2n_2;…;valuem1,…,valuemn_m’. In the first form, ‘attr’ should be an existing sample attribute, and groups are defined by ‘attr’. In the second form, ‘attr1’,…,’attrn’ are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute ‘attr’ has a value among valuei1,…,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+  String? batch_group_by
+  # Only keep cells with at least <number> of genes. [default: 500]
+  Int? min_genes
+  # Only keep cells with less than <number> of genes. [default: 6000]
+  Int? max_genes
+  # Prefix for mitochondrial genes. [default: MT-]
+  String? mito_prefix
+  # Only keep cells with mitochondrial ratio less than <ratio>. [default: 0.1]
+  Float? percent_mito
+  # Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes. [default: 0.0005]
+  Float? gene_percent_cells
+  # Total counts per cell after normalization. [default: 1e5]
+  Float? counts_per_cell_after
+  # Random number generator seed. [default: 0]
+  Int? random_state
+  # Number of PCs. [default: 50]
+  Int? nPC
+  # Number of diffusion components. [default: 50]
+  Int? nDC
+  # Power parameter for diffusion-based pseudotime. [default: 0.5]
+  Float? diffmap_alpha
+  # Number of neighbors used for constructing affinity matrix. [default: 100]
+  Float? diffmap_K
+  # Run louvain clustering algorithm.
+  Boolean? run_louvain
+  # Resolution parameter for the louvain clustering algorithm. [default: 1.3]
+  Float? louvain_resolution
+  # Run KMeans clustering algorithm on diffusion components.
+  Boolean? run_kmeans
+  # Target at <number> clusters for K means. [default: 20]
+  Int? kmeans_n_clusters
+  # Run hdbscan clustering algorithm on diffusion components.
+  Boolean? run_hdbscan
+  # Minimum cluster size for hdbscan. [default: 50]
+  Int? hdbscan_min_cluster_size
+  # Minimum number of samples for hdbscan. [default: 50]
+  Int? hdbscan_min_samples
+  # Run approximated louvain clustering algorithm.
+  Boolean? run_approximated_louvain
+  # Number of Kmeans tries. [default: 20]
+  Int? approx_louvain_ninit
+  # Number of clusters for Kmeans initialization. [default: 30]
+  Int? approx_louvain_nclusters
+  # Resolution parameter for louvain. [default: 1.3]
+  Float? approx_louvain_resolution
+  # Run multi-core tSNE for visualization.
+  Boolean? run_tsne
+  # tSNE’s perplexity parameter. [default: 30]
+  Float? tsne_perplexity
+  # Run FItSNE for visualization.
+  Boolean? run_fitsne
+  # Run umap for visualization.
+  Boolean? run_umap
+  # Run umap on diffusion components.
+  Boolean? umap_on_diffmap
+  # K neighbors for umap. [default: 15]
+  Int? umap_K
+  # Umap parameter. [default: 0.1]
+  Float? umap_min_dist
+  # Umap parameter. [default: 1.0]
+  Float? umap_spread
+  # Run force-directed layout embedding.
+  Boolean? run_fle
+  # K neighbors for building graph for FLE. [default: 50]
+  Int? fle_K
+  # Number of iterations for FLE. [default: 10000]
+  Int? fle_n_steps
+  # for de_analysis and annotate_cluster
+  # If perform de analysis
+  Boolean perform_de_analysis = true
+  # Specify the cluster labels used for differential expression analysis. [default: louvain_labels]
+  String? cluster_labels
+  # Control false discovery rate at <alpha>. [default: 0.05]
+  Float? alpha
+  # Calculate Fisher’s exact test.
+  Boolean? fisher
+  # Calculate Mann-Whitney U test.
+  Boolean? mwu
+  # Calculate area under cuver in ROC curve.
+  Boolean? roc
+  # If also annotate cell types for clusters based on DE results.
+  Boolean? annotate_cluster
+  # Organism, could either be "human" or "mouse" [default: human]
+  String? organism
+  # Minimum cell type score to report a potential cell type. [default: 0.5]
+  Float? minimum_report_score
+  # for plot
+  # Takes the format of "label:attr,label:attr,...,label:attr". If non-empty, generate composition plot for each "label:attr" pair. "label" refers to cluster labels and "attr" refers to sample conditions.
+  String? plot_composition
+  # Takes the format of "attr,attr,...,attr". If non-empty, plot attr colored tSNEs side by side. 
+  String? plot_tsne
+  # Takes the format of "attr,attr,...,attr". If non-empty, generate attr colored 3D interactive plot. The 3 coordinates are the first 3 PCs of all diffusion components.
+  String? plot_diffmap
 	
   call parseCsv as parse {
     input:
       masterCsv = masterCsv,
-      countOutPath = countOutPath,
       diskSpace = diskSpace,
       preemptible = preemptible,
       cores = cores,
@@ -42,31 +144,31 @@ workflow orchestra {
       }
   }
 	
+  call filterSamples as filter {
+    input:
+      paths = fq.path,
+      masterCsv = masterCsv,
+      sampleIds = parse.sampleIds,
+      diskSpace = diskSpace,
+      preemptible = preemptible,
+      cores = cores,
+      memory = memory
+  }
   # gathered- a bunch of fast qs for every sample across flowcells
   # scatter by sample name
   # in count 
   scatter(sampleId in parse.sampleIds){
-      call filterSamples as filter {
-        input:
-          paths = fq.path,
-          sample = sampleId,
-          diskSpace = diskSpace,
-          preemptible = preemptible,
-          cores = cores,
-          memory = memory
-      }
-
       call count.cellranger as cnt {
         input:
           sampleId = sampleId,
-          fastqs = filter.filteredPaths,
-          referenceName = referenceName,
+          commaFastqs = filter.filteredPaths[sampleId],
+          referenceName = filter.filteredGenome[sampleId],
           secondary = secondary,
           expectCells = expectCells,
           diskSpace = diskSpace,
           forceCells = forceCells,
           do_force_cells = do_force_cells,
-          chemistry = chemistry,
+          chemistry = filter.filteredChemistry[sampleId],
           preemptible = preemptible,
           cores = cores,
           memory = memory
@@ -74,113 +176,173 @@ workflow orchestra {
 
     }
 
-    call scrtools as tools {
+    call generateAnalysisCsv as analysisCsv{
       input:
-         input_count_matrix_csv = parse.analysis_csv,
-         output_name = analysisOutDirectory
+        h5s = cnt.filtered_gene_h5,
+        masterCsv = masterCsv,
+        diskSpace = diskSpace,
+        preemptible = preemptible,
+        cores = cores,
+        memory = memory
+    }
+
+    call tools.scrtools {
+      input:
+         input_count_matrix_csv = analysisCsv.analysis_csv,
+         output_name = output_name,
+         num_cpu = 64,
+         disk_space = diskSpace,
+         preemptible = preemptible,
+         genome = genome,
+         attributes = attributes,
+         restrictions = restrictions,
+         output_filtration_results = output_filtration_results,
+         output_loom = output_loom,
+         correct_batch_effect = correct_batch_effect,
+         batch_group_by = batch_group_by,
+         min_genes = min_genes,
+         max_genes = max_genes,
+         mito_prefix = mito_prefix,
+         percent_mito = percent_mito,
+         gene_percent_cells = gene_percent_cells,
+         counts_per_cell_after = counts_per_cell_after,
+         random_state = random_state,
+         nPC = nPC,
+         nDC = nDC,
+         diffmap_alpha = diffmap_alpha,
+         diffmap_K = diffmap_K,
+         run_louvain = run_louvain,
+         louvain_resolution = louvain_resolution,
+         run_kmeans = run_kmeans,
+         kmeans_n_clusters = kmeans_n_clusters,
+         run_hdbscan = run_hdbscan,
+         hdbscan_min_cluster_size = hdbscan_min_cluster_size,
+         hdbscan_min_samples = hdbscan_min_samples,
+         run_approximated_louvain = run_approximated_louvain,
+         approx_louvain_ninit = approx_louvain_ninit,
+         approx_louvain_nclusters = approx_louvain_nclusters,
+         approx_louvain_resolution = approx_louvain_resolution,
+         run_tsne = run_tsne,
+         tsne_perplexity = tsne_perplexity,
+         run_fitsne = run_fitsne,
+         run_umap = run_umap,
+         umap_on_diffmap = umap_on_diffmap,
+         umap_K = umap_K,
+         umap_min_dist = umap_min_dist,
+         umap_spread = umap_spread,
+         run_fle = run_fle,
+         fle_K = fle_K,
+         fle_n_steps = fle_n_steps,
+         perform_de_analysis = perform_de_analysis,
+         cluster_labels = cluster_labels,
+         alpha = alpha,
+         fisher = fisher,
+         mwu = mwu,
+         annotate_cluster = annotate_cluster,
+         organism = organism,
+         minimum_report_score = minimum_report_score,
+         plot_composition = plot_composition,
+         plot_tsne = plot_tsne,
+         plot_diffmap = plot_diffmap
     }
 
 }
 
 task parseCsv {
   File masterCsv
-  String diskSpace
-  String countOutPath
-  String memory
-  String cores
-  String preemptible
+  Int diskSpace
+  Int memory
+  Int cores
+  Int preemptible
 
   command {
     set -e
     ln -s /usr/bin/python3 python
     export PATH=$PATH:.
-    python <<CODE
-    import os
-    import pandas as pd
-    master_csv = "${masterCsv}"
-    df = pd.read_csv(master_csv,header=0)
-    bcl_paths = set(df['Flowcell'].tolist())
-    bcl_file = open('bcls.txt', 'w+')
-    for item in bcl_paths:
-      bcl_file.write("%s\n" % item)
-    bcl_file.close()
-    sampleIds = set(df['Sample'].tolist())
-    samples_file = open('samples.txt', 'w+')
-    for item in sampleIds:
-      samples_file.write("%s\n" % item)
-    samples_file.close()
-    count_output_path = "${countOutPath}"
-    df = df.drop(columns=["Flowcell"])
-    locations = [count_output_path+"results_"s+"/filtered_gene_bc_matrices_h5.h5" for s in sampleIds]
-    df["Location"] = locations
-    df.to_csv("analysis.csv")
-
-    CODE
+    python /software/scripts/orchestra_methods.py -c=parse \
+                                                    -M=${masterCsv}
   }
 
   output {
     Array[String] bcls = read_lines('bcls.txt')
     Array[String] sampleIds = read_lines('samples.txt')
-    File analysis_csv = "analysis.csv"
   }
 
   runtime {
-        docker: "singlecellportal/cell-ranger-count-2.1.1"
-        memory: "${memory} GB"
-        bootDiskSizeGb: 12
-        disks: "local-disk ${diskSpace} HDD"
-        cpu: "${cores}"
-        preemptible: "${preemptible}"
-    }
+          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          memory: "${memory} GB"
+          bootDiskSizeGb: 12
+          disks: "local-disk ${diskSpace} HDD"
+          cpu: cores
+          preemptible: preemptible
+      }
 
+}
+
+task generateAnalysisCsv {
+  File masterCsv
+  Array[File] h5s
+  Int diskSpace
+  Int memory
+  Int cores
+  Int preemptible
+
+  command {
+    set -e
+    ln -s /usr/bin/python3 python
+    export PATH=$PATH:.
+    python /software/scripts/orchestra_methods.py -c=analysis \
+                                                    -hs=["${sep='","' h5s}"] \
+                                                    -M=${masterCsv}
+  }
+
+  output {
+    File analysis_csv = "analysis.csv"
+  }
+  runtime {
+          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          memory: "${memory} GB"
+          bootDiskSizeGb: 12
+          disks: "local-disk ${diskSpace} HDD"
+          cpu: cores
+          preemptible: preemptible
+      }
 }
 
 task filterSamples {
   Array[String] paths
-  String sample
-  String diskSpace
-  String memory
-  String cores
-  String preemptible
+  Array[String] sampleIds
+  File masterCsv
+  Int diskSpace
+  Int memory
+  Int cores
+  Int preemptible
 
   command {
     set -e
     mkdir fastqs
     ln -s /usr/bin/python3 python
     export PATH=$PATH:.
-    python <<CODE
-    import os
-    import pandas as pd
-    from subprocess import run
-    from subprocess import check_output
-
-    # Now we have a list of every sample
-    samples = []
-    for f in ["${sep='","' paths}"]:
-      samples = samples + check_output(["gsutil", "ls", f]).decode("utf-8").split("\n")
-
-    key = "${sample}" + "/"
-    paths_list = open('paths.txt', 'w+')
-    for path in samples:
-      if path.endswith(key):
-        paths_list.write("%s\n" % path)
-    paths_list.close()
-
-    CODE
+    python /software/scripts/orchestra_methods.py -c=filter \
+                                                    -p=["${sep='","' paths}"] \
+                                                    -S=["${sep='","' sampleIds}"] \
+                                                    -M=${masterCsv}
   }
 
   output {
-    Array[String] filteredPaths = read_lines("paths.txt")
+    Map[String,String] filteredPaths = read_map("paths.tsv")
+    Map[String, String] filteredChemistry = read_map("chemistry.tsv")
+    Map[String, String] filteredGenome = read_map("genome.tsv")
   }
 
   runtime {
-        docker: "singlecellportal/cell-ranger-count-2.1.1"
-        memory: "${memory} GB"
-        bootDiskSizeGb: 12
-        disks: "local-disk ${diskSpace} HDD"
-        cpu: "${cores}"
-        preemptible: "${preemptible}"
-    }
+          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          memory: "${memory} GB"
+          bootDiskSizeGb: 12
+          disks: "local-disk ${diskSpace} HDD"
+          cpu: cores
+          preemptible: preemptible
+      }
 
 }
 
