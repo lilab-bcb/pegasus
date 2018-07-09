@@ -55,7 +55,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# diffusion map
 	if is_raw:
-		tools.run_diffmap(adata, pca_key, n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'])
+		tools.run_diffmap(adata, pca_key, n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], stable_construction = kwargs['diffmap_stable'])
 	else:
 		assert 'X_diffmap' in adata.obsm.keys()
 

@@ -42,6 +42,7 @@ Options:
   --nDC <number>                                   Number of diffusion components. [default: 50]
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
   --diffmap-K <K>                                  Number of neighbors used for constructing affinity matrix. [default: 100]
+  --diffmap-stable                                 Disable multi-threading in constructing kNN indices so that the kNN graph is reproducible.
 
   --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
@@ -117,6 +118,7 @@ Examples:
             'nDC' : int(self.args['--nDC']),
             'diffmap_alpha' : float(self.args['--diffmap-alpha']),
             'diffmap_K' : int(self.args['--diffmap-K']),
+            'diffmap_stable' : self.args['--diffmap-stable'],
 
             'run_louvain' : self.args['--run-louvain'],
             'louvain_resolution' : float(self.args['--louvain-resolution']),
