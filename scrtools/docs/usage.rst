@@ -228,6 +228,9 @@ to see the usage information::
 	-\\-diffmap-K <K>
 		Number of neighbors used for constructing affinity matrix. [default: 100]
 
+	-\\-diffmap-full-speed
+		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+
 	-\\-calculate-pseudotime <roots>
 		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
@@ -711,6 +714,9 @@ to see the usage information::
 
 	-\\-diffmap-K <K>
 		Number of neighbors used for constructing affinity matrix. [default: 100]
+
+	-\\-diffmap-full-speed
+		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
 	-\\-calculate-pseudotime <roots>
 		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.

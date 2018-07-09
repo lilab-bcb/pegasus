@@ -26,7 +26,7 @@ def get_symmetric_matrix(csr_mat):
 	sym_mat.data[idx] /= 2.0
 	return sym_mat
 
-def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, efC = 200, efS = 200, random_state = 0, stable_construction = False):
+def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
 	"""X is the sample by feature matrix, could be either dense or sparse"""
 	nsample = X.shape[0]
 	
@@ -34,9 +34,9 @@ def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, 
 		assert not issparse(X)
 		start = time.time()
 		knn_index = hnswlib.Index(space = 'l2', dim = X.shape[1])
-		knn_index.init_index(max_elements = nsample, ef_construction = efC, M = M, random_state = random_state)
+		knn_index.init_index(max_elements = nsample, ef_construction = efC, M = M, random_seed = random_state)
 		knn_index.set_ef(efS)
-		knn_index.set_num_threads(num_threads if not stable_construction else 1)
+		knn_index.set_num_threads(num_threads if full_speed else 1)
 		knn_index.add_items(X)
 		knn_index.set_num_threads(num_threads)
 		indices, distances = knn_index.knn_query(X, k = K)
@@ -133,12 +133,12 @@ def reduce_diffmap_to_3d(Phi_pt, random_state = 0):
 
 	return Phi_reduced
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, stable_construction = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
 	start = time.time()
-	W = calculate_affinity_matrix(data.obsm[rep_key], n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS, random_state = random_state, stable_construction = stable_construction)
+	W = calculate_affinity_matrix(data.obsm[rep_key], n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
 	Phi_pt, U_pt, S, W_norm = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
 	Phi_reduced = reduce_diffmap_to_3d(Phi_pt, random_state = random_state)
-	W_diffmap = calculate_affinity_matrix(Phi_pt, n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS, random_state = random_state, stable_construction = stable_construction)
+	W_diffmap = calculate_affinity_matrix(Phi_pt, n_jobs, method = knn_method, K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
 	W_diffmap_norm, diag_tmp, diag_half_tmp = calculate_normalized_affinity(W_diffmap)
 
 	data.uns['W'] = W
