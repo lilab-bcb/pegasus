@@ -1,5 +1,5 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/22/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/19/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/25/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/20/plain-WDL/descriptor" as count
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as tools
 
 workflow orchestra {
@@ -13,6 +13,9 @@ workflow orchestra {
   Int memory
   Int cores
   Int preemptible
+  File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
+
+  # Bo Inputs
   String output_name
   # Reference genome name [default: GRCh38]
   String? genome
@@ -127,7 +130,8 @@ workflow orchestra {
       diskSpace = diskSpace,
       preemptible = preemptible,
       cores = cores,
-      memory = memory
+      memory = memory,
+      monitoringScript = monitoringScript
   }
 
   # scatter per flow cell
@@ -140,7 +144,8 @@ workflow orchestra {
           output_directory = fastqOutputDirectory,
           preemptible = preemptible,
           cores = cores,
-          memory = memory
+          memory = memory,
+          monitoringScript = monitoringScript
       }
   }
 	
@@ -152,7 +157,8 @@ workflow orchestra {
       diskSpace = diskSpace,
       preemptible = preemptible,
       cores = cores,
-      memory = memory
+      memory = memory,
+      monitoringScript = monitoringScript
   }
   # gathered- a bunch of fast qs for every sample across flowcells
   # scatter by sample name
@@ -171,7 +177,8 @@ workflow orchestra {
           chemistry = filter.filteredChemistry[sampleId],
           preemptible = preemptible,
           cores = cores,
-          memory = memory
+          memory = memory,
+          monitoringScript = monitoringScript
       }
 
     }
@@ -183,7 +190,8 @@ workflow orchestra {
         diskSpace = diskSpace,
         preemptible = preemptible,
         cores = cores,
-        memory = memory
+        memory = memory,
+        monitoringScript = monitoringScript
     }
 
     call tools.scrtools {
@@ -273,8 +281,12 @@ task parseCsv {
   Int memory
   Int cores
   Int preemptible
+  File monitoringScript
 
   command {
+    chmod u+x ${monitoringScript}
+    ${monitoringScript} > monitoring.log &
+    
     orchestra_methods.py -c=parse \
                                 -M=${masterCsv}
   }
@@ -282,6 +294,7 @@ task parseCsv {
   output {
     Array[String] bcls = read_lines('bcls.txt')
     Array[String] sampleIds = read_lines('samples.txt')
+    File monitoringLog = "monitoring.log"
   }
 
   runtime {
@@ -302,8 +315,12 @@ task generateAnalysisCsv {
   Int memory
   Int cores
   Int preemptible
+  File monitoringScript
 
   command {
+    chmod u+x ${monitoringScript}
+    ${monitoringScript} > monitoring.log &
+    
     orchestra_methods.py -c=analysis \
                         -hs "${sep='" "' h5s}" \
                         -M=${masterCsv}
@@ -311,6 +328,7 @@ task generateAnalysisCsv {
 
   output {
     File analysis_csv = "analysis.csv"
+    File monitoringLog = "monitoring.log"
   }
   runtime {
           docker: "singlecellportal/cell-ranger-count-2.1.1"
@@ -330,8 +348,12 @@ task filterSamples {
   Int memory
   Int cores
   Int preemptible
+  File monitoringScript
 
   command {
+    chmod u+x ${monitoringScript}
+    ${monitoringScript} > monitoring.log &
+
     orchestra_methods.py -c=filter \
                                 -p "${sep='" "' paths}" \
                                 -S "${sep='" "' sampleIds}" \
@@ -342,6 +364,7 @@ task filterSamples {
     Map[String,String] filteredPaths = read_map("paths.tsv")
     Map[String, String] filteredChemistry = read_map("chemistry.tsv")
     Map[String, String] filteredGenome = read_map("genome.tsv")
+    File monitoringLog = "monitoring.log"
   }
 
   runtime {

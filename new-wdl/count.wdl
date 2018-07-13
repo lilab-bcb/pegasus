@@ -19,6 +19,7 @@ workflow cellranger {
     Int memory
     Int cores
     Int preemptible
+    File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 
      call CellRanger {
         input:
@@ -35,7 +36,8 @@ workflow cellranger {
         chemistry = chemistry,
         memory = memory,
         cores = cores,
-        preemptible = preemptible
+        preemptible = preemptible,
+        monitoringScript = monitoringScript
     }
 
     output {
@@ -53,6 +55,7 @@ workflow cellranger {
         File raw_matrix = CellRanger.raw_matrix
         File mol_info_h5 = CellRanger.mol_info_h5
         File cloupe = CellRanger.cloupe
+        File monitoringLog = CellRanger.monitoringLog
     }
 }
 
@@ -71,8 +74,12 @@ task CellRanger {
     Int memory
     Int cores
     Int preemptible
+    File monitoringScript
 
     command {
+        chmod u+x ${monitoringScript}
+        ${monitoringScript} > monitoring.log &
+
         orchestra_methods.py -c=count \
                             -id=${sampleId} \
                             -cf=${commaFastqs} \
@@ -98,6 +105,7 @@ task CellRanger {
         File raw_matrix = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/matrix.mtx"
         File mol_info_h5 = "results_${sampleId}/outs/molecule_info.h5"
         File cloupe = "results_${sampleId}/outs/cloupe.cloupe"
+        File monitoringLog = "monitoring.log"
     }
     
  runtime {

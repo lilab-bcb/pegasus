@@ -6,6 +6,7 @@ workflow cellranger {
 	Int memory
 	Int cores
 	Int preemptible
+	File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 
 	call mkfastq {
 		input:
@@ -15,12 +16,14 @@ workflow cellranger {
 		masterCsv = masterCsv,
 		memory = memory,
 		cores = cores,
-		preemptible = preemptible
+		preemptible = preemptible,
+		monitoringScript = monitoringScript
 	}
 
 	output {
 		String path = mkfastq.path
 		String undetermined_path = mkfastq.undetermined_path
+		File monitoringLog = mkfastq.monitoringLog
 	}
 }
 
@@ -32,8 +35,12 @@ task mkfastq {
 	Int memory
 	Int cores
 	Int preemptible
+	File monitoringScript
 
 	command {
+		chmod u+x ${monitoringScript}
+		${monitoringScript} > monitoring.log &
+		
 		orchestra_methods.py -c=mkfastq \
                         -b=${bcl} \
                         -M=${masterCsv} \
@@ -43,6 +50,7 @@ task mkfastq {
 	output {
 		String path = read_string("path.txt")
 		String undetermined_path = read_string("undetermined.txt")
+		File monitoringLog = "monitoring.log"
 	}
 
 	runtime {
