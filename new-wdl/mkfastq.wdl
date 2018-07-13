@@ -20,6 +20,7 @@ workflow cellranger {
 
 	output {
 		String path = mkfastq.path
+		String undetermined_path = mkfastq.undetermined_path
 	}
 }
 
@@ -33,19 +34,15 @@ task mkfastq {
 	Int preemptible
 
 	command {
-		set -e
-		export PATH=$PATH:.
-		gsutil -q -m cp -r -L log.txt ${bcl} .
-		mkdir fastqs
-		ln -s /usr/bin/python3 python
-		python /software/scripts/orchestra_methods.py -c=mkfastq \
-                                                    -b=${bcl} \
-                                                    -M=${masterCsv} \
-                                                    -O=${output_directory}
+		orchestra_methods.py -c=mkfastq \
+                        -b=${bcl} \
+                        -M=${masterCsv} \
+                        -O=${output_directory}
 	}
 
 	output {
 		String path = read_string("path.txt")
+		String undetermined_path = read_string("undetermined.txt")
 	}
 
 	runtime {

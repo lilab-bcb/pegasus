@@ -1,11 +1,11 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/19/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/13/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/22/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/19/plain-WDL/descriptor" as count
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as tools
 
 workflow orchestra {
   File masterCsv
   String fastqOutputDirectory
-  Boolean? secondary
+  Boolean? secondary = false
   Int? expectCells
   Int? forceCells
   Boolean? do_force_cells
@@ -246,6 +246,25 @@ workflow orchestra {
          plot_diffmap = plot_diffmap
     }
 
+    output {
+      File analysis_csv = analysisCsv.analysis_csv
+      Array[File] barcodes = cnt.barcodes
+      Array[File] genes = cnt.genes
+      Array[File] matrix = cnt.matrix
+      Array[File] qc = cnt.qc
+      Array[File] report = cnt.report
+      Array[File] sorted_bam = cnt.sorted_bam
+      Array[File] sorted_bam_index = cnt.sorted_bam_index
+      Array[File] filtered_gene_h5 = cnt.filtered_gene_h5
+      Array[File] raw_gene_h5 = cnt.raw_gene_h5
+      Array[File] raw_barcodes = cnt.raw_barcodes
+      Array[File] raw_genes = cnt.raw_genes
+      Array[File] raw_matrix = cnt.raw_matrix
+      Array[File] mol_info_h5 = cnt.mol_info_h5
+      Array[File] cloupe = cnt.cloupe
+      Array[String] fastq_paths = fq.path
+      Array[String] undetermined_paths = fq.undetermined_path
+    }
 }
 
 task parseCsv {
@@ -256,11 +275,8 @@ task parseCsv {
   Int preemptible
 
   command {
-    set -e
-    ln -s /usr/bin/python3 python
-    export PATH=$PATH:.
-    python /software/scripts/orchestra_methods.py -c=parse \
-                                                    -M=${masterCsv}
+    orchestra_methods.py -c=parse \
+                                -M=${masterCsv}
   }
 
   output {
@@ -288,12 +304,9 @@ task generateAnalysisCsv {
   Int preemptible
 
   command {
-    set -e
-    ln -s /usr/bin/python3 python
-    export PATH=$PATH:.
-    python /software/scripts/orchestra_methods.py -c=analysis \
-                                                    -hs=["${sep='","' h5s}"] \
-                                                    -M=${masterCsv}
+    orchestra_methods.py -c=analysis \
+                        -hs "${sep='" "' h5s}" \
+                        -M=${masterCsv}
   }
 
   output {
@@ -319,14 +332,10 @@ task filterSamples {
   Int preemptible
 
   command {
-    set -e
-    mkdir fastqs
-    ln -s /usr/bin/python3 python
-    export PATH=$PATH:.
-    python /software/scripts/orchestra_methods.py -c=filter \
-                                                    -p=["${sep='","' paths}"] \
-                                                    -S=["${sep='","' sampleIds}"] \
-                                                    -M=${masterCsv}
+    orchestra_methods.py -c=filter \
+                                -p "${sep='" "' paths}" \
+                                -S "${sep='" "' sampleIds}" \
+                                -M=${masterCsv}
   }
 
   output {
