@@ -1,7 +1,6 @@
 import os
 from .Base import Base
 from ..plotting import make_static_plots
-from ..tools import Logging
 
 class Plotting(Base):
     """
@@ -87,6 +86,4 @@ Examples:
         }
         
         make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)
-
-        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logger.add_output(self.args['<output_file>'])
+        

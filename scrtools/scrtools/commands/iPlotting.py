@@ -1,7 +1,6 @@
 import os
 from .Base import Base
 from ..plotting import make_interactive_plots
-from ..tools import Logging
 
 class iPlotting(Base):
     """
@@ -37,6 +36,3 @@ Examples:
         }
 
         make_interactive_plots(self.args['<input_h5ad_file>'], self.args['<basis>'], self.args['<output_html_file>'], **kwargs)
-
-        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logger.add_output(self.args['<output_html_file>'])

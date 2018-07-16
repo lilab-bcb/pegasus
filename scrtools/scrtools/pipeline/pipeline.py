@@ -1,14 +1,10 @@
 import os
 from .. import tools 
-from ..tools import Logging
 
 def run_pipeline(input_file, output_name, **kwargs):
 	# load input data
 	is_raw = not kwargs['processed']
 	adata = tools.read_input(input_file, is_raw, kwargs['genome'])
-
-	# generate output log file
-	logger = Logging(output_name + ".log")
 
 	# preprocessing
 	if is_raw:
@@ -16,8 +12,6 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.update_var_names(adata, kwargs['genome'])
 		# filter out low quality cells/genes
 		tools.filter_data(adata, mito_prefix = kwargs['mito_prefix'], filt_xlsx = kwargs['filt_xlsx'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], percent_mito = kwargs['percent_mito'], percent_cells = kwargs['percent_cells'])
-		if kwargs['filt_xlsx'] is not None:
-			logger.add_output(kwargs['filt_xlsx'])
 		# normailize counts and then transform to log space
 		tools.log_norm(adata, kwargs['norm_count'])
 		# estimate bias factors
@@ -88,10 +82,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
 	
 	adata.write(output_name + ".h5ad")
-	logger.add_output(output_name + ".h5ad")
 
 	if kwargs['output_loom']:
 		adata.write_loom(output_name + ".loom")
-		logger.add_output(output_name + ".loom")
 
 	print("Results are written.")

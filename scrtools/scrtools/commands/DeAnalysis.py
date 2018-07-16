@@ -1,6 +1,6 @@
 import os
 from .Base import Base
-from ..tools import run_de_analysis, Logging
+from ..tools import run_de_analysis
 
 class DeAnalysis(Base):
     """
@@ -33,7 +33,3 @@ Examples:
 
     def execute(self):
         run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'])
-
-        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logger.add_output(self.args['<input_h5ad_file>'])
-        logger.add_output(self.args['<output_spreadsheet>'])

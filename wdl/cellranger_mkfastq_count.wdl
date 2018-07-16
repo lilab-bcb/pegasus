@@ -37,7 +37,7 @@ workflow cellranger_mkfastq_count {
 	# Memory in GB
 	Int? memory = 128
 	# Optional disk space for mkfastq.
-	Int? mkfastq_disk_space = 1000
+	Int? mkfastq_disk_space = 1500
 	# Optional disk space needed for cell ranger count.
 	Int? count_disk_space = 500	
 	# Number of preemptible tries 
@@ -180,7 +180,7 @@ task generate_count_config {
 				dirs = df_local['Flowcell'].map(lambda x: x if len(rid2fdir) == 0 else rid2fdir[os.path.basename(x)]).values
 				fo2.write(sample_id + '\t' + ','.join(dirs) + '\n')
 				assert df_local['Reference'].unique().size == 1
-				fo3.write(sample_id + '\t' + df_local['Reference'][0] + '\n')
+				fo3.write(sample_id + '\t' + df_local['Reference'].iat[0] + '\n')
 				chemistry = 'auto'
 				if 'Chemistry' in df_local.columns:
 					assert df_local['Chemistry'].unique().size == 1

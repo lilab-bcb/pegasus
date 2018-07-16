@@ -34,6 +34,3 @@ Examples:
 			self.split_string(self.args['--attributes']), 
 			self.args['<output_name>'] + '_10x.h5',
 			self.args['--google-cloud'])
-		
-		logger = Logging(self.args['<output_name>'] + ".log", start_new = True)
-		logger.add_output(self.args['<output_name>'] + "_10x.h5")

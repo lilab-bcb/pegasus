@@ -19,6 +19,8 @@ Sub-commands:
   Subclustering:
     view                    View attribute (e.g. cluster labels) and their values. This subcommand is used to determine cells to run subcluster analysis.
     subcluster              Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
+  Single cell portal:
+    scp_output              Generate output files for single cell portal.
     
 Options:
   -h, --help          Show help information.

@@ -6,3 +6,4 @@ from .Plotting import Plotting as plot
 from .iPlotting import iPlotting as iplot
 from .SubClustering import SubClustering as subcluster
 from .View import View as view
+from .SCPOutput import SCPOutput as scp_output

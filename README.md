@@ -94,7 +94,7 @@ secondary | Perform cell ranger secondary analysis (dimensionality reduction, cl
 cellranger_version | Cellranger version | "2.1.1" | "2.1.1"
 num_cpu | Number of cpus to request for one node | 64 | 64
 memory | Memory in GB | 128 | 128
-mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 1000 | 1000 
+mkfastq_disk_space | Optional disk space in gigabytes for mkfastq. | 1500 | 1500 
 count_disk_space | Disk space in gigabytes needed for cell ranger count | 500 | 500
 preemptible | Number of preemptible tries | 2 | 2
 

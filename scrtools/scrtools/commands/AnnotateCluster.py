@@ -1,7 +1,6 @@
 import os
 from .Base import Base
 from ..annotate_cluster import run_annotate_cluster
-from ..tools import Logging
 
 class AnnotateCluster(Base):
     """
@@ -30,6 +29,3 @@ Examples:
 
     def execute(self):
         run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), ignoreNA = self.args['--do-not-use-non-de-genes'], json_file = self.args['--json-file'])
-
-        logger = Logging(os.path.splitext(self.args['<input_h5ad_file>'])[0] + ".log")
-        logger.add_output(self.args['<output_file>'])
