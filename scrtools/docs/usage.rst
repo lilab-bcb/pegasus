@@ -39,13 +39,17 @@ to see the help information::
 		Make interactive plots using plotly. The outputs are HTML pages. You can visualize diffusion maps with this sub-command.
 
 * Subclustering:
-	
+
 	view
 		View attribute (e.g. cluster labels) and their values. This subcommand is used to determine cells to run subcluster analysis.
 
 	subcluster
     	Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
 
+* Single cell portal:
+
+	scp_output
+		Generate output files for single cell portal.	
 
 
 ---------------------------------
@@ -807,3 +811,43 @@ to see the usage information::
 * Examples::
 
 	scrtools subcluster --subset_selection louvain_labels:1,3  --subset_selection Donor:1 -p 20 --correct-batch-effect example.h5ad example_sub
+
+---------------------------------
+
+``scrtools scp_output``
+^^^^^^^^^^^^^^^^^
+
+If we want to visualize analysis results on single cell portal (SCP), we can generate required files for SCP using this subcommand.
+
+Type::
+
+	scrtools scp_output -h
+
+to see the usage information::
+
+	Usage:
+		scrtools scp_output <input_h5ad_file> <output_name>
+		scrtools scp_output -h
+
+* Arguments:
+
+	input_h5ad_file
+		Analyzed single cell data in h5ad format.
+
+	output_name
+		Name prefix for all outputted files.
+
+* Options:
+
+	\-h, -\\-help
+		Print out help information.
+
+* Outputs:
+
+	output_name.scp.metadata.txt, output_name.scp.barcodes.tsv, output_name.scp.genes.tsv, output_name.scp.matrix.mtx, output_name.scp.*.coords.txt
+		Files that single cell portal needs.
+
+* Examples::
+
+	scrtools scp_output example.h5ad example
+
