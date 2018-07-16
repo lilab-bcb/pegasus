@@ -1,19 +1,30 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/25/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/20/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/26/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/21/plain-WDL/descriptor" as count
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as tools
 
 workflow orchestra {
+  # Csv File mapping samples, lanes and indices to bcl
   File masterCsv
+  # Csv Map of transcriptomes to gsurls
+  File? transMap
+  # Gsurl output directory for all fastqs
   String fastqOutputDirectory
+  # CellRanger Count Secondary Flag, for now disable it because optional outputs are not in wdl
   Boolean? secondary = false
+  # CellRanger Count Argument
   Int? expectCells
+  # CellRanger Count Argument
   Int? forceCells
+  # CellRanger Count Control Argument
   Boolean? do_force_cells
+  # Runtime Arguments
   Int diskSpace
   Int memory
   Int cores
   Int preemptible
+  # Monitoring Script, writes core, mem and disk usage to file
   File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
+  
 
   # Bo Inputs
   String output_name
@@ -158,7 +169,8 @@ workflow orchestra {
       preemptible = preemptible,
       cores = cores,
       memory = memory,
-      monitoringScript = monitoringScript
+      monitoringScript = monitoringScript,
+      transMap = transMap
   }
   # gathered- a bunch of fast qs for every sample across flowcells
   # scatter by sample name
@@ -168,7 +180,7 @@ workflow orchestra {
         input:
           sampleId = sampleId,
           commaFastqs = filter.filteredPaths[sampleId],
-          referenceName = filter.filteredGenome[sampleId],
+          transcriptome_file = filter.filteredGenome[sampleId],
           secondary = secondary,
           expectCells = expectCells,
           diskSpace = diskSpace,
@@ -349,6 +361,7 @@ task filterSamples {
   Int cores
   Int preemptible
   File monitoringScript
+  File? transMap
 
   command {
     chmod u+x ${monitoringScript}
@@ -357,13 +370,14 @@ task filterSamples {
     orchestra_methods.py -c=filter \
                                 -p "${sep='" "' paths}" \
                                 -S "${sep='" "' sampleIds}" \
-                                -M=${masterCsv}
+                                -M=${masterCsv} \
+                                -t=${transMap}
   }
 
   output {
     Map[String,String] filteredPaths = read_map("paths.tsv")
     Map[String, String] filteredChemistry = read_map("chemistry.tsv")
-    Map[String, String] filteredGenome = read_map("genome.tsv")
+    Map[String, File] filteredGenome = read_map("genome.tsv")
     File monitoringLog = "monitoring.log"
   }
 

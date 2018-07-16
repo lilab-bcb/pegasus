@@ -1,24 +1,28 @@
 workflow cellranger {
+    # Name of Sample to run CellRanger Count on
     String sampleId
+    # Array of Fastq Directories for running decoupled
     Array[String]? fastqs
+    # Comma Seperated String of Fastq Directories for Running in orchestration
     String? commaFastqs
-    String referenceName
-    File transcriptome_file = (if referenceName == 'GRCh38' 
-                                then 'gs://fc-bcc55e6c-bec3-4b2e-9fb2-5e1526ddfcd2/reference_data/human/grch38/refdata-cellranger-GRCh38-1.2.0.tar.gz'
-                                else (if referenceName == 'mm10' 
-                                        then 'gs://fc-bcc55e6c-bec3-4b2e-9fb2-5e1526ddfcd2/reference_data/mouse/mm10/refdata-cellranger-mm10-1.2.0.tar.gz' 
-                                        else (if referenceName == 'GRCh38_and_mm10'
-                                                then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
-                                                else referenceName)))
+    # Reference File for Count
+    File transcriptome_file
+    # Run CellRanger built in secondary analysis? Default to false because we have Bo's pipeline
     Boolean secondary = false
+    # CellRanger count input
     Int? expectCells
+    # CellRanger count input
     Int? forceCells
+    # CellRanger count input
     Boolean? do_force_cells
+    # CellRanger count input
     String? chemistry
+    # Runtime Arguments
     Int diskSpace
     Int memory
     Int cores
     Int preemptible
+    # Monitoring Script, writes core, mem and disk usage to file
     File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 
      call CellRanger {
@@ -26,7 +30,6 @@ workflow cellranger {
         sampleId = sampleId,
         fastqs = fastqs,
         commaFastqs = commaFastqs,
-        reference = referenceName,
         transcriptome_file = transcriptome_file,
         secondary = secondary,
         expectCells = expectCells,
@@ -88,7 +91,8 @@ task CellRanger {
                             -F=${forceCells} \
                             -C=${chemistry} \
                             -S=${secondary} \
-                            -tf=${transcriptome_file}
+                            -tf=${transcriptome_file} \
+                            -dfc=${do_force_cells}
         }
     output {
         File barcodes = "results_${sampleId}/outs/filtered_gene_bc_matrices/${reference}/barcodes.tsv"

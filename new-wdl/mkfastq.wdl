@@ -1,11 +1,16 @@
 workflow cellranger {
+	# gsurl of BCL to run CellRanger mkfastq on
 	String bcl
+	# Csv File mapping samples, lanes and indices to bcl
 	File masterCsv
+	# Output directory of Fastqs
 	String output_directory
+	# Runtime Arguments
 	Int diskSpace
 	Int memory
 	Int cores
 	Int preemptible
+	# Monitoring Script, writes core, mem and disk usage to file
 	File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 
 	call mkfastq {
