@@ -97,7 +97,6 @@ Examples:
 
             'filt_xlsx' : self.args['--output-filtration-results'],
             'output_loom' : self.args['--output-loom'],
-            'output_scp' : self.args['--output-scp'],
             'batch_correction' : self.args['--correct-batch-effect'],
             'group_attribute' : self.args['--batch-group-by'],
 

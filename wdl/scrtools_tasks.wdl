@@ -17,7 +17,7 @@ task run_scrtools_aggregate_matrices {
 
 		python <<CODE
 		from subprocess import check_call
-		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}', '--google-cloud']
+		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}']#, '--google-cloud']
 		if '${genome}' is not '':
 			call_args.extend(['--genome', '${genome}'])
 		if '${restrictions}' is not '':
@@ -327,6 +327,33 @@ task run_scrtools_plot {
 	}
 }
 
+task run_scrtools_scp_output {
+	File input_h5ad
+	String output_name
+	Int memory
+	Int disk_space
+	Int preemptible
+
+	command {
+		set -e
+		export TMPDIR=/tmp
+		scrtools scp_output ${input_h5ad} ${output_name}
+	}
+
+	output {
+		Array[File] output_scp_files = glob("${output_name}.scp.*")
+	}
+
+	runtime {
+		docker: "regevlab/scrtools"
+		memory: "${memory} GB"
+		bootDiskSizeGb: 12
+		disks: "local-disk ${disk_space} HDD"
+		cpu: 1
+		preemptible: preemptible
+	}
+}
+
 task run_scrtools_subcluster {
 	File input_h5ad
 	String output_name
@@ -485,6 +512,7 @@ task organize_results {
 	Array[File]? output_anno_file
 	Array[File]? output_pngs
 	Array[File]? output_htmls
+	Array[File]? output_scp_files
 
 	command {
 		set -e
@@ -493,17 +521,16 @@ task organize_results {
 		python <<CODE
 		import os
 		from subprocess import check_call
-
 		dest = os.path.dirname('${output_name}') + '/'
 		files = ['${output_10x_h5}', '${sep=" " output_filt_xlsx}', '${sep=" " output_loom_file}', '${output_de_xlsx}', '${sep=" " output_anno_file}']
 		files.append('${output_h5ad}' if '${output_de_h5ad}' is '' else '${output_de_h5ad}')
 		files.extend('${sep="," output_pngs}'.split(','))
 		files.extend('${sep="," output_htmls}'.split(','))
-
+		files.extend('${sep="," output_scp_files}'.split(','))
 		for file in files:
 			if file is not '':
-				# call_args = ['cp', file, dest]
-				call_args = ['gsutil', '-q', 'cp', file, dest]
+				call_args = ['cp', file, dest]
+				# call_args = ['gsutil', '-q', 'cp', file, dest]
 				print(' '.join(call_args))
 				check_call(call_args)
 		CODE

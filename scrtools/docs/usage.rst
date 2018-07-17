@@ -815,7 +815,7 @@ to see the usage information::
 ---------------------------------
 
 ``scrtools scp_output``
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 If we want to visualize analysis results on single cell portal (SCP), we can generate required files for SCP using this subcommand.
 
