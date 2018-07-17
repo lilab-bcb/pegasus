@@ -16,7 +16,7 @@ workflow cellranger_mkfastq {
 	# Memory in GB
 	Int? memory = 128
 	# Disk space in GB
-	Int? disk_space = 1000
+	Int? disk_space = 1500
 	# Number of preemptible tries 
 	Int? preemptible = 2
 
@@ -36,6 +36,7 @@ workflow cellranger_mkfastq {
 	output {
 		String output_fastqs_directory = run_cellranger_mkfastq.output_fastqs_directory
 		String output_fastqs_flowcell_directory = run_cellranger_mkfastq.output_fastqs_flowcell_directory
+		File monitoringLog = run_cellranger_mkfastq.monitoringLog
 	}
 }
 
@@ -55,6 +56,7 @@ task run_cellranger_mkfastq {
 	command {
 		set -e
 		export TMPDIR=/tmp
+		monitor_script.sh > monitoring.log &
 		gsutil -q -m cp -r ${input_bcl_directory} .
 		# cp -r ${input_bcl_directory} .
 		cellranger mkfastq --id=results --run=${run_id} --csv=${input_csv_file} --jobmode=local
@@ -85,6 +87,7 @@ task run_cellranger_mkfastq {
 	output {
 		String output_fastqs_directory = "${output_directory}/${run_id}_fastqs"
 		String output_fastqs_flowcell_directory = select_first(read_lines("output_fastqs_flowcell_directory.txt"))
+		File monitoringLog = "monitoring.log"
 	}
 
 	runtime {

@@ -17,7 +17,7 @@ task run_scrtools_aggregate_matrices {
 
 		python <<CODE
 		from subprocess import check_call
-		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}']#, '--google-cloud']
+		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}', '--google-cloud']
 		if '${genome}' is not '':
 			call_args.extend(['--genome', '${genome}'])
 		if '${restrictions}' is not '':
@@ -99,6 +99,7 @@ task run_scrtools_cluster {
 	command {
 		set -e
 		export TMPDIR=/tmp
+		monitor_script.sh > monitoring.log &
 
 		python <<CODE
 		from subprocess import check_call
@@ -198,6 +199,7 @@ task run_scrtools_cluster {
 		File output_h5ad = "${output_name}.h5ad"
 		Array[File] output_filt_xlsx = glob("${output_name}.filt.xlsx")
 		Array[File] output_loom_file = glob("${output_name}.loom")
+		File monitoringLog = "monitoring.log"
 	}
 
 	runtime {
@@ -230,6 +232,7 @@ task run_scrtools_de_analysis {
 	command {
 		set -e
 		export TMPDIR=/tmp
+		monitor_script.sh > monitoring.log &
 
 		python <<CODE
 		from subprocess import check_call
@@ -264,6 +267,7 @@ task run_scrtools_de_analysis {
 		File output_de_h5ad = "${output_name}.h5ad"
 		File output_de_xlsx = "${output_name}.de.xlsx"
 		Array[File] output_anno_file = glob("${output_name}.anno.txt")
+		File monitoringLog = "monitoring.log"
 	}
 
 	runtime {
@@ -401,6 +405,7 @@ task run_scrtools_subcluster {
 	command {
 		set -e
 		export TMPDIR=/tmp
+		monitor_script.sh > monitoring.log &
 
 		python <<CODE
 		from subprocess import check_call
@@ -487,6 +492,7 @@ task run_scrtools_subcluster {
 	output {
 		File output_h5ad = "${output_name}.h5ad"
 		Array[File] output_loom_file = glob("${output_name}.loom")
+		File monitoringLog = "monitoring.log"
 	}
 
 	runtime {
@@ -529,8 +535,8 @@ task organize_results {
 		files.extend('${sep="," output_scp_files}'.split(','))
 		for file in files:
 			if file is not '':
-				call_args = ['cp', file, dest]
-				# call_args = ['gsutil', '-q', 'cp', file, dest]
+				# call_args = ['cp', file, dest]
+				call_args = ['gsutil', '-q', 'cp', file, dest]
 				print(' '.join(call_args))
 				check_call(call_args)
 		CODE

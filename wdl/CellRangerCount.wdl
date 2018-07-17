@@ -65,6 +65,7 @@ workflow cellranger_count {
 		String output_count_directory = run_cellranger_count.output_count_directory
 		File output_metrics_summary = run_cellranger_count.output_metrics_summary
 		File output_web_summary = run_cellranger_count.output_web_summary
+		File monitoringLog = run_cellranger_count.monitoringLog
 	}
 }
 
@@ -87,6 +88,7 @@ task run_cellranger_count {
 	command {
 		set -e
 		export TMPDIR=/tmp
+		monitor_script.sh > monitoring.log &
 		mkdir -p genome_dir
 		tar xf ${genome_file} -C genome_dir --strip-components 1
 
@@ -121,6 +123,7 @@ task run_cellranger_count {
 		String output_count_directory = "${output_directory}/${sample_id}"
 		File output_metrics_summary = "results/outs/metrics_summary.csv"
 		File output_web_summary = "results/outs/web_summary.html"
+		File monitoringLog = "monitoring.log"
 	}
 
 	runtime {

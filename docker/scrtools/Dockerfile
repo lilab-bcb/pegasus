@@ -26,5 +26,9 @@ RUN pip install --upgrade pip && \
 	cd /software/hnswlib/python_bindings && python setup.py install && cd ../../..
 
 COPY scrtools-0.3.0.tar.gz /software
+COPY monitor_script.sh /software
+
 RUN tar -xzf /software/scrtools-0.3.0.tar.gz -C /software && \
 	cd /software/scrtools-0.3.0 && pip install . && cd ../..
+
+ENV PATH=/software:$PATH

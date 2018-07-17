@@ -1,4 +1,4 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/4/plain-WDL/descriptor" as tasks
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/5/plain-WDL/descriptor" as tasks
 # import "../scrtools_tasks.wdl" as tasks
 
 workflow scrtools_subcluster {
@@ -203,7 +203,7 @@ workflow scrtools_subcluster {
 	if (generate_scp_outputs) {
 		call tasks.run_scrtools_scp_output as scp_output {
 			input:
-				input_h5ad = cluster.output_h5ad,
+				input_h5ad = subcluster.output_h5ad,
 				output_name = out_name,
 				memory = memory,
 				disk_space = disk_space,
