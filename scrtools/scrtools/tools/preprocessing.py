@@ -33,22 +33,20 @@ def read_10x_h5_file(input_h5, genome):
 
 	return data
 
-def read_input(input_file, is_raw = True, genome = 'GRCh38', load_all = False):
+def read_input(input_file, genome = 'GRCh38', mode = 'r+'):
 	"""Load either 10x-formatted raw count matrix or h5ad-formatted processed expression matrix into memory.
 
-	This function is used to load input data into memory. If the input is 10x-formatted raw count matrix, the whole matrix will be loaded into the memory. Otherwise, only the sample and gene attributes are loaded, unless load_all == True.
+	This function is used to load input data into memory.
 	
 	Parameters
 	----------
 
 	input_file : `str`
 		Input file name.
-	is_raw : `bool`, optional (default: `True`)
-		If input file is 10x-formatted raw count matrix.
 	genome : `str`, optional (default: `GRCh38`)
 		The genome used to produce raw count matrices.
-	load_all : `bool`, optional (default: `False`)
-		If data is processed, if load the expression matrix.
+	mode : `str`, optional (default: `r+`)
+		If input is h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
 
 	Returns
 	-------
@@ -57,16 +55,18 @@ def read_input(input_file, is_raw = True, genome = 'GRCh38', load_all = False):
 
 	Examples
 	--------
-	>>> adata = tools.read_input('example_10x.h5', is_raw = True, genome = 'mm10')
+	>>> adata = tools.read_input('example_10x.h5', genome = 'mm10')
+	>>> adata = tools.read_input('example.h5ad', mode = 'r+')
 	"""
 
-	if is_raw:
+	if input_file.endswith('.h5'):
 		data = read_10x_h5_file(input_file, genome)
 		data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]
-	elif load_all:
-		data = anndata.read_h5ad(input_file)
+	elif input_file.endswith('.h5ad'):
+		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
 	else:
-		data = anndata.read_h5ad(input_file, backed = 'r+')
+		print("Unrecognized file type!")
+		assert False
 
 	return data
 

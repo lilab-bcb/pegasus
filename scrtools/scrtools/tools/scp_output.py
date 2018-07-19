@@ -90,7 +90,7 @@ def scp_write_expression(data, output_name, is_sparse = True, round_to = 2):
 		write_dense_matrix(expr_file, data, round_to)
 
 def run_scp_output(input_h5ad_file, output_name, is_sparse, round_to):
-	adata = read_input(input_h5ad_file, is_raw = False, load_all = True)
+	adata = read_input(input_h5ad_file, mode = 'a')
 	scp_write_coords(adata, output_name)
 	scp_write_metadata(adata, output_name)
 	scp_write_expression(adata, output_name, is_sparse, round_to)

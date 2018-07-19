@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import anndata
 import numpy as np
 import pandas as pd
 from natsort import natsorted
 from scipy.stats import f_oneway
+from ..tools import read_input
 
 def search_genes(data, gene_list, measure = 'percentage'):
 	"""Extract and display gene expressions for each cluster from an `anndata` object.
@@ -81,7 +81,7 @@ def search_de_genes(data, gene_list, test = 'fisher', thre = 1.5):
 	return df
 
 def show_attributes(input_file, show_attributes, show_gene_attributes, show_values_for_attributes):
-	data = anndata.read_h5ad(input_file, backed = 'r')
+	data = read_input(input_file, mode = 'r')
 	if show_attributes:
 		print("Available sample attributes in input dataset: {0}".format(', '.join(data.obs.columns.values)))
 	if show_gene_attributes:

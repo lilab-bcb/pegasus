@@ -1,10 +1,9 @@
 import pandas as pd
-import anndata
 from matplotlib import pyplot as pl
 
+from ..tools import read_input
 from .plot_utils import transform_basis
 from . import plot_library, iplot_library
-
 
 
 pop_list = {
@@ -17,7 +16,7 @@ pop_list = {
 }
 
 def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
-	adata = anndata.read_h5ad(input_file, backed = 'r')
+	adata = read_input(input_file, mode = 'r')
 	assert plot_type in pop_list
 	pop_set = pop_list[plot_type].copy()
 	for key, value in kwargs.items():
@@ -31,7 +30,7 @@ def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
 
 
 def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
-	adata = anndata.read_h5ad(input_file, backed = 'r')
+	adata = read_input(input_file, mode = 'r')
 	basis = transform_basis(plot_type)
 	if plot_type == 'diffmap' or plot_type == 'diffmap_pca':
 		df = pd.DataFrame(adata.obsm['X_{}'.format(plot_type)][:, 0:3], index = adata.obs.index, columns = [basis + i for i in ['1', '2', '3']])

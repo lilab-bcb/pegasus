@@ -1,5 +1,5 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/5/plain-WDL/descriptor" as tasks
-# import "../scrtools_tasks.wdl" as tasks
+# import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/5/plain-WDL/descriptor" as tasks
+import "../scrtools_tasks.wdl" as tasks
 
 workflow scrtools {
 	File input_count_matrix_csv
@@ -147,6 +147,8 @@ workflow scrtools {
 	# If generate outputs required by single cell portal
 	Boolean generate_scp_outputs = false
 
+	Boolean output_dense = false
+
 
 
 	call tasks.run_scrtools_aggregate_matrices as aggregate_matrices {
@@ -248,6 +250,7 @@ workflow scrtools {
 			input:
 				input_h5ad = cluster.output_h5ad,
 				output_name = out_name,
+				output_dense = output_dense,
 				memory = memory,
 				disk_space = disk_space,
 				preemptible = preemptible				

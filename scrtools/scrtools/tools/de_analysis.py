@@ -6,12 +6,11 @@ import scipy.stats as ss
 import fisher
 from statsmodels.stats.multitest import fdrcorrection as fdr
 import sklearn.metrics as sm
-import anndata
 import warnings
 import xlsxwriter
 import threading
 from natsort import natsorted
-
+from .preprocessing import read_input
 
 
 # assume cluster labels from 1 to n
@@ -390,7 +389,7 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 
 def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc):
 	start = time.time()
-	data = anndata.read_h5ad(input_file, backed = 'r+')
+	data = read_input(input_file, mode = 'r+')
 	X = data.X[:]
 	end = time.time()
 	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))

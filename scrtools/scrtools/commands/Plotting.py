@@ -1,4 +1,5 @@
 import os
+import time
 from .Base import Base
 from ..plotting import make_static_plots
 
@@ -86,4 +87,4 @@ Examples:
         }
         
         make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)
-        
+        time.sleep(1) # wait 1s to release the backed h5ad file

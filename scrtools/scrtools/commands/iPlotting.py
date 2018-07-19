@@ -1,4 +1,5 @@
 import os
+import time
 from .Base import Base
 from ..plotting import make_interactive_plots
 
@@ -36,3 +37,4 @@ Examples:
         }
 
         make_interactive_plots(self.args['<input_h5ad_file>'], self.args['<basis>'], self.args['<output_html_file>'], **kwargs)
+        time.sleep(1) # wait 1s to release the backed h5ad file

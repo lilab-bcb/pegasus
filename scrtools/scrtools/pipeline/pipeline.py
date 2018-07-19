@@ -4,7 +4,7 @@ from .. import tools
 def run_pipeline(input_file, output_name, **kwargs):
 	# load input data
 	is_raw = not kwargs['processed']
-	adata = tools.read_input(input_file, is_raw, kwargs['genome'])
+	adata = tools.read_input(input_file, genome = kwargs['genome'])
 
 	# preprocessing
 	if is_raw:

@@ -1,4 +1,5 @@
 import os
+import time
 from .Base import Base
 from ..tools import run_de_analysis
 
@@ -33,3 +34,4 @@ Examples:
 
     def execute(self):
         run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'])
+        time.sleep(1) # wait 1s to release the backed h5ad file

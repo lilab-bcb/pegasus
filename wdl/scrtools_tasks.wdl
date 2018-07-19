@@ -17,7 +17,7 @@ task run_scrtools_aggregate_matrices {
 
 		python <<CODE
 		from subprocess import check_call
-		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}', '--google-cloud']
+		call_args = ['scrtools', 'aggregate_matrix', '${input_count_matrix_csv}', '${output_name}'] #, '--google-cloud']
 		if '${genome}' is not '':
 			call_args.extend(['--genome', '${genome}'])
 		if '${restrictions}' is not '':
@@ -334,6 +334,7 @@ task run_scrtools_plot {
 task run_scrtools_scp_output {
 	File input_h5ad
 	String output_name
+	Boolean output_dense
 	Int memory
 	Int disk_space
 	Int preemptible
@@ -341,7 +342,7 @@ task run_scrtools_scp_output {
 	command {
 		set -e
 		export TMPDIR=/tmp
-		scrtools scp_output ${input_h5ad} ${output_name}
+		scrtools scp_output ${true='--dense' false='' output_dense} ${input_h5ad} ${output_name}
 	}
 
 	output {
@@ -535,8 +536,8 @@ task organize_results {
 		files.extend('${sep="," output_scp_files}'.split(','))
 		for file in files:
 			if file is not '':
-				# call_args = ['cp', file, dest]
-				call_args = ['gsutil', '-q', 'cp', file, dest]
+				call_args = ['cp', file, dest]
+				# call_args = ['gsutil', '-q', 'cp', file, dest]
 				print(' '.join(call_args))
 				check_call(call_args)
 		CODE
