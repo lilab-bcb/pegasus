@@ -1,6 +1,6 @@
 import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/26/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/21/plain-WDL/descriptor" as count
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/7/plain-WDL/descriptor" as tools
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/23/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/9/plain-WDL/descriptor" as tools
 
 workflow orchestra {
   # Csv File mapping samples, lanes and indices to bcl
@@ -18,10 +18,10 @@ workflow orchestra {
   # CellRanger Count Control Argument
   Boolean? do_force_cells
   # Runtime Arguments
-  Int diskSpace
-  Int memory
-  Int cores
-  Int preemptible
+  Int diskSpace = 500
+  Int memory = 120
+  Int cores = 32
+  Int preemptible = 2
   # Monitoring Script, writes core, mem and disk usage to file
   File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
   
@@ -134,6 +134,10 @@ workflow orchestra {
   String? plot_tsne
   # Takes the format of "attr,attr,...,attr". If non-empty, generate attr colored 3D interactive plot. The 3 coordinates are the first 3 PCs of all diffusion components.
   String? plot_diffmap
+  # Output scp files (cluster, expression etc)
+  Boolean? generate_scp_outputs = true
+  # Output dense expr matrix
+  Boolean? output_dense = false  
 	
   call parseCsv as parse {
     input:
@@ -180,7 +184,8 @@ workflow orchestra {
         input:
           sampleId = sampleId,
           commaFastqs = filter.filteredPaths[sampleId],
-          transcriptome_file = filter.filteredGenome[sampleId],
+          transcriptome_file = filter.filteredTranscriptome[sampleId],
+          reference = filter.filteredReference[sampleId],
           secondary = secondary,
           expectCells = expectCells,
           diskSpace = diskSpace,
@@ -263,7 +268,9 @@ workflow orchestra {
          minimum_report_score = minimum_report_score,
          plot_composition = plot_composition,
          plot_tsne = plot_tsne,
-         plot_diffmap = plot_diffmap
+         plot_diffmap = plot_diffmap,
+         generate_scp_outputs = generate_scp_outputs,
+         output_dense = output_dense
     }
 
     output {
@@ -281,9 +288,10 @@ workflow orchestra {
       Array[File] raw_genes = cnt.raw_genes
       Array[File] raw_matrix = cnt.raw_matrix
       Array[File] mol_info_h5 = cnt.mol_info_h5
-      Array[File] cloupe = cnt.cloupe
       Array[String] fastq_paths = fq.path
       Array[String] undetermined_paths = fq.undetermined_path
+      Array[File] mkfastq_monitoring_logs = fq.monitoringLog
+      Array[File] count_monitoring_logs = cnt.monitoringLog
     }
 }
 
@@ -377,7 +385,8 @@ task filterSamples {
   output {
     Map[String,String] filteredPaths = read_map("paths.tsv")
     Map[String, String] filteredChemistry = read_map("chemistry.tsv")
-    Map[String, File] filteredGenome = read_map("genome.tsv")
+    Map[String, File] filteredTranscriptome = read_map("transcriptome.tsv")
+    Map[String, File] filteredReference = read_map("reference.tsv")
     File monitoringLog = "monitoring.log"
   }
 

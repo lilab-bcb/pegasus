@@ -6,10 +6,10 @@ workflow cellranger {
 	# Output directory of Fastqs
 	String output_directory
 	# Runtime Arguments
-	Int diskSpace
-	Int memory
-	Int cores
-	Int preemptible
+	Int diskSpace = 500 
+	Int memory = 120
+	Int cores = 32
+	Int preemptible =2 
 	# Monitoring Script, writes core, mem and disk usage to file
 	File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 

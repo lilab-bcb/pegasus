@@ -5,6 +5,8 @@ workflow cellranger {
     Array[String]? fastqs
     # Comma Seperated String of Fastq Directories for Running in orchestration
     String? commaFastqs
+    # Reference Name for Count
+    String reference
     # Reference File for Count
     File transcriptome_file
     # Run CellRanger built in secondary analysis? Default to false because we have Bo's pipeline
@@ -18,10 +20,10 @@ workflow cellranger {
     # CellRanger count input
     String? chemistry
     # Runtime Arguments
-    Int diskSpace
-    Int memory
-    Int cores
-    Int preemptible
+    Int diskSpace = 500
+    Int memory = 120
+    Int cores = 32
+    Int preemptible = 2
     # Monitoring Script, writes core, mem and disk usage to file
     File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 
@@ -31,6 +33,7 @@ workflow cellranger {
         fastqs = fastqs,
         commaFastqs = commaFastqs,
         transcriptome_file = transcriptome_file,
+        reference = reference,
         secondary = secondary,
         expectCells = expectCells,
         diskSpace = diskSpace,
@@ -57,7 +60,6 @@ workflow cellranger {
         File raw_genes = CellRanger.raw_genes
         File raw_matrix = CellRanger.raw_matrix
         File mol_info_h5 = CellRanger.mol_info_h5
-        File cloupe = CellRanger.cloupe
         File monitoringLog = CellRanger.monitoringLog
     }
 }
@@ -108,7 +110,6 @@ task CellRanger {
         File raw_genes = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/genes.tsv"
         File raw_matrix = "results_${sampleId}/outs/raw_gene_bc_matrices/${reference}/matrix.mtx"
         File mol_info_h5 = "results_${sampleId}/outs/molecule_info.h5"
-        File cloupe = "results_${sampleId}/outs/cloupe.cloupe"
         File monitoringLog = "monitoring.log"
     }
     
