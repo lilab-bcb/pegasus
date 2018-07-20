@@ -9,9 +9,10 @@ import copy
 from subprocess import check_call
 
 
-basic_attrs = set(["barcodes", "gene_names", "genes", "matrix"])
 
 def load_10x_h5_file(input_h5, genome):
+	basic_attrs = set(["barcodes", "gene_names", "genes", "matrix"])
+	
 	inpmat = {}
 	with tables.open_file(input_h5) as h5_in:
 		for node in h5_in.walk_nodes("/" + genome, "Array"):
@@ -29,12 +30,28 @@ def load_10x_h5_file(input_h5, genome):
 	return inpmat, attributes
 
 
+def load_antibody_csv(input_csv):
+	barcodes = []
+	antibody_names = []
+	stacks = []
+	with open(input_csv) as fin:
+		barcodes = next(fin).strip().split(',')[1:]
+		for line in fin:
+			fields = line.strip().split(',')
+			antibody_names.append(fields[0])
+			stacks.append([int(x) for x in fields[1:]])
+
+	inpmat["barcodes"] = barcodes
+	inpmat["antibody_names"] = antibody_names
+	inpmat["matrix"] = csc_matrix(np.stack(stacks, axis = 1))
+
+	return inpmat
+
+
 def write_10x_h5_file(output_h5, output_data, genome, attributes):
 	with tables.open_file(output_h5, mode="w", title=output_h5, filters=tables.Filters(complevel=1)) as hd5_out:
 		out_group = hd5_out.create_group("/", genome)
 		hd5_out.create_carray(out_group, "barcodes", obj=output_data["barcodes"])
-		hd5_out.create_carray(out_group, "gene_names", obj=output_data["gene_names"])
-		hd5_out.create_carray(out_group, "genes", obj=output_data["genes"])
 		hd5_out.create_carray(out_group, "data", obj=output_data["matrix"].data)
 		hd5_out.create_carray(out_group, "indices", obj=output_data["matrix"].indices)
 		hd5_out.create_carray(out_group, "indptr", obj=output_data["matrix"].indptr)
@@ -74,7 +91,7 @@ def parse_restriction_string(rstr):
 	return (name, isin, content)
 
 
-def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_file, google_cloud=False):
+def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_file, google_cloud=False, input_type='gene'):
 	"""Aggregate channel-specific 10x count matrices into one big count matrix.
 
 	This function takes as input a csv_file, which contains at least 3 columns — Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. It outputs a 10x-formatted HDF5 file for the big count matrix.
@@ -93,7 +110,9 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 	output_file : `str`
 		The output count matrix file, normally the file name ends with '_10x.h5'.
 	google_cloud : `bool`, optional (default: `False`) 
-		If the channel-specific count matrices are stored in a google bucket. 
+		If the channel-specific count matrices are stored in a google bucket.
+	input_type : `str`, optional (default: `gene`)
+		Input type, 'gene' refers to 10x h5 format; 'ADT' refers to CITE-Seq csv.
 
 	Returns
 	-------
@@ -133,7 +152,11 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 			check_call(call_args)
 			input_hd5_file = '{0}_tmp_h5.h5'.format(sample_name)
 		
-		channel, tmp_attrs = load_10x_h5_file(input_hd5_file, genome)
+		if input_type == 'gene':
+			channel, tmp_attrs = load_10x_h5_file(input_hd5_file, genome)
+		elif input_type == 'ADT':
+			channel = load_antibody_csv(input_hd5_file)
+
 		channel["barcodes"] = np.array([(sample_name + '-' + x.decode()).encode() for x in channel["barcodes"]])
 
 		if out_hd5 is None:
@@ -162,6 +185,11 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 	out_hd5["barcodes"] = np.concatenate(out_hd5["barcodes"])
 	for attr in attributes:
 		out_hd5[attr] = np.concatenate(out_hd5[attr])
+	
+	if input_type == 'gene':
+		attributes.extend(['genes', 'gene_names'])
+	elif input_type == 'ADT':
+		attributes.append('antibody_names')
 
 	write_10x_h5_file(output_file, out_hd5, genome, attributes)
 	print("Generated {file} from {tot} files.".format(file=output_file, tot=tot))

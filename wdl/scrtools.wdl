@@ -1,5 +1,5 @@
-# import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/5/plain-WDL/descriptor" as tasks
-import "../scrtools_tasks.wdl" as tasks
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:tasks/versions/6/plain-WDL/descriptor" as tasks
+# import "../scrtools_tasks.wdl" as tasks
 
 workflow scrtools {
 	File input_count_matrix_csv
