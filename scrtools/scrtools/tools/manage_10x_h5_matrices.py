@@ -41,9 +41,10 @@ def load_antibody_csv(input_csv):
 			antibody_names.append(fields[0])
 			stacks.append([int(x) for x in fields[1:]])
 
-	inpmat["barcodes"] = barcodes
-	inpmat["antibody_names"] = antibody_names
-	inpmat["matrix"] = csc_matrix(np.stack(stacks, axis = 1))
+	inpmat = {}
+	inpmat["barcodes"] = [x.encode() for x in barcodes]
+	inpmat["antibody_names"] = [x.encode() for x in antibody_names]
+	inpmat["matrix"] = csc_matrix(np.stack(stacks, axis = 0))
 
 	return inpmat
 
@@ -91,7 +92,7 @@ def parse_restriction_string(rstr):
 	return (name, isin, content)
 
 
-def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_file, google_cloud=False, input_type='gene'):
+def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_name, google_cloud=False, input_type='gene'):
 	"""Aggregate channel-specific 10x count matrices into one big count matrix.
 
 	This function takes as input a csv_file, which contains at least 3 columns — Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. It outputs a 10x-formatted HDF5 file for the big count matrix.
@@ -107,8 +108,8 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 		A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
 	attributes : `list[str]`
 		A list of attributes need to be incorporated into the output count matrix.
-	output_file : `str`
-		The output count matrix file, normally the file name ends with '_10x.h5'.
+	output_name : `str`
+		The output count matrix file name prefix. If input_type == 'gene', output_name_10x.h5 will be generated. If input_type == 'ADT', output_name.h5at will be generated.
 	google_cloud : `bool`, optional (default: `False`) 
 		If the channel-specific count matrices are stored in a google bucket.
 	input_type : `str`, optional (default: `gene`)
@@ -186,9 +187,12 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_fi
 	for attr in attributes:
 		out_hd5[attr] = np.concatenate(out_hd5[attr])
 	
+	output_file = output_name
 	if input_type == 'gene':
+		output_file += '_10x.h5'
 		attributes.extend(['genes', 'gene_names'])
 	elif input_type == 'ADT':
+		output_file += '.h5at'
 		attributes.append('antibody_names')
 
 	write_10x_h5_file(output_file, out_hd5, genome, attributes)

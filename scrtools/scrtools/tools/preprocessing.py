@@ -14,9 +14,10 @@ from sklearn.utils.extmath import randomized_svd
 
 
 
-obs_not = set(["data", "indices", "indptr", "shape", "gene_names", "genes", "barcodes"])
 
 def read_10x_h5_file(input_h5, genome):
+	obs_not = set(["data", "indices", "indptr", "shape", "gene_names", "genes", "barcodes"])
+
 	with tables.open_file(input_h5) as h5_in:
 		inpmat = {}
 		for node in h5_in.walk_nodes("/" + genome, "Array"):
@@ -30,6 +31,25 @@ def read_10x_h5_file(input_h5, genome):
 			obs_dict[key] = value.astype(str)
 
 	data = anndata.AnnData(X = X, obs = obs_dict, var = {"var_names" : inpmat["gene_names"].astype(str), "gene_ids": inpmat["genes"].astype(str)})
+
+	return data
+
+def read_antibody_file(input_h5at, genome):
+	obs_not = set(["data", "indices", "indptr", "shape", "antibody_names", "barcodes"])
+
+	with tables.open_file(input_h5at) as h5_in:
+		inpmat = {}
+		for node in h5_in.walk_nodes("/" + genome, "Array"):
+			inpmat[node.name] = node.read()
+
+	X = csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0]))
+	
+	obs_dict = {"obs_names" : inpmat["barcodes"].astype(str)}
+	for key, value in inpmat.items():
+		if key not in obs_not:
+			obs_dict[key] = value.astype(str)
+
+	data = anndata.AnnData(X = X, obs = obs_dict, var = {"var_names" : inpmat["antibody_names"].astype(str)})
 
 	return data
 
@@ -64,6 +84,8 @@ def read_input(input_file, genome = 'GRCh38', mode = 'r+'):
 		data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]
 	elif input_file.endswith('.h5ad'):
 		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
+	elif input_file.endswith('.h5at'):
+		data = read_antibody_file(input_file, genome)
 	else:
 		print("Unrecognized file type!")
 		assert False
@@ -138,6 +160,14 @@ def filter_data(data, mito_prefix = 'MT-', filt_xlsx = None, min_genes = 500, ma
 	data._inplace_subset_var(var_index)
 	print("After filteration, {nc} cells and {ng} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(nc = data.shape[0], ng = data.shape[1], nrb = data.var['robust'].sum()))
 
+
+def filter_cells_cite_seq(data, max_cells):
+	data.obs['n_counts'] = data.X.sum(axis = 1).A1
+	obs_index = np.zeros(data.shape[0], dtype = bool)
+	obs_index[np.argsort(data.obs['n_counts'].values)[::-1][:max_cells]] = True
+	data._inplace_subset_obs(obs_index)
+	data.var['robust'] = True
+	print("After filteration, {nc} cells are kept, with the minimum nUMI = {numi}.".format(nc = max_cells, numi = data.obs['n_counts'].min()))
 
 def log_norm(data, norm_count):
 	""" Normalization and then take log """

@@ -67,7 +67,7 @@ def calc_stat_and_t_per_thread(thread_no, results, n_jobs, clusts, labels, gene_
 		log_fold_change = mean1 - mean2
 		x_avg = (mean1 + mean2) / 2
 		x_max = x_avg.max()
-		x_min = x_avg.min()
+		x_min = x_avg.min() - 0.001 # to avoid divide by zero
 		weights = (x_avg - x_min) / (x_max - x_min)
 		wads = log_fold_change * weights
 

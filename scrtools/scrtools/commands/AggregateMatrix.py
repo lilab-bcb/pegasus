@@ -33,6 +33,6 @@ Examples:
 			self.args['--genome'], 
 			self.args['--restriction'], 
 			self.split_string(self.args['--attributes']), 
-			self.args['<output_name>'] + '_10x.h5',
+			self.args['<output_name>'],
 			google_cloud = self.args['--google-cloud'],
       input_type = self.args['--input-type'])

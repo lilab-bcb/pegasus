@@ -23,7 +23,8 @@ Options:
   --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition'.
   --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
   --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
-  --restriction <restriction>...     Multiple <restriction> strings for different attributes. Each <restriction> takes the format of 'attr:value,value'. Only used for scatter. 
+  --restriction <restriction>...     Set restriction if you only want to plot a subset of data in 'scatter'. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value'. This option is only used in 'scatter'.
+  --apply-to-each-figure             Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict. 
   --group <attr>                     <attr> is used to make group plots. In group plots, the first one contains all components in the group and the following plots show each component separately. This option is iused in 'scatter_groups' and 'scatter_gene_groups'. If <attr> is a semi-colon-separated string, parse the string as groups.
   --genes <genes>                    <genes> is a comma-separated list of gene names to visualize. This option is used in 'scatter_genes' and 'heatmap'.
   --gene <gene>                      Visualize <gene> in group plots. This option is only used in 'scatter_gene_groups'.
@@ -63,6 +64,7 @@ Examples:
             'cluster' : self.args['--cluster-labels'],
             'attr' : self.args['--attribute'],
             'restrictions' : self.args['--restriction'],
+            'apply_to_all' : not self.args['--apply-to-each-figure'],
             'basis' : self.args['--basis'],
             'attrs' : self.split_string(self.args['--attributes']),
             'group' : self.args['--group'],
