@@ -1,5 +1,5 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/26/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/23/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/27/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/24/plain-WDL/descriptor" as count
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/9/plain-WDL/descriptor" as tools
 
 workflow orchestra {
