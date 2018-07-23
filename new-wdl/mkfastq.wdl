@@ -59,7 +59,7 @@ task mkfastq {
 	}
 
 	runtime {
-	        docker: "singlecellportal/cell-ranger-count-2.1.1"
+	        docker: "singlecellportal/scrna-seq_orchestra"
 	        memory: "${memory} GB"
 	        bootDiskSizeGb: 12
 	        disks: "local-disk ${diskSpace} HDD"

@@ -318,7 +318,7 @@ task parseCsv {
   }
 
   runtime {
-          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          docker: "singlecellportal/scrna-seq_orchestra"
           memory: "${memory} GB"
           bootDiskSizeGb: 12
           disks: "local-disk ${diskSpace} HDD"
@@ -351,7 +351,7 @@ task generateAnalysisCsv {
     File monitoringLog = "monitoring.log"
   }
   runtime {
-          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          docker: "singlecellportal/scrna-seq_orchestra"
           memory: "${memory} GB"
           bootDiskSizeGb: 12
           disks: "local-disk ${diskSpace} HDD"
@@ -391,7 +391,7 @@ task filterSamples {
   }
 
   runtime {
-          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          docker: "singlecellportal/scrna-seq_orchestra"
           memory: "${memory} GB"
           bootDiskSizeGb: 12
           disks: "local-disk ${diskSpace} HDD"
