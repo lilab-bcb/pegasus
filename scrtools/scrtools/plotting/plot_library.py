@@ -71,7 +71,7 @@ def as_category(labels):
 def get_marker_size(nsamples):
 	return (240000.0 if nsamples > 300000 else 120000.0) / nsamples
 
-def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, logy = False, subplot_size = (6, 4), left = 0.15, bottom = None, wspace = 0.2, hspace = None):
+def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, logy = False, subplot_size = (6, 4), left = 0.15, bottom = None, wspace = 0.2, hspace = None, restrictions = []):
 	"""Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
 	
 	This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
@@ -101,6 +101,8 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 		This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
 	hspace: `float`, optional (defualt: `0.15`)
 		This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
+	restrictions: `list[str]`, optional (default: `[]`)
+		This parameter is used to select a subset of data to plot.
 
 	Returns
 	-------
@@ -116,7 +118,13 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, ax = get_subplot_layouts(**kwargs)
 
-	df = pd.crosstab(data.obs[cluster], data.obs[attr])
+	rest_dict = parse_restrictions(restrictions)
+	selected = np.ones(data.shape[0], dtype = bool)
+	for key, value in rest_dict.items():
+		labels = data.obs[key].astype(str)
+		selected = selected & np.isin(labels, value)
+
+	df = pd.crosstab(data.obs.loc[selected, cluster], data.obs.loc[selected, attr])
 	df = df.reindex(index = natsorted(df.index.values), columns = natsorted(df.columns.values))
 
 	if style == 'frequency':
@@ -138,7 +146,7 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 	ax.grid(False)
 	ax.set_xlabel('Cluster ID')
 	ax.set_ylabel('Percentage' if style != 'count' else 'Count')
-	ax.set_title("AMI = {0:.4f}".format(adjusted_mutual_info_score(data.obs[cluster], data.obs[attr])))
+	ax.set_title("AMI = {0:.4f}".format(adjusted_mutual_info_score(data.obs.loc[selected, cluster], data.obs.loc[selected, attr])))
 	ax.legend(loc = 'center left', bbox_to_anchor = (1.05, 0.5))
 
 	return fig
@@ -165,7 +173,7 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 
 	unsel = np.zeros(data.shape[0], dtype = bool)
 	if apply_to_all:
-		for key, value in rest_dict:
+		for key, value in rest_dict.items():
 			labels = data.obs[key].astype(str)
 			unsel = unsel | ~np.isin(labels, value)
 	nunsel = sum(unsel)

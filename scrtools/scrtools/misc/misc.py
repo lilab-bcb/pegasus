@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from natsort import natsorted
 from scipy.stats import f_oneway
+from statsmodels.stats.multitest import fdrcorrection as fdr
 from ..tools import read_input
 
 def search_genes(data, gene_list, measure = 'percentage'):
@@ -89,3 +90,51 @@ def show_attributes(input_file, show_attributes, show_gene_attributes, show_valu
 	if not show_values_for_attributes is None:
 		for attr in show_values_for_attributes.split(','):
 			print("Available values for attribute {0}: {1}.".format(attr, ', '.join(np.unique(data.obs[attr]))))
+
+
+
+def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha = 0.05):
+	selected = np.ones(data.shape[0], dtype = bool)
+	for rest_str in restriction_vec:
+		attr, value_str = rest_str.split(':')
+		values = value_str.split(',')
+		selected = selected & np.isin(data.obs[attr], values)
+	gene_list = np.array(glist)
+	gene_list = gene_list[np.isin(gene_list, data.var_names)]	
+	newdat = data[selected, :][:, gene_list].copy()
+	newdat.X = newdat.X.toarray()
+	group_attr, tmp_str = group_str.split(':')
+	groups_str = tmp_str.split(';')
+	ngr = len(groups_str)
+	group_names = []
+	group_idx = np.zeros((ngr, newdat.shape[0]), dtype = bool)
+	for i, gstr in enumerate(groups_str):
+		name, values = gstr.split('~')
+		group_names.extend([name + '_mean', name + '_percent'])
+		group_idx[i] = np.isin(newdat.obs[group_attr], values.split(','))
+	np.warnings.filterwarnings('ignore')
+	stats = np.zeros((len(gene_list), 3 + ngr * 2))
+	for i in range(len(gene_list)):
+		arr_list = []
+		for j in range(group_idx.shape[0]):
+			arr = newdat.X[group_idx[j], i]
+			stats[i, 3 + j * 2] = arr.mean()
+			stats[i, 3 + j * 2 + 1] = (arr > 0).sum() * 100.0 / arr.size
+			arr_list.append(arr)
+		stats[i, 0], stats[i, 1] = f_oneway(*arr_list)
+		if np.isnan(stats[i, 0]):
+			stats[i, 0] = 0.0
+			stats[i, 1] = 1.0
+	passed, stats[:, 2] = fdr(stats[:, 1])
+	cols = ['fstat', 'pval', 'qval']
+	cols.extend(group_names)
+	raw_results = pd.DataFrame(stats, columns = cols, index = gene_list)
+	results = raw_results[raw_results['qval'] <= fdr_alpha]
+	results = results.sort_values('qval')
+	return results, raw_results
+
+
+
+
+
+

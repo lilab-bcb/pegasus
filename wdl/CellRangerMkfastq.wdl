@@ -60,7 +60,7 @@ task run_cellranger_mkfastq {
 		gsutil -q -m cp -r ${input_bcl_directory} .
 		# cp -r ${input_bcl_directory} .
 		cellranger mkfastq --id=results --run=${run_id} --csv=${input_csv_file} --jobmode=local
-		gsutil -q -m cp -r results/outs ${output_directory}/${run_id}_fastqs
+		gsutil -q -m rsync -d -r results/outs ${output_directory}/${run_id}_fastqs
 		# cp -r results/outs ${output_directory}/${run_id}_fastqs
 
 

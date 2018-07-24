@@ -7,7 +7,7 @@ from . import plot_library, iplot_library
 
 
 pop_list = {
-	'composition' : {'basis', 'attrs', 'restrictions', 'apply_to_all', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall'},
+	'composition' : {'basis', 'attrs', 'apply_to_all', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall'},
 	'scatter' : {'cluster', 'attr', 'group', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title', 'showall'},
 	'scatter_groups' : {'attr', 'attrs', 'apply_to_all', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
 	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'apply_to_all', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
