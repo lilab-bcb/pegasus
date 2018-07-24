@@ -115,7 +115,7 @@ task run_cellranger_count {
 		check_call(call_args)
 		CODE
 
-		gsutil -q -m cp -r results/outs ${output_directory}/${sample_id}
+		gsutil -q -m rsync -d -r results/outs ${output_directory}/${sample_id}
 		# cp -r results/outs ${output_directory}/${sample_id}
 	}
 
