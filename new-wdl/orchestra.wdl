@@ -1,5 +1,5 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/26/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/23/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/27/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/24/plain-WDL/descriptor" as count
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/9/plain-WDL/descriptor" as tools
 
 workflow orchestra {
@@ -318,7 +318,7 @@ task parseCsv {
   }
 
   runtime {
-          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          docker: "singlecellportal/scrna-seq_orchestra"
           memory: "${memory} GB"
           bootDiskSizeGb: 12
           disks: "local-disk ${diskSpace} HDD"
@@ -351,7 +351,7 @@ task generateAnalysisCsv {
     File monitoringLog = "monitoring.log"
   }
   runtime {
-          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          docker: "singlecellportal/scrna-seq_orchestra"
           memory: "${memory} GB"
           bootDiskSizeGb: 12
           disks: "local-disk ${diskSpace} HDD"
@@ -391,7 +391,7 @@ task filterSamples {
   }
 
   runtime {
-          docker: "singlecellportal/cell-ranger-count-2.1.1"
+          docker: "singlecellportal/scrna-seq_orchestra"
           memory: "${memory} GB"
           bootDiskSizeGb: 12
           disks: "local-disk ${diskSpace} HDD"
