@@ -36,11 +36,11 @@ Table of Contents
 ## Run Cell Ranger mkfastq/count
 1. [Create](https://software.broadinstitute.org/firecloud/documentation/article?id=10746) a [FireCloud](https://portal.firecloud.org/) workspace or use an existing workspace.
 
-1. Copy your sequencing output to the workspace using gsutil in your unix terminal. 
+1. Copy your sequencing output to the workspace bucket using gsutil in your unix terminal. 
 
     It is highly recommended that you delete the **BCL files** after the pipeline is finished by turning on the **delete_input_directory** option.
 
-    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
+    Example of copying a directory to a Google Cloud bucket: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
     
     -m means copy in parallel, -r means copy the directory recursively.
     
