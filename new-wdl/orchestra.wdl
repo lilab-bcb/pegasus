@@ -1,5 +1,5 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/27/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/24/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/28/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/25/plain-WDL/descriptor" as count
 import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/9/plain-WDL/descriptor" as tools
 
 workflow orchestra {
@@ -22,10 +22,7 @@ workflow orchestra {
   Int memory = 120
   Int cores = 32
   Int preemptible = 2
-  # Monitoring Script, writes core, mem and disk usage to file
-  File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
   
-
   # Bo Inputs
   String output_name
   # Reference genome name [default: GRCh38]
@@ -146,7 +143,6 @@ workflow orchestra {
       preemptible = preemptible,
       cores = cores,
       memory = memory,
-      monitoringScript = monitoringScript
   }
 
   # scatter per flow cell
@@ -160,7 +156,6 @@ workflow orchestra {
           preemptible = preemptible,
           cores = cores,
           memory = memory,
-          monitoringScript = monitoringScript
       }
   }
 	
@@ -173,7 +168,6 @@ workflow orchestra {
       preemptible = preemptible,
       cores = cores,
       memory = memory,
-      monitoringScript = monitoringScript,
       transMap = transMap
   }
   # gathered- a bunch of fast qs for every sample across flowcells
@@ -194,8 +188,7 @@ workflow orchestra {
           chemistry = filter.filteredChemistry[sampleId],
           preemptible = preemptible,
           cores = cores,
-          memory = memory,
-          monitoringScript = monitoringScript
+          memory = memory
       }
 
     }
@@ -207,8 +200,7 @@ workflow orchestra {
         diskSpace = diskSpace,
         preemptible = preemptible,
         cores = cores,
-        memory = memory,
-        monitoringScript = monitoringScript
+        memory = memory
     }
 
     call tools.scrtools {
@@ -301,11 +293,9 @@ task parseCsv {
   Int memory
   Int cores
   Int preemptible
-  File monitoringScript
 
   command {
-    chmod u+x ${monitoringScript}
-    ${monitoringScript} > monitoring.log &
+    monitor_script.sh > monitoring.log &
     
     orchestra_methods.py -c=parse \
                                 -M=${masterCsv}
@@ -335,11 +325,9 @@ task generateAnalysisCsv {
   Int memory
   Int cores
   Int preemptible
-  File monitoringScript
 
   command {
-    chmod u+x ${monitoringScript}
-    ${monitoringScript} > monitoring.log &
+    monitor_script.sh > monitoring.log &
     
     orchestra_methods.py -c=analysis \
                         -hs "${sep='" "' h5s}" \
@@ -368,12 +356,10 @@ task filterSamples {
   Int memory
   Int cores
   Int preemptible
-  File monitoringScript
   File? transMap
 
   command {
-    chmod u+x ${monitoringScript}
-    ${monitoringScript} > monitoring.log &
+    monitor_script.sh > monitoring.log &
 
     orchestra_methods.py -c=filter \
                                 -p "${sep='" "' paths}" \
