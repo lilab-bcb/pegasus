@@ -22,7 +22,7 @@ Table of Contents
 
 ## First Time Running - Authenticate with Google
 
-1. Ensure the Google Cloud SDK is installed. 
+1. Ensure the Google Cloud SDK is installed on your computer. 
     
     Note: Broad users do not have to install this-they can type *use Google-Cloud-SDK* to make the Google Cloud tools available. 
 
@@ -36,11 +36,11 @@ Table of Contents
 ## Run Cell Ranger mkfastq/count
 1. [Create](https://software.broadinstitute.org/firecloud/documentation/article?id=10746) a [FireCloud](https://portal.firecloud.org/) workspace or use an existing workspace.
 
-1. Copy your sequencing output to the workspace using gsutil in your unix terminal. 
+1. Copy your sequencing output to the workspace bucket using gsutil in your unix terminal. 
 
     It is highly recommended that you delete the **BCL files** after the pipeline is finished by turning on the **delete_input_directory** option.
 
-    Example: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
+    Example of copying a directory to a Google Cloud bucket: *gsutil -m cp -r /foo/bar/nextseq/Data/VK18WBC6Z4 gs://fc-e0000000-0000-0000-0000-000000000000/VK18WBC6Z4*
     
     -m means copy in parallel, -r means copy the directory recursively.
     
@@ -48,9 +48,21 @@ Table of Contents
     
     You can also read [FireCloud instructions](https://software.broadinstitute.org/firecloud/documentation/article?id=10574) on uploading data.
 
-1. Create a sample sheet. A sample sheet is a simple CSV with sample, reference, flowcell, lane, index columns. It can optionally contain a chemistry column. This sample sheet describe the ways to demultiplex flowcells and generate channel-specific count matrices. *Sample* column gives sample names and each 10x channel should have a unique sample name. *Reference* provides the reference genome used by *cellranger count* for each 10x channel. The elements of the *reference* column are either google bucket urls pointing to reference tarballs or keywords such as **GRCh38** for human, **mm10** for mouse, and **GRCh38\_and\_mm10** for human and mouse). *Flowcell* column records the google bucket urls of uploaded BCL folders. *Lane* column tells which lanes the current sample were pooled into. *Index* column contains 10x sample index set names (e.g. SI-GA-A12). *Chemistry* column is optional and it describes the 10x chemistry used for the sample. If this column is omitted, *cellranger count* will try to determine the chemistry automatically. Note that *Sample*, *Lane*, and *Index* columns are defined exactly the same as in 10x's simple CSV layout file.
+1. Create a scRNA-Seq formatted sample sheet. Please note that the columns in the CSV can be in any order, but that the column names must match the recognized headings.  
+The sample sheet describes how to demultiplex flowcells and generate channel-specific count matrices.Note that *Sample*, *Lane*, and *Index* columns are defined exactly the same as in 10x's simple CSV layout file.
 
-This sample sheet supports sequencing the same 10x channels across multiple flowcells. If a sample is sequenced across multiple flowcells, just list it in multiple rows, with one flowcell per row. In the following example, we have 4 samples sequenced in two flowcells.
+scRNA-Seq formatted sample sheet description (required column headers are shown in bold):
+
+Column | Description
+--- | --- | 
+**Sample** | Contains sample names. Each 10x channel should have a unique sample name.
+**Reference** | Provides the reference genome used by *cellranger count* for each 10x channel. The elements in the *reference* column can be either Google bucket URLs to reference tarballs or keywords such as **GRCh38** for human, **mm10** for mouse, and **GRCh38\_and\_mm10** for human and mouse)
+**Flowcell** | Indicates the Google bucket URL of uploaded BCL folders.
+**Lane** | Tells which lanes the sample was pooled into.
+**Index** | Contains 10x sample index set names (e.g. SI-GA-A12).
+Chemistry | Optionally describe the 10x chemistry used for the sample. If this column is omitted, *cellranger count* will try to determine the chemistry automatically.
+
+The sample sheet supports sequencing the same 10x channels across multiple flowcells. If a sample is sequenced across multiple flowcells, simply list it in multiple rows, with one flowcell per row. In the following example, we have 4 samples sequenced in two flowcells.
    
    Example:
    
@@ -66,7 +78,7 @@ This sample sheet supports sequencing the same 10x channels across multiple flow
     sample_4,mm10,gs://fc-e0000000-0000-0000-0000-000000000000/VK10WBC9Z2,7-8,SI-GA-D8,fiveprime
     ```
 
-1. Upload your sample sheet to the workspace.  
+1. Upload your sample sheet to the workspace bucket.  
 
     Example: *gsutil cp /foo/bar/projects/sample_sheet.csv gs://fc-e0000000-0000-0000-0000-000000000000/*
 
