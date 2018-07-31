@@ -1,6 +1,6 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerMkfastq/versions/15/plain-WDL/descriptor" as crm 
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerMkfastq/versions/16/plain-WDL/descriptor" as crm 
 # import "../CellRangerMkfastq.wdl" as crm 
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerCount/versions/17/plain-WDL/descriptor" as crc
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:CellRangerCount/versions/18/plain-WDL/descriptor" as crc
 # import "../CellRangerCount.wdl" as crc
 
 workflow cellranger_mkfastq_count {
@@ -124,6 +124,7 @@ task generate_bcl_csv {
 		import pandas as pd 
 		from subprocess import check_call
 		df = pd.read_csv('${input_csv_file}', header = 0)
+		df['Flowcell'] = df['Flowcell'].apply(lambda x: x.rstrip('/')) 
 		with open('run_ids.txt', 'w') as fo1, open('inpdirs.txt', 'w') as fo2, open('bcls.txt', 'w') as fo3:
 			for input_dir in df['Flowcell'].unique():
 				run_id = os.path.basename(input_dir)

@@ -10,24 +10,40 @@ from subprocess import check_call
 
 
 
-def load_10x_h5_file(input_h5, genome):
-	basic_attrs = set(["barcodes", "gene_names", "genes", "matrix"])
+def load_10x_h5_file(input_h5, genome, threshold = 30000, ngene = 100):
+	"""Load 10x format matrix from h5 file
 	
+	Parameters
+	----------
+
+	input_h5 : `str`
+		The matrix in h5 format.
+	genome : `str`
+		Genome string.
+	threshold : `int`, optional (default: 30000)
+		If matrix contain more than threshold barcodes, filter barcodes with low number of genes.
+	ngene : `int`, optional (default: 100)
+		Minimum number of genes to keep a barcode if # of barcodes > threshold.
+	"""	
 	inpmat = {}
 	with tables.open_file(input_h5) as h5_in:
 		for node in h5_in.walk_nodes("/" + genome, "Array"):
 			inpmat[node.name] = node.read()
 
-		inpmat["matrix"] = csc_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape=inpmat["shape"])
+	mat = csc_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape=inpmat["shape"])
+	if mat.shape[1] > threshold:
+		selected = mat.getnnz(axis = 0) >= ngene
+		mat = mat[:, selected]
+		inpmat["barcodes"] = inpmat["barcodes"][selected]
 
-		inpmat.pop("data")
-		inpmat.pop("indices")
-		inpmat.pop("indptr")
-		inpmat.pop("shape")
+	inpmat["matrix"] = mat
 
-	attributes = [key for key in inpmat.keys() if key not in basic_attrs]
+	inpmat.pop("data")
+	inpmat.pop("indices")
+	inpmat.pop("indptr")
+	inpmat.pop("shape")
 
-	return inpmat, attributes
+	return inpmat
 
 
 def load_antibody_csv(input_csv):
@@ -154,7 +170,7 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 			input_hd5_file = '{0}_tmp_h5.h5'.format(sample_name)
 		
 		if input_type == 'gene':
-			channel, tmp_attrs = load_10x_h5_file(input_hd5_file, genome)
+			channel = load_10x_h5_file(input_hd5_file, genome)
 		elif input_type == 'ADT':
 			channel = load_antibody_csv(input_hd5_file)
 

@@ -6,26 +6,20 @@ workflow cellranger_count {
 	# CellRanger output directory, gs url
 	String output_directory
 
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz
-	# gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz
 	# GRCh38, mm10, GRCh38_and_mm10, or a URL to a tar.gz file
 	String genome
 	
-	File genome_file = (if genome == 'GRCh38' 
-								then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38-1.2.0.tar.gz'
-								else (if genome == 'mm10' 
-										then 'gs://regev-lab/resources/cellranger/refdata-cellranger-mm10-1.2.0.tar.gz' 
-										else (if genome == 'GRCh38_and_mm10'
-												then 'gs://regev-lab/resources/cellranger/refdata-cellranger-GRCh38_and_mm10-1.2.0.tar.gz'
-												else genome)))
+	File acronym_file
+	Map[String, String] acronym2gsurl = read_map(acronym_file)
+
+	File genome_file = select_first([acronym2gsurl[genome], genome])
 
 	# chemistry of the channel
 	String? chemistry = "auto"
 	# Perform secondary analysis of the gene-barcode matrix (dimensionality reduction, clustering and visualization). Default: false
 	Boolean? secondary = false
 	# If force cells, default: true
-	Boolean? do_force_cells = true
+	Boolean? do_force_cells = false
 	# Force pipeline to use this number of cells, bypassing the cell detection algorithm, mutually exclusive with expect_cells. Default: 6,000 cells
 	Int? force_cells = 6000
 	# Expected number of recovered cells. Default: 3,000 cells. Mutually exclusive with force_cells

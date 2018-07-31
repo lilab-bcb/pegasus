@@ -25,7 +25,12 @@ def read_10x_h5_file(input_h5, genome):
 
 	X = csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0]))
 	
-	obs_dict = {"obs_names" : inpmat["barcodes"].astype(str)}
+	barcodes = inpmat["barcodes"].astype(str)
+	if np.vectorize(lambda x: x.endswith("-1"))(barcodes).sum() == barcodes.size:
+		barcodes = [x[:-2] for x in barcodes] # remove the trailing '-1'
+
+	obs_dict = {"obs_names" : barcodes}
+	obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
 	for key, value in inpmat.items():
 		if key not in obs_not:
 			obs_dict[key] = value.astype(str)
@@ -44,12 +49,28 @@ def read_antibody_file(input_h5at, genome):
 
 	X = csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0]))
 	
-	obs_dict = {"obs_names" : inpmat["barcodes"].astype(str)}
+	barcodes = inpmat["barcodes"].astype(str)
+	obs_dict = {"obs_names" : barcodes}
+	obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
 	for key, value in inpmat.items():
 		if key not in obs_not:
 			obs_dict[key] = value.astype(str)
 
 	data = anndata.AnnData(X = X, obs = obs_dict, var = {"var_names" : inpmat["antibody_names"].astype(str)})
+
+	return data
+
+def read_antibody_csv(input_csv):
+	barcodes = []
+	antibody_names = []
+	stacks = []
+	with open(input_csv) as fin:
+		barcodes = next(fin).strip().split(',')[1:]
+		for line in fin:
+			fields = line.strip().split(',')
+			antibody_names.append(fields[0])
+			stacks.append([int(x) for x in fields[1:]])
+	data = anndata.AnnData(X = csr_matrix(np.stack(stacks, axis = 1)), obs = {"obs_names" : barcodes}, var = {"var_names" : antibody_names})
 
 	return data
 
@@ -81,11 +102,12 @@ def read_input(input_file, genome = 'GRCh38', mode = 'r+'):
 
 	if input_file.endswith('.h5'):
 		data = read_10x_h5_file(input_file, genome)
-		data.obs['Channel'] = ['-'.join(x.split('-')[:-2]) for x in data.obs_names]
 	elif input_file.endswith('.h5ad'):
 		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
 	elif input_file.endswith('.h5at'):
 		data = read_antibody_file(input_file, genome)
+	elif input_file.endswith('.csv'):
+		data = read_antibody_csv(input_file)
 	else:
 		print("Unrecognized file type!")
 		assert False
@@ -124,7 +146,7 @@ def filter_data(data, mito_prefix = 'MT-', filt_xlsx = None, min_genes = 500, ma
 	data.obs['n_genes'] = data.X.getnnz(axis = 1)
 	data.obs['n_counts'] = data.X.sum(axis = 1).A1
 	mito_genes = [name for name in data.var_names if name.startswith(mito_prefix)]
-	data.obs['percent_mito'] = data[:, mito_genes].X.sum(axis=1).A1 / data.obs['n_counts'].values
+	data.obs['percent_mito'] = data[:, mito_genes].X.sum(axis=1).A1 / np.maximum(data.obs['n_counts'].values, 1.0)
 
 	# Filter cells	
 	if filt_xlsx is not None:
