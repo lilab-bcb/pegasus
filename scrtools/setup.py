@@ -34,7 +34,7 @@ requires = ['anndata>=0.5',
 
 setup(
 	name='scrtools',
-	version='0.3.0',
+	version='0.4.0',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scrtools',
