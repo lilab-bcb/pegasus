@@ -27,13 +27,23 @@ def get_droplet_type(arr):
 
 def demultiplex(data, adt):
 	start = time.time()
-	adt_small = adt[data.obs_names,].X.toarray()
+
+	idx_df = data.obs_names.isin(adt.obs_names)
+	if idx_df.sum() < data.shape[0]:
+		nzero = data.shape[0] - idx_df.sum()
+		print("Warning: {} cells do not have ADTs, percentage = {:.2f}%.".format(nzero, nzero * 100.0 / data.shape[0]))
+
+	adt_small = adt[data.obs_names[idx_df],].X.toarray()
 	value = np.median(adt_small.sum(axis = 1))
 	tmp = adt[adt.obs_names.difference(data.obs_names),]
 	idx = tmp.X.sum(axis = 1).A1 < value
 	pvec = tmp.X[idx, ].sum(axis = 0).A1
 	pvec /= pvec.sum()
-	data.obsm['raw_probs'] = np.apply_along_axis(estimate_probs, 1, adt_small, pvec)
+	
+	data.obsm['raw_probs'] = np.zeros((data.shape[0], adt.shape[1] + 1))
+	data.obsm['raw_probs'][:, adt.shape[1]] = 1.0
+	data.obsm['raw_probs'][idx_df, :] = np.apply_along_axis(estimate_probs, 1, adt_small, pvec)
+
 	assignments = np.full(data.shape[0], 'unknown', dtype = 'object')
 	idx = data.obsm['raw_probs'][:,pvec.size] < 0.5
 	tmp = data.obsm['raw_probs'][idx,]
@@ -45,5 +55,6 @@ def demultiplex(data, adt):
 	assignments[idx] = values
 	data.obs['assignment'] = pd.Categorical(assignments, categories = natsorted(np.unique(assignments)))
 	data.obs.loc[idx, 'assignment'] = values
+	
 	end = time.time()
 	print(end - start)

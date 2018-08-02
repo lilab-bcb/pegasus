@@ -40,7 +40,7 @@ Options:
   --bottom <bottom>                  Figure's bottom margin in fraction with respect to subplot height.
   --wspace <wspace>                  Horizontal space between subplots in fraction with respect to subplot width.
   --hspace <hspace>                  Vertical space between subplots in fraction with respect to subplot height.
-  --alpha <alpha>                    Point transparent parameter.
+  --alpha <alpha>                    Point transparent parameter. Can be a list of parameters separated by comma.
   --legend-fontsize <fontsize>       Legend font size.
   --use-raw                          Use anndata stored raw expression matrix. Only used by 'scatter_genes' and 'scatter_gene_groups'.
 
@@ -80,13 +80,21 @@ Examples:
             'bottom' : float(self.args['--bottom']) if self.args['--bottom'] is not None else None,
             'wspace' : float(self.args['--wspace']) if self.args['--wspace'] is not None else None,
             'hspace' : float(self.args['--hspace']) if self.args['--hspace'] is not None else None,
-            'alpha' : float(self.args['--alpha']) if self.args['--alpha'] is not None else None,
             'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
             'use_raw' : self.args['--use-raw'],
             'showzscore' : self.args['--show-zscore'],
             'title' : self.args['--heatmap-title'],
             'showall' : not self.args['--do-not-show-all']
         }
+
+        if self.args['--alpha'] is None:
+          kwargs['alpha'] = None
+        else:
+          values = [float(x) for x in self.args['--alpha'].split(',')]
+          if len(values) == 1:
+            kwargs['alpha'] = values[0]
+          else:
+            kwargs['alpha'] = values
         
         make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)
         time.sleep(1) # wait 1s to release the backed h5ad file

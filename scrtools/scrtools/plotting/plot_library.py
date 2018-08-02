@@ -71,7 +71,7 @@ def as_category(labels):
 def get_marker_size(nsamples):
 	return (240000.0 if nsamples > 300000 else 120000.0) / nsamples
 
-def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, logy = False, subplot_size = (6, 4), left = 0.15, bottom = None, wspace = 0.2, hspace = None, restrictions = []):
+def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, logy = False, subplot_size = (6, 4), left = 0.15, bottom = None, wspace = 0.3, hspace = None, restrictions = []):
 	"""Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
 	
 	This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
@@ -187,6 +187,7 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 
 			if i * ncols + j < nattrs:
 				attr = attrs[i * ncols + j]
+				alpha_value = alpha[i * ncols + j] if isinstance(alpha, list) else alpha
 
 				labels = data.obs[attr].astype(str)
 				if (not apply_to_all) and (attr in rest_dict):
@@ -208,7 +209,7 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 						   c = palettes[k],
 						   s = marker_size,
 						   marker = '.',
-						   alpha = alpha,
+						   alpha = alpha_value,
 						   edgecolors = 'none',
 						   label = cat,
 						   rasterized = True)

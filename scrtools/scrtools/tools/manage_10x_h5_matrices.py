@@ -142,8 +142,9 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 	"""
 
 	df = pd.read_csv(csv_file, header=0, index_col='Sample')
-	restrictions.append("Reference:{}".format(genome))
+	df['Sample'] = df.index
 	rvec = [parse_restriction_string(x) for x in restrictions]
+	rvec.append(('Reference', True, {genome}))
 	if attributes is None:
 		attributes = []
 	idx = pd.Series([True] * df.shape[0], index=df.index, name='selected')
@@ -186,10 +187,7 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 		out_hd5["matrix"].append(channel["matrix"])
 		out_hd5["barcodes"].append(channel["barcodes"])
 		for attr in attributes:
-			if attr in channel:
-				out_hd5[attr].append(channel[attr])
-			else:
-				out_hd5[attr].append(np.repeat(row[attr], channel["matrix"].shape[1]))
+			out_hd5[attr].append(np.repeat(row[attr], channel["matrix"].shape[1]))
 
 		print("Processed {}.".format(input_hd5_file))
 		tot += 1

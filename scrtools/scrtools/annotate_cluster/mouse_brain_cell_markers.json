@@ -1,0 +1,199 @@
+{
+	"title" : "Mouse brain cell markers",
+	"cell_types" : [
+		{
+			"name" : "Neuron",
+			"markers" : [
+				{
+					"genes" : ["Rbfox3+", "Slc17a6+", "Slc17a7+", "Gad1+", "Gad2+", "Reln+"],
+					"weight" : 1.0
+				}
+			],
+			"subtypes" : {
+				"title" : "Neuron subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Gabaergic Vip interneuron",
+						"markers" : [
+							{
+								"genes" : ["Gad1+", "Vip+", "Parm1+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Gabaergic Sst interneuron",
+						"markers" : [
+							{
+								"genes" : ["Gad1+", "Sst+", "Grin3a+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Gabaergic Pvalb interneuron",
+						"markers" : [
+							{
+								"genes" : ["Gad1+", "Pvalb+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Gabaergic Ndnf interneuron",
+						"markers" : [
+							{
+								"genes" : ["Gad1+", "Ndnf+", "Fgf13+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 4",
+						"markers" : [
+							{
+								"genes" : ["Slc17a7+", "Rorb+", "Paqr8+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 5",
+						"markers" : [
+							{
+								"genes" : ["Slc17a7+", "Deptor+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 6a",
+						"markers" : [
+							{
+								"genes" : ["Slc17a7+", "Foxp2+", "Tle4+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 6b",
+						"markers" : [
+							{
+								"genes" : ["Slc17a7+", "Rgs12+", "Tle4+"],
+								"weight" : 1.0
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"name" : "Astrocyte",
+			"markers" : [
+				{
+					"genes" : ["Gja1+", "Aqp4+", "F3+", "Prex2+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Oligodendrocyte",
+			"markers" : [
+				{
+					"genes" : ["Mbp+", "Trf+", "Plp1+", "Olig1+", "Vcan+", "Olig2+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "OPC",
+			"markers" : [
+				{
+					"genes" : ["Pdgfra+", "Mog+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Polydendrocyte",
+			"markers" : [
+				{
+					"genes" : ["Tnr+", "Cspg4+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Endothelial",
+			"markers" : [
+				{
+					"genes" : ["Flt+", "Dcn+", "Xdh+", "Id1+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Fibroblast",
+			"markers" : [
+				{
+					"genes" : ["Igfbp1+", "Dcn+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Mural",
+			"markers" : [
+				{
+					"genes" : ["Rgs5+", "Acta2+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Choroid Coch",
+			"markers" : [
+				{
+					"genes" : ["Tgfbi+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Ependyma",
+			"markers" : [
+				{
+					"genes" : ["Ccdc153+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Neurogenesis",
+			"markers" : [
+				{
+					"genes" : ["Sox4+", "Sox11+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Microglia",
+			"markers" : [
+				{
+					"genes" : ["C1qb+", "P2ry12+", "Ctss+", "Csf1r+", "Hmha1+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Smooth muscle cell",
+			"markers" : [
+				{
+					"genes" : ["Vtn+", "Colec12+"],
+					"weight" : 1.0
+				}
+			]			
+		}
+	]
+}

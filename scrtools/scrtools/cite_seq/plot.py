@@ -5,10 +5,32 @@ import seaborn as sns
 
 def plot_barcode_hist(data, adt, out_file, dpi = 500):
 	background = adt.X.sum(axis = 1).A1
-	signal = adt[data.obs_names,].X.sum(axis = 1).A1
+
+	idx_df = data.obs_names.isin(adt.obs_names)
+	if idx_df.sum() < data.shape[0]:
+		nzero = data.shape[0] - idx_df.sum()
+		print("Warning: {} cells do not have ADTs, percentage = {:.2f}%.".format(nzero, nzero * 100.0 / data.shape[0]))
+
+	signal = adt[data.obs_names[idx_df],].X.sum(axis = 1).A1
 	bins = np.logspace(0, np.log10(max(background)), 100)
 	plt.hist(background, bins, alpha = 0.5, label = 'background', log = True)
 	plt.hist(signal, bins, alpha = 0.5, label = 'signal', log = True)
+	plt.legend(loc='upper right')
+	ax = plt.gca()
+	ax.set_xscale("log")
+	ax.set_xlabel("Number of UMIs (log10 scale)")
+	ax.set_ylabel("Number of barcodes (log10 scale)")
+	plt.savefig(out_file, dpi = dpi)
+	plt.close()
+
+
+
+def plot_antibody_hist(adt, antibody, control, out_file, dpi = 500):
+	signal = adt[:, antibody].X.toarray()
+	background = adt[:, control].X.toarray()
+	bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 100)
+	plt.hist(background, bins, alpha = 0.5, label = control, log = True)
+	plt.hist(signal, bins, alpha = 0.5, label = antibody, log = True)
 	plt.legend(loc='upper right')
 	ax = plt.gca()
 	ax.set_xscale("log")
@@ -46,4 +68,5 @@ def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4)):
 
 	plt.tight_layout()
 	fig.savefig(out_file, dpi = dpi)
+	plt.close()
 

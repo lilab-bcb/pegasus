@@ -16,7 +16,7 @@ Arguments:
   output_file            Output annotation file.
 
 Options:
-  --json-file <file>                    JSON file for markers. Could also be human/mouse. [default: human]
+  --json-file <file>                    JSON file for markers. Could also be human_immune/mouse_immune/mouse_brain, which triggers scrtools to markers included in the package. [default: human_immune]
   --minimum-report-score <score>        Minimum cell type score to report a potential cell type. [default: 0.5]
   --do-not-use-non-de-genes             Do not count non DE genes as down-regulated.
   -h, --help                            Print out help information.
