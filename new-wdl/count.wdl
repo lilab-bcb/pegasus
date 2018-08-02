@@ -24,8 +24,6 @@ workflow cellranger {
     Int memory = 120
     Int cores = 32
     Int preemptible = 2
-    # Monitoring Script, writes core, mem and disk usage to file
-    File? monitoringScript = "gs://fc-6665a95b-cb65-4527-ad5e-0d1be0fdf3dc/monitor_script.sh"
 
      call CellRanger {
         input:
@@ -42,8 +40,7 @@ workflow cellranger {
         chemistry = chemistry,
         memory = memory,
         cores = cores,
-        preemptible = preemptible,
-        monitoringScript = monitoringScript
+        preemptible = preemptible
     }
 
     output {
@@ -79,11 +76,9 @@ task CellRanger {
     Int memory
     Int cores
     Int preemptible
-    File monitoringScript
 
     command {
-        chmod u+x ${monitoringScript}
-        ${monitoringScript} > monitoring.log &
+        monitor_script.sh > monitoring.log &
 
         orchestra_methods.py -c=count \
                             -id=${sampleId} \
