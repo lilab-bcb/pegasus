@@ -83,7 +83,7 @@ def scp_write_expression(data, output_name, is_sparse = True, round_to = 2):
 			df.to_csv(fout, sep = ' ', header = False, index = False)
 		print("Gene file {} is written.".format(gene_file))
 		mtx_file = "{}.scp.matrix.mtx".format(output_name)
-		write_market_matrix(mtx_file, data.X.transpose(), round_to)
+		write_market_matrix(mtx_file, data.X.transpose().tocsr(), round_to)
 		print("Matrix file {} is written.".format(mtx_file))
 	else:
 		expr_file = "{}.scp.expr.txt".format(output_name)
