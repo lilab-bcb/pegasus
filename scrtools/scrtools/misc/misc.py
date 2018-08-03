@@ -5,7 +5,7 @@ import pandas as pd
 from natsort import natsorted
 from scipy.stats import f_oneway
 from statsmodels.stats.multitest import fdrcorrection as fdr
-from ..tools import read_input
+from scrtools.tools import read_input
 
 def search_genes(data, gene_list, measure = 'percentage'):
 	"""Extract and display gene expressions for each cluster from an `anndata` object.

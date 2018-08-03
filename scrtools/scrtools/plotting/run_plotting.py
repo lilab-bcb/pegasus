@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as pl
 
-from ..tools import read_input
+from scrtools.tools import read_input
 from .plot_utils import transform_basis
 from . import plot_library, iplot_library
 

@@ -418,7 +418,7 @@ to see the usage information::
 * Options:
 
 	-\\-json-file <file>
-		JSON file for markers. Could also be ``human``/``mouse``. [default: human]
+		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``, which triggers scrtools to markers included in the package. [default: human_immune]
 
 	-\\-minimum-report-score <score>
 		Minimum cell type score to report a potential cell type. [default: 0.5]
@@ -487,7 +487,10 @@ to see the usage information::
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
 
 	-\\-restriction <restriction>...
-		Multiple <restriction> strings for different attributes. Each <restriction> takes the format of 'attr:value,value'. Only used for scatter.
+		Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value'. This option is used in 'composition' and 'scatter'.
+	
+	-\\-apply-to-each-figure
+		Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict. 
 
 	-\\-group <attr>
 		<attr> is used to make group plots. In group plots, the first one contains all components in the group and the following plots show each component separately. This option is iused in 'scatter_groups' and 'scatter_gene_groups'. If <attr> is a semi-colon-separated string, parse the string as groups.

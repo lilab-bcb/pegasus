@@ -100,7 +100,7 @@
 			"name" : "Oligodendrocyte",
 			"markers" : [
 				{
-					"genes" : ["Mbp+", "Trf+", "Plp1+", "Olig1+", "Vcan+", "Olig2+"],
+					"genes" : ["Mbp+", "Trf+", "Plp1+", "Olig1+", "Vcan+", "Olig2+", "Mog+"],
 					"weight" : 1.0
 				}
 			]
@@ -109,16 +109,7 @@
 			"name" : "OPC",
 			"markers" : [
 				{
-					"genes" : ["Pdgfra+", "Mog+"],
-					"weight" : 1.0
-				}
-			]
-		},
-		{
-			"name" : "Polydendrocyte",
-			"markers" : [
-				{
-					"genes" : ["Tnr+", "Cspg4+"],
+					"genes" : ["Pdgfra+", "Cspg4+"],
 					"weight" : 1.0
 				}
 			]
@@ -127,7 +118,7 @@
 			"name" : "Endothelial",
 			"markers" : [
 				{
-					"genes" : ["Flt+", "Dcn+", "Xdh+", "Id1+"],
+					"genes" : ["Flt1+", "Dcn+", "Xdh+", "Id1+"],
 					"weight" : 1.0
 				}
 			]
