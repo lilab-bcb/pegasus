@@ -6,10 +6,10 @@ workflow cellranger {
 	# Output directory of Fastqs
 	String output_directory
 	# Runtime Arguments
-	Int diskSpace = 500 
-	Int memory = 120
-	Int cores = 32
-	Int preemptible =2 
+	Int? diskSpace = 500 
+	Int? memory = 120
+	Int? cores = 32
+	Int? preemptible = 2
 
 	call mkfastq {
 		input:
