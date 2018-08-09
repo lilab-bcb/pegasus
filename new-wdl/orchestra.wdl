@@ -1,12 +1,12 @@
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:mkfastq/versions/28/plain-WDL/descriptor" as mkfastq
-import "https://api.firecloud.org/ga4gh/v1/tools/scp:count/versions/25/plain-WDL/descriptor" as count
-import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/9/plain-WDL/descriptor" as tools
+import "https://api.firecloud.org/ga4gh/v1/tools/single-cell-portal:cellranger_mkfastq/versions/1/plain-WDL/descriptor" as mkfastq
+import "https://api.firecloud.org/ga4gh/v1/tools/single-cell-portal:cellranger_count/versions/1/plain-WDL/descriptor" as count
+import "https://api.firecloud.org/ga4gh/v1/tools/scrtools:scrtools/versions/11/plain-WDL/descriptor" as tools
 
 workflow orchestra {
   # Csv File mapping samples, lanes and indices to bcl
   File masterCsv
   # Csv Map of transcriptomes to gsurls
-  File? transMap
+  File transMap
   # Gsurl output directory for all fastqs
   String fastqOutputDirectory
   # CellRanger Count Secondary Flag, for now disable it because optional outputs are not in wdl
@@ -18,15 +18,15 @@ workflow orchestra {
   # CellRanger Count Control Argument
   Boolean? do_force_cells
   # Runtime Arguments
-  Int diskSpace = 500
-  Int memory = 120
-  Int cores = 32
-  Int preemptible = 2
+  Int? diskSpace = 500
+  Int? memory = 120
+  Int? cores = 32
+  Int? preemptible = 2
   
   # Bo Inputs
   String output_name
-  # Reference genome name [default: GRCh38]
-  String? genome
+  # Reference genome name [default: mm10]
+  String genome = 
   # Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value. Multiple restrictions are separated by ';'
   String? restrictions
   # Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file
@@ -120,7 +120,7 @@ workflow orchestra {
   Boolean? roc
   # If also annotate cell types for clusters based on DE results.
   Boolean? annotate_cluster
-  # Organism, could either be "human" or "mouse" [default: human]
+  # Organism, could either be "human_immune" or "mouse_immune" or "mouse_brain" [default: human_immune]
   String? organism
   # Minimum cell type score to report a potential cell type. [default: 0.5]
   Float? minimum_report_score
@@ -142,7 +142,7 @@ workflow orchestra {
       diskSpace = diskSpace,
       preemptible = preemptible,
       cores = cores,
-      memory = memory,
+      memory = memory
   }
 
   # scatter per flow cell
@@ -155,7 +155,7 @@ workflow orchestra {
           output_directory = fastqOutputDirectory,
           preemptible = preemptible,
           cores = cores,
-          memory = memory,
+          memory = memory
       }
   }
 	
@@ -356,7 +356,7 @@ task filterSamples {
   Int memory
   Int cores
   Int preemptible
-  File? transMap
+  File transMap
 
   command {
     monitor_script.sh > monitoring.log &

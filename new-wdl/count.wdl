@@ -20,10 +20,10 @@ workflow cellranger {
     # CellRanger count input
     String? chemistry
     # Runtime Arguments
-    Int diskSpace = 500
-    Int memory = 120
-    Int cores = 32
-    Int preemptible = 2
+    Int? diskSpace = 500
+    Int? memory = 120
+    Int? cores = 32
+    Int? preemptible = 2
 
      call CellRanger {
         input:
