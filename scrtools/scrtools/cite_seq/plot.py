@@ -3,6 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from matplotlib.backends.backend_pdf import PdfPages
+
+
+
 def plot_barcode_hist(data, adt, out_file, dpi = 500):
 	background = adt.X.sum(axis = 1).A1
 
@@ -12,7 +16,7 @@ def plot_barcode_hist(data, adt, out_file, dpi = 500):
 		print("Warning: {} cells do not have ADTs, percentage = {:.2f}%.".format(nzero, nzero * 100.0 / data.shape[0]))
 
 	signal = adt[data.obs_names[idx_df],].X.sum(axis = 1).A1
-	bins = np.logspace(0, np.log10(max(background)), 100)
+	bins = np.logspace(0, np.log10(max(background)), 101)
 	plt.hist(background, bins, alpha = 0.5, label = 'background', log = True)
 	plt.hist(signal, bins, alpha = 0.5, label = 'signal', log = True)
 	plt.legend(loc='upper right')
@@ -70,3 +74,51 @@ def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4)):
 	fig.savefig(out_file, dpi = dpi)
 	plt.close()
 
+
+
+def plot_doublet_hist(adata, nuclei_type, out_file, attr = 'coarse_annotation', dpi = 500, format = None):
+	fig, axes = plt.subplots(nrows = 2, ncols = 2, squeeze = False)
+	plt.tight_layout(pad = 2)
+
+	idx = np.isin(adata.obs[attr], nuclei_type)	
+	bins = np.linspace(adata.obs.loc[idx, 'n_genes'].min(), adata.obs.loc[idx, 'n_genes'].max(), 101)
+	
+	ax = axes[0, 0]
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'z_unknown'), 'n_genes'], bins, alpha = 0.5, label = 'unknown')
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'z_doublet'), 'n_genes'], bins, alpha = 0.5, label = 'doublet')
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'hashtag'), 'n_genes'], bins, alpha = 0.5, label = 'singlet')
+	ax.legend(loc='upper right')
+	ax.set_xlabel("Number of genes")
+	ax.set_ylabel("Number of nuclei")
+
+	ax = axes[0, 1]
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'nohashtag'), 'n_genes'], bins, label = 'nohash')
+	ax.legend(loc='upper right')
+	ax.set_xlabel("Number of genes")
+	ax.set_ylabel("Number of nuclei")
+
+	bins = np.linspace(adata.obs.loc[idx, 'n_counts'].min(), adata.obs.loc[idx, 'n_counts'].max(), 101)
+	
+	ax = axes[1, 0]
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'z_unknown'), 'n_counts'], bins, alpha = 0.5, label = 'unknown')
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'z_doublet'), 'n_counts'], bins, alpha = 0.5, label = 'doublet')
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'hashtag'), 'n_counts'], bins, alpha = 0.5, label = 'singlet')
+	ax.legend(loc='upper right')
+	ax.set_xlabel("Number of UMIs")
+	ax.set_ylabel("Number of nuclei")
+
+	ax = axes[1, 1]
+	ax.hist(adata.obs.loc[idx & np.isin(adata.obs['Cond2'], 'nohashtag'), 'n_counts'], bins, label = 'nohash')
+	ax.legend(loc='upper right')
+	ax.set_xlabel("Number of UMIs")
+	ax.set_ylabel("Number of nuclei")
+
+	fig.suptitle(nuclei_type)
+	
+	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
+
+def plot_doublet_hists(adata, out_file):
+	with PdfPages(out_file) as pdf:
+		for nuclei_type in adata.obs['coarse_annotation'].cat.categories:
+			plot_doublet_hist(adata, nuclei_type, pdf, format = "pdf")

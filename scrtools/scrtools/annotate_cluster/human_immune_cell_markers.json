@@ -404,7 +404,7 @@
 					"comment" : "key markers"
 				},
 				{
-					"genes" : ["FCGR3A++", "FCGR3B+", "CEACAM8+"],
+					"genes" : ["FCGR3A+", "FCGR3B+", "CEACAM8+"],
 					"weight" : 0.4,
 					"comment" : "important markers"
 				}
