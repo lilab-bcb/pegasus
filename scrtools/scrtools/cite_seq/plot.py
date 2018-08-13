@@ -29,19 +29,44 @@ def plot_barcode_hist(data, adt, out_file, dpi = 500):
 
 
 
-def plot_antibody_hist(adt, antibody, control, out_file, dpi = 500):
-	signal = adt[:, antibody].X.toarray()
-	background = adt[:, control].X.toarray()
-	bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 100)
-	plt.hist(background, bins, alpha = 0.5, label = control, log = True)
-	plt.hist(signal, bins, alpha = 0.5, label = antibody, log = True)
-	plt.legend(loc='upper right')
-	ax = plt.gca()
-	ax.set_xscale("log")
-	ax.set_xlabel("Number of UMIs (log10 scale)")
-	ax.set_ylabel("Number of barcodes (log10 scale)")
-	plt.savefig(out_file, dpi = dpi)
+def plot_antibody_hist(adts, names, antibody, control, out_file, dpi = 500, figsize = None, format = None):
+	fig, axes = plt.subplots(nrows = 2, ncols = len(adts), squeeze = False, figsize = figsize)
+	plt.tight_layout(pad = 4)
+
+	for i, adt in enumerate(adts):
+		signal = adt[:, antibody].X.toarray()
+		background = adt[:, control].X.toarray()
+		bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 101)
+
+		ax = axes[0, i]
+		ax.hist(background, bins, alpha = 0.5, label = control, log = True)
+		ax.hist(signal, bins, alpha = 0.5, label = antibody, log = True)
+		ax.legend(loc='upper right')
+		ax.set_xscale("log")
+		ax.set_xlabel("Number of UMIs (log10 scale)")
+		ax.set_ylabel("Number of barcodes (log10 scale)")
+		ax.set_title(names[i])
+
+		idx = (signal > 0) | (background > 0)
+		fc = (signal[idx] + 1.0) / (background[idx] + 1.0)
+		bins = np.logspace(np.log10(fc.min()), np.log10(fc.max()), 101)
+
+		ax = axes[1, i]
+		ax.hist(fc, bins, label = "{} /\n{}".format(antibody, control), log = True)
+		ax.legend(loc='upper right')
+		ax.set_xscale("log")
+		ax.set_xlabel("Fold change (log10 scale)")
+		ax.set_ylabel("Number of barcodes (log10 scale)")
+		ax.set_title("{:.2%}".format((fc >= 10.0).sum() / fc.size))
+
+	plt.savefig(out_file, dpi = dpi, format = format)
 	plt.close()
+
+def plot_antibodies_hist(adts, names, df, out_file, figsize = None):
+	with PdfPages(out_file) as pdf:
+		for idx, row in df.iterrows():
+			plot_antibody_hist(adts, names, row['antibody'], row['control'], pdf, figsize = figsize, format = "pdf")
+			print("{} / {}".format(row['antibody'], row['control']))
 
 
 
@@ -71,7 +96,7 @@ def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4)):
 			ax.set_title(gene_list[gid])
 
 	plt.tight_layout()
-	fig.savefig(out_file, dpi = dpi)
+	plt.savefig(out_file, dpi = dpi)
 	plt.close()
 
 
@@ -114,7 +139,7 @@ def plot_doublet_hist(adata, nuclei_type, out_file, attr = 'coarse_annotation', 
 	ax.set_ylabel("Number of nuclei")
 
 	fig.suptitle(nuclei_type)
-	
+
 	plt.savefig(out_file, dpi = dpi, format = format)
 	plt.close()
 
@@ -122,3 +147,4 @@ def plot_doublet_hists(adata, out_file):
 	with PdfPages(out_file) as pdf:
 		for nuclei_type in adata.obs['coarse_annotation'].cat.categories:
 			plot_doublet_hist(adata, nuclei_type, pdf, format = "pdf")
+

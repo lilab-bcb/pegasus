@@ -307,7 +307,7 @@ def plot_scatter_genes(data, basis, genes, nrows = None, ncols = None, subplot_s
 
 	ngenes = len(genes)
 	nrows, ncols = get_nrows_and_ncols(ngenes, nrows, ncols)
-	marker_size = 120000.0 / df.shape[0]
+	marker_size = 240000.0 / df.shape[0]
 
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, axes = get_subplot_layouts(nrows = nrows, ncols = ncols, squeeze = False, **kwargs)
@@ -326,7 +326,7 @@ def plot_scatter_genes(data, basis, genes, nrows = None, ncols = None, subplot_s
 				img = ax.scatter(df.iloc[:, 0], df.iloc[:, 1],
 					   s = marker_size,
 					   c = X[:, gene_id],
-					   # marker = '.',
+					   marker = '.',
 					   alpha = alpha,
 					   edgecolors = 'none',
 					   cmap='viridis',
@@ -356,7 +356,7 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 	df = pd.DataFrame(data.obsm['X_' + basis][:, 0:2], columns = [basis + c for c in ['1', '2']])
 	basis = transform_basis(basis)
 
-	marker_size = 120000.0 / df.shape[0]
+	marker_size = 240000.0 / df.shape[0]
 	groups = as_category(data.obs[group])
 	ngroup = groups.categories.size
 	nrows, ncols = get_nrows_and_ncols(ngroup + 1, nrows, ncols)
@@ -383,7 +383,7 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 				img = ax.scatter(df.iloc[idx_g, 0], df.iloc[idx_g, 1],
 					   s = marker_size,
 					   c = X[idx_g],
-					   # marker = '.',
+					   marker = '.',
 					   alpha = alpha,
 					   edgecolors = 'none',
 					   cmap='viridis',

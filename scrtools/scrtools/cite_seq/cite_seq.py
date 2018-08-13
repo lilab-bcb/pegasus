@@ -3,7 +3,10 @@ import pandas as pd
 import time
 from natsort import natsorted
 
-def estimate_probs(arr, pvec, n_iter = 200):
+import anndata
+from scipy.sparse import vstack, hstack, csr_matrix
+
+def estimate_probs_old(arr, pvec, n_iter = 200):
 	probs = np.zeros(pvec.size + 1)
 	z = np.zeros(pvec.size + 1)
 	noise = pvec.size
@@ -21,11 +24,37 @@ def estimate_probs(arr, pvec, n_iter = 200):
 		probs = z / z.sum()
 	return probs
 
+def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 50):
+	probs = np.zeros(pvec.size + 1)
+	z = np.zeros(pvec.size + 1)
+	noise = pvec.size
+	# Estimate MLE without Generalized Dirichlet prior
+	probs_mle = arr / arr.sum()
+	probs[noise] = (probs_mle / pvec).min() + 0.01
+	probs[:-1] = np.maximum(probs_mle - probs[noise] * pvec, 0.01)
+	probs = probs / probs.sum()
+	# EM algorithm
+	for i in range(n_iter):
+		# E step
+		z[:-1] = alpha - 1.0
+		z[noise] = alpha_noise - 1.0
+		for j in range(pvec.size):
+			if arr[j] > 0:
+				p = probs[j] / (probs[noise] * pvec[j] + probs[j])
+				z[j] += arr[j] * p
+				z[noise] += arr[j] * (1.0 - p)
+		# M step
+		idx = z > 0.0
+		probs[idx] = z[idx] / z[idx].sum()
+		probs[~idx] = 0.0
+	# return results
+	return probs
+
 def get_droplet_type(arr):
 	res = arr.nonzero()[0]
 	return str(res[0] + 1) if res.size == 1 else 'doublet'
 
-def demultiplex(data, adt):
+def demultiplex(data, adt, unknown_threshold = 0.5):
 	start = time.time()
 
 	idx_df = data.obs_names.isin(adt.obs_names)
@@ -45,7 +74,7 @@ def demultiplex(data, adt):
 	data.obsm['raw_probs'][idx_df, :] = np.apply_along_axis(estimate_probs, 1, adt_small, pvec)
 
 	assignments = np.full(data.shape[0], 'unknown', dtype = 'object')
-	idx = data.obsm['raw_probs'][:,pvec.size] < 0.5
+	idx = data.obsm['raw_probs'][:,pvec.size] < unknown_threshold
 	tmp = data.obsm['raw_probs'][idx,]
 	norm_probs = tmp[:,0:pvec.size] / (1.0 - tmp[:,pvec.size])[:,None]
 	idx_arr = norm_probs >= 0.1
@@ -58,3 +87,29 @@ def demultiplex(data, adt):
 	
 	end = time.time()
 	print(end - start)
+
+
+
+def concatenate_ADTs(ADTs, names):
+	obs_names = []
+	Xs = []
+	for adt, name in zip(ADTs, names):
+		obs_names.append([name + '-' + x for x in adt.obs_names])
+		Xs.append(adt.X)
+	data = anndata.AnnData(X = vstack(Xs), obs = {"obs_names" : np.concatenate(obs_names)}, var = {"var_names" : ADTs[0].var_names})
+	return data
+
+def append_ADT_to_RNA_data(adt_data, df_a2c, data):
+	adt_expr = np.zeros((data.shape[0], df_a2c.shape[0]))
+	new_index, indexer = adt_data.obs_names.reindex(data.obs_names)
+	idx = indexer >= 0
+	adt_subset = adt_data[indexer[idx],]
+	for i, row in df_a2c.iterrows():
+		adt_expr[:, i] = np.maximum(np.log(adt_subset[:, row['antibody']].X + 1.0) - np.log(adt_subset[:, row['control']].X + 1.0), 0.0)
+	
+	new_data = anndata.AnnData(X = hstack([data.X, csr_matrix(adt_expr)], format = 'csr'), 
+		obs = data.obs,
+		obsm = data.obsm, 
+		var = {"var_names" : np.concatenate([data.var_names, df_a2c['antibody'].apply(lambda x: 'AB-' + x)])})
+
+	return new_data
