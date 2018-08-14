@@ -19,6 +19,7 @@ Options:
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
   --output-filtration-results <spreadsheet>        Output filtration results into <spreadsheet>.
+  --output-seurat-compatible                       Output seurat-compatible h5ad file.
   --output-loom                                    Output loom-formatted file.
   --correct-batch-effect                           Correct for batch effects.
   --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
@@ -80,8 +81,9 @@ Options:
   -h, --help                                       Print out help information.
 
 Outputs:
-  output_name.h5ad        Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
-  output_name.loom        Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
+  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+  output_name.seurat.h5ad       Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
+  output_name.loom              Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
   scrtools cluster -p 20 --correct-batch-effect --run-louvain --run-tsne manton_bm_10x.h5 manton_bm
@@ -96,6 +98,7 @@ Examples:
             'subcluster' : False,
 
             'filt_xlsx' : self.args['--output-filtration-results'],
+            'output_seurat_compatible' : self.args['--output-seurat-compatible'],
             'output_loom' : self.args['--output-loom'],
             'batch_correction' : self.args['--correct-batch-effect'],
             'group_attribute' : self.args['--batch-group-by'],

@@ -22,6 +22,11 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
 		is_raw = True # get submat and then set is_raw to True
 
+
+	if kwargs['output_seurat_compatible']:
+		assert is_raw and kwargs['select_variable_genes'] and kwargs['submat_to_dense']	
+
+
 	# dimension reduction --- select variable genes or not
 	pca_key = kwargs['pca_key']
 	if is_raw:	
@@ -80,8 +85,15 @@ def run_pipeline(input_file, output_name, **kwargs):
 	if kwargs['pseudotime'] is not None:
 		assert 'X_diffmap' in adata.obsm.keys()
 		tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
-	
+
 	adata.write(output_name + ".h5ad")
+
+	if kwargs['output_seurat_compatible']:
+		adata_c.obs = adata.obs
+		adata_c.obsm = adata.obsm
+		adata_c.uns = adata.uns
+		adata_c.raw = adata
+		adata_c.write(output_name + ".seurat.h5ad")
 
 	if kwargs['output_loom']:
 		adata.write_loom(output_name + ".loom")

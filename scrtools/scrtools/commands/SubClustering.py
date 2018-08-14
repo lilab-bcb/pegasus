@@ -18,6 +18,7 @@ Options:
 
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --correct-batch-effect                           Correct for batch effects for subclustering task.
+  --output-seurat-compatible                       Output seurat-compatible h5ad file.
   --output-loom                                    Output loom-formatted file.
 
   --random-state <seed>                            Random number generator seed. [default: 0]
@@ -68,9 +69,9 @@ Options:
   -h, --help                                       Print out help information.
 
 Outputs:
-  output_name.h5ad        Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
-  output_name.loom        Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
-  output_name.metadata.txt, output_name.barcodes.tsv, output_name.genes.tsv, output_name.matrix.mtx, output_name.*.coords.txt         Optional output for single cell portal. Only exist if '--output-scp' is set.
+  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+  output_name.seurat.h5ad       Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
+  output_name.loom              Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
   scrtools subcluster -p 20 --correct-batch-effect --subset-selection louvain_labels:3,6 --subset-selection Condition:CB_nonmix --run-tsne --run-louvain manton_bm.h5ad manton_bm_subset
@@ -86,6 +87,7 @@ Examples:
             'n_jobs' : int(self.args['--threads']),
             'genome' : None,
             'batch_correction' : self.args['--correct-batch-effect'],
+            'output_seurat_compatible' : self.args['--output-seurat-compatible'],
             'output_loom' : self.args['--output-loom'],
 
             'random_state' : int(self.args['--random-state']),
