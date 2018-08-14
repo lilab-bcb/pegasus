@@ -5,6 +5,7 @@ from scrtools.tools import read_input
 from .plot_utils import transform_basis
 from . import plot_library, iplot_library
 
+import gc
 
 pop_list = {
 	'composition' : {'basis', 'attrs', 'apply_to_all', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall'},
@@ -27,7 +28,8 @@ def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
 	fig = getattr(plot_library, 'plot_' + plot_type)(adata, **kwargs)
 	fig.savefig(output_file, dpi = dpi)
 	print(output_file + " is generated.")
-
+	del adata
+	gc.collect()
 
 def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 	adata = read_input(input_file, mode = 'r')
@@ -55,4 +57,5 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
 		else:
 			iplot_library.scatter_real(df, output_file, kwargs['log10'])
 	print(output_file + " is generated.")
-
+	del adata
+	gc.collect()
