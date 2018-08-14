@@ -1,5 +1,4 @@
 import os
-import time
 from .Base import Base
 from ..annotate_cluster import run_annotate_cluster
 
@@ -30,5 +29,4 @@ Examples:
 
     def execute(self):
         run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), ignoreNA = self.args['--do-not-use-non-de-genes'], json_file = self.args['--json-file'])
-        time.sleep(1) # wait 1s to release the backed h5ad file
         
