@@ -15,5 +15,6 @@ def run_annotate_cluster(input_file, output_file, threshold, ignoreNA = False, j
 	adata = read_input(input_file, mode = 'r')
 	with open(output_file, 'w') as fout:
 		annotate_cluster.annotate_clusters(adata, json_file, threshold, fout, ignoreNA)
+	adata.file.close()
 	end = time.time()
 	print("Time spent for annotating clusters is {:.2f}s.".format(end - start))
