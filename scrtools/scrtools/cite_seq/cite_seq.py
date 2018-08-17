@@ -5,6 +5,12 @@ from natsort import natsorted
 
 import anndata
 from scipy.sparse import vstack, hstack, csr_matrix
+from scipy.stats import pearsonr
+
+import warnings
+warnings.filterwarnings("error")
+
+import xlsxwriter
 
 def estimate_probs_old(arr, pvec, n_iter = 200):
 	probs = np.zeros(pvec.size + 1)
@@ -113,3 +119,31 @@ def append_ADT_to_RNA_data(adt_data, df_a2c, data):
 		var = {"var_names" : np.concatenate([data.var_names, df_a2c['antibody'].apply(lambda x: 'AB-' + x)])})
 
 	return new_data
+
+def evaluate_concentration(data, df_r2a, attr, out_file):
+	attrs = data.obs[attr].unique()
+	results = []
+
+	for rid, row in df_r2a.iterrows():
+		genes = row['gene'].split(',')
+		if len(genes) == 1:
+			expr = data[:,genes].X.toarray()
+		else:
+			expr = np.log1p(np.expm1(data[:,genes].X.toarray()).sum(axis = 1))
+		adts = data[:,row['antibody']].X.toarray()
+
+		my_dict = {}
+		for value in attrs:
+			idx = np.isin(data.obs[attr], value)
+			try:
+				my_dict[value + '_rho'] = "{:.2f}".format(pearsonr(expr[idx], adts[idx])[0])
+			except RuntimeWarning:
+				my_dict[value + '_rho'] = "0.0"
+			my_dict[value + '_mag_95'] = "{:.2f}".format(np.percentile(adts[idx], 95))
+		results.append(my_dict)
+
+	df = pd.DataFrame(results, index = df_r2a['antibody'])
+
+	writer = pd.ExcelWriter(out_file, engine='xlsxwriter')
+	df.to_excel(writer, sheet_name = "Eval")
+	writer.save()

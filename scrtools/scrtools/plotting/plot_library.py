@@ -364,7 +364,8 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 	kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
 	fig, axes = get_subplot_layouts(nrows = nrows, ncols = ncols, squeeze = False, **kwargs)
 
-	X = data.raw[:, gene].X if use_raw else data[:, gene].X
+	X = (data.raw[:, gene].X if use_raw else data[:, gene].X).toarray()[:, 0]
+	vmax = X.max()
 
 	for i in range(nrows):
 		for j in range(ncols):
@@ -387,6 +388,8 @@ def plot_scatter_gene_groups(data, basis, gene, group, nrows = None, ncols = Non
 					   alpha = alpha,
 					   edgecolors = 'none',
 					   cmap='viridis',
+					   vmin = 0.0,
+					   vmax = vmax,
 					   rasterized = True)
 
 				left, bottom, width, height = ax.get_position().bounds

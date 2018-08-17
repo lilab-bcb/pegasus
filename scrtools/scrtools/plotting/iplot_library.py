@@ -20,7 +20,7 @@ def scatter(df, output_file):
 			name = label,
 			x = tdf.iloc[:, 1],
 			y = tdf.iloc[:, 2],
-			type = 'scatter',
+			type = 'scattergl',
 			mode = 'markers',
 			marker = dict(size = 5, color = color, line = dict(width=0))
 			)
