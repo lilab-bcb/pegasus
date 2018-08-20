@@ -60,7 +60,7 @@ def upload_table(df, client, dataset, table):
 
 	return job.state == 'DONE'
 
-def upload_expression_matrix(thread_no, dfs_genes, n_threads, batch_size, X, gene_names, bigquery_names, metadata_df, client, dataset, table_prefix):
+def upload_expression_matrix(thread_no, dfs_genes, n_threads, batch_size, X, gene_names, bigquery_names, metadata_df, client, dataset):
 	n_genes = X.shape[1]
 	for i, start_pos in enumerate(range(batch_size * thread_no, n_genes, batch_size * n_threads)):
 		table_id = thread_no + i * n_threads
@@ -68,10 +68,21 @@ def upload_expression_matrix(thread_no, dfs_genes, n_threads, batch_size, X, gen
 		dfs_genes[table_id] = pd.DataFrame({'gene' : gene_names[start_pos : end_pos], 'bigquery_name' : bigquery_names[start_pos : end_pos], 'table_number' : table_id})
 		df_expr = pd.DataFrame(data = X[:, start_pos : end_pos].toarray(), columns = bigquery_names[start_pos : end_pos])
 		df_expr[metadata_df.columns] = metadata_df
-		upload_table(df_expr, client, dataset, table_prefix + '_expr{}'.format(table_id))
+		upload_table(df_expr, client, dataset, 'expression_{}'.format(table_id))
 
-def upload_data_to_bigquery(data, client, dataset, table_prefix, batch_size = 1000, n_threads = -1):
+def upload_data_to_bigquery(data, project_id, dataset_name, batch_size = 1000, n_threads = -1):
 	start = time.time()
+
+	client = bigquery.Client(project = project_id)
+	dataset_ref = client.dataset(dataset_name)
+	dataset = bigquery.Dataset(dataset_ref)
+	dataset.location = 'US'
+	try:
+		dataset = client.create_dataset(dataset)
+	except Exception:
+		None
+
+	print("Dataset {} is created.".format(dataset_name))
 
 	metadata_df, range_df = get_metadata_data_frames(data)
 	X = data.X.tocsc()
@@ -82,19 +93,23 @@ def upload_data_to_bigquery(data, client, dataset, table_prefix, batch_size = 10
 	if n_threads < 0:
 		n_threads = n_tables
 
+	print("Begin to upload expression tables.")
+
 	threads = [None] * n_threads
 	dfs_genes = [None] * n_tables
 	for i in range(n_threads):
-		t = threading.Thread(target=upload_expression_matrix, args=(i, dfs_genes, n_threads, batch_size, X, gene_names, bigquery_names, metadata_df, client, dataset, table_prefix))
+		t = threading.Thread(target=upload_expression_matrix, args=(i, dfs_genes, n_threads, batch_size, X, gene_names, bigquery_names, metadata_df, client, dataset_name))
 		threads[i] = t
 		t.start()
 
 	for i in range(n_threads):
 		threads[i].join()
 
+	print("Expression tables uploaded.")
+	
 	df_genes = pd.concat(dfs_genes)
-	upload_table(df_genes, client, dataset, table_prefix + '_gene_names')
-	upload_table(range_df, client, dataset, table_prefix + '_ranges')
+	upload_table(df_genes, client, dataset_name, 'gene_names')
+	upload_table(range_df, client, dataset_name, 'ranges')
 
 	end = time.time()
 	print("Data were uploaded to BigQuery, total time = {:.2f}s.".format(end - start))
