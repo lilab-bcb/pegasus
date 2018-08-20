@@ -29,11 +29,14 @@ def plot_barcode_hist(data, adt, out_file, dpi = 500):
 
 
 
-def plot_antibody_hist(adts, names, antibody, control, out_file, dpi = 500, figsize = None, format = None):
+def plot_antibody_hist(adts, names, data_vec, antibody, control, out_file, dpi = 500, figsize = None, format = None):
 	fig, axes = plt.subplots(nrows = 2, ncols = len(adts), squeeze = False, figsize = figsize)
 	plt.tight_layout(pad = 4)
 
 	for i, adt in enumerate(adts):
+		idx = data_vec[i].obs_names.isin(adt.obs_names)
+		data_vec[i].obs_names[idx]
+
 		signal = adt[:, antibody].X.toarray()
 		background = adt[:, control].X.toarray()
 		bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 101)
@@ -62,7 +65,7 @@ def plot_antibody_hist(adts, names, antibody, control, out_file, dpi = 500, figs
 	plt.savefig(out_file, dpi = dpi, format = format)
 	plt.close()
 
-def plot_antibodies_hist(adts, names, df, out_file, figsize = None):
+def plot_antibodies_hist(adts, names, data_vec, df, out_file, figsize = None):
 	with PdfPages(out_file) as pdf:
 		for idx, row in df.iterrows():
 			plot_antibody_hist(adts, names, row['antibody'], row['control'], pdf, figsize = figsize, format = "pdf")
