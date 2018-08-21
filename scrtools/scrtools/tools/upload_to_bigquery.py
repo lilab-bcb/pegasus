@@ -106,7 +106,7 @@ def upload_data_to_bigquery(data, project_id, dataset_name, batch_size = 1000, n
 		threads[i].join()
 
 	print("Expression tables uploaded.")
-	
+
 	df_genes = pd.concat(dfs_genes)
 	upload_table(df_genes, client, dataset_name, 'gene_names')
 	upload_table(range_df, client, dataset_name, 'ranges')
