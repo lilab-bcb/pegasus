@@ -1,3 +1,9 @@
+Version 0.5.0 `August 21, 2018`
+-------------------------------
+
+Fixed a problem related AnnData.
+Added support for BigQuery.
+
 Version 0.4.0 `August 2, 2018`
 ------------------------------
 

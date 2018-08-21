@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
-requires = ['anndata>=0.5',
+requires = ['anndata<=0.6.6',
 			'matplotlib>=2.0.0',
 			'pandas>=0.21',
 			'Cython',
@@ -28,13 +28,15 @@ requires = ['anndata>=0.5',
 			'pybind11',
 			'umap-learn',
 			'fitsne',
-			'hdbscan'
+			'hdbscan',
+			'pyarrow',
+			'google-cloud-bigquery'
 			# 'hnswlib'
 		  ]
 
 setup(
 	name='scrtools',
-	version='0.4.0',
+	version='0.5.0',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scrtools',
