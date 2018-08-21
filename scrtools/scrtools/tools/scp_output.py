@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import time
 from scipy.sparse import issparse
 from .preprocessing import read_input
 
@@ -91,6 +92,9 @@ def scp_write_expression(data, output_name, is_sparse = True, round_to = 2):
 
 def run_scp_output(input_h5ad_file, output_name, is_sparse, round_to):
 	adata = read_input(input_h5ad_file, mode = 'a')
+	start = time.time()
 	scp_write_coords(adata, output_name)
 	scp_write_metadata(adata, output_name)
 	scp_write_expression(adata, output_name, is_sparse, round_to)
+	end = time.time()
+	print("Time spent for generating SCP outputs is {:.2f}s.".format(end - start))
