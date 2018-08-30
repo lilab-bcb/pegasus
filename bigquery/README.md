@@ -15,3 +15,12 @@ res_obj.promise.then(() => {
 
 This is an object. Bases and attr/gene are its properties. Each property is an array of values that people can fit into plotly.
 
+## Dependencies
+
+* @google-cloud/bigquery
+
+* @google-cloud/storage
+
+* es6-dynamic-template
+
+ 
