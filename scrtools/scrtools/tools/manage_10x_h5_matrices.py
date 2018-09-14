@@ -202,7 +202,7 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 			input_hd5_file = '{0}_tmp_h5.h5'.format(sample_name)
 		
 		if input_type == 'gene':
-			channel = load_10x_h5_file(input_hd5_file, genome)
+			channel = load_10x_h5_file(input_hd5_file, genome) if not input_hd5_file.endswith('.txt.gz') else load_dropseq_txt_gz(input_hd5_file)
 		elif input_type == 'ADT':
 			channel = load_antibody_csv(input_hd5_file)
 
