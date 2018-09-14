@@ -58,7 +58,7 @@ def load_dropseq_txt_gz(input_gz):
 
 	inpmat = {}
 	
-	with gzip.open(input_gz, "rb") as gin:
+	with gzip.open(input_gz, "rt") as gin:
 		fields = next(gin).strip().split('\t')
 		inpmat["barcodes"] = np.array(fields[1:])
 		arr = []
