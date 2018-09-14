@@ -6,6 +6,7 @@ import os
 from scipy.sparse import csc_matrix, hstack
 import tables
 import copy
+import gzip
 from subprocess import check_call
 
 
@@ -42,6 +43,36 @@ def load_10x_h5_file(input_h5, genome, threshold = 30000, ngene = 100):
 	inpmat.pop("indices")
 	inpmat.pop("indptr")
 	inpmat.pop("shape")
+
+	return inpmat
+
+def load_dropseq_txt_gz(input_gz):
+	"""Load dropseq output from .txt.gz
+
+	Parameters
+	----------
+
+	input_gz : `str`
+		The input matrix gene x barcode.
+	"""
+
+	inpmat = {}
+	
+	with gzip.open(input_gz, "rb") as gin:
+		fields = next(gin).strip().split('\t')
+		inpmat["barcodes"] = np.array(fields[1:])
+		arr = []
+		gene_names = []
+		for line in gin:
+			fields = line.strip().split('\t')
+			gene_names.append(fields[0])
+			arr.append([int(x) for x in fields[1:]])
+
+	gene_names = np.array(gene_names)
+	inpmat["gene_names"] = gene_names
+	inpmat["genes"] = gene_names
+
+	inpmat["matrix"] = csc_matrix(arr)
 
 	return inpmat
 

@@ -4,9 +4,9 @@ import pandas as pd
 import anndata
 import tables
 import xlsxwriter
-from collections import Counter
+from collections import Counter, ChainMap
 
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import issparse, csr_matrix, hstack
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.utils.sparsefuncs import mean_variance_axis
@@ -14,28 +14,47 @@ from sklearn.utils.extmath import randomized_svd
 
 
 
-
 def read_10x_h5_file(input_h5, genome):
 	obs_not = set(["data", "indices", "indptr", "shape", "gene_names", "genes", "barcodes"])
 
+	Xs = [] # a list of csr matrices
+	gn_vec = [] # gene_names vec
+	gi_vec = [] # gene_ids vec
+
+	obs_dict = None
+
 	with tables.open_file(input_h5) as h5_in:
-		inpmat = {}
-		for node in h5_in.walk_nodes("/" + genome, "Array"):
-			inpmat[node.name] = node.read()
+		genomes = []
+		if genome is None: # if no genome is provided, scan the hdf5 file, must load raw matrix here.
+			for i, group in enumerate(h5_in.walk_groups()):
+				if i > 0:
+					genomes.append(group._v_name)
+		else:
+			genomes.append(genome)
 
-	X = csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0]))
-	
-	barcodes = inpmat["barcodes"].astype(str)
-	if np.vectorize(lambda x: x.endswith("-1"))(barcodes).sum() == barcodes.size:
-		barcodes = [x[:-2] for x in barcodes] # remove the trailing '-1'
+		for genome in genomes:
+			inpmat = {}
+			for node in h5_in.walk_nodes("/" + genome, "Array"):
+				inpmat[node.name] = node.read()
+			
+			Xs.append(csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0])))
+			gn_vec.append(inpmat["gene_names"].astype(str))
+			gi_vec.append(inpmat["genes"].astype(str))
 
-	obs_dict = {"obs_names" : barcodes}
-	obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
-	for key, value in inpmat.items():
-		if key not in obs_not:
-			obs_dict[key] = value.astype(str)
+			if obs_dict is None:
+				barcodes = inpmat["barcodes"].astype(str)
+				if np.vectorize(lambda x: x.endswith("-1"))(barcodes).sum() == barcodes.size:
+					barcodes = [x[:-2] for x in barcodes] # remove the trailing '-1'
+				obs_dict = {"obs_names" : barcodes}
+				obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
+				for key, value in inpmat.items():
+					if key not in obs_not:
+						obs_dict[key] = value.astype(str)
 
-	data = anndata.AnnData(X = X, obs = obs_dict, var = {"var_names" : inpmat["gene_names"].astype(str), "gene_ids": inpmat["genes"].astype(str)})
+	data = anndata.AnnData(X = Xs[0] if len(Xs) == 1 else hstack(Xs, format = 'csr'),
+						   obs = obs_dict, 
+						   var = {"var_names" : gn_vec[0] if len(gn_vec) == 1 else np.concatenate(gn_vec),
+						   		  "gene_ids" : gi_vec[0] if len(gi_vec) == 1 else np.concatenate(gi_vec)})
 
 	return data
 
@@ -74,7 +93,7 @@ def read_antibody_csv(input_csv):
 
 	return data
 
-def read_input(input_file, genome = 'GRCh38', mode = 'r+'):
+def read_input(input_file, genome = None, mode = 'r+'):
 	"""Load either 10x-formatted raw count matrix or h5ad-formatted processed expression matrix into memory.
 
 	This function is used to load input data into memory.
@@ -84,8 +103,8 @@ def read_input(input_file, genome = 'GRCh38', mode = 'r+'):
 
 	input_file : `str`
 		Input file name.
-	genome : `str`, optional (default: `GRCh38`)
-		The genome used to produce raw count matrices.
+	genome : `str`, optional (default: None)
+		The genome used to produce raw count matrices. If genome == None, we will load count matrices from all possible genomes and merge them into one big matrix.
 	mode : `str`, optional (default: `r+`)
 		If input is h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
 

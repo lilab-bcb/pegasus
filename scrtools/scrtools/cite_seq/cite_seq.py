@@ -12,24 +12,6 @@ warnings.filterwarnings("error")
 
 import xlsxwriter
 
-def estimate_probs_old(arr, pvec, n_iter = 200):
-	probs = np.zeros(pvec.size + 1)
-	z = np.zeros(pvec.size + 1)
-	noise = pvec.size
-	probs[:] = 0.1 / pvec.size
-	probs[-1] = 0.9
-	for i in range(n_iter):
-		# E step
-		z[:] = 0.0
-		for j in range(pvec.size):
-			if arr[j] > 0:
-				p = probs[j] / (probs[noise] * pvec[j] + probs[j])
-				z[j] += arr[j] * p
-				z[noise] += arr[j] * (1.0 - p)
-		# M step
-		probs = z / z.sum()
-	return probs
-
 def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 50):
 	probs = np.zeros(pvec.size + 1)
 	z = np.zeros(pvec.size + 1)
@@ -74,6 +56,7 @@ def demultiplex(data, adt, unknown_threshold = 0.5):
 	idx = tmp.X.sum(axis = 1).A1 < value
 	pvec = tmp.X[idx, ].sum(axis = 0).A1
 	pvec /= pvec.sum()
+	data.uns['background_probs'] = pvec
 	
 	data.obsm['raw_probs'] = np.zeros((data.shape[0], adt.shape[1] + 1))
 	data.obsm['raw_probs'][:, adt.shape[1]] = 1.0

@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+import anndata
 import matplotlib.pyplot as plt
 import seaborn as sns
+from natsort import natsorted
 
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -73,7 +75,7 @@ def plot_antibodies_hist(adts, names, data_vec, df, out_file, figsize = None):
 
 
 
-def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4)):
+def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4), linewidth = None):
 	df = pd.DataFrame(data.X.toarray(), index = data.obs_names, columns = data.var_names)
 	df['assignment'] = data.obs['assignment']
 
@@ -94,7 +96,7 @@ def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4)):
 				ax.set_xticks([])
 				ax.set_yticks([])
 				continue
-			sns.violinplot(x = 'assignment', y = gene_list[gid], data = df, ax = ax)
+			sns.violinplot(x = 'assignment', y = gene_list[gid], data = df, ax = ax, linewidth = linewidth)
 			ax.set_ylabel('log TPM')
 			ax.set_title(gene_list[gid])
 
@@ -151,3 +153,94 @@ def plot_doublet_hists(adata, out_file):
 		for nuclei_type in adata.obs['coarse_annotation'].cat.categories:
 			plot_doublet_hist(adata, nuclei_type, pdf, format = "pdf")
 
+
+
+
+def plot_human_vs_mouse(data, out_file, tp = 'counts', alpha = 1.0, dpi = 500, format = None, log = False):
+	ax = plt.gca()
+
+	if 'assignment' in data.obs:
+		labels = data.obs['assignment'].astype(str)
+		labels[np.isin(data.obs['assignment'], ['1','2','3','4'])] = 'singlet_mouse'
+		labels[np.isin(data.obs['assignment'], ['5','6','7','8'])] = 'singlet_human'
+		labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet', 'unknown'])
+		colors = ['red', 'blue', 'green', 'orange']
+	else:
+		labels = ['nuclei'] * data.shape[0]
+		labels = pd.Categorical(labels, categories = ['nuclei'])
+		colors = ['blue']
+
+	for k, cat in enumerate(labels.categories):
+		idx = np.isin(labels, cat)
+		ax.scatter(data.obs.loc[idx, 'mm10_n_' + tp],
+				   data.obs.loc[idx, 'grch38_n_' + tp],
+				   c = colors[k],
+				   marker = '.',
+				   alpha = alpha,
+				   edgecolors = 'none',
+				   label = cat,
+				   rasterized = True)
+	ax.grid(False)
+	ax.legend()
+	ax.set_xlabel("Mouse UMI")
+	ax.set_ylabel("Human UMI")
+	if log:
+		ax.set_xscale('log')
+		ax.set_yscale('log')
+	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
+
+def plot_bar(heights, tick_labels, xlabel, ylabel, out_file, dpi = 500, figsize = None, format = None):
+	plt.bar(x = np.linspace(0.5, heights.size - 0.5, heights.size), 
+			height = heights, 
+			tick_label = tick_labels)
+	ax = plt.gca()
+	ax.set_xlabel(xlabel)
+	ax.set_ylabel(ylabel)
+	if figsize is not None:
+		fig = plt.gcf()
+		fig.set_size_inches(*figsize)
+	plt.tick_params(axis = 'x', labelsize = 7)
+	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
+
+# attrs is a dict with name: attr format
+def plot_violins(data, attrs, xlabel, ylabel, out_file, dpi = 500, format = None, log = True):
+	dfs = []
+	if isinstance(data, anndata.base.AnnData):
+		for name, attr in attrs.items():
+			dfs.append(pd.DataFrame({xlabel : name, ylabel : data.obs[attr].values}))
+	else:
+		for arr, name in zip(data, attrs):
+			dfs.append(pd.DataFrame({xlabel : name, ylabel : arr}))
+	df = pd.concat(dfs)
+
+	if log:
+		df[ylabel] = np.log10(df[ylabel])
+		sns.violinplot(x = xlabel, y = ylabel, data = df)
+		y_max = int(np.ceil(df[ylabel].max()))
+		loc = list(range(y_max + 1))
+		labels = [r'$10^{}$'.format(x) for x in loc]
+		plt.yticks(loc, labels)
+	else:
+		sns.violinplot(x = xlabel, y = ylabel, data = df)
+
+	plt.gca().grid(False)
+	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
+
+def plot_demux_hist(data, out_file, attr = 'n_counts', dpi = 500, format = None):
+	assignments = data.obs['assignment'].astype(str).map(lambda x: x if x == 'doublet' or x == 'unknown' else 'singlet')
+	bins = np.logspace(np.log10(min(data.obs[attr])), np.log10(max(data.obs[attr])), 101)
+
+	ax = plt.gca()
+	ax.hist(data.obs.loc[np.isin(assignments, 'singlet'), attr], bins, alpha = 0.5, label = 'singlet')
+	ax.hist(data.obs.loc[np.isin(assignments, 'doublet'), attr], bins, alpha = 0.5, label = 'doublet')
+	ax.hist(data.obs.loc[np.isin(assignments, 'unknown'), attr], bins, alpha = 0.5, label = 'unknown')
+	ax.legend(loc='upper right')
+	ax.set_xscale("log")
+	ax.set_xlabel("Number of UMIs (log10 scale)")
+	ax.set_ylabel("Number of barcodes")
+
+	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
