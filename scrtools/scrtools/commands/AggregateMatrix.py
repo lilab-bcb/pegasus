@@ -18,7 +18,7 @@ Options:
   --restriction <restriction>...   Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value or name:~value,..,value, where ~ refers to not. You can specifiy multiple restrictions by setting this option multiple times.
   --attributes <attributes>        Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file.
   --google-cloud                   If files are stored in google cloud. Assuming google cloud sdk is installed.
-  --input-type <type>              Input type, could be either 'gene' or 'ADT'. [default: gene]
+  --input-type <type>              Input type, could be either 'gene', 'dropseq' or 'ADT'. [default: gene]
   -h, --help                       Print out help information.
 
 Outputs:
