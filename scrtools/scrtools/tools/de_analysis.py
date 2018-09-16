@@ -15,7 +15,8 @@ from .preprocessing import read_input
 
 # assume cluster labels from 1 to n
 def collect_contingency_table(data, X, labels = 'louvain_labels'):	
-	clusts = data.obs[labels].value_counts()
+	clusts = data.obs[labels].value_counts(sort = False)
+	data.uns["de_nclust"] = clusts.size
 	ct = np.zeros((data.var_names.size, clusts.size, 2), dtype = np.uint)
 	for label, count in clusts.iteritems():
 		i = int(label) - 1
@@ -104,10 +105,11 @@ def collect_stat_and_t_test(data, X, clusts = None, labels = 'louvain_labels', n
 
 	ct = data.uns["contingency_table"]
 
-	if clusts is not None:
+	if clusts is None:
+		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+
+	if len(clusts) < data.uns["de_nclust"]:
 		ct = ct[:, [int(x) - 1 for x in clusts], :]
-	else:
-		clusts = [str(x + 1) for x in range(data.obs[labels].nunique())]
 
 	total = ct.sum(axis = 1)
 
@@ -161,10 +163,11 @@ def fisher_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 
 	ct = data.uns["contingency_table"]
 
-	if clusts is not None:
+	if clusts is None:
+		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+
+	if len(clusts) < data.uns["de_nclust"]:
 		ct = ct[:, [int(x) - 1 for x in clusts], :]
-	else:
-		clusts = [str(x + 1) for x in range(data.obs[labels].nunique())]
 
 	total = ct.sum(axis = 1)
 	
@@ -226,8 +229,8 @@ def mwu_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	start = time.time()
 
 	if clusts is None:
-		clusts = [str(x + 1) for x in range(data.obs[labels].nunique())]
-	
+		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+
 	mask = np.isin(data.obs[labels], clusts)
 	csc_mat = X[mask].tocsc()
 
@@ -297,7 +300,7 @@ def calc_roc_stats(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1
 	start = time.time()
 
 	if clusts is None:
-		clusts = [str(x + 1) for x in range(data.obs[labels].nunique())]
+		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
 	
 	mask = np.isin(data.obs[labels], clusts)
 	csc_mat = X[mask].tocsc()
