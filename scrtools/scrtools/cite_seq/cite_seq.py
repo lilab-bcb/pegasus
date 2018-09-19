@@ -38,11 +38,11 @@ def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 50):
 	# return results
 	return probs
 
-def get_droplet_type(arr):
-	res = arr.nonzero()[0]
-	return str(res[0] + 1) if res.size == 1 else 'doublet'
+def get_droplet_info(arr):
+	res = [str(x + 1) for x in arr.nonzero()[0]]
+	return ('singlet' if len(res) == 1 else 'doublet', ','.join(res))
 
-def demultiplex(data, adt, unknown_threshold = 0.5):
+def demultiplex(data, adt, unknown = 0.9, high_quality = 0.5):
 	start = time.time()
 
 	idx_df = data.obs_names.isin(adt.obs_names)
@@ -62,18 +62,30 @@ def demultiplex(data, adt, unknown_threshold = 0.5):
 	data.obsm['raw_probs'][:, adt.shape[1]] = 1.0
 	data.obsm['raw_probs'][idx_df, :] = np.apply_along_axis(estimate_probs, 1, adt_small, pvec)
 
-	assignments = np.full(data.shape[0], 'unknown', dtype = 'object')
-	idx = data.obsm['raw_probs'][:,pvec.size] < unknown_threshold
+	demux_type = np.full(data.shape[0], 'unknown', dtype = 'object')
+	assignments = np.full(data.shape[0], '', dtype = 'object')
+
+	idx = data.obsm['raw_probs'][:,pvec.size] < unknown
 	tmp = data.obsm['raw_probs'][idx,]
 	norm_probs = tmp[:,0:pvec.size] / (1.0 - tmp[:,pvec.size])[:,None]
 	idx_arr = norm_probs >= 0.1
-	values = []
+
+	values1 = []
+	values2 = []
 	for i in range(idx_arr.shape[0]):
-		values.append(get_droplet_type(idx_arr[i,]))
-	assignments[idx] = values
+		droplet_type, droplet_id = get_droplet_info(idx_arr[i,])
+		values1.append(droplet_type)
+		values2.append(droplet_id)
+
+	demux_type[idx] = values1
+	data.obs['demux_type'] = pd.Categorical(demux_type, categories = ['singlet', 'doublet', 'unknown'])
+	assignments[idx] = values2
 	data.obs['assignment'] = pd.Categorical(assignments, categories = natsorted(np.unique(assignments)))
-	data.obs.loc[idx, 'assignment'] = values
 	
+	quality = np.full(data.shape[0], 'low', dtype = 'object')
+	quality[data.obsm['raw_probs'][:,pvec.size] < high_quality] = 'high'
+	data.obs['quality'] = pd.Categorical(quality)
+
 	end = time.time()
 	print(end - start)
 

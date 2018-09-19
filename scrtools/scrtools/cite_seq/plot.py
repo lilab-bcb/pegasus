@@ -4,6 +4,7 @@ import anndata
 import matplotlib.pyplot as plt
 import seaborn as sns
 from natsort import natsorted
+from scipy.stats import pearsonr
 
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -31,14 +32,11 @@ def plot_barcode_hist(data, adt, out_file, dpi = 500):
 
 
 
-def plot_antibody_hist(adts, names, data_vec, antibody, control, out_file, dpi = 500, figsize = None, format = None):
+def plot_antibody_hist(adts, names, antibody, control, out_file, dpi = 500, figsize = None, format = None):
 	fig, axes = plt.subplots(nrows = 2, ncols = len(adts), squeeze = False, figsize = figsize)
 	plt.tight_layout(pad = 4)
 
 	for i, adt in enumerate(adts):
-		idx = data_vec[i].obs_names.isin(adt.obs_names)
-		data_vec[i].obs_names[idx]
-
 		signal = adt[:, antibody].X.toarray()
 		background = adt[:, control].X.toarray()
 		bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 101)
@@ -67,7 +65,7 @@ def plot_antibody_hist(adts, names, data_vec, antibody, control, out_file, dpi =
 	plt.savefig(out_file, dpi = dpi, format = format)
 	plt.close()
 
-def plot_antibodies_hist(adts, names, data_vec, df, out_file, figsize = None):
+def plot_antibodies_hist(adts, names, df, out_file, figsize = None):
 	with PdfPages(out_file) as pdf:
 		for idx, row in df.iterrows():
 			plot_antibody_hist(adts, names, row['antibody'], row['control'], pdf, figsize = figsize, format = "pdf")
@@ -75,9 +73,14 @@ def plot_antibodies_hist(adts, names, data_vec, df, out_file, figsize = None):
 
 
 
-def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4), linewidth = None):
+def plot_gene_violin(data, gene_list, out_file, dpi = 500, figsize = (6, 4), linewidth = None, quality = None):
+	if quality is not None:
+		data = data[data.obs['quality'] == quality]
+
 	df = pd.DataFrame(data.X.toarray(), index = data.obs_names, columns = data.var_names)
-	df['assignment'] = data.obs['assignment']
+	df['assignment'] = data.obs['demux_type'].astype(str)
+	idx_singlet = np.isin(data.obs['demux_type'], 'singlet')
+	df.loc[idx_singlet, 'assignment'] = data.obs.loc[idx_singlet, 'assignment'].astype(str)
 
 	gene_list = np.array(gene_list)
 	gene_list = gene_list[np.isin(gene_list, df.columns)]
@@ -160,7 +163,7 @@ def plot_human_vs_mouse(data, out_file, tp = 'counts', alpha = 1.0, dpi = 500, f
 	ax = plt.gca()
 
 	if 'assignment' in data.obs:
-		labels = data.obs['assignment'].astype(str)
+		labels = data.obs['demux_type'].astype(str)
 		labels[np.isin(data.obs['assignment'], ['1','2','3','4'])] = 'singlet_mouse'
 		labels[np.isin(data.obs['assignment'], ['5','6','7','8'])] = 'singlet_human'
 		labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet', 'unknown'])
@@ -189,6 +192,67 @@ def plot_human_vs_mouse(data, out_file, tp = 'counts', alpha = 1.0, dpi = 500, f
 		ax.set_yscale('log')
 	plt.savefig(out_file, dpi = dpi, format = format)
 	plt.close()
+
+
+def plot_2attr_hvm(data, attrs, names, out_file, dpi = 500, format = None, log = True, separate = False, alpha = 0.5):	
+	labels = data.obs['demux_type'].astype(str)
+	labels[np.isin(data.obs['assignment'], ['1','2','3','4'])] = 'singlet_mouse'
+	labels[np.isin(data.obs['assignment'], ['5','6','7','8'])] = 'singlet_human'
+	labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet', 'unknown'])
+	colors = ['red', 'blue', 'green', 'orange']
+
+	if separate:
+		fig, axes = plt.subplots(nrows = 2, ncols = 2)
+		axes = axes.flatten()
+	else:
+		ax = plt.gca()
+
+	for k, cat in enumerate(labels.categories):
+		idx = np.isin(labels, cat)
+
+		if separate:
+			ax = axes[k]
+
+		x = data.obs.loc[idx, attrs[0]].values + 1.0
+		y = data.obs.loc[idx, attrs[1]].values + 1.0
+
+		ax.scatter(x,
+				   y,
+				   c = colors[k],
+				   marker = '.',
+				   alpha = alpha,
+				   edgecolors = 'none',
+				   label = cat,
+				   rasterized = True)
+
+		if separate:
+			ax.grid(False)
+			ax.set_title("{}, $\\log_{{10}}\\rho$ = {:.2f}".format(cat, pearsonr(np.log10(x), np.log10(y))[0]))
+			if log:
+				ax.set_xscale('log')
+				ax.set_yscale('log')
+
+	if separate:
+		plt.tight_layout()
+		plt.subplots_adjust(left = 0.1, bottom = 0.1)
+		fig.text(0.5, 0.01, names[0], ha='center')
+		fig.text(0.01, 0.5, names[1], va='center', rotation='vertical')
+	else:
+		ax.grid(False)
+		ax.legend()
+		x = data.obs[attrs[0]].values + 1.0
+		y = data.obs[attrs[1]].values + 1.0
+		ax.set_title("$\\log_{{10}}\\rho$ = {:.2f}".format(pearsonr(np.log10(x), np.log10(y))[0]))
+		ax.set_xlabel(names[0])
+		ax.set_ylabel(names[1])
+		if log:
+			ax.set_xscale('log')
+			ax.set_yscale('log')
+
+
+	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
+
 
 def plot_bar(heights, tick_labels, xlabel, ylabel, out_file, dpi = 500, figsize = None, format = None):
 	plt.bar(x = np.linspace(0.5, heights.size - 0.5, heights.size), 
@@ -230,17 +294,31 @@ def plot_violins(data, attrs, xlabel, ylabel, out_file, dpi = 500, format = None
 	plt.close()
 
 def plot_demux_hist(data, out_file, attr = 'n_counts', dpi = 500, format = None):
-	assignments = data.obs['assignment'].astype(str).map(lambda x: x if x == 'doublet' or x == 'unknown' else 'singlet')
+	demux_type = data.obs['demux_type']
 	bins = np.logspace(np.log10(min(data.obs[attr])), np.log10(max(data.obs[attr])), 101)
 
 	ax = plt.gca()
-	ax.hist(data.obs.loc[np.isin(assignments, 'singlet'), attr], bins, alpha = 0.5, label = 'singlet')
-	ax.hist(data.obs.loc[np.isin(assignments, 'doublet'), attr], bins, alpha = 0.5, label = 'doublet')
-	ax.hist(data.obs.loc[np.isin(assignments, 'unknown'), attr], bins, alpha = 0.5, label = 'unknown')
+	ax.hist(data.obs.loc[np.isin(demux_type, 'singlet'), attr], bins, alpha = 0.5, label = 'singlet')
+	ax.hist(data.obs.loc[np.isin(demux_type, 'doublet'), attr], bins, alpha = 0.5, label = 'doublet')
+	ax.hist(data.obs.loc[np.isin(demux_type, 'unknown'), attr], bins, alpha = 0.5, label = 'unknown')
 	ax.legend(loc='upper right')
 	ax.set_xscale("log")
 	ax.set_xlabel("Number of UMIs (log10 scale)")
 	ax.set_ylabel("Number of barcodes")
 
 	plt.savefig(out_file, dpi = dpi, format = format)
+	plt.close()
+
+def plot_heatmap(vec1, vec2, out_file, dpi = 500, format = None):
+	df = pd.crosstab(vec1, vec2)
+	df.columns.name = df.index.name = ''
+
+	ax = plt.gca()
+	ax.xaxis.tick_top()
+	ax.set_xlabel('')
+	ax.set_ylabel('')
+	ax = sns.heatmap(df, annot = True, fmt = 'd', cmap = 'inferno', ax = ax)
+	
+	plt.tight_layout()
+	plt.savefig(out_file, dpi = 500, format = format)
 	plt.close()
