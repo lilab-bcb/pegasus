@@ -12,6 +12,8 @@ def run_annotate_cluster(input_file, output_file, threshold, ignoreNA = False, j
 		json_file = pkg_resources.resource_filename('scrtools.annotate_cluster', 'mouse_immune_cell_markers.json')
 	elif json_file == "mouse_brain":
 		json_file = pkg_resources.resource_filename('scrtools.annotate_cluster', 'mouse_brain_cell_markers.json')
+	elif json_file == "human_brian":
+		json_file = pkg_resources.resource_filename('scrtools.annotate_cluster', 'human_brain_cell_markers.json')
 	adata = read_input(input_file, mode = 'r')
 	with open(output_file, 'w') as fout:
 		annotate_cluster.annotate_clusters(adata, json_file, threshold, fout, ignoreNA)

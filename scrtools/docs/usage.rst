@@ -424,7 +424,7 @@ to see the usage information::
 * Options:
 
 	-\\-json-file <file>
-		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``, which triggers scrtools to markers included in the package. [default: human_immune]
+		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``, which triggers scrtools to markers included in the package. [default: human_immune]
 
 	-\\-minimum-report-score <score>
 		Minimum cell type score to report a potential cell type. [default: 0.5]

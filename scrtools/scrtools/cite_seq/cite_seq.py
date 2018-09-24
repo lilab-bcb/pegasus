@@ -12,7 +12,7 @@ warnings.filterwarnings("error")
 
 import xlsxwriter
 
-def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 50):
+def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 200):
 	probs = np.zeros(pvec.size + 1)
 	z = np.zeros(pvec.size + 1)
 	noise = pvec.size
