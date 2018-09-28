@@ -100,10 +100,11 @@
 			"name" : "Microglia",
 			"markers" : [
 				{
-					"genes" : ["TGFBR1+"],
+					"genes" : ["TGFBR1+", "DOCK8+", "CD74+", "CSF1R+", "MS4A6A+", "PLXDC2+"],
 					"weight" : 1.0
 				}
 			]			
 		}
 	]
 }
+
