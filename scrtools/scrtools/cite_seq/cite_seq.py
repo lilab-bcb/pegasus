@@ -11,9 +11,15 @@ import warnings
 warnings.filterwarnings("error")
 
 import xlsxwriter
+import multiprocessing
 
-def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 200):
+
+pvec = None # global pvec
+
+
+def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, tol = 1e-6):
 	probs = np.zeros(pvec.size + 1)
+	old_probs = np.zeros(pvec.size + 1)
 	z = np.zeros(pvec.size + 1)
 	noise = pvec.size
 	# Estimate MLE without Generalized Dirichlet prior
@@ -21,8 +27,13 @@ def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 200):
 	probs[noise] = (probs_mle / pvec).min() + 0.01
 	probs[:-1] = np.maximum(probs_mle - probs[noise] * pvec, 0.01)
 	probs = probs / probs.sum()
+
 	# EM algorithm
-	for i in range(n_iter):
+	i = 0
+	eps = 1.0
+	while eps > tol:
+		i += 1
+		old_probs[:] = probs[:]
 		# E step
 		z[:-1] = alpha - 1.0
 		z[noise] = alpha_noise - 1.0
@@ -35,14 +46,21 @@ def estimate_probs(arr, pvec, alpha = 0.0, alpha_noise = 1.0, n_iter = 200):
 		idx = z > 0.0
 		probs[idx] = z[idx] / z[idx].sum()
 		probs[~idx] = 0.0
-	# return results
+		eps = np.linalg.norm(probs - old_probs, ord = 1)
+		# print ("i = {}, eps = {:.2g}.".format(i, eps))
+
 	return probs
+
+def estimate_probs_wrapper(arr):
+	return estimate_probs(arr, pvec)
 
 def get_droplet_info(arr):
 	res = [str(x + 1) for x in arr.nonzero()[0]]
 	return ('singlet' if len(res) == 1 else 'doublet', ','.join(res))
 
-def demultiplex(data, adt, unknown = 0.9, high_quality = 0.5):
+def demultiplex(data, adt, unknown = 0.9, high_quality = 0.5, n_threads = 1):
+	global pvec
+
 	start = time.time()
 
 	idx_df = data.obs_names.isin(adt.obs_names)
@@ -60,7 +78,10 @@ def demultiplex(data, adt, unknown = 0.9, high_quality = 0.5):
 	
 	data.obsm['raw_probs'] = np.zeros((data.shape[0], adt.shape[1] + 1))
 	data.obsm['raw_probs'][:, adt.shape[1]] = 1.0
-	data.obsm['raw_probs'][idx_df, :] = np.apply_along_axis(estimate_probs, 1, adt_small, pvec)
+
+	pool = multiprocessing.Pool(n_threads)
+	data.obsm['raw_probs'][idx_df, :] = pool.map(estimate_probs_wrapper, adt_small)
+	# data.obsm['raw_probs'][idx_df, :] = np.apply_along_axis(estimate_probs, 1, adt_small, pvec)
 
 	demux_type = np.full(data.shape[0], 'unknown', dtype = 'object')
 	assignments = np.full(data.shape[0], '', dtype = 'object')
@@ -142,3 +163,4 @@ def evaluate_concentration(data, df_r2a, attr, out_file):
 	writer = pd.ExcelWriter(out_file, engine='xlsxwriter')
 	df.to_excel(writer, sheet_name = "Eval")
 	writer.save()
+
