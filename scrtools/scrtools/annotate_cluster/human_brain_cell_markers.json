@@ -55,7 +55,7 @@
 			"name" : "Astrocyte",
 			"markers" : [
 				{
-					"genes" : ["SLC1A3+", "GFAP+", "APOE+"],
+					"genes" : ["SLC1A3+", "GFAP+", "APOE+", "SLC1A2+", "SLC14A1+"],
 					"weight" : 1.0
 				}
 			]
