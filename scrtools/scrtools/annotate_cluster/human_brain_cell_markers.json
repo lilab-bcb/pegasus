@@ -2,30 +2,30 @@
 	"title" : "Mouse brain cell markers",
 	"cell_types" : [
 		{
-			"name" : "Neuron",
+			"name" : "Glutamatergic neuron",
 			"markers" : [
 				{
-					"genes" : ["RBFOX3+", "MEG3+"],
+					"genes" : ["RBFOX3+", "MEG3+", "SLC17A7+"],
 					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "GABAergic neuron",
+			"markers" : [
+				{
+					"genes" : ["RBFOX3+", "MEG3+", "GAD1+", "GAD2+", "GRIK1+"],
+					"weight" : 1.0					
 				}
 			],
 			"subtypes" : {
-				"title" : "Neuron subtype markers",
+				"title" : "GABAergic neuron subtype markers",
 				"cell_types" : [
-					{
-						"name" : "Glutamatergic neuron",
-						"markers" : [
-							{
-								"genes" : ["SLC17A7+"],
-								"weight" : 1.0
-							}
-						]
-					},
 					{
 						"name" : "GABAergic SST interneuron",
 						"markers" : [
 							{
-								"genes" : ["GAD1+", "GAD2+", "GRIK1+", "SST+"],
+								"genes" : ["SST+"],
 								"weight" : 1.0
 							}
 						]
@@ -34,7 +34,7 @@
 						"name" : "Gabaergic PVALB interneuron",
 						"markers" : [
 							{
-								"genes" : ["GAD1+", "GAD2+", "GRIK1+", "PVALB+"],
+								"genes" : ["PVALB+"],
 								"weight" : 1.0
 							}
 						]
@@ -43,7 +43,7 @@
 						"name" : "Gabaergic VIP interneuron",
 						"markers" : [
 							{
-								"genes" : ["GAD1+", "GAD2+", "GRIK1+", "VIP+"],
+								"genes" : ["VIP+"],
 								"weight" : 1.0
 							}
 						]

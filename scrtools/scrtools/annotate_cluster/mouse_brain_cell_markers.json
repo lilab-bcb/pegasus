@@ -2,57 +2,21 @@
 	"title" : "Mouse brain cell markers",
 	"cell_types" : [
 		{
-			"name" : "Neuron",
+			"name" : "Glutamatergic neuron",
 			"markers" : [
 				{
-					"genes" : ["Rbfox3+", "Slc17a6+", "Slc17a7+", "Gad1+", "Gad2+", "Reln+"],
+					"genes" : ["Rbfox3+", "Reln+", "Slc17a6+", "Slc17a7+"],
 					"weight" : 1.0
 				}
 			],
 			"subtypes" : {
-				"title" : "Neuron subtype markers",
+				"title" : "Glutamatergic neuron subtype markers",
 				"cell_types" : [
-					{
-						"name" : "Gabaergic Vip interneuron",
-						"markers" : [
-							{
-								"genes" : ["Gad1+", "Vip+", "Parm1+"],
-								"weight" : 1.0
-							}
-						]
-					},
-					{
-						"name" : "Gabaergic Sst interneuron",
-						"markers" : [
-							{
-								"genes" : ["Gad1+", "Sst+", "Grin3a+"],
-								"weight" : 1.0
-							}
-						]
-					},
-					{
-						"name" : "Gabaergic Pvalb interneuron",
-						"markers" : [
-							{
-								"genes" : ["Gad1+", "Pvalb+"],
-								"weight" : 1.0
-							}
-						]
-					},
-					{
-						"name" : "Gabaergic Ndnf interneuron",
-						"markers" : [
-							{
-								"genes" : ["Gad1+", "Ndnf+", "Fgf13+"],
-								"weight" : 1.0
-							}
-						]
-					},
 					{
 						"name" : "Glutamatergic layer 4",
 						"markers" : [
 							{
-								"genes" : ["Slc17a7+", "Rorb+", "Paqr8+"],
+								"genes" : ["Rorb+", "Paqr8+"],
 								"weight" : 1.0
 							}
 						]
@@ -61,7 +25,7 @@
 						"name" : "Glutamatergic layer 5",
 						"markers" : [
 							{
-								"genes" : ["Slc17a7+", "Deptor+"],
+								"genes" : ["Deptor+"],
 								"weight" : 1.0
 							}
 						]
@@ -70,7 +34,7 @@
 						"name" : "Glutamatergic layer 6a",
 						"markers" : [
 							{
-								"genes" : ["Slc17a7+", "Foxp2+", "Tle4+"],
+								"genes" : ["Foxp2+", "Tle4+"],
 								"weight" : 1.0
 							}
 						]
@@ -79,11 +43,61 @@
 						"name" : "Glutamatergic layer 6b",
 						"markers" : [
 							{
-								"genes" : ["Slc17a7+", "Rgs12+", "Tle4+"],
+								"genes" : ["Rgs12+", "Tle4+"],
 								"weight" : 1.0
 							}
 						]
 					}
+				]
+			}
+		},
+		{
+			"name" : "GABAergic neuron",
+			"markers" : [
+				{
+					"genes" : ["Rbfox3+", "Reln+", "Gad1+", "Gad2+"],
+					"weight" : 1.0
+				}
+			],
+			"subtypes" : {
+				"title" : "GABAergic neuron subtype markers",
+				"cell_types" : [
+					{
+						"name" : "GABAergic Vip interneuron",
+						"markers" : [
+							{
+								"genes" : ["Vip+", "Parm1+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "GABAergic Sst interneuron",
+						"markers" : [
+							{
+								"genes" : ["Sst+", "Grin3a+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "GABAergic Pvalb interneuron",
+						"markers" : [
+							{
+								"genes" : ["Pvalb+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "GABAergic Ndnf interneuron",
+						"markers" : [
+							{
+								"genes" : ["Ndnf+", "Fgf13+"],
+								"weight" : 1.0
+							}
+						]
+					},
 				]
 			}
 		},
