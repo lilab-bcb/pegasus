@@ -24,14 +24,14 @@ def read_10x_h5_file(input_h5, genome, ngene = None):
 
 	obs_dict = None
 
+	genomes = []
 	with tables.open_file(input_h5) as h5_in:
-		genomes = []
 		if genome is None: # if no genome is provided, scan the hdf5 file, must load raw matrix here.
 			for i, group in enumerate(h5_in.walk_groups()):
 				if i > 0:
 					genomes.append(group._v_name)
 		else:
-			genomes.append(genome)
+			genomes = genome if isinstance(genome, list) else [genome]
 
 		for genome in genomes:
 			inpmat = {}
@@ -56,10 +56,13 @@ def read_10x_h5_file(input_h5, genome, ngene = None):
 						   obs = obs_dict, 
 						   var = {"var_names" : gn_vec[0] if len(gn_vec) == 1 else np.concatenate(gn_vec),
 						   		  "gene_ids" : gi_vec[0] if len(gi_vec) == 1 else np.concatenate(gi_vec)})
+	data.uns['genomes'] = genomes
 
 	if ngene is not None:
-		n_genes_vec = data.X.getnnz(axis = 1)
-		data._inplace_subset_obs(n_genes_vec >= ngene)
+		data.obs['n_genes'] = data.X.getnnz(axis = 1)
+		data.obs['n_counts'] = data.X.sum(axis = 1).A1
+		data._inplace_subset_obs(data.obs['n_genes'] >= ngene)
+		data.var['robust'] = True
 
 	return data
 

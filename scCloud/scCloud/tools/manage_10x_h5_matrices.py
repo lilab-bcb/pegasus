@@ -9,18 +9,8 @@ import copy
 from subprocess import check_call
 
 
-def determine_genome(input_h5):
-	with tables.open_file(input_h5) as h5_in:
-		genomes = []
-		for i, group in enumerate(h5_in.walk_groups()):
-			if i > 0:
-				genomes.append(group._v_name)
-		if len(genomes) > 1:
-			print("Warning: Genome is not provided and the hdf5 file contains multiple genomes. Genome {} is used.".format(genomes[0]))
-	return genomes[0]
 
-
-def load_10x_h5_file(input_h5, genome, threshold = 30000, ngene = 100):
+def load_10x_h5_file(input_h5, threshold = 30000, ngene = 100):
 	"""Load 10x format matrix from h5 file
 	
 	Parameters
@@ -28,32 +18,37 @@ def load_10x_h5_file(input_h5, genome, threshold = 30000, ngene = 100):
 
 	input_h5 : `str`
 		The matrix in h5 format.
-	genome : `str`
-		Genome string.
 	threshold : `int`, optional (default: 30000)
 		If matrix contain more than threshold barcodes, filter barcodes with low number of genes.
 	ngene : `int`, optional (default: 100)
 		Minimum number of genes to keep a barcode if # of barcodes > threshold.
 	"""	
-	inpmat = {}
+	
 	with tables.open_file(input_h5) as h5_in:
-		for node in h5_in.walk_nodes("/" + genome, "Array"):
-			inpmat[node.name] = node.read()
+		results = {}
+		for i, group in enumerate(h5_in.walk_groups()):
+			if i > 0:
+				genome = group._v_name
+				
+				inpmat = {}
+				for node in h5_in.walk_nodes("/" + genome, "Array"):
+					inpmat[node.name] = node.read()
+				
+				mat = csc_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape=inpmat["shape"])
+				if threshold is not None and mat.shape[1] > threshold:
+					selected = mat.getnnz(axis = 0) >= ngene
+					mat = mat[:, selected]
+					inpmat["barcodes"] = inpmat["barcodes"][selected]
+				inpmat["matrix"] = mat
+				
+				inpmat.pop("data")
+				inpmat.pop("indices")
+				inpmat.pop("indptr")
+				inpmat.pop("shape")
 
-	mat = csc_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape=inpmat["shape"])
-	if threshold is not None and mat.shape[1] > threshold:
-		selected = mat.getnnz(axis = 0) >= ngene
-		mat = mat[:, selected]
-		inpmat["barcodes"] = inpmat["barcodes"][selected]
+				results[genome] = inpmat
 
-	inpmat["matrix"] = mat
-
-	inpmat.pop("data")
-	inpmat.pop("indices")
-	inpmat.pop("indptr")
-	inpmat.pop("shape")
-
-	return inpmat
+	return results
 
 
 def load_antibody_csv(input_csv):
@@ -75,17 +70,18 @@ def load_antibody_csv(input_csv):
 	return inpmat
 
 
-def write_10x_h5_file(output_h5, output_data, genome, attributes):
+def write_10x_h5_file(output_h5, genome2data, attributes):
 	with tables.open_file(output_h5, mode="w", title=output_h5, filters=tables.Filters(complevel=1)) as hd5_out:
-		out_group = hd5_out.create_group("/", genome)
-		hd5_out.create_carray(out_group, "barcodes", obj=output_data["barcodes"])
-		hd5_out.create_carray(out_group, "data", obj=output_data["matrix"].data)
-		hd5_out.create_carray(out_group, "indices", obj=output_data["matrix"].indices)
-		hd5_out.create_carray(out_group, "indptr", obj=output_data["matrix"].indptr)
-		hd5_out.create_carray(out_group, "shape", obj=output_data["matrix"].shape)
+		for genome, output_data in genome2data.items():
+			out_group = hd5_out.create_group("/", genome)
+			hd5_out.create_carray(out_group, "barcodes", obj=output_data["barcodes"])
+			hd5_out.create_carray(out_group, "data", obj=output_data["matrix"].data)
+			hd5_out.create_carray(out_group, "indices", obj=output_data["matrix"].indices)
+			hd5_out.create_carray(out_group, "indptr", obj=output_data["matrix"].indptr)
+			hd5_out.create_carray(out_group, "shape", obj=output_data["matrix"].shape)
 
-		for attr in attributes:
-			hd5_out.create_carray(out_group, attr, obj=output_data[attr])
+			for attr in attributes:
+				hd5_out.create_carray(out_group, attr, obj=output_data[attr])
 
 
 def find_digits(value):
@@ -151,6 +147,8 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 	>>> tools.aggregate_matrix('example.csv', 'GRCh38', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'], 'example_10x.h5')
 	"""
 
+	assert genome is not None
+
 	df = pd.read_csv(csv_file, header=0, index_col='Sample')
 	df['Sample'] = df.index
 	rvec = [parse_restriction_string(x) for x in restrictions]
@@ -192,10 +190,10 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 			out_hd5["matrix"].append(channel)
 			for attr in attributes:
 				out_hd5[attr].append(np.repeat(row[attr], channel.shape[1]))
-
 		else:
 			if input_type == 'gene':
-				channel = load_10x_h5_file(input_hd5_file, genome)
+				results = load_10x_h5_file(input_hd5_file)
+				channel = results[genome]
 			elif input_type == 'ADT':
 				channel = load_antibody_csv(input_hd5_file)
 			else:
@@ -247,5 +245,5 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 			output_file += '.h5at'
 			attributes.append('antibody_names')
 
-	write_10x_h5_file(output_file, out_hd5, genome, attributes)
+	write_10x_h5_file(output_file, {genome : out_hd5}, attributes)
 	print("Generated {file} from {tot} files.".format(file=output_file, tot=tot))
