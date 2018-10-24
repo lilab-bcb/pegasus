@@ -4,10 +4,10 @@ import pandas as pd
 from .. import tools, demuxEM
 
 def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
-	assert kwargs['hash_type'] in {'nuclei', 'cell'}
-	if kwargs['hash_type'] == 'nuclei':
+	assert kwargs['hash_type'] in {'nuclei-hashing', 'cell-hashing'}
+	if kwargs['hash_type'] == 'nuclei-hashing':
 		kwargs['alpha'] = 0.0
-	elif kwargs['hash_type'] == 'cell':
+	elif kwargs['hash_type'] == 'cell-hashing':
 		kwargs['alpha'] = 0.5
 
 	if kwargs['alpha_value'] is not None:

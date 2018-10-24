@@ -15,7 +15,7 @@ Arguments:
   output_name                             Output name. All outputs will use it as the prefix.
 
 Options:
-  --hash-type <type>                         The hash type of the data. <type> can be 'cell' for cell-hashing and 'nuclei' for nuclei-hashing.
+  --hash-type <type>                         The hash type of the data. <type> can be 'cell-hashing' for cell-hashing and 'nuclei-hashing' for nuclei-hashing.
 
   -p <number>, --threads <number>            Number of threads. [default: 1]
   --genome <genome>                          Reference genome name. If not provided, we will infer it from the expression matrix file.
@@ -31,7 +31,7 @@ Options:
   -h, --help                                 Print out help information.
 
 Outputs:
-  output_name.demux_10x.h5                               RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
+  output_name_demux_10x.h5                               RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
   output_name_ADTs.h5ad                                  Antibody tag matrix in h5ad format.
   output_name_demux.h5ad                                 Demultiplexed RNA count matrix in h5ad format.
   output_name.ambient_hashtag.hist.png                   Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.

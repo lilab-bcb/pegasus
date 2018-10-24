@@ -178,7 +178,7 @@ to see the usage information::
 * Options:
 
 	-\\-hash-type <type>
-		The hash type of the data. <type> can be 'cell' for cell-hashing and 'nuclei' for nuclei-hashing.
+		The hash type of the data. <type> can be 'cell-hashing' for cell-hashing and 'nuclei-hashing' for nuclei-hashing.
 
   	\-p <number>, -\\-threads <number>
 		Number of threads. [default: 1]
@@ -209,7 +209,7 @@ to see the usage information::
 
 * Outputs:
 
-	output_name.demux_10x.h5
+	output_name_demux_10x.h5
 		RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
 
 	output_name_ADTs.h5ad
