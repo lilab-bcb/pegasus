@@ -51,23 +51,6 @@ def load_10x_h5_file(input_h5, threshold = 30000, ngene = 100):
 	return results
 
 
-def load_antibody_csv(input_csv):
-	barcodes = []
-	antibody_names = []
-	stacks = []
-	with open(input_csv) as fin:
-		barcodes = next(fin).strip().split(',')[1:]
-		for line in fin:
-			fields = line.strip().split(',')
-			antibody_names.append(fields[0])
-			stacks.append([int(x) for x in fields[1:]])
-
-	inpmat = {}
-	inpmat["barcodes"] = [x.encode() for x in barcodes]
-	inpmat["antibody_names"] = [x.encode() for x in antibody_names]
-	inpmat["matrix"] = csc_matrix(np.stack(stacks, axis = 0))
-
-	return inpmat
 
 
 def write_10x_h5_file(output_h5, genome2data, attributes):
@@ -81,7 +64,8 @@ def write_10x_h5_file(output_h5, genome2data, attributes):
 			hd5_out.create_carray(out_group, "shape", obj=output_data["matrix"].shape)
 
 			for attr in attributes:
-				hd5_out.create_carray(out_group, attr, obj=output_data[attr])
+				if attr in output_data:
+					hd5_out.create_carray(out_group, attr, obj=output_data[attr])
 
 
 def find_digits(value):

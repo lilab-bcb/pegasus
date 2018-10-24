@@ -8,4 +8,4 @@ from .iPlotting import iPlotting as iplot
 from .SubClustering import SubClustering as subcluster
 from .View import View as view
 from .SCPOutput import SCPOutput as scp_output
-from .CITESeq import CITESeq as cite_seq
+from .CITESeq import CITESeq as merge_rna_adt

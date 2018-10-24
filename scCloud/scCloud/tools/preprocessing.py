@@ -66,27 +66,6 @@ def read_10x_h5_file(input_h5, genome, ngene = None):
 
 	return data
 
-def read_antibody_file(input_h5at, genome):
-	obs_not = set(["data", "indices", "indptr", "shape", "antibody_names", "barcodes"])
-
-	with tables.open_file(input_h5at) as h5_in:
-		inpmat = {}
-		for node in h5_in.walk_nodes("/" + genome, "Array"):
-			inpmat[node.name] = node.read()
-
-	X = csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0]))
-	
-	barcodes = inpmat["barcodes"].astype(str)
-	obs_dict = {"obs_names" : barcodes}
-	obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
-	for key, value in inpmat.items():
-		if key not in obs_not:
-			obs_dict[key] = value.astype(str)
-
-	data = anndata.AnnData(X = X, obs = obs_dict, var = {"var_names" : inpmat["antibody_names"].astype(str)})
-
-	return data
-
 def read_antibody_csv(input_csv):
 	barcodes = []
 	antibody_names = []
@@ -132,8 +111,6 @@ def read_input(input_file, genome = None, mode = 'r+', ngene = None):
 		data = read_10x_h5_file(input_file, genome, ngene = ngene)
 	elif input_file.endswith('.h5ad'):
 		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
-	elif input_file.endswith('.h5at'):
-		data = read_antibody_file(input_file, genome)
 	elif input_file.endswith('.csv'):
 		data = read_antibody_csv(input_file)
 	else:
