@@ -226,6 +226,7 @@ to see the usage information::
 
 	output_name.real_content.hist.png
 		Optional output. A histogram plot depicting hashtag distributions of not-real-cells and real-cells as defined by total number of expressed genes in the RNA assay.
+
 	output_name.rna_demux.hist.png
 		Optional output. A histogram plot depicting RNA UMI distribution for singlets, doublets and unknown cells.
 
