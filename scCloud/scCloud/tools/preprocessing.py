@@ -61,7 +61,7 @@ def read_10x_h5_file(input_h5, genome, ngene = None):
 	if ngene is not None:
 		data.obs['n_genes'] = data.X.getnnz(axis = 1)
 		data.obs['n_counts'] = data.X.sum(axis = 1).A1
-		data._inplace_subset_obs(data.obs['n_genes'] >= ngene)
+		data._inplace_subset_obs(data.obs['n_genes'].values >= ngene)
 		data.var['robust'] = True
 
 	return data

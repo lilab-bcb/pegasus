@@ -1,5 +1,5 @@
 from .AggregateMatrix import AggregateMatrix as aggregate_matrix
-from .Hashing import Hashing as hashing
+from .DemuxEM import DemuxEM as demuxEM
 from .Clustering import Clustering as cluster
 from .DeAnalysis import DeAnalysis as de_analysis
 from .AnnotateCluster import AnnotateCluster as annotate_cluster

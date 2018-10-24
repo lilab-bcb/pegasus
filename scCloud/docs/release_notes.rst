@@ -1,3 +1,9 @@
+Version 0.6.0 `October 23, 2018`
+--------------------------------
+
+Renamed scrtools to scCloud.
+Added demuxEM module for cell/nuclei-hashing.
+
 Version 0.5.0 `August 21, 2018`
 -------------------------------
 

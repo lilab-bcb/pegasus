@@ -14,21 +14,21 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../scrtools')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../scCloud')))
 
 import matplotlib
 matplotlib.use('Agg')
 
 # -- Project information -----------------------------------------------------
 
-project = 'scrtools'
+project = 'scCloud'
 copyright = '2018, Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.'
 author = 'Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.'
 
 # The short X.Y version
-version = '0.4.0'
+version = '0.6.0'
 # The full version, including alpha/beta/rc tags
-release = '0.4.0'
+release = '0.6.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -117,14 +117,14 @@ html_context = dict(
     github_user = 'broadinstitute',   # Username
     github_repo = 'scRNA-Seq',     # Repo name
     github_version = 'master',  # Version
-    conf_py_path = '/scrtools/docs/',    # Path in the checkout to the docs root
+    conf_py_path = '/scCloud/docs/',    # Path in the checkout to the docs root
 )
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'scrtoolsdoc'
+htmlhelp_basename = 'scCloud_doc'
 
 
 def setup(app):
@@ -154,7 +154,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'scrtools.tex', 'scrtools Documentation',
+    (master_doc, 'scCloud.tex', 'scCloud Documentation',
      'Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.', 'manual'),
 ]
 
@@ -164,7 +164,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'scrtools', 'scrtools Documentation',
+    (master_doc, 'scCloud', 'scCloud Documentation',
      [author], 1)
 ]
 
@@ -175,8 +175,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'scrtools', 'scrtools Documentation',
-     author, 'scrtools', 'One line description of project.',
+    (master_doc, 'scCloud', 'scCloud Documentation',
+     author, 'scCloud', 'One line description of project.',
      'Miscellaneous'),
 ]
 

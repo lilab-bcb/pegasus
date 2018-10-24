@@ -11,7 +11,7 @@ def plot_adt_hist(adt, attr, out_file, alpha = 0.5, dpi = 500, figsize = None):
 	idx_signal = np.isin(adt.obs[attr], 'signal')
 	signal = adt.obs.loc[idx_signal, 'counts']
 	background = adt.obs.loc[~idx_signal, 'counts']
-	bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 1001)
+	bins = np.logspace(0, np.log10(max(signal.max(), background.max())), 501)
 	plt.hist(background, bins, alpha = alpha, label = 'background', log = True)
 	plt.hist(signal, bins, alpha = alpha, label = 'signal', log = True)
 	plt.legend(loc='upper right')

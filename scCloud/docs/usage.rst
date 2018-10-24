@@ -1,23 +1,28 @@
-Use ``scrtools`` as a command line tool
+Use ``scCloud`` as a command line tool
 ---------------------------------------
 
-``scrtools`` can be used as a command line tool. Type::
+``scCloud`` can be used as a command line tool. Type::
 
-	scrtools -h
+	scCloud -h
 
 to see the help information::
 
 	Usage:
-		scrtools <command> [<args>...]
-		scrtools -h | --help
-		scrtools -v | --version
+		scCloud <command> [<args>...]
+		scCloud -h | --help
+		scCloud -v | --version
 
-``scrtools`` has 8 sub-commands in 4 groups.
+``scCloud`` has 10 sub-commands in 6 groups.
 
 * Preprocessing:
 
 	aggregate_matrix
 		Aggregate cellranger-outputted channel-specific count matrices into a single count matrix. It also enables users to import metadata into the count matrix.
+
+* Demultiplexing:
+
+	demuxEM
+		Demultiplex cells/nuclei based on DNA barcodes for cell-hashing and nuclei-hashing data.
 
 * Analyzing:
 	
@@ -28,7 +33,7 @@ to see the help information::
     	Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene.
     
     annotate_cluster
-    	This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it only works for human and mouse immune cells.
+    	This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it works for human/mouse immune/brain cells.
 
 * Plotting:
 
@@ -67,38 +72,38 @@ Suppose you have ``example.csv`` ready with the following contents::
 
 You want to analyze all four samples but correct batch effects for bone marrow and pbmc samples separately. You can run the following commands::
 
-	scrtools aggregate_matrix --genome GRCh38 --attributes Source,Platform,Donor example.csv example
-	scrtools cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
-	scrtools de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
-	scrtools annotate_cluster example.h5ad example.anno.txt
-	scrtools plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
-	scrtools plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
-	scrtools iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
+	scCloud aggregate_matrix --genome GRCh38 --attributes Source,Platform,Donor example.csv example
+	scCloud cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
+	scCloud de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
+	scCloud annotate_cluster example.h5ad example.anno.txt
+	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
+	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
+	scCloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
 
 The above analysis will give you tSNE, louvain cluster labels and diffusion maps in ``example.h5ad``. You can investigate donor-specific effects by looking at ``example.composition.png``. ``example.scatter.png`` plotted tSNE colored by louvain_labels and Donor info side-by-side. You can explore the diffusion map in 3D by looking at ``example.diffmap.html``. This html maps all diffusion components into 3D using PCA.
 
 If you want to perform subcluster analysis by combining cluster 1 and 3, run the following command::
 
-	scrtools subcluster -p 20 --correct-batch-effect example.h5ad 1,3 example_sub
+	scCloud subcluster -p 20 --correct-batch-effect example.h5ad 1,3 example_sub
 
 
 ---------------------------------
 
 
-``scrtools aggregate_matrix``
+``scCloud aggregate_matrix``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The first step for single cell analysis is to generate one count matrix from cellranger's channel-specific count matrices. ``scrtools aggregate_matrix`` allows aggregating arbitrary matrices with the help of a *CSV* file.
+The first step for single cell analysis is to generate one count matrix from cellranger's channel-specific count matrices. ``scCloud aggregate_matrix`` allows aggregating arbitrary matrices with the help of a *CSV* file.
 
 Type::
 
-	scrtools aggregate_matrix -h
+	scCloud aggregate_matrix -h
 
 to see the usage information::
 
 	Usage:
-  		scrtools aggregate_matrix <csv_file> <output_name> [--genome <genome> --restriction <restriction>... --attributes <attributes> --google-cloud]
-  		scrtools aggregate_matrix -h
+  		scCloud aggregate_matrix <csv_file> <output_name> [--genome <genome> --restriction <restriction>... --attributes <attributes> --google-cloud]
+  		scCloud aggregate_matrix -h
 
 * Arguments:
 
@@ -138,26 +143,117 @@ to see the usage information::
 
 * Examples::
 
-	scrtools aggregate_matrix --genome GRCh38 --restriction Source:pbmc --restriction Donor:1 --attributes Source,Platform,Donor example.csv example
+	scCloud aggregate_matrix --genome GRCh38 --restriction Source:pbmc --restriction Donor:1 --attributes Source,Platform,Donor example.csv example
 
 
 ---------------------------------
 
 
-``scrtools cluster``
-^^^^^^^^^^^^^^^^^^^^
+``scCloud demuxEM``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we collected the count matrix ``example_10x.h5``, we can perform single cell analysis using ``scrtools cluster``.
+If you have data generated by cell-hashing or nuclei-hashing, you can use ``scCloud demuxEM`` to demultiplex your data. 
 
 Type::
 
-	scrtools cluster -h
+	scCloud demuxEM -h
 
 to see the usage information::
 
 	Usage:
-		scrtools cluster [options] <input_file> <output_name>
-		scrtools cluster -h
+	  scCloud demuxEM --hash-type <type> [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
+	  scCloud demuxEM -h
+
+* Arguments:
+
+	input_adt_csv_file
+		Input ADT (antibody tag) count matrix in CSV format.
+
+	input_raw_gene_bc_matrices_h5.h5
+		Input raw RNA expression matrix in 10x hdf5 format.
+
+	output_name
+		Output name. All outputs will use it as the prefix.
+
+* Options:
+
+	-\\-hash-type <type>
+		The hash type of the data. <type> can be 'cell' for cell-hashing and 'nuclei' for nuclei-hashing.
+
+  	\-p <number>, -\\-threads <number>
+		Number of threads. [default: 1]
+
+	-\\-genome <genome>
+		Reference genome name. If not provided, we will infer it from the expression matrix file.
+
+	-\\-min-num-genes <number>
+		We only demultiplex cells/nuclei with at least <number> expressed genes. [default: 100]
+
+	-\\-max-background-probability <prob>
+		Any cell/nucleus with no less than <prob> background probability will be marked as unknown. [default: 0.8]
+
+	-\\-prior-on-samples <prior>
+		The sparse prior put on samples.
+
+	-\\-random-state <seed>
+		The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 0]
+
+	-\\-generate-diagnostic-plots
+		Generate a series of diagnostic plots, including the background/signal between HTO counts, estimated background probabilities, HTO distributions of cells and non-cells etc.
+
+	-\\-generate-gender-plot <genes>
+		Generate violin plots using gender-specific genes (e.g. Xist). <gene> is a comma-separated list of gene names. 
+	
+	\-h, -\\-help
+		Print out help information.
+
+* Outputs:
+
+	output_name.demux_10x.h5
+		RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
+
+	output_name_ADTs.h5ad
+		Antibody tag matrix in h5ad format.
+
+	output_name_demux.h5ad
+		Demultiplexed RNA count matrix in h5ad format.
+
+	output_name.ambient_hashtag.hist.png
+		Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.
+
+	output_name.background_probabilities.bar.png
+		Optional output. A bar plot visualizing the estimated hashtag background probability distribution.
+
+	output_name.real_content.hist.png
+		Optional output. A histogram plot depicting hashtag distributions of not-real-cells and real-cells as defined by total number of expressed genes in the RNA assay.
+	output_name.rna_demux.hist.png
+		Optional output. A histogram plot depicting RNA UMI distribution for singlets, doublets and unknown cells.
+
+	output_name.gene_name.violin.png
+		Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
+
+* Examples::
+
+	scCloud demuxEM -p 8 --hash-type cell --generate-diagnostic-plots example_adt.csv example_raw_gene_bc_matrices_h5.h5 example_output
+
+
+---------------------------------
+
+
+``scCloud cluster``
+^^^^^^^^^^^^^^^^^^^^
+
+Once we collected the count matrix ``example_10x.h5``, we can perform single cell analysis using ``scCloud cluster``.
+
+Type::
+
+	scCloud cluster -h
+
+to see the usage information::
+
+	Usage:
+		scCloud cluster [options] <input_file> <output_name>
+		scCloud cluster -h
 
 * Arguments:
 
@@ -329,27 +425,26 @@ to see the usage information::
 
 * Examples::
 
-	scrtools cluster -p 20 --correct-batch-effect --run-louvain --run-tsne example_10x.h5 example
-
+	scCloud cluster -p 20 --correct-batch-effect --run-louvain --run-tsne example_10x.h5 example
 
 
 ---------------------------------
 
 
-``scrtools de_analysis``
+``scCloud de_analysis``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we have the clusters, we can detect markers using ``scrtools de_analysis``.
+Once we have the clusters, we can detect markers using ``scCloud de_analysis``.
 
 Type::
 
-	scrtools de_analysis -h
+	scCloud de_analysis -h
 
 to see the usage information::
 
 	Usage:
-		scrtools de_analysis [--labels <attr> -p <threads> --alpha <alpha> --fisher --mwu --roc] <input_h5ad_file> <output_spreadsheet>
-		scrtools de_analysis -h
+		scCloud de_analysis [--labels <attr> -p <threads> --alpha <alpha> --fisher --mwu --roc] <input_h5ad_file> <output_spreadsheet>
+		scCloud de_analysis -h
 
 * Arguments:
 
@@ -392,31 +487,31 @@ to see the usage information::
 
 * Examples::
 
-	scrtools de_analysis --labels louvain_labels -p 20 --fisher --mwu --roc example.h5ad example_de.xlsx
+	scCloud de_analysis --labels louvain_labels -p 20 --fisher --mwu --roc example.h5ad example_de.xlsx
 
 
 ---------------------------------
 
 
-``scrtools annotate_cluster``
+``scCloud annotate_cluster``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we have the DE results, we could optionally identify putative cell types for each cluster using ``scrtools annotate_cluster``. Currently, this subcommand only works for human and mouse immune cells.
+Once we have the DE results, we could optionally identify putative cell types for each cluster using ``scCloud annotate_cluster``. Currently, this subcommand only works for human and mouse immune cells.
 
 Type::
 
-	scrtools annotate_cluster -h
+	scCloud annotate_cluster -h
 
 to see the usage information::
 
 	Usage:
-		scrtools annotate_cluster [--json-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
-		scrtools annotate_cluster -h
+		scCloud annotate_cluster [--json-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+		scCloud annotate_cluster -h
 
 * Arguments:
 
 	input_h5ad_file
-		Single cell data with DE analysis done by ``scrtools de_analysis``.
+		Single cell data with DE analysis done by ``scCloud de_analysis``.
 
 	output_file
 		Output annotation file.
@@ -424,7 +519,7 @@ to see the usage information::
 * Options:
 
 	-\\-json-file <file>
-		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``, which triggers scrtools to markers included in the package. [default: human_immune]
+		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``, which triggers scCloud to markers included in the package. [default: human_immune]
 
 	-\\-minimum-report-score <score>
 		Minimum cell type score to report a potential cell type. [default: 0.5]
@@ -442,27 +537,27 @@ to see the usage information::
 
 * Examples::
 
-	scrtools annotate_cluster example.h5ad example.anno.txt
+	scCloud annotate_cluster example.h5ad example.anno.txt
 
 
 ---------------------------------
 
 
 
-``scrtools plot``
+``scCloud plot``
 ^^^^^^^^^^^^^^^^^
 
-We can make a variety of figures using ``scrtools plot``.
+We can make a variety of figures using ``scCloud plot``.
 
 Type::
 
-	scrtools plot -h
+	scCloud plot -h
 
 to see the usage information::
 
 	Usage:
-  		scrtools plot [options] [--restriction <restriction>...] <plot_type> <input_h5ad_file> <output_file>
-		scrtools plot -h
+  		scCloud plot [options] [--restriction <restriction>...] <plot_type> <input_h5ad_file> <output_file>
+		scCloud plot -h
 
 * Arguments:
 
@@ -517,10 +612,10 @@ to see the usage information::
 		Plot y axis in log10 scale for composition plot.
 
 	-\\-nrows <nrows>
-		Number of rows in the figure. If not set, scrtools will figure it out automatically.
+		Number of rows in the figure. If not set, scCloud will figure it out automatically.
 
 	-\\-ncols <ncols>
-		Number of columns in the figure. If not set, scrtools will figure it out automatically.
+		Number of columns in the figure. If not set, scCloud will figure it out automatically.
 
 	-\\-subplot-size <sizes>
 		Sub-plot size in inches, w x h, separated by comma. Note that margins are not counted in the sizes. For composition, default is (6, 4). For scatter plots, default is (4, 4).
@@ -560,32 +655,31 @@ to see the usage information::
 
 Examples::
 
-	scrtools plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
-	scrtools plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
-	scrtools plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.png
-	scrtools plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.png
-	scrtools plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.png
-	scrtools plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.png
+	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
+	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
+	scCloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.png
+	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.png
+	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.png
+	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.png
 
 
 ---------------------------------
 
 
-
-``scrtools iplot``
+``scCloud iplot``
 ^^^^^^^^^^^^^^^^^^
 
-We can also make interactive plots in html format using ``scrtools iplot``. These interactive plots are very helpful if you want to explore the diffusion maps.
+We can also make interactive plots in html format using ``scCloud iplot``. These interactive plots are very helpful if you want to explore the diffusion maps.
 
 Type::
 
-	scrtools iplot -h
+	scCloud iplot -h
 
 to see the usage information::
 
 	Usage:
-		scrtools iplot --attribute <attr> [options] <basis> <input_h5ad_file> <output_html_file>
-		scrtools iplot -h
+		scCloud iplot --attribute <attr> [options] <basis> <input_h5ad_file> <output_html_file>
+		scCloud iplot -h
 
 * Arguments:
 
@@ -617,26 +711,27 @@ to see the usage information::
 
 * Examples::
 
-	scrtools iplot --attribute louvain_labels tsne example.h5ad example.tsne.html
-	scrtools iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
+	scCloud iplot --attribute louvain_labels tsne example.h5ad example.tsne.html
+	scCloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
 
 
 ---------------------------------
 
-``scrtools view``
+
+``scCloud view``
 ^^^^^^^^^^^^^^^^^
 
 We may want to further perform sub-cluster analysis on a subset of cells. This sub-command helps us to define the subset.
 
 Type::
 
-	scrtools view -h
+	scCloud view -h
 
 to see the usage information::
 
 	Usage:
-		scrtools view [--show-attributes --show-gene-attributes --show-values-for-attributes <attributes>] <input_h5ad_file>
-		scrtools view -h
+		scCloud view [--show-attributes --show-gene-attributes --show-values-for-attributes <attributes>] <input_h5ad_file>
+		scCloud view -h
 
 * Arguments:
 
@@ -659,28 +754,28 @@ to see the usage information::
 
 * Examples::
 
-	scrtools view --show-attributes example.h5ad
-	scrtools view --show-gene-attributes example.h5ad
-	scrtools view --show-values-for-attributes louvain_labels,Donor example.h5ad
+	scCloud view --show-attributes example.h5ad
+	scCloud view --show-gene-attributes example.h5ad
+	scCloud view --show-values-for-attributes louvain_labels,Donor example.h5ad
 
 
 ---------------------------------
 
 
-``scrtools subcluster``
+``scCloud subcluster``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-If there is a subset of cells that we want to further cluster, we can run ``scrtools subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
+If there is a subset of cells that we want to further cluster, we can run ``scCloud subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
 
 Type::
 
-	scrtools subcluster -h
+	scCloud subcluster -h
 
 to see the usage information::
 
 	Usage:
-		scrtools subcluster [options] --subset-selection <subset-selection>... <input_file> <output_name>
-		scrtools subcluster -h
+		scCloud subcluster [options] --subset-selection <subset-selection>... <input_file> <output_name>
+		scCloud subcluster -h
 
 * Arguments:
 
@@ -825,24 +920,27 @@ to see the usage information::
 
 * Examples::
 
-	scrtools subcluster --subset_selection louvain_labels:1,3  --subset_selection Donor:1 -p 20 --correct-batch-effect example.h5ad example_sub
+	scCloud subcluster --subset_selection louvain_labels:1,3  --subset_selection Donor:1 -p 20 --correct-batch-effect example.h5ad example_sub
+
 
 ---------------------------------
 
-``scrtools scp_output``
+
+
+``scCloud scp_output``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If we want to visualize analysis results on single cell portal (SCP), we can generate required files for SCP using this subcommand.
 
 Type::
 
-	scrtools scp_output -h
+	scCloud scp_output -h
 
 to see the usage information::
 
 	Usage:
-		scrtools scp_output <input_h5ad_file> <output_name>
-		scrtools scp_output -h
+		scCloud scp_output <input_h5ad_file> <output_name>
+		scCloud scp_output -h
 
 * Arguments:
 
@@ -864,5 +962,4 @@ to see the usage information::
 
 * Examples::
 
-	scrtools scp_output example.h5ad example
-
+	scCloud scp_output example.h5ad example
