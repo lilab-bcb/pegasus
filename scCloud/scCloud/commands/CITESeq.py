@@ -26,4 +26,4 @@ Examples:
     """
 
     def execute(self):
-        run_cite_seq_pipeline(self.args['<input_raw_gene_bc_matrices_h5.h5>'], self.args['<input_adt_csv_file>'], self.args['<antibody_control_csv>'], self.args['<output_10x.h5>'])
+        merge_rna_and_adt_data(self.args['<input_raw_gene_bc_matrices_h5.h5>'], self.args['<input_adt_csv_file>'], self.args['<antibody_control_csv>'], self.args['<output_10x.h5>'])

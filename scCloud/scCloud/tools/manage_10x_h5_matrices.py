@@ -10,18 +10,20 @@ from subprocess import check_call
 
 
 
-def load_10x_h5_file(input_h5, threshold = 30000, ngene = 100):
-	"""Load 10x format matrix from h5 file
+row_attrs = {"genes", "gene_names", "antibody_names"} # row attributes
+excluded = {"barcodes", "matrix"} # processed attributes
+
+
+def load_10x_h5_file(input_h5, ngene = None):
+	"""Load 10x-format matrix from h5 file
 	
 	Parameters
 	----------
 
 	input_h5 : `str`
 		The matrix in h5 format.
-	threshold : `int`, optional (default: 30000)
-		If matrix contain more than threshold barcodes, filter barcodes with low number of genes.
-	ngene : `int`, optional (default: 100)
-		Minimum number of genes to keep a barcode if # of barcodes > threshold.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 	"""	
 	
 	with tables.open_file(input_h5) as h5_in:
@@ -30,30 +32,50 @@ def load_10x_h5_file(input_h5, threshold = 30000, ngene = 100):
 			if i > 0:
 				genome = group._v_name
 				
-				inpmat = {}
+				channel = {}
 				for node in h5_in.walk_nodes("/" + genome, "Array"):
-					inpmat[node.name] = node.read()
+					channel[node.name] = node.read()
 				
-				mat = csc_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape=inpmat["shape"])
-				if threshold is not None and mat.shape[1] > threshold:
+				mat = csc_matrix((channel["data"], channel["indices"], channel["indptr"]), shape=channel["shape"])
+				if ngene is not None and not genome.startswith("CITE_Seq"):
 					selected = mat.getnnz(axis = 0) >= ngene
 					mat = mat[:, selected]
-					inpmat["barcodes"] = inpmat["barcodes"][selected]
-				inpmat["matrix"] = mat
+					channel["barcodes"] = channel["barcodes"][selected]
+				channel["matrix"] = mat
 				
-				inpmat.pop("data")
-				inpmat.pop("indices")
-				inpmat.pop("indptr")
-				inpmat.pop("shape")
+				channel.pop("data")
+				channel.pop("indices")
+				channel.pop("indptr")
+				channel.pop("shape")
 
-				results[genome] = inpmat
+				results[genome] = channel
 
 	return results
 
 
 
+def load_dropseq_file(input_file, genome):
+	"""Load dropseq-format matrix from the dropseq file
 
-def write_10x_h5_file(output_h5, genome2data, attributes):
+	Parameters
+	----------
+
+	input_file : `str`
+		The matrix in dropseq format.
+	genome : `str`
+		The genome reference.
+	"""
+
+	df = pd.read_table(input_file, header = 0, index_col = 0, compression = 'gzip')
+	channel = {"barcodes" : np.array([x.encode() for x in df.columns]), 
+			   "matrix" : df}
+	results = {genome : channel}
+
+	return results
+
+
+
+def write_10x_h5_file(output_h5, genome2data):
 	with tables.open_file(output_h5, mode="w", title=output_h5, filters=tables.Filters(complevel=1)) as hd5_out:
 		for genome, output_data in genome2data.items():
 			out_group = hd5_out.create_group("/", genome)
@@ -63,9 +85,51 @@ def write_10x_h5_file(output_h5, genome2data, attributes):
 			hd5_out.create_carray(out_group, "indptr", obj=output_data["matrix"].indptr)
 			hd5_out.create_carray(out_group, "shape", obj=output_data["matrix"].shape)
 
-			for attr in attributes:
-				if attr in output_data:
-					hd5_out.create_carray(out_group, attr, obj=output_data[attr])
+			for attr, obj in output_data.items():
+				if attr not in excluded:
+					hd5_out.create_carray(out_group, attr, obj=obj)
+
+
+
+class aggr_matrix:
+	def __init__(self, channel, nsample, is_dropseq):
+		self.out_hd5 = {}
+		self.attrs = set()
+		for attr, value in channel.items():
+			self.attrs.add(attr)
+			self.out_hd5[attr] = value if attr in row_attrs else [value]
+		self.nsample = nsample
+		self.is_dropseq = is_dropseq is not None
+
+	def append(self, channel, nsample):
+		attrs_c = set(channel)
+		attrs_r = self.attrs & attrs_c # joint	
+		for attr in attrs_r:
+			if attr not in row_attrs:
+				self.out_hd5[attr].append(channel[attr])
+		attrs_r = self.attrs - attrs_c # only in existing
+		for attr in attrs_r:
+			self.out_hd5[attr].append(np.repeat('', nsample))
+		attrs_r = attrs_c - self.attrs # only in new
+		for attr in attrs_r:
+			self.out_hd5[attr] = [np.repeat('', self.nsample), channel[attr]]
+		self.nsample += nsample
+
+	def merge(self):
+		if not self.is_dropseq:
+			self.out_hd5["matrix"] = hstack(self.out_hd5["matrix"], "csc")
+		else:
+			df_new = pd.concat(self.out_hd5["matrix"], axis = 1, sort = True)
+			df_new.fillna(0, inplace = True)
+			self.out_hd5["matrix"] = csc_matrix(df_new.astype(int).values)
+			self.out_hd5["genes"] = self.out_hd5["gene_names"] = df_new.index.values.astype(str)
+
+		self.out_hd5["barcodes"] = np.concatenate(self.out_hd5["barcodes"])
+
+		for attr in self.attrs:
+			if (attr not in row_attrs) and (attr not in excluded):
+				self.out_hd5[attr] = np.concatenate(self.out_hd5[attr])
+
 
 
 def find_digits(value):
@@ -98,28 +162,45 @@ def parse_restriction_string(rstr):
 	return (name, isin, content)
 
 
-def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_name, google_cloud=False, input_type='gene'):
+
+def select_only_singlets(results):
+	singlet = "singlet".encode()
+	for genome, channel in results.items():
+		if not genome.startswith("CITE_Seq") and "demux_type" in channel:
+			idx = channel["demux_type"] == singlet
+			channel.pop("demux_type")
+			channel["matrix"] = channel["matrix"][:, idx]
+			channel["barcodes"] = channel["barcodes"][idx]
+			for attr in channel:
+				if (attr not in row_attrs) and (attr not in excluded):
+					channel[attr] = channel[attr][idx]
+
+
+
+def aggregate_10x_matrices(csv_file, restrictions, attributes, output_file, google_cloud = False, select_singlets = False, ngene = None, is_dropseq = None):
 	"""Aggregate channel-specific 10x count matrices into one big count matrix.
 
-	This function takes as input a csv_file, which contains at least 3 columns — Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. It outputs a 10x-formatted HDF5 file for the big count matrix.
+	This function takes as input a csv_file, which contains at least 2 columns — Sample, sample name; Location, folder that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5). It outputs a 10x-formatted HDF5 file containing on merged matrix per genome.
 	
 	Parameters
 	----------
 
 	csv_file : `str`
 		The CSV file containing information about each 10x channel.
-	genome : `str`
-		The genome each sample comes from.
 	restrictions : `list[str]`
 		A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
 	attributes : `list[str]`
 		A list of attributes need to be incorporated into the output count matrix.
-	output_name : `str`
-		The output count matrix file name prefix. If input_type == 'gene', output_name_10x.h5 will be generated. If input_type == 'ADT', output_name.h5at will be generated.
-	google_cloud : `bool`, optional (default: `False`) 
+	output_file : `str`
+		The output count matrix file name.
+	google_cloud : `bool`, optional (default: False) 
 		If the channel-specific count matrices are stored in a google bucket.
-	input_type : `str`, optional (default: `gene`)
-		Input type, 'gene' refers to 10x h5 format; 'dropseq' refers to drop-seq format; 'ADT' refers to CITE-Seq csv.
+	select_singlets : `bool`, optional (default: False)
+		If we have demultiplexed data, turning on this option will make scCloud only include barcodes that are predicted as singlets.
+	ngene : `int`, optional (default: None)
+		The minimum number of expressed genes to keep one barcode. 
+	is_dropseq: `str`, optional (default: None)
+		If None, assume data are generated from 10 assays; otherwise, assume data are generated using Drop-Seq with reference genome <is_dropseq>.
 
 	Returns
 	-------
@@ -128,17 +209,21 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 
 	Examples
 	--------
-	>>> tools.aggregate_matrix('example.csv', 'GRCh38', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'], 'example_10x.h5')
+	>>> tools.aggregate_matrix('example.csv', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'], 'example_10x.h5')
 	"""
-
-	assert genome is not None
 
 	df = pd.read_csv(csv_file, header=0, index_col='Sample')
 	df['Sample'] = df.index
+
+	# Automatically detect assay type
+	input_type = 'dropseq' if df['Location'].iat[0].endswith('dge.txt.gz') else '10x' 
+
+	# Select channels
 	rvec = [parse_restriction_string(x) for x in restrictions]
-	rvec.append(('Reference', True, {genome}))
+	
 	if attributes is None:
 		attributes = []
+	
 	idx = pd.Series([True] * df.shape[0], index=df.index, name='selected')
 	for name, isin, content in rvec:
 		assert name in df.columns
@@ -153,8 +238,9 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 		print("No channels pass the restrictions!")
 		return
 
+	# Load channels
 	tot = 0
-	out_hd5 = None
+	merged_map = {}
 	for sample_name, row in df.iterrows():
 		input_hd5_file = row['Location']
 		if google_cloud:
@@ -162,72 +248,31 @@ def aggregate_10x_matrices(csv_file, genome, restrictions, attributes, output_na
 			check_call(call_args)
 			input_hd5_file = '{0}_tmp_h5.h5'.format(sample_name)
 		
-		if input_type == 'dropseq':
-			channel = pd.read_table(input_hd5_file, header = 0, index_col = 0, compression = 'gzip')
-			channel.columns = [sample_name + '-' + x for x in channel.columns]
-
-			if out_hd5 is None:
-				out_hd5 = {"matrix" : [], "barcodes" : None, "genes" : None, "gene_names" : None}
-				for attr in attributes:
-					out_hd5[attr] = []
-
-			out_hd5["matrix"].append(channel)
-			for attr in attributes:
-				out_hd5[attr].append(np.repeat(row[attr], channel.shape[1]))
-		else:
-			if input_type == 'gene':
-				results = load_10x_h5_file(input_hd5_file)
-				channel = results[genome]
-			elif input_type == 'ADT':
-				channel = load_antibody_csv(input_hd5_file)
-			else:
-				assert(False)
-
+		results = load_10x_h5_file(input_hd5_file, ngene) if is_dropseq is None else load_dropseq_file(input_hd5_file, is_dropseq)
+		if select_singlets:
+			select_only_singlets(results)
+		for genome, channel in results.items():
 			channel["barcodes"] = np.array([(sample_name + '-' + x.decode()) for x in channel["barcodes"]])
-
-			if out_hd5 is None:
-				out_hd5 = copy.copy(channel)
-				out_hd5["matrix"] = []
-				out_hd5["barcodes"] = []
-				for attr in attributes:
-					out_hd5[attr] = []
-
-			out_hd5["matrix"].append(channel["matrix"])
-			out_hd5["barcodes"].append(channel["barcodes"])
+			nsample = channel["barcodes"].size
 			for attr in attributes:
-				out_hd5[attr].append(np.repeat(row[attr], channel["matrix"].shape[1]))
+				channel[attr] = np.repeat(row[attr], nsample)
+			if genome in merged_map:
+				merged_map[genome].append(channel, nsample)
+			else:
+				merged_map[genome] = aggr_matrix(channel, nsample, is_dropseq)
 
-		print("Processed {}.".format(input_hd5_file))
 		tot += 1
+		print("Processed {}.".format(input_hd5_file))
 
-	# delete temporary file
+	# Delete temporary file
 	if google_cloud: 
 		check_call(['rm', '-f', input_hd5_file])
 
-	output_file = output_name
-	
-	if input_type == 'dropseq':
-		df_new = pd.concat(out_hd5["matrix"], axis = 1, sort = True)
-		df_new.fillna(0, inplace = True)
-		out_hd5["matrix"] = csc_matrix(df_new.astype(int).values)
-		out_hd5["barcodes"] = df_new.columns.values.astype(str)
-		out_hd5["genes"] = out_hd5["gene_names"] = df_new.index.values.astype(str)
-		for attr in attributes:
-			out_hd5[attr] = np.concatenate(out_hd5[attr])
-		output_file += '_10x.h5'
-		attributes.extend(['genes', 'gene_names'])
-	else:		
-		out_hd5["matrix"] = hstack(out_hd5["matrix"], "csc")
-		out_hd5["barcodes"] = np.concatenate(out_hd5["barcodes"])
-		for attr in attributes:
-			out_hd5[attr] = np.concatenate(out_hd5[attr])
-		
-		if input_type == 'gene':
-			output_file += '_10x.h5'
-			attributes.extend(['genes', 'gene_names'])
-		elif input_type == 'ADT':
-			output_file += '.h5at'
-			attributes.append('antibody_names')
+	# Merge channels
+	results_map = {}
+	for genome, aggr in merged_map.items():
+		aggr.merge()
+		results_map[genome] = aggr.out_hd5
 
-	write_10x_h5_file(output_file, {genome : out_hd5}, attributes)
+	write_10x_h5_file(output_file, results_map)
 	print("Generated {file} from {tot} files.".format(file=output_file, tot=tot))

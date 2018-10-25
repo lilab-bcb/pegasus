@@ -56,8 +56,14 @@ to see the help information::
 	scp_output
 		Generate output files for single cell portal.	
 
+* CITE-Seq:
+
+	merge_rna_adt
+		Merge RNA and ADT matrices into one 10x-formatted hdf5 file.
+
 
 ---------------------------------
+
 
 Quick guide
 ^^^^^^^^^^^
@@ -102,13 +108,13 @@ Type::
 to see the usage information::
 
 	Usage:
-  		scCloud aggregate_matrix <csv_file> <output_name> [--genome <genome> --restriction <restriction>... --attributes <attributes> --google-cloud]
-  		scCloud aggregate_matrix -h
+	  scCloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene> --dropseq-genome <genome>]
+  	  scCloud aggregate_matrix -h
 
 * Arguments:
 
 	csv_file
-		Input csv-formatted file containing information of each 10x channel. Each row must contain at least 3 columns --- Sample, sample name; Location, location of the channel-specific count matrix in 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5); Reference, genome reference used for 10x cellranger. See below for an example csv::
+		Input csv-formatted file containing information of each 10x channel. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5) or dropseq format. See below for an example csv::
 
 			Sample,Source,Platform,Donor,Reference,Location
  			sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
@@ -121,9 +127,6 @@ to see the usage information::
 
 * Options:
 	
-	-\\-genome <genome>
-		Genome reference. [default: GRCh38]
-
 	-\\-restriction <restriction>...
 		Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value or name:~value,..,value, where ~ refers to not. You can specifiy multiple restrictions by setting this option multiple times.
 
@@ -133,17 +136,26 @@ to see the usage information::
 	-\\-google-cloud
 		If files are stored in google cloud. Assuming google cloud sdk is installed.
 
+	-\\-select-only-singlets
+		If we have demultiplexed data, turning on this option will make scCloud only include barcodes that are predicted as singlets.
+
+	-\\-minimum-number-of-genes <ngene>
+		Only keep barcodes with at least <ngene> expressed genes.
+
+	-\\-dropseq-genome <genome>
+		If inputs are dropseq data, this option needs to turn on and provides the reference genome name.
+
 	\-h, -\\-help
 		Print out help information.
 
 * Outputs:
 
 	output_name_10x.h5
-		A 10x-formatted HDF5 file containing the count matrix and associated attributes.
+		A 10x-formatted HDF5 file containing the count matrices and associated attributes.
 
 * Examples::
 
-	scCloud aggregate_matrix --genome GRCh38 --restriction Source:pbmc --restriction Donor:1 --attributes Source,Platform,Donor example.csv example
+	scCloud aggregate_matrix --restriction Source:pbmc --restriction Donor:1 --attributes Source,Platform,Donor example.csv example
 
 
 ---------------------------------

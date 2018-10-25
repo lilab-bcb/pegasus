@@ -25,7 +25,7 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	print("Demultiplexing is done.")
 	
 	# annotate raw matrix with demuxEM results
-	genome_indexed_raw_data = tools.load_10x_h5_file(input_rna_file, threshold = None)
+	genome_indexed_raw_data = tools.load_10x_h5_file(input_rna_file)
 	for raw_data in genome_indexed_raw_data.values():
 		barcodes = pd.Index([x.decode()[:-2] for x in raw_data['barcodes']])
 		idx = barcodes.isin(data.obs_names)

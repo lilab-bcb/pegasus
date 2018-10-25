@@ -20,6 +20,7 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 			stacks.append([int(x) for x in fields[1:]])
 
 	adt_matrix = np.stack(stacks, axis = 0)
+	adt_matrix = adt_matrix.astype(float)
 
 	series = pd.read_csv(antibody_control_csv, header = 0, index_col = 0, squeeze = True)
 	idx = np.zeros(len(antibody_names), dtype = bool)
@@ -29,6 +30,7 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 		idx[pos_a] = True
 		# convert to log expression
 		adt_matrix[pos_a, :] = np.maximum(np.log(adt_matrix[pos_a, :] + 1.0) - np.log(adt_matrix[pos_c, :] + 1.0), 0.0)
+	adt_matrix = adt_matrix[idx, :]
 
 	inpmat = {}
 	inpmat["barcodes"] = [x.encode() for x in barcodes]
@@ -38,11 +40,11 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 	return inpmat
 
 def merge_rna_and_adt_data(input_raw_h5, input_csv, antibody_control_csv, output_10x_h5):
-	results = load_10x_h5_file(input_raw_h5, threshold = None)
+	results = load_10x_h5_file(input_raw_h5)
 	print("Loaded the RNA matrix.")
 	assert len(results) == 1
-	genome = results.keys()[0]
-	results['CITE-Seq:' + genome] = load_antibody_csv(input_csv, antibody_control_csv)
+	genome = next(iter(results))
+	results['CITE_Seq_' + genome] = load_antibody_csv(input_csv, antibody_control_csv)
 	print("Loaded the ADT matrix.")
-	write_10x_h5_file(output_10x_h5, results, ["genes", "gene_names", "antibody_names"])
+	write_10x_h5_file(output_10x_h5, results)
 	print("Merged output is written.")
