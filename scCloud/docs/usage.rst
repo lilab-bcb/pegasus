@@ -108,8 +108,8 @@ Type::
 to see the usage information::
 
 	Usage:
-	  scCloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene> --dropseq-genome <genome>]
-  	  scCloud aggregate_matrix -h
+		scCloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene> --dropseq-genome <genome>]
+		scCloud aggregate_matrix -h
 
 * Arguments:
 
@@ -173,8 +173,8 @@ Type::
 to see the usage information::
 
 	Usage:
-	  scCloud demuxEM --hash-type <type> [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
-	  scCloud demuxEM -h
+		scCloud demuxEM --hash-type <type> [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
+		scCloud demuxEM -h
 
 * Arguments:
 
@@ -939,7 +939,6 @@ to see the usage information::
 ---------------------------------
 
 
-
 ``scCloud scp_output``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -976,3 +975,50 @@ to see the usage information::
 * Examples::
 
 	scCloud scp_output example.h5ad example
+
+
+---------------------------------
+
+
+``scCloud merge_rna_adt``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If we have CITE-Seq data, we can merge RNA count matrix and ADT (antibody tag) count matrix into one file using this subcommand.
+
+Type::
+
+	scCloud merge_rna_adt -h
+
+to see the usage information::
+
+	Usage:
+		scCloud merge_rna_adt <input_raw_gene_bc_matrices_h5.h5> <input_adt_csv_file> <antibody_control_csv> <output_10x.h5>
+		scCloud merge_rna_adt -h
+
+* Arguments:
+
+	input_raw_gene_bc_matrices_h5.h5
+		Input raw RNA expression matrix in 10x hdf5 format.
+
+	input_adt_csv_file
+		Input ADT (antibody tag) count matrix in CSV format.
+
+	antibody_control_csv
+		A CSV file containing the IgG control information for each antibody.
+
+	output_10x.h5
+		Merged output file in 10x hdf5 format.
+
+* Options:
+
+	\-h, -\\-help
+		Print out help information.
+
+* Outputs:
+
+	output_10x.h5
+		Output file in 10x hdf5 format. This file contains two groups --- one is for RNAs and the other is for ADTs.
+
+* Examples::
+
+	scCloud merge_rna_adt example_raw_h5.h5 example_adt.csv antibody_control.csv example_merged_raw_10x.h5
