@@ -1,3 +1,8 @@
+Version 0.7.0 `October 26, 2018`
+--------------------------------
+
+Added support for CITE-Seq analysis.
+
 Version 0.6.0 `October 23, 2018`
 --------------------------------
 
