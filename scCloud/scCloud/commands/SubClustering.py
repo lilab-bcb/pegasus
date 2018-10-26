@@ -51,9 +51,9 @@ Options:
   --hdbscan-min-cluster-size <number>              Minimum cluster size for hdbscan. [default: 50]
   --hdbscan-min-samples <number>                   Minimum number of samples for hdbscan. [default: 50]
 
-  --run-tsne                                       Run multi-core tSNE for visualization.
-  --tsne-perplexity <perplexity>                   tSNE's perplexity parameter. [default: 30]
-  --run-fitsne                                     Run FItSNE for visualization.
+  --run-tsne                                       Run multi-core t-SNE for visualization.
+  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter. [default: 30]
+  --run-fitsne                                     Run FIt-SNE for visualization.
 
   --run-umap                                       Run umap for visualization.
   --umap-on-diffmap                                Run umap on diffusion components.
@@ -69,7 +69,7 @@ Options:
   -h, --help                                       Print out help information.
 
 Outputs:
-  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
   output_name.seurat.h5ad       Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
   output_name.loom              Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   

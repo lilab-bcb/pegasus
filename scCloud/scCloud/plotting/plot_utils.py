@@ -57,7 +57,7 @@ def get_palettes(n_labels, with_background = False):
 	return palettes
 
 def transform_basis(basis):
-	if basis == 'tsne':
+	if basis == 'tsne' or basis == 'citeseq_tsne':
 		return 'tSNE'
 	elif basis == 'fitsne':
 		return 'FItSNE'

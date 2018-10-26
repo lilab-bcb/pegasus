@@ -11,12 +11,12 @@ from umap import UMAP
 from fitsne import FItSNE
 from .diffusion_map import calculate_affinity_matrix
 
-def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0):
+def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'tsne'):
 	start = time.time()
 	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, random_state = random_state)
 	X = data.obsm[rep_key].astype('float64')
 	X_tsne = tsne.fit_transform(X)
-	data.obsm['X_tsne'] = X_tsne
+	data.obsm['X_' + out_basis] = X_tsne
 	end = time.time()
 	print("TSNE is done. Time spent = {:.2f}s.".format(end - start))
 

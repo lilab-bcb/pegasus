@@ -8,10 +8,8 @@ import tables
 import copy
 from subprocess import check_call
 
+from . import row_attrs, excluded
 
-
-row_attrs = {"genes", "gene_names", "antibody_names"} # row attributes
-excluded = {"barcodes", "matrix"} # processed attributes
 
 
 def load_10x_h5_file(input_h5, ngene = None):
@@ -24,6 +22,15 @@ def load_10x_h5_file(input_h5, ngene = None):
 		The matrix in h5 format.
 	ngene : `int`, optional (default: None)
 		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+
+	Returns
+	-------
+	
+	A dictionary containing genome-channel pair per each genome. The channels are also dictionaries containing the count matricies.
+
+	Examples
+	--------
+	>>> tools.load_10x_h5_file('example_10x.h5')
 	"""	
 	
 	with tables.open_file(input_h5) as h5_in:
@@ -37,16 +44,19 @@ def load_10x_h5_file(input_h5, ngene = None):
 					channel[node.name] = node.read()
 				
 				mat = csc_matrix((channel["data"], channel["indices"], channel["indptr"]), shape=channel["shape"])
-				if ngene is not None and not genome.startswith("CITE_Seq"):
-					selected = mat.getnnz(axis = 0) >= ngene
-					mat = mat[:, selected]
-					channel["barcodes"] = channel["barcodes"][selected]
-				channel["matrix"] = mat
-				
 				channel.pop("data")
 				channel.pop("indices")
 				channel.pop("indptr")
 				channel.pop("shape")
+
+				if ngene is not None and not genome.startswith("CITE_Seq"):
+					selected = mat.getnnz(axis = 0) >= ngene
+					mat = mat[:, selected]
+					channel["barcodes"] = channel["barcodes"][selected]
+					for attr in channel:
+						if (attr not in row_attrs) and (attr not in excluded):
+							channel[attr] = channel[attr][selected]
+				channel["matrix"] = mat
 
 				results[genome] = channel
 
@@ -64,6 +74,15 @@ def load_dropseq_file(input_file, genome):
 		The matrix in dropseq format.
 	genome : `str`
 		The genome reference.
+
+	Returns
+	-------
+
+	A dictionary containing one genome-channel pair. The genome is the provided genome name. The channel is a dictionary containing the drop-seq count matrix.
+
+	Examples
+	--------
+	>>> tools.load_dropseq_file('example.umi.dge.txt.gz', 'GRCh38')
 	"""
 
 	df = pd.read_table(input_file, header = 0, index_col = 0, compression = 'gzip')
@@ -76,6 +95,26 @@ def load_dropseq_file(input_file, genome):
 
 
 def write_10x_h5_file(output_h5, genome2data):
+	"""Write count matricies into one 10x-formatted hdf5 file output_h5
+
+	Parameters
+	----------
+
+	output_h5 : `str`
+		The output file name.
+	genome2data : `dict of dict`
+		This is a dictionary containing genome-channel pairs. Each cannel is a dictionary containing one count matrix.
+
+	Returns
+	-------
+
+	None
+
+	Examples
+	--------
+	>>> tools.write_10x_h5_file('example_10x.h5', results_map)
+	"""
+
 	with tables.open_file(output_h5, mode="w", title=output_h5, filters=tables.Filters(complevel=1)) as hd5_out:
 		for genome, output_data in genome2data.items():
 			out_group = hd5_out.create_group("/", genome)

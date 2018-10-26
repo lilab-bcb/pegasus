@@ -416,6 +416,7 @@ def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fi
 		de_results.extend(calc_roc_stats(data, X, labels = labels, n_jobs = n_jobs))
 		
 	data.var = pd.concat(de_results, axis = 1)
+	data.uns['de_labels'] = labels
 	data.write(input_file)
 
 	print("Differential expression results are written back to h5ad file.")

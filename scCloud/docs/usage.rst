@@ -78,7 +78,7 @@ Suppose you have ``example.csv`` ready with the following contents::
 
 You want to analyze all four samples but correct batch effects for bone marrow and pbmc samples separately. You can run the following commands::
 
-	scCloud aggregate_matrix --genome GRCh38 --attributes Source,Platform,Donor example.csv example
+	scCloud aggregate_matrix --attributes Source,Platform,Donor example.csv example
 	scCloud cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
 	scCloud de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
 	scCloud annotate_cluster example.h5ad example.anno.txt
@@ -114,7 +114,7 @@ to see the usage information::
 * Arguments:
 
 	csv_file
-		Input csv-formatted file containing information of each 10x channel. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5) or dropseq format. See below for an example csv::
+		Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5) or dropseq format (e.g. /sample/sample.umi.dge.txt.gz). See below for an example csv::
 
 			Sample,Source,Platform,Donor,Reference,Location
  			sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
@@ -281,11 +281,14 @@ to see the usage information::
 	\-p <number>, -\\-threads <number>
 		Number of threads. [default: 1]
 
-	-\\-genome <genome>
-		Genome name. [default: GRCh38]
-
 	-\\-processed
 		Input file is processed and thus no PCA & diffmap will be run.
+
+	-\\-genome <genome>
+		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+  
+	-\\-cite-seq
+		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using t-SNE (the basis used for plotting is 'citeseq_tsne').
 
   	-\\-output-filtration-results <spreadsheet>
 		Output filtration results into <spreadsheet>.
@@ -387,13 +390,13 @@ to see the usage information::
 		Resolution parameter for louvain. [default: 1.3]
 
 	-\\-run-tsne
-		Run multi-core tSNE for visualization.
+		Run multi-core t-SNE for visualization.
 
 	-\\-tsne-perplexity <perplexity>
-		tSNE's perplexity parameter. [default: 30]
+		t-SNE's perplexity parameter. [default: 30]
 
   	-\\-run-fitsne
-  		Run FItSNE for visualization.
+  		Run FIt-SNE for visualization.
 
   	-\\-run-umap
   		Run umap for visualization.
@@ -428,7 +431,7 @@ to see the usage information::
 * Outputs:
 
 	output_name.h5ad
-		Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+		Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
 
 	output_name.seurat.h5ad
 		Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
@@ -509,7 +512,7 @@ to see the usage information::
 ``scCloud annotate_cluster``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we have the DE results, we could optionally identify putative cell types for each cluster using ``scCloud annotate_cluster``. Currently, this subcommand only works for human and mouse immune cells.
+Once we have the DE results, we could optionally identify putative cell types for each cluster using ``scCloud annotate_cluster``. Currently, this subcommand works for human/mouse immune/brain cells. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
 
 Type::
 
@@ -519,6 +522,7 @@ to see the usage information::
 
 	Usage:
 		scCloud annotate_cluster [--json-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+		scCloud annotate_cluster --annotation <annotation_string> <input_h5ad_file>
 		scCloud annotate_cluster -h
 
 * Arguments:
@@ -540,6 +544,9 @@ to see the usage information::
 	-\\-do-not-use-non-de-genes
 		Do not count non DE genes as down-regulated.
 
+	-\\-annotation <annotation_string>
+		Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: 'anno_attr:anno_1;anno_2;...;anno_n'. 'anno_attr' is the annotation attribute in the h5ad object and anno_i is the annotation for cluster i.
+
 	\-h, -\\-help
 		Print out help information.
 
@@ -551,6 +558,7 @@ to see the usage information::
 * Examples::
 
 	scCloud annotate_cluster example.h5ad example.anno.txt
+	scCloud annotate_cluster --annotation "anno:T cells;B cells;NK cells;Monocytes" example.h5ad
 
 
 ---------------------------------
@@ -882,13 +890,13 @@ to see the usage information::
 		Resolution parameter for louvain. [default: 1.3]
 
 	-\\-run-tsne
-		Run multi-core tSNE for visualization.
+		Run multi-core t-SNE for visualization.
 
 	-\\-tsne-perplexity <perplexity>
-		tSNE's perplexity parameter. [default: 30]
+		t-SNE's perplexity parameter. [default: 30]
 
   	-\\-run-fitsne
-  		Run FItSNE for visualization.
+  		Run FIt-SNE for visualization.
 
   	-\\-run-umap
   		Run umap for visualization.
@@ -923,7 +931,7 @@ to see the usage information::
 * Outputs:
 
 	output_name.h5ad
-		Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+		Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
 
 	output_name.seurat.h5ad
 		Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.

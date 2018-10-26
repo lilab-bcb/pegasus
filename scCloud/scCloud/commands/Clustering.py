@@ -15,8 +15,11 @@ Arguments:
 
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
-  --genome <genome>                                Genome name. [default: GRCh38]
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
+
+  --genome <genome>                                A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+  
+  --cite-seq                                       Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using t-SNE (the basis used for plotting is 'citeseq_tsne').
 
   --output-filtration-results <spreadsheet>        Output filtration results into <spreadsheet>.
   --output-seurat-compatible                       Output seurat-compatible h5ad file.
@@ -63,9 +66,9 @@ Options:
   --approx-louvain-nclusters <number>              Number of clusters for Kmeans initialization. [default: 30]
   --approx-louvain-resolution <resolution>.        Resolution parameter for louvain. [default: 1.3]
 
-  --run-tsne                                       Run multi-core tSNE for visualization.
-  --tsne-perplexity <perplexity>                   tSNE's perplexity parameter. [default: 30]
-  --run-fitsne                                     Run FItSNE for visualization.
+  --run-tsne                                       Run multi-core t-SNE for visualization.
+  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter. [default: 30]
+  --run-fitsne                                     Run FIt-SNE for visualization.
 
   --run-umap                                       Run umap for visualization.
   --umap-on-diffmap                                Run umap on diffusion components.
@@ -81,7 +84,7 @@ Options:
   -h, --help                                       Print out help information.
 
 Outputs:
-  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, tSNE and diffusion map coordinates are stored in the 'obsm' field.
+  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
   output_name.seurat.h5ad       Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
   output_name.loom              Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
@@ -96,6 +99,8 @@ Examples:
 
             'processed' : self.args['--processed'],
             'subcluster' : False,
+
+            'cite_seq' : self.args['--cite-seq'],
 
             'filt_xlsx' : self.args['--output-filtration-results'],
             'output_seurat_compatible' : self.args['--output-seurat-compatible'],

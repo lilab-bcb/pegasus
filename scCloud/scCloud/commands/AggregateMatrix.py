@@ -10,7 +10,7 @@ Usage:
   scCloud aggregate_matrix -h
 
 Arguments:
-  csv_file          Input csv-formatted file containing information of each 10x channel. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5) or dropseq format.
+  csv_file          Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5) or dropseq format (e.g. /sample/sample.umi.dge.txt.gz).
   output_name       The output file name. 
 
 Options:

@@ -1,15 +1,31 @@
 import os
+import numpy as np
+import anndata
+from scipy.sparse import csr_matrix, hstack
 from .. import tools 
 
 def run_pipeline(input_file, output_name, **kwargs):
-	# load input data
 	is_raw = not kwargs['processed']
-	adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if kwargs['subcluster'] else 'r+')
+
+	# load input data
+	if not kwargs['cite_seq']:
+		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if kwargs['subcluster'] else 'r+')
+	else:
+		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True)
+		assert len(data_dict) == 2
+		adata = cdata = None
+		for genome, data in data_dict.items():
+			if genome.startswith('CITE_Seq'):
+				cdata = data
+			else:
+				adata = data
+		assert adata is not None and cdata is not None
+	print("Inputs are loaded.")
 
 	# preprocessing
 	if is_raw:
 		# make gene names unique
-		tools.update_var_names(adata, kwargs['genome'])
+		tools.update_var_names(adata)
 		# filter out low quality cells/genes
 		tools.filter_data(adata, mito_prefix = kwargs['mito_prefix'], filt_xlsx = kwargs['filt_xlsx'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], percent_mito = kwargs['percent_mito'], percent_cells = kwargs['percent_cells'])
 		# normailize counts and then transform to log space
@@ -86,6 +102,34 @@ def run_pipeline(input_file, output_name, **kwargs):
 		assert 'X_diffmap' in adata.obsm.keys()
 		tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
 
+	# merge cite-seq data and run t-SNE
+	if kwargs['cite_seq']:
+		adt_matrix = np.zeros((adata.shape[0], cdata.shape[1]), dtype = 'float32')
+		idx = adata.obs_names.isin(cdata.obs_names)
+		adt_matrix[idx, :] = cdata[adata.obs_names[idx],].X.toarray()
+
+		var_names = np.concatenate([adata.var_names, ['AD-' + x for x in cdata.var_names]])
+
+		new_data = anndata.AnnData(X = hstack([adata.X, csr_matrix(adt_matrix)], format = 'csr'), 
+			obs = adata.obs,
+			obsm = adata.obsm,
+			uns = adata.uns, 
+			var = {'var_names' : var_names,
+				   'gene_ids' : var_names,
+				   'n_cells' : np.concatenate([adata.var['n_cells'].values, [0] * cdata.shape[1]]),
+				   'percent_cells' : np.concatenate([adata.var['percent_cells'].values, [0.0] * cdata.shape[1]]), 
+				   'robust' : np.concatenate([adata.var['robust'].values, [False] * cdata.shape[1]])
+				  })
+		if 'selected' in adata.var:
+			new_data.var['selected'] = np.concatenate([adata.var['selected'].values, [False] * cdata.shape[1]])
+		new_data.obsm['CITE-Seq'] = adt_matrix
+		adata = new_data
+		print("ADT count matrix is attached.")
+
+		tools.run_tsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_tsne')
+		print("Antibody embedding is done.")
+
+	# write out results
 	adata.write(output_name + ".h5ad")
 
 	if kwargs['output_seurat_compatible']:

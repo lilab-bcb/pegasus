@@ -12,7 +12,7 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 	stacks = []
 
 	with open(input_csv) as fin:
-		barcodes = next(fin).strip().split(',')[1:]
+		barcodes = np.array([x.encode() for x in next(fin).strip().split(',')[1:]])
 		for i, line in enumerate(fin):
 			fields = line.strip().split(',')
 			antibody_names.append(fields[0])
@@ -21,6 +21,7 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 
 	adt_matrix = np.stack(stacks, axis = 0)
 	adt_matrix = adt_matrix.astype(float)
+	antibody_names = np.array([x.encode() for x in antibody_names])
 
 	series = pd.read_csv(antibody_control_csv, header = 0, index_col = 0, squeeze = True)
 	idx = np.zeros(len(antibody_names), dtype = bool)
@@ -31,13 +32,10 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 		# convert to log expression
 		adt_matrix[pos_a, :] = np.maximum(np.log(adt_matrix[pos_a, :] + 1.0) - np.log(adt_matrix[pos_c, :] + 1.0), 0.0)
 	adt_matrix = adt_matrix[idx, :]
+	antibody_names = antibody_names[idx]
 
-	inpmat = {}
-	inpmat["barcodes"] = [x.encode() for x in barcodes]
-	inpmat["antibody_names"] = [x.encode() for x in antibody_names]
-	inpmat["matrix"] = csc_matrix(adt_matrix)
-
-	return inpmat
+	channel = {"barcodes" : barcodes, "antibody_names" : antibody_names, "matrix" : csc_matrix(adt_matrix)}
+	return channel
 
 def merge_rna_and_adt_data(input_raw_h5, input_csv, antibody_control_csv, output_10x_h5):
 	results = load_10x_h5_file(input_raw_h5)

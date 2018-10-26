@@ -13,60 +13,112 @@ from sklearn.decomposition import PCA
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.extmath import randomized_svd
 
+from . import row_attrs, excluded, load_10x_h5_file
 
 
-def read_10x_h5_file(input_h5, genome, ngene = None):
-	obs_not = set(["data", "indices", "indptr", "shape", "gene_names", "genes", "barcodes"])
 
-	Xs = [] # a list of csr matrices
-	gn_vec = [] # gene_names vec
-	gi_vec = [] # gene_ids vec
+def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene = None):
+	"""Load 10x-format matrices from the h5 file into a series of h5ad objects
+	
+	Parameters
+	----------
 
-	obs_dict = None
+	input_h5 : `str`
+		The matricies in h5 format.
+	genome : `str`, optional (default: None)
+		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+	return_a_dict : `boolean`, optional (default: False)
+		If input file contains multiple genome groups, if concatenate them into one h5ad object or return a dictionary of genome-h5ad pairs. If this option is on, return a dict.
+	demux_ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode for demultiplexing.
 
-	genomes = []
-	with tables.open_file(input_h5) as h5_in:
-		if genome is None: # if no genome is provided, scan the hdf5 file, must load raw matrix here.
-			for i, group in enumerate(h5_in.walk_groups()):
-				if i > 0:
-					genomes.append(group._v_name)
-		else:
-			genomes = genome if isinstance(genome, list) else [genome]
+	Returns
+	-------
+	
+	`anndata` object or a dictionary of `anndata` objects
+		An `anndata` object or a dictionary of `anndata` objects containing the count matrices.
 
-		for genome in genomes:
-			inpmat = {}
-			for node in h5_in.walk_nodes("/" + genome, "Array"):
-				inpmat[node.name] = node.read()
-			
-			Xs.append(csr_matrix((inpmat["data"], inpmat["indices"], inpmat["indptr"]), shape = (inpmat["shape"][1], inpmat["shape"][0])))
-			gn_vec.append(inpmat["gene_names"].astype(str))
-			gi_vec.append(inpmat["genes"].astype(str))
+	Examples
+	--------
+	>>> tools.read_10x_h5_file('example_10x.h5')
+	"""	
 
-			if obs_dict is None:
-				barcodes = inpmat["barcodes"].astype(str)
-				if np.vectorize(lambda x: x.endswith("-1"))(barcodes).sum() == barcodes.size:
-					barcodes = [x[:-2] for x in barcodes] # remove the trailing '-1'
-				obs_dict = {"obs_names" : barcodes}
-				obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
-				for key, value in inpmat.items():
-					if key not in obs_not:
-						obs_dict[key] = value.astype(str)
+	gdmap = load_10x_h5_file(input_h5) # gdmap , genome-data map
+	if genome is not None: # remove genomes not in the list
+		remove_set = set(gdmap) - set(genome.split(','))
+		for gname in remove_set:
+			gdmap.pop(gname)
 
-	data = anndata.AnnData(X = Xs[0] if len(Xs) == 1 else hstack(Xs, format = 'csr'),
-						   obs = obs_dict, 
-						   var = {"var_names" : gn_vec[0] if len(gn_vec) == 1 else np.concatenate(gn_vec),
-						   		  "gene_ids" : gi_vec[0] if len(gi_vec) == 1 else np.concatenate(gi_vec)})
-	data.uns['genomes'] = genomes
+	results = {}
+	for genome, data in gdmap.items():
+		# obs_dict
+		barcodes = data["barcodes"].astype(str)
+		if np.vectorize(lambda x: x.endswith("-1"))(barcodes).sum() == barcodes.size:
+			barcodes = np.array([x[:-2] for x in barcodes]) # remove the trailing '-1'
+		obs_dict = {"obs_names" : barcodes}
+		obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
+		for attr, value in data.items():
+			if (attr not in row_attrs) and (attr not in excluded):
+				obs_dict[attr] = value.astype(str)
+		# var_dict
+		var_dict = {"var_names" : (data["gene_names"] if "gene_names" in data else data["antibody_names"]).astype(str)}
+		if "genes" in data:
+			var_dict["gene_ids"] = data["genes"].astype(str)
+		# construct h5ad object
+		results[genome] = anndata.AnnData(X = data["matrix"].transpose(), obs = obs_dict, var = var_dict)
+		results[genome].uns["genome"] = genome
 
-	if ngene is not None:
-		data.obs['n_genes'] = data.X.getnnz(axis = 1)
-		data.obs['n_counts'] = data.X.sum(axis = 1).A1
-		data._inplace_subset_obs(data.obs['n_genes'].values >= ngene)
-		data.var['robust'] = True
+	if len(results) == 1:
+		results = results[next(iter(results))]
+	elif not return_a_dict:
+		Xs = [] # a list of csr matrices
+		vn_vec = [] # var_names vec
+		gi_vec = [] # gene_ids vec
+		genomes = []
+		for data in results.values():
+			Xs.append(data.X)
+			vn_vec.append(data.var_names.values)				
+			if "gene_ids" in data.var:
+				gi_vec.append(data.var["gene_ids"].values)
+			genomes.append(data.uns["genome"])
+		var_dict = {"var_names" : np.concatenate(vn_vec)}
+		if len(gi_vec) > 0:
+			var_dict["gene_ids"] = np.concatenate(gi_vec)
+		results = anndata.AnnData(X = hstack(Xs, format = 'csr'), obs = obs_dict, var = var_dict)
+		results.uns["genome"] = ",".join(genomes)
 
-	return data
+	# for demultiplexing purpose, select only barcodes with min gene >= demux_ngene
+	if demux_ngene is not None:
+		assert isinstance(results, anndata.base.AnnData)
+		results.obs['n_genes'] = results.X.getnnz(axis = 1)
+		results.obs['n_counts'] = results.X.sum(axis = 1).A1
+		results._inplace_subset_obs(results.obs['n_genes'].values >= demux_ngene)
+		results.var['robust'] = True
+
+	return results
+
+
 
 def read_antibody_csv(input_csv):
+	"""Load an ADT matrix from the csv file
+
+	Parameters
+	----------
+
+	input_csv : `str`
+		The CSV file containing ADT counts.
+
+	Returns
+	-------
+	
+	`anndata` object 
+		An `anndata` object containing the ADT count matrix.
+	
+	Examples
+	--------
+	>>> tools.read_antibody_csv('example_ADT.csv')
+	"""
+
 	barcodes = []
 	antibody_names = []
 	stacks = []
@@ -80,35 +132,41 @@ def read_antibody_csv(input_csv):
 
 	return data
 
-def read_input(input_file, genome = None, mode = 'r+', ngene = None):
-	"""Load either 10x-formatted raw count matrix or h5ad-formatted processed expression matrix into memory.
 
-	This function is used to load input data into memory.
+
+def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = None, mode = 'r+'):
+	"""Load data into memory.
+
+	This function is used to load input data into memory. Inputs can be in .h5, .h5ad, or .csv format.
 	
 	Parameters
 	----------
 
 	input_file : `str`
 		Input file name.
-	genome : `str`, optional (default: None)
-		The genome used to produce raw count matrices. If genome == None, we will load count matrices from all possible genomes and merge them into one big matrix.
-	mode : `str`, optional (default: `r+`)
-		If input is h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
-	ngene : `int`, optional (default: None)
-		Only used for raw 10x hdf5 file. If set, only keep cells/nuclei with at least <ngene> expressed genes.
+	genome : `str`, .h5, optional (default: None)
+		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+	return_a_dict : `boolean`, .h5, optional (default: False)
+		If input file contains multiple genome groups, if concatenate them into one h5ad object or return a dictionary of genome-h5ad pairs. If this option is on, return a dict.
+	demux_ngene : `int`, .h5, optional (default: None)
+		Minimum number of genes to keep a barcode for demultiplexing.
+	mode : `str`, .h5ad, optional (default: `r+`)
+		If input is in h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
+	
 	Returns
 	-------
-	`anndata` object
-		An `anndata` object contains the count matrix.
+	`anndata` object or a dictionary of `anndata` objects
+		An `anndata` object or a dictionary of `anndata` objects containing the count matrices.
 
 	Examples
 	--------
 	>>> adata = tools.read_input('example_10x.h5', genome = 'mm10')
 	>>> adata = tools.read_input('example.h5ad', mode = 'r+')
+	>>> adata = tools.read_input('example_ADT.csv')
 	"""
 
 	if input_file.endswith('.h5'):
-		data = read_10x_h5_file(input_file, genome, ngene = ngene)
+		data = read_10x_h5_file(input_file, genome, return_a_dict, demux_ngene)
 	elif input_file.endswith('.h5ad'):
 		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
 	elif input_file.endswith('.csv'):
@@ -123,15 +181,16 @@ def read_input(input_file, genome = None, mode = 'r+', ngene = None):
 
 transfer_gene_name = [(358, 'ENSG00000268991', 'FAM231C.2'), (921, 'ENSG00000278139', 'AL358075.4'), (2207, 'ENSG00000232995', 'RGS5.2'), (5847, 'ENSG00000282827', 'AC134772.2'), (5938, 'ENSG00000271858', 'CYB561D2.2'), (6087, 'ENSG00000241572', 'PRICKLE2-AS1.2'), (7213, 'ENSG00000249428', 'CFAP99.2'), (9596, 'ENSG00000280987', 'MATR3.2'), (9605, 'ENSG00000279686', 'AC142391.1'), (10277, 'ENSG00000282913', 'BLOC1S5.2'), (10867, 'ENSG00000124593', 'AL365205.1'), (11619, 'ENSG00000268592', 'RAET1E-AS1.2'), (13877, 'ENSG00000231963', 'AL662864.1'), (16117, 'ENSG00000225655', 'BX255923.1'), (16938, 'ENSG00000282955', 'RABL6.2'), (17241, 'ENSG00000265264', 'TIMM10B.2'), (18626, 'ENSG00000282682', 'C11orf71.2'), (18984, 'ENSG00000282883', 'AKR1C3.2'), (19226, 'ENSG00000150076', 'CCDC7.2'), (19346, 'ENSG00000264404', 'BX547991.1'), (21184, 'ENSG00000282031', 'TMBIM4.2'), (21230, 'ENSG00000257815', 'LINC01481.2'), (22033, 'ENSG00000228741', 'SPATA13.2'), (22037, 'ENSG00000281899', 'AL359736.3'), (22654, 'ENSG00000274827', 'LINC01297.2'), (23662, 'ENSG00000273259', 'AL049839.2'), (24019, 'ENSG00000211974', 'AC245369.1'), (26919, 'ENSG00000279257', 'C17orf100.2'), (26962, 'ENSG00000187838', 'PLSCR3'), (27137, 'ENSG00000255104', 'AC005324.4'), (27884, 'ENSG00000263715', 'LINC02210-CRHR1'), (28407, 'ENSG00000281844', 'FBF1.2'), (30440, 'ENSG00000283027', 'CAPS.2'), (32648, 'ENSG00000235271', 'LINC01422.2')]
 
-def update_var_names(data, genome):
-	prefix = re.compile('^' + genome + '_+')
+def update_var_names(data):
+	data.uns['genome'].split(',')
+	prefix = re.compile('^(' + '|'.join(data.uns['genome'].split(',')) + ')_+')
 	if prefix.match(data.var_names[0]):
 		data.var['gene_ids'] = [prefix.sub('', x) for x in data.var['gene_ids']]
 		data.var_names = pd.Index([prefix.sub('', x) for x in data.var_names])
 
 	gsyms = data.var_names.values
 	
-	if genome == "GRCh38":
+	if data.uns['genome'] == 'GRCh38':
 		for pos, gid, gsym in transfer_gene_name:
 			assert data.var.iloc[pos, 0] == gid
 			gsyms[pos] = gsym
