@@ -247,7 +247,7 @@ to see the usage information::
 
 * Examples::
 
-	scCloud demuxEM -p 8 --hash-type cell --generate-diagnostic-plots example_adt.csv example_raw_gene_bc_matrices_h5.h5 example_output
+	scCloud demuxEM -p 8 --hash-type cell-hashing --generate-diagnostic-plots example_adt.csv example_raw_gene_bc_matrices_h5.h5 example_output
 
 
 ---------------------------------
