@@ -16,7 +16,7 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	# load input data
 	adt = tools.read_input(input_adt_file)
 	print("ADT file is loaded.")
-	data = tools.read_input(input_rna_file, genome = kwargs['genome'], ngene = kwargs['min_num_genes'])
+	data = tools.read_input(input_rna_file, genome = kwargs['genome'], demux_ngene = kwargs['min_num_genes'])
 	print("RNA file is loaded.")
 	# run demuxEM
 	demuxEM.estimate_background_probs(adt, random_state = kwargs['random_state'])
@@ -61,7 +61,7 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	print("Hashtag count information is written to {output_name}_ADTs.h5ad .".format(output_name = output_name))
 	data.write(output_name + "_demux.h5ad")
 	print("Demutiplexed RNA expression information is written to {output_name}_demux.h5ad .".format(output_name = output_name))
-	tools.write_10x_h5_file(output_name + '_demux_10x.h5', genome_indexed_raw_data, ['genes', 'gene_names', 'demux_type', 'assignment'])
+	tools.write_10x_h5_file(output_name + '_demux_10x.h5', genome_indexed_raw_data)
 	print("Raw 10x-format hdf5 file with demultiplexing results is written to {output_name}_demux_10x.h5 .".format(output_name = output_name))
 
 	# output summary statistics

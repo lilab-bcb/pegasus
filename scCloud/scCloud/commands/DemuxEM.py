@@ -41,7 +41,7 @@ Outputs:
   output_name.gene_name.violin.png                       Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
   
 Examples:
-  scCloud demuxEM -p 8 --hash-type cell --generate-diagnostic-plots sample_adt.csv sample_raw_gene_bc_matrices_h5.h5 sample_output
+  scCloud demuxEM -p 8 --hash-type cell-hashing --generate-diagnostic-plots sample_adt.csv sample_raw_gene_bc_matrices_h5.h5 sample_output
     """
 
     def execute(self):
