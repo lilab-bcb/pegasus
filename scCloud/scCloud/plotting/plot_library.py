@@ -423,7 +423,7 @@ def plot_heatmap(data, cluster, genes, use_raw = False, showzscore = False, titl
 		df = df.apply(zscore, axis = 0)
 
 	cluster_ids = as_category(data.obs[cluster])
-	idx = cluster_ids.argsort().values
+	idx = cluster_ids.argsort()
 	df = df.iloc[idx, :] # organize df by category order
 	row_colors = np.zeros(df.shape[0], dtype = object) 
 	palettes = get_palettes(cluster_ids.categories.size)

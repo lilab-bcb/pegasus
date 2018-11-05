@@ -103,7 +103,7 @@ def write_10x_h5_file(output_h5, genome2data):
 	output_h5 : `str`
 		The output file name.
 	genome2data : `dict of dict`
-		This is a dictionary containing genome-channel pairs. Each cannel is a dictionary containing one count matrix.
+		This is a dictionary containing genome-channel pairs. Each channel is a dictionary containing one count matrix.
 
 	Returns
 	-------

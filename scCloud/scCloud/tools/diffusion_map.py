@@ -29,7 +29,9 @@ def get_symmetric_matrix(csr_mat):
 def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
 	"""X is the sample by feature matrix, could be either dense or sparse"""
 	nsample = X.shape[0]
-	
+	if nsample < 500:
+		method = 'sklearn'
+
 	if method == 'hnsw':
 		assert not issparse(X)
 		start = time.time()
@@ -56,7 +58,6 @@ def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, 
 		knn.fit(X)
 		distances, indices = knn.kneighbors()
 
-
 	# calculate sigma, important to use median here!
 	sigmas = np.median(distances, axis = 1)
 	sigmas_sq = np.square(sigmas)
@@ -66,8 +67,8 @@ def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, 
 		numers = 2.0 * sigmas[i] * sigmas[indices[i,:]]
 		denoms = sigmas_sq[i] + sigmas_sq[indices[i,:]]
 		distances[i,:] = np.sqrt(numers / denoms) * np.exp(-np.square(distances[i,:]) / denoms)
-	
-	W = csr_matrix((distances.ravel(), (np.repeat(range(nsample), K), indices.ravel())))
+
+	W = csr_matrix((distances.ravel(), (np.repeat(range(nsample), K), indices.ravel())), shape = (nsample, nsample))
 	W = get_symmetric_matrix(W)
 
 	# density normalization

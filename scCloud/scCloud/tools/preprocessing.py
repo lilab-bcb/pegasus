@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.extmath import randomized_svd
 
-from . import row_attrs, excluded, load_10x_h5_file
+from . import row_attrs, excluded, load_10x_h5_file, load_dropseq_file
 
 
 
@@ -99,6 +99,38 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene
 
 
 
+def read_dropseq_file(input_file, genome):
+	"""Load dropseq-format matrix from the dropseq file into a h5ad object
+
+	Parameters
+	----------
+
+	input_file : `str`
+		The matrix in dropseq format.
+	genome : `str`
+		The genome reference.
+
+	Returns
+	-------
+	
+	`anndata` object
+		An `anndata` object containing the gene-count matrix
+
+	Examples
+	--------
+	>>> tools.read_dropseq_file('example.umi.dge.txt.gz', 'GRCh38')
+	"""
+
+	results = load_dropseq_file(input_file, genome)
+	df = results[genome]["matrix"]
+	data = anndata.AnnData(X = csr_matrix(df.values.transpose()), obs = {"obs_names" : df.columns.values}, var = {"var_names" : df.index.values, "genes" : df.index.values})
+	data.obs['Channel'] = input_file[:-len(".dge.txt.gz")]
+	data.uns['genome'] = genome
+
+	return data
+
+
+
 def read_antibody_csv(input_csv):
 	"""Load an ADT matrix from the csv file
 
@@ -137,7 +169,7 @@ def read_antibody_csv(input_csv):
 def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = None, mode = 'r+'):
 	"""Load data into memory.
 
-	This function is used to load input data into memory. Inputs can be in .h5, .h5ad, or .csv format.
+	This function is used to load input data into memory. Inputs can be in .h5, .h5ad, .dge.txt.gz or .csv format.
 	
 	Parameters
 	----------
@@ -167,6 +199,8 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 
 	if input_file.endswith('.h5'):
 		data = read_10x_h5_file(input_file, genome, return_a_dict, demux_ngene)
+	elif input_file.endswith('.dge.txt.gz'):
+		data = read_dropseq_file(input_file, genome)
 	elif input_file.endswith('.h5ad'):
 		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
 	elif input_file.endswith('.csv'):
