@@ -115,16 +115,67 @@ def plot_violin(data, attrs, out_file, xlabel = None, ylabel = None, title = Non
 
 
 
-def plot_heatmap(vec1, vec2, out_file, dpi = 500, format = None):
+def plot_heatmap(vec1, vec2, out_file, dpi = 500, xlabel = '', ylabel = ''):
 	df = pd.crosstab(vec1, vec2)
 	df.columns.name = df.index.name = ''
 
 	ax = plt.gca()
 	ax.xaxis.tick_top()
-	ax.set_xlabel('')
-	ax.set_ylabel('')
 	ax = sns.heatmap(df, annot = True, fmt = 'd', cmap = 'inferno', ax = ax)
+	ax.set_xlabel(xlabel)
+	ax.set_ylabel(ylabel)
 	
 	plt.tight_layout()
-	plt.savefig(out_file, dpi = 500, format = format)
+	plt.savefig(out_file, dpi = 500)
+	plt.close()
+
+
+# type = count or gene
+def plot_human_vs_mouse(data, out_file, plot_type, alpha = 0.5, dpi = 500, log = False, figsize = None):
+	type2xlabel = {'count' : 'Number of mouse UMIs', 'gene' : 'Number of expressed mouse genes'}
+	type2ylabel = {'count' : 'Number of human UMIs', 'gene' : 'Number of expressed human genes'}
+	type2xattr = {'count' : 'mm10_n_counts', 'gene' : 'mm10_n_genes'}
+	type2yattr = {'count' : 'grch38_n_counts', 'gene' : 'grch38_n_genes'}
+
+	ax = plt.gca()
+
+	labels = data.obs['demux_type'].astype(str)
+	labels[np.isin(data.obs['assignment'], ['Sample1MmF','Sample2MmF','Sample3MmM','Sample4MmM'])] = 'singlet_mouse'
+	labels[np.isin(data.obs['assignment'], ['Sample5HuF','Sample6HuF','Sample7HuM','Sample8HuM'])] = 'singlet_human'
+	idx_dbl = np.isin(labels, 'doublet')
+	mouse_set = {'Sample1MmF','Sample2MmF','Sample3MmM','Sample4MmM'}
+	human_set = {'Sample5HuF','Sample6HuF','Sample7HuM','Sample8HuM'}
+
+	def doublet_type(assign_str):
+		ids = set(assign_str.split(','))
+		return 'doublet_human' if ids.issubset(human_set) else ('doublet_mouse' if ids.issubset(mouse_set) else 'doublet_mix')
+
+	labels[idx_dbl] = np.vectorize(doublet_type)(data.obs.loc[idx_dbl, 'assignment'].values)
+
+	labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet_human', 'doublet_mouse', 'doublet_mix', 'unknown'])
+	colors = ['red', 'blue', 'purple', 'orange', 'green', 'grey']
+
+	for k, cat in enumerate(labels.categories):
+		idx = np.isin(labels, cat)
+		ax.scatter(data.obs.loc[idx, type2xattr[plot_type]],
+				   data.obs.loc[idx, type2yattr[plot_type]],
+				   c = colors[k],
+				   marker = '.',
+				   alpha = alpha,
+				   edgecolors = 'none',
+				   label = cat,
+				   rasterized = True)
+
+	ax.grid(False)
+	ax.legend()
+	ax.set_xlabel(type2xlabel[plot_type])
+	ax.set_ylabel(type2ylabel[plot_type])
+
+	if log:
+		ax.set_xscale('log')
+		ax.set_yscale('log')
+
+	if figsize is not None:
+		plt.gcf().set_size_inches(*figsize)
+	plt.savefig(out_file, dpi = dpi)
 	plt.close()

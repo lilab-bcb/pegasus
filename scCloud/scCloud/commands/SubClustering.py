@@ -81,6 +81,7 @@ Examples:
         kwargs = {
             'processed' : True,
             'subcluster' : True,
+            'cite_seq' : False,
             
             'subset_selections' : self.args['--subset-selection'],
 
