@@ -153,6 +153,7 @@ class aggr_matrix:
 		for attr in attrs_r:
 			self.out_hd5[attr] = [np.repeat('', self.nsample), channel[attr]]
 		self.nsample += nsample
+		self.attrs = self.attrs | attrs_c
 
 	def merge(self):
 		if not self.is_dropseq:
