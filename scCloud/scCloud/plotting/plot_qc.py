@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # plot_type: gene, count, mito
-def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inner = None, dpi = 500, figsize = None, xlabel = None, xtick_font = None, xtick_rotation = False, no_legend = False, split = False):
+def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inner = None, dpi = 500, figsize = None, xlabel = None, xtick_font = None, xtick_rotation = False, no_legend = False, split = False, linewidth = None):
 	pt2attr = {'gene' : 'n_genes', 'count' : 'n_counts', 'mito' : 'percent_mito'}
 	pt2ylab = {'gene' : 'Number of expressed genes', 'count' : 'Number of UMIs', 'mito' : 'Percentage of mitochondrial genes'}
 
@@ -15,7 +15,7 @@ def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inn
 
 	df = data.obs[[xattr, yattr]] if hue is None else data.obs[[xattr, yattr, hue]]
 
-	sns.violinplot(x = xattr, y = yattr, hue = hue, data = df, inner = inner, split = split)
+	sns.violinplot(x = xattr, y = yattr, hue = hue, data = df, inner = inner, split = split, linewidth = linewidth)
 	ax = plt.gca()
 	ax.grid(False)
 	if xlabel is not None:
