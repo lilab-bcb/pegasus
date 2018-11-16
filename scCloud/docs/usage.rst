@@ -201,8 +201,8 @@ to see the usage information::
 	-\\-min-num-genes <number>
 		We only demultiplex cells/nuclei with at least <number> expressed genes. [default: 100]
 
-	-\\-max-background-probability <prob>
-		Any cell/nucleus with no less than <prob> background probability will be marked as unknown. [default: 0.8]
+	-\\-min-signal-hashtag <count>
+		Any cell/nucleus with less than <count> hashtags from the signal will be marked as unknown. [default: 10.0]
 
 	-\\-prior-on-samples <prior>
 		The sparse prior put on samples.
@@ -613,6 +613,9 @@ to see the usage information::
 	
 	-\\-apply-to-each-figure
 		Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict. 
+
+	-\\-show-background
+		Show points that are not selected as gray.
 
 	-\\-group <attr>
 		<attr> is used to make group plots. In group plots, the first one contains all components in the group and the following plots show each component separately. This option is iused in 'scatter_groups' and 'scatter_gene_groups'. If <attr> is a semi-colon-separated string, parse the string as groups.
