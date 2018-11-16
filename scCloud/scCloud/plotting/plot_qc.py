@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # plot_type: gene, count, mito
-def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inner = None, dpi = 500, figsize = None, xlabel = None, xtick_font = None, xtick_rotation = False, no_legend = False, split = False, linewidth = None):
+def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inner = None, dpi = 500, figsize = None, xlabel = None, xtick_font = None, xtick_rotation = False, split = False, linewidth = None):
 	pt2attr = {'gene' : 'n_genes', 'count' : 'n_counts', 'mito' : 'percent_mito'}
 	pt2ylab = {'gene' : 'Number of expressed genes', 'count' : 'Number of UMIs', 'mito' : 'Percentage of mitochondrial genes'}
 
@@ -26,8 +26,7 @@ def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inn
 			tick.label.set_fontsize(xtick_font)
 		if xtick_rotation: 
 			tick.label.set_rotation('vertical')
-	if no_legend:
-		ax.legend_.remove()
+	ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5))
 	if figsize is not None:
 		plt.gcf().set_size_inches(*figsize)
 	plt.tight_layout()
