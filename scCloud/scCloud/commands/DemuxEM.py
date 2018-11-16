@@ -21,7 +21,7 @@ Options:
   --genome <genome>                          Reference genome name. If not provided, we will infer it from the expression matrix file.
 
   --min-num-genes <number>                   We only demultiplex cells/nuclei with at least <number> expressed genes. [default: 100]
-  --max-background-probability <prob>        Any cell/nucleus with no less than <prob> background probability will be marked as unknown. [default: 0.8]
+  --min-signal-hashtag <count>               Any cell/nucleus with less than <count> hashtags from the signal will be marked as unknown. [default: 10.0]
   --prior-on-samples <prior>                 The sparse prior put on samples.
   --random-state <seed>                      The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 0]
 
@@ -50,7 +50,7 @@ Examples:
             'n_jobs' : int(self.args['--threads']),
             'genome' : self.args['--genome'],
             'min_num_genes' : int(self.args['--min-num-genes']),
-            'unknown_rate' : float(self.args['--max-background-probability']),
+            'min_signal' : float(self.args['--min-signal-hashtag']),
             'alpha_value' : self.args['--prior-on-samples'],
             'random_state' : int(self.args['--random-state']),
             'gen_plots' : self.args['--generate-diagnostic-plots'],

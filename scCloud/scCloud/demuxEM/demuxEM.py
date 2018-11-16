@@ -68,7 +68,7 @@ def get_droplet_info(probs, sample_names):
 
 
 
-def demultiplex(data, adt, unknown = 0.8, alpha = 0.0, alpha_noise = 1.0, tol = 1e-6, n_threads = 1):
+def demultiplex(data, adt, min_signal = 10.0, alpha = 0.0, alpha_noise = 1.0, tol = 1e-6, n_threads = 1):
 	start = time.time()
 	
 	nsample = adt.shape[1]
@@ -94,7 +94,9 @@ def demultiplex(data, adt, unknown = 0.8, alpha = 0.0, alpha_noise = 1.0, tol = 
 	demux_type = np.full(data.shape[0], 'unknown', dtype = 'object')
 	assignments = np.full(data.shape[0], '', dtype = 'object')
 
-	idx = data.obsm['raw_probs'][:,nsample] < unknown
+	signals = adt.obs['counts'].reindex(data.obs_names, fill_value = 0.0).values * (1.0 - data.obsm['raw_probs'][:,nsample])
+	idx = signals >= min_signal
+
 	tmp = data.obsm['raw_probs'][idx,]
 	norm_probs = tmp[:,0:nsample] / (1.0 - tmp[:,nsample])[:,None]
 

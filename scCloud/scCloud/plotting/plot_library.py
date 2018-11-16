@@ -156,7 +156,7 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 
 ### Sample usage:
 ###    fig = plot_scatter(data, 'tsne', ['louvain_labels', 'hdbscan_labels_soft'], nrows = 1, ncols = 2, alpha = 0.5)
-def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None, apply_to_all = True):
+def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = None, subplot_size = (4, 4), left = None, bottom = None, wspace = None, hspace = None, alpha = None, legend_fontsize = None, apply_to_all = True, show_background = False):
 	df = pd.DataFrame(data.obsm['X_' + basis][:, 0:2], columns = [basis + c for c in ['1', '2']])
 	basis = transform_basis(basis)
 
@@ -197,12 +197,12 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 					labels[idx] = ''
 					labels = as_category(labels)
 					label_size = labels.categories.size
-					palettes = get_palettes(label_size, with_background = True)
+					palettes = get_palettes(label_size, with_background = True, show_background = show_background)
 				else:
 					labels[unsel] = ''
 					labels = as_category(labels)
 					label_size = labels.categories.size
-					palettes = get_palettes(label_size, with_background = nunsel > 0)
+					palettes = get_palettes(label_size, with_background = nunsel > 0, show_background = show_background)
 
 				for k, cat in enumerate(labels.categories):
 					idx = np.isin(labels, cat)

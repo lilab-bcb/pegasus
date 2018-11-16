@@ -36,7 +36,7 @@ godsnot_64 = [
 
 
 
-def get_palettes(n_labels, with_background = False):
+def get_palettes(n_labels, with_background = False, show_background = False):
 	if with_background:
 		n_labels -= 1
 
@@ -49,8 +49,7 @@ def get_palettes(n_labels, with_background = False):
 		palettes = godsnot_64
 
 	if with_background:
-		# palettes = np.array(["gainsboro"] + palettes[: n_labels])
-		palettes = np.array(["white"] + palettes[: n_labels])
+		palettes = np.array(["gainsboro" if show_background else "white"] + palettes[: n_labels])
 	else:
 		palettes = np.array(palettes[: n_labels])
 

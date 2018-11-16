@@ -21,7 +21,7 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	# run demuxEM
 	demuxEM.estimate_background_probs(adt, random_state = kwargs['random_state'])
 	print("Background probability distribution is estimated.")
-	demuxEM.demultiplex(data, adt, unknown = kwargs['unknown_rate'], alpha = kwargs['alpha'], n_threads = kwargs['n_jobs'])
+	demuxEM.demultiplex(data, adt, min_signal = kwargs['min_signal'], alpha = kwargs['alpha'], n_threads = kwargs['n_jobs'])
 	print("Demultiplexing is done.")
 	
 	# annotate raw matrix with demuxEM results

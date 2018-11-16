@@ -6,12 +6,12 @@ from .plot_utils import transform_basis
 from . import plot_library, iplot_library
 
 pop_list = {
-	'composition' : {'basis', 'attrs', 'apply_to_all', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall'},
+	'composition' : {'basis', 'attrs', 'apply_to_all', 'group', 'genes', 'gene', 'nrows', 'ncols', 'alpha', 'legend_fontsize', 'use_raw', 'showzscore', 'title', 'showall', 'show_background'},
 	'scatter' : {'cluster', 'attr', 'group', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title', 'showall'},
-	'scatter_groups' : {'attr', 'attrs', 'apply_to_all', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title'},
-	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'apply_to_all', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
-	'scatter_gene_groups' : {'cluster', 'attr', 'attrs', 'restrictions', 'apply_to_all', 'genes', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall'},
-	'heatmap' : {'attr', 'basis', 'attrs', 'restrictions', 'apply_to_all', 'group', 'gene', 'style', 'stacked', 'logy', 'nrows', 'ncols', 'subplot_size', 'left', 'bottom', 'wspace', 'hspace', 'alpha', 'legend_fontsize', 'showall'}
+	'scatter_groups' : {'attr', 'attrs', 'apply_to_all', 'genes', 'gene', 'style', 'stacked', 'logy', 'use_raw', 'showzscore', 'title', 'show_background'},
+	'scatter_genes' : {'cluster', 'attr', 'attrs', 'restrictions', 'apply_to_all', 'group', 'gene', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall', 'show_background'},
+	'scatter_gene_groups' : {'cluster', 'attr', 'attrs', 'restrictions', 'apply_to_all', 'genes', 'style', 'stacked', 'logy', 'legend_fontsize', 'showzscore', 'title', 'showall', 'show_background'},
+	'heatmap' : {'attr', 'basis', 'attrs', 'restrictions', 'apply_to_all', 'group', 'gene', 'style', 'stacked', 'logy', 'nrows', 'ncols', 'subplot_size', 'left', 'bottom', 'wspace', 'hspace', 'alpha', 'legend_fontsize', 'showall', 'show_background'}
 }
 
 def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
