@@ -26,7 +26,7 @@ def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inn
 			tick.label.set_fontsize(xtick_font)
 		if xtick_rotation: 
 			tick.label.set_rotation('vertical')
-	ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5))
+	ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5), fontsize = xtick_font)
 	if figsize is not None:
 		plt.gcf().set_size_inches(*figsize)
 	plt.tight_layout()
