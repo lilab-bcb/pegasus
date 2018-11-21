@@ -28,15 +28,16 @@ requires = ['anndata==0.6.4',
 			'pybind11',
 			'umap-learn',
 			'fitsne',
-			'hdbscan',
+			'xgboost',
 			'pyarrow',
 			'google-cloud-bigquery'
+			# 'hdbscan',
 			# 'hnswlib'
 		  ]
 
 setup(
 	name='scCloud',
-	version='0.7.0',
+	version='0.8.0',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scCloud',

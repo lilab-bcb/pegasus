@@ -61,6 +61,18 @@ def plot_bar(heights, tick_labels, xlabel, ylabel, out_file, dpi = 500, figsize 
 	plt.close()
 
 
+def plot_dataframe_bar(df, ylabel, out_file, dpi = 500, figsize = None):
+	if df.shape[1] == 1:
+		df.plot.bar(legend = False)
+	else:		
+		df.plot.bar()
+	ax = plt.gca()
+	ax.set_ylabel(ylabel)
+	if figsize is not None:
+		plt.gcf().set_size_inches(*figsize)
+	plt.savefig(out_file, dpi = dpi)
+	plt.close()	
+
 
 # attrs is a dict with name: attr format; if this is a gene violin, attrs == {gene: gene_name}
 def plot_violin(data, attrs, out_file, xlabel = None, ylabel = None, title = None, dpi = 500, figsize = None, linewidth = None, log = False):
@@ -100,7 +112,7 @@ def plot_violin(data, attrs, out_file, xlabel = None, ylabel = None, title = Non
 	ax = plt.gca()
 	ax.grid(False)
 	if 'gene' in attrs:
-		ax.set_ylabel('log TPM')
+		ax.set_ylabel('log(TP100K+1)')
 	if title is not None:
 		ax.set_title(title)
 
@@ -132,8 +144,8 @@ def plot_heatmap(vec1, vec2, out_file, dpi = 500, xlabel = '', ylabel = ''):
 
 # type = count or gene
 def plot_human_vs_mouse(data, out_file, plot_type, alpha = 0.5, dpi = 500, log = False, figsize = None):
-	type2xlabel = {'count' : 'Number of mouse UMIs', 'gene' : 'Number of expressed mouse genes'}
-	type2ylabel = {'count' : 'Number of human UMIs', 'gene' : 'Number of expressed human genes'}
+	type2xlabel = {'count' : 'Number of mouse RNA UMIs', 'gene' : 'Number of expressed mouse genes'}
+	type2ylabel = {'count' : 'Number of human RNA UMIs', 'gene' : 'Number of expressed human genes'}
 	type2xattr = {'count' : 'mm10_n_counts', 'gene' : 'mm10_n_genes'}
 	type2yattr = {'count' : 'grch38_n_counts', 'gene' : 'grch38_n_genes'}
 
@@ -141,19 +153,23 @@ def plot_human_vs_mouse(data, out_file, plot_type, alpha = 0.5, dpi = 500, log =
 
 	labels = data.obs['demux_type'].astype(str)
 	labels[np.isin(data.obs['assignment'], ['Sample1MmF','Sample2MmF','Sample3MmM','Sample4MmM'])] = 'singlet_mouse'
-	labels[np.isin(data.obs['assignment'], ['Sample5HuF','Sample6HuF','Sample7HuM','Sample8HuM'])] = 'singlet_human'
+	labels[np.isin(data.obs['assignment'], ['Sample5HuF','Sample6HuF','Sample7HuM'])] = 'singlet_human'
+	labels[np.isin(data.obs['assignment'], 'Sample8HuM')] = 'singlet_donor8'
+
 	idx_dbl = np.isin(labels, 'doublet')
 	mouse_set = {'Sample1MmF','Sample2MmF','Sample3MmM','Sample4MmM'}
-	human_set = {'Sample5HuF','Sample6HuF','Sample7HuM','Sample8HuM'}
+	human_set = {'Sample5HuF','Sample6HuF','Sample7HuM'}
 
 	def doublet_type(assign_str):
 		ids = set(assign_str.split(','))
-		return 'doublet_human' if ids.issubset(human_set) else ('doublet_mouse' if ids.issubset(mouse_set) else 'doublet_mix')
+		return 'doublet_human' if ids.issubset(human_set) else ('doublet_mouse' if ids.issubset(mouse_set) else ('doublet_donor8' if 'Sample8HuM' in ids else 'doublet_mix'))
 
 	labels[idx_dbl] = np.vectorize(doublet_type)(data.obs.loc[idx_dbl, 'assignment'].values)
 
-	labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet_human', 'doublet_mouse', 'doublet_mix', 'unknown'])
-	colors = ['red', 'blue', 'purple', 'orange', 'green', 'grey']
+	labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'singlet_donor8', 'doublet_human', 'doublet_mouse', 'doublet_mix', 'doublet_donor8', 'unknown'])
+	colors = ['red', 'blue', 'greenyellow', 'purple', 'green', 'fuchsia', 'orange', 'grey']
+	# labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet', 'unknown'])
+	# colors = ['red', 'blue', 'green', 'grey']
 
 	for k, cat in enumerate(labels.categories):
 		idx = np.isin(labels, cat)
