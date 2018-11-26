@@ -25,6 +25,8 @@ Sub-commands:
     scp_output              Generate output files for single cell portal.
   CITE-Seq:
     merge_rna_adt           Merge RNA and ADT matrices into one 10x-formatted hdf5 file.
+  MISC:
+    check_indexes           Check CITE-Seq/hashing indexes to avoid index collision.
     
 Options:
   -h, --help          Show help information.

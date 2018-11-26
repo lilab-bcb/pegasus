@@ -12,7 +12,7 @@ to see the help information::
 		scCloud -h | --help
 		scCloud -v | --version
 
-``scCloud`` has 10 sub-commands in 6 groups.
+``scCloud`` has 11 sub-commands in 7 groups.
 
 * Preprocessing:
 
@@ -61,6 +61,10 @@ to see the help information::
 	merge_rna_adt
 		Merge RNA and ADT matrices into one 10x-formatted hdf5 file.
 
+* MISC:
+
+	check_indexes
+		Check CITE-Seq/hashing indexes to avoid index collision.
 
 ---------------------------------
 
@@ -1033,3 +1037,47 @@ to see the usage information::
 * Examples::
 
 	scCloud merge_rna_adt example_raw_h5.h5 example_adt.csv antibody_control.csv example_merged_raw_10x.h5
+
+
+---------------------------------
+
+
+``scCloud check_indexes``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If we run CITE-Seq or any kind of hashing, we need to make sure that the library indexes of CITE-Seq/hashing do not collide with 10x's RNA indexes. This command can help us to determine which 10x index sets we should use.
+
+Type::
+
+	scCloud check_indexes -h
+
+to see the usage information::
+
+	Usage:
+		scCloud check_indexes [--num-mismatch <mismatch> --num-report <report>] <index_file>
+		scCloud check_indexes -h
+
+* Arguments:
+
+	index_file
+		Index file containing CITE-Seq/hashing index sequences. One sequence per line.
+
+* Options:
+
+	-\\-num-mismatch <mismatch>
+		Number of mismatch allowed for each index sequence. [default: 1]
+
+  	-\\-num-report <report>
+  		Number of valid 10x indexes to report. Default is to report all valid indexes. [default: 9999]
+  
+  	\-h, -\\-help
+  		Print out help information.
+
+* Outputs:
+
+	Up to <report> number of valid 10x indexes will be printed out to standard output.
+
+* Examples::
+
+	scCloud check_indexes --num-report 8 index_file.txt
+

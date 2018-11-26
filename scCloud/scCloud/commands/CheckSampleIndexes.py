@@ -1,4 +1,3 @@
-import os
 from .Base import Base
 from ..check_sample_indexes import run_check_sample_indexes
 
@@ -7,7 +6,7 @@ class CheckSampleIndexes(Base):
 Check for index collision between 10x' index sets and CITE-Seq/hashing indexes.
 
 Usage:
-  scCloud check_indexes [--num-mismatch <mismatch> --num-report <report>] index_file 
+  scCloud check_indexes [--num-mismatch <mismatch> --num-report <report>] <index_file>
   scCloud check_indexes -h
 
 Arguments:

@@ -1,9 +1,9 @@
 API
 ===
 
-``scrtools`` can also be used as a python package. Import ``scrtools`` by::
+``scCloud`` can also be used as a python package. Import ``scCloud`` by::
 
-	import scrtools
+	import scCloud
 
 Tools:
 ------
@@ -27,6 +27,7 @@ Tools:
 	tools.run_pca
 	tools.run_rpca
 	tools.get_anndata_for_subclustering
+	tools.filter_cells_cite_seq
 
 **Batch correction**
 
@@ -53,7 +54,6 @@ Tools:
 	:toctree: .
 
 	tools.run_louvain
-	tools.run_hdbscan
 	tools.run_kmeans
 	tools.run_approximated_louvain
 
@@ -74,6 +74,13 @@ Tools:
 
 	tools.run_de_analysis
 
+**Write single-cell-portal-formatted outputs**
+
+.. autosummary::
+	:toctree: .
+
+	tools.run_scp_output
+
 Annotate clusters:
 ------------------
 
@@ -81,6 +88,7 @@ Annotate clusters:
 	:toctree: .
 
 	annotate_cluster.annotate_clusters
+	annotate_cluster.annotate_anndata_object
 
 Plotting:
 ---------
@@ -107,6 +115,37 @@ Plotting:
 	plotting.scatter3d
 	plotting.scatter3d_real
 
+**Quality control plots**
+
+.. autosummary::
+	:toctree: .
+
+	plotting.plot_qc_violin
+
+DemuxEM
+-------
+
+.. autosummary::
+	:toctree: .
+
+	demuxEM.estimate_background_probs
+	demuxEM.demultiplex
+	demuxEM.down_sampling
+	demuxEM.plot_adt_hist
+	demuxEM.plot_rna_hist
+	demuxEM.plot_bar
+	demuxEM.plot_violin
+	demuxEM.plot_heatmap
+	demuxEM.plot_dataframe_bar
+	demuxEM.plot_down_sampling 
+
+CITE-Seq
+--------
+
+.. autosummary::
+	:toctree: .
+
+	cite_seq.merge_rna_and_adt_data
 
 Miscellaneous:
 --------------
