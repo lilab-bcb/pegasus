@@ -14,7 +14,6 @@ Tools:
 	:toctree: .
 
 	tools.aggregate_10x_matrices
-	scCloud.demuxEM.demultiplex
 
 **Preprocess**
 
@@ -122,6 +121,39 @@ Plotting:
 	:toctree: .
 
 	plotting.plot_qc_violin
+
+DemuxEM:
+--------
+
+**Estimation**
+
+.. autosummary::
+	:toctree: .
+
+	demuxEM.estimate_background_probs
+	demuxEM.demultiplex
+	demuxEM.down_sampling
+
+**Plotting**
+
+.. autosummary::
+	:toctree: .
+
+	demuxEM.plot_adt_hist
+	demuxEM.plot_rna_hist
+	demuxEM.plot_bar
+	demuxEM.plot_violin
+	demuxEM.plot_heatmap
+	demuxEM.plot_dataframe_bar
+	demuxEM.plot_down_sampling
+
+CITE-Seq:
+---------
+
+.. autosummary::
+	:toctree: .
+
+	cite_seq.merge_rna_and_adt_data
 
 Miscellaneous:
 --------------

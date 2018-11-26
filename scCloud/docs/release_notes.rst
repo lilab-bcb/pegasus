@@ -1,3 +1,8 @@
+Version 0.8.0 `November 26, 2018`
+---------------------------------
+
+Added support for checking index collision for CITE-Seq/hashing experiments.
+
 Version 0.7.0 `October 26, 2018`
 --------------------------------
 
