@@ -64,6 +64,7 @@ setup(
 	python_requires='~=3.5',
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],
+		'scCloud.check_sample_indexes' : ['chromium-dna-sample-indexes-plate.json'],
 		'scCloud': ['ext/GraphLayout.java', 'ext/GraphLayout.class', 'ext/gephi-toolkit-0.9.2-all.jar']
 	},
 	entry_points={

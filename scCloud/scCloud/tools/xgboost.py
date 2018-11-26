@@ -6,7 +6,7 @@ import xlsxwriter
 from xgboost import XGBClassifier
 
 
-def find_markers_with_xgboost(data, label_attr, output_name, n_jobs = 1, top_n = 500, alpha = 0.05)
+def find_markers_with_xgboost(data, label_attr, output_name, n_jobs = 1, top_n = 500, alpha = 0.05):
 	start = time.time()
 	xgb = XGBClassifier(n_jobs = n_jobs)
 	xgb.fit(data.X, data.obs[label_attr])
@@ -20,7 +20,7 @@ def find_markers_with_xgboost(data, label_attr, output_name, n_jobs = 1, top_n =
 	top_n = min(top_n, (xgb.feature_importances_ > 0).sum())
 	genes = data.var_names.values[np.argsort(xgb.feature_importances_)[::-1][:top_n]]
 
-	writer = pd.ExcelWriter(output_name + 'xgb.markers.xlsx' engine='xlsxwriter')
+	writer = pd.ExcelWriter(output_name + 'xgb.markers.xlsx', engine='xlsxwriter')
 
 	var_df = data.var.loc[genes]
 	cols = ["percentage", "percentage_other", "percentage_fold_change", "mean_log_expression", "log_fold_change", "WAD_score", "auc", "predpower"]	
