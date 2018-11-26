@@ -15,10 +15,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../scCloud')))
-print(sys.path)
 
-import matplotlib
-matplotlib.use('Agg')
+# import matplotlib
+# matplotlib.use('Agg')
 
 # -- Project information -----------------------------------------------------
 
@@ -27,9 +26,9 @@ copyright = '2018, Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr A
 author = 'Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.'
 
 # The short X.Y version
-version = '0.7.0'
+version = '0.8.0'
 # The full version, including alpha/beta/rc tags
-release = '0.7.0'
+release = '0.8.0'
 
 
 # -- General configuration ---------------------------------------------------

@@ -6,8 +6,4 @@ except NameError:
 	import matplotlib
 	matplotlib.use('Agg')
 
-from . import tools
-from . import plotting
-from . import misc
-from . import demuxEM
-from . import cite_seq
+from . import tools, plotting, demuxEM, cite_seq, misc
