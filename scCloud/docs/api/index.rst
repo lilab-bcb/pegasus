@@ -14,7 +14,7 @@ Tools:
 	:toctree: .
 
 	tools.aggregate_10x_matrices
-	demuxEM.demultiplex
+	scCloud.demuxEM.demultiplex
 
 **Preprocess**
 

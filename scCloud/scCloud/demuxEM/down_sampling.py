@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from . import estimate_background_probs, demultiplex
-from ..tools import read_input
+from scCloud.tools import read_input
 
 
 def down_sampling(data_gt, adt_gt, probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], n_threads = 1):
