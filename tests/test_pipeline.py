@@ -7,7 +7,7 @@ import scCloud.pipeline
 class TestPipeline(unittest.TestCase):
     def tearDown(self):
         os.remove('test.h5')
-        # os.remove('test.h5ad')
+        os.remove('test.h5ad')
 
     def test_run(self):
         scCloud.tools.aggregate_10x_matrices('data/aggregate_test.csv', restrictions=None, attributes=['Version'],
