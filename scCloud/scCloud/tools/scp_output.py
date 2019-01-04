@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import time
 from scipy.sparse import issparse
-from .preprocessing import read_input
+from . import read_input
 
 def scp_write_coords(data, output_name):
 	cluster_labels = []

@@ -21,8 +21,9 @@ Sub-commands:
   Subclustering:
     view                    View attribute (e.g. cluster labels) and their values. This subcommand is used to determine cells to run subcluster analysis.
     subcluster              Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
-  Single cell portal:
+  Web-based visualization:
     scp_output              Generate output files for single cell portal.
+    parquet                 Generate a PARQUET file for web-based visualization.
   CITE-Seq:
     merge_rna_adt           Merge RNA and ADT matrices into one 10x-formatted hdf5 file.
   MISC:

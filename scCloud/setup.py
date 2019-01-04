@@ -30,8 +30,6 @@ requires = ['anndata==0.6.4',
 			'fitsne',
 			'xgboost',
 			'pyarrow',
-			'google-cloud-bigquery'
-			# 'hdbscan',
 			# 'hnswlib'
 		  ]
 

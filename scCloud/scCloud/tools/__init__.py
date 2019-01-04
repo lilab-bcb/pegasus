@@ -8,6 +8,7 @@ from .diffusion_map import run_diffmap, run_pseudotime_calculation, calculate_af
 from .clustering import run_louvain, run_kmeans, run_approximated_louvain
 from .visualization import run_tsne, run_fitsne, run_umap, run_force_directed_layout
 from .de_analysis import run_de_analysis, write_results_to_excel, collect_stat_and_t_test, fisher_test, mwu_test, calc_roc_stats
+from .convert_to_parquet import convert_to_parquet, run_conversion
 from .scp_output import run_scp_output, scp_write_coords, scp_write_metadata, scp_write_expression
 # from .xgboost import find_markers_with_xgboost
 from .logging import Logging
