@@ -21,8 +21,10 @@ Options:
   
   --cite-seq                                       Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using t-SNE (the basis used for plotting is 'citeseq_tsne').
 
-  --output-filtration-results <spreadsheet>        Output filtration results into <spreadsheet>.
-  --output-seurat-compatible                       Output seurat-compatible h5ad file.
+  --output-filtration-results                      Output filtration results as a spreadsheet.
+  --plot-filtration-results                        Plot filtration results as PDF files.
+  --plot-filtration-figsize <figsize>              Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
+  --make-output-seurat-compatible                  Make output h5ad file seurat compatible. Caution: this will significantly increase the output size. Do not turn this option on for large data sets.
   --output-loom                                    Output loom-formatted file.
   --correct-batch-effect                           Correct for batch effects.
   --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
@@ -30,9 +32,12 @@ Options:
   
   --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
+  --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: 100]
+  --max-umis <number>                              Only keep cells with less than <number> of UMIs. [default: 600000]
   --mito-prefix <prefix>                           Prefix for mitochondrial genes. [default: MT-]
   --percent-mito <ratio>                           Only keep cells with mitochondrial ratio less than <ratio>. [default: 0.1]
   --gene-percent-cells <ratio>                     Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes. [default: 0.0005]
+  --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
   
@@ -54,17 +59,10 @@ Options:
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
   --louvain-affinity <affinity>                    Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
 
-  --run-kmeans                                     Run KMeans clustering algorithm on diffusion components.
-  --kmeans-n-clusters <number>                     Target at <number> clusters for K means. [default: 20]
-
-  --run-hdbscan                                    Run hdbscan clustering algorithm on diffusion components.
-  --hdbscan-min-cluster-size <number>              Minimum cluster size for hdbscan. [default: 50]
-  --hdbscan-min-samples <number>                   Minimum number of samples for hdbscan. [default: 50]
-
   --run-approximated-louvain                       Run approximated louvain clustering algorithm.
   --approx-louvain-ninit <number>                  Number of Kmeans tries. [default: 20]
   --approx-louvain-nclusters <number>              Number of clusters for Kmeans initialization. [default: 30]
-  --approx-louvain-resolution <resolution>.        Resolution parameter for louvain. [default: 1.3]
+  --approx-louvain-resolution <resolution>         Resolution parameter for louvain. [default: 1.3]
 
   --run-tsne                                       Run multi-core t-SNE for visualization.
   --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter. [default: 30]
@@ -84,9 +82,12 @@ Options:
   -h, --help                                       Print out help information.
 
 Outputs:
-  output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
-  output_name.seurat.h5ad       Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
-  output_name.loom              Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
+  output_name.h5ad                 Output file in h5ad format. To load this file in python, use ``import scCloud; data = scCloud.tools.read_input('output_name.h5ad', mode = 'a')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). If '--make-output-seurat-compatible' is on, this file can be loaded into R and converted into a Seurat object.
+  output_name.filt.xlsx            Optional output. Only exists if '--output-filtration-results' is set. This file has two sheets --- Cell filtration stats and Gene filtration stats. The first sheet records cell filtering results and it has 10 columns: Channel, channel name; kept, number of cells kept; median_n_genes, median number of expressed genes in kept cells; median_n_umis, median number of UMIs in kept cells; median_percent_mito, median mitochondrial rate as UMIs between mitochondrial genes and all genes in kept cells; filt, number of cells filtered out; total, total number of cells before filtration, if the input contain all barcodes, this number is the cells left after '--min-genes-on-raw' filtration; median_n_genes_before, median expressed genes per cell before filtration; median_n_umis_before, median UMIs per cell before filtration; median_percent_mito_before, median mitochondrial rate per cell before filtration. The channels are sorted in ascending order with respect to the number of kept cells per channel. The second sheet records genes that failed to pass the filtering. This sheet has 3 columns: gene, gene name; n_cells, number of cells this gene is expressed; percent_cells, the fraction of cells this gene is expressed. Genes are ranked in ascending order according to number of cells the gene is expressed. Note that only genes not expressed in any cell are removed from the data. Other filtered genes are marked as non-robust and not used for TPM-like normalization.
+  output_name.filt.gene.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel.
+  output_name.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel.
+  output_name.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
+  output_name.loom                 Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
   scCloud cluster -p 20 --correct-batch-effect --run-louvain --run-tsne manton_bm_10x.h5 manton_bm
@@ -102,17 +103,23 @@ Examples:
 
             'cite_seq' : self.args['--cite-seq'],
 
-            'filt_xlsx' : self.args['--output-filtration-results'],
-            'output_seurat_compatible' : self.args['--output-seurat-compatible'],
+            'output_filt' : self.args['<output_name>'] if self.args['--output-filtration-results'] else None,
+            'plot_filt' : self.args['<output_name>'] if self.args['--plot-filtration-results'] else None,
+            'plot_filt_figsize' : self.args['--plot-filtration-figsize'],
+
+            'seurat_compatible' : self.args['--make-output-seurat-compatible'],
             'output_loom' : self.args['--output-loom'],
             'batch_correction' : self.args['--correct-batch-effect'],
             'group_attribute' : self.args['--batch-group-by'],
 
             'min_genes' : int(self.args['--min-genes']),
             'max_genes' : int(self.args['--max-genes']),
+            'min_umis' : int(self.args['--min-umis']),
+            'max_umis' : int(self.args['--max-umis']),
             'mito_prefix' : self.args['--mito-prefix'],
             'percent_mito' : float(self.args['--percent-mito']),
             'percent_cells' : float(self.args['--gene-percent-cells']),
+            'min_genes_on_raw' : int(self.args['--min-genes-on-raw']),
 
             'norm_count' : float(self.args['--counts-per-cell-after']),
 
@@ -131,13 +138,6 @@ Examples:
             'run_louvain' : self.args['--run-louvain'],
             'louvain_resolution' : float(self.args['--louvain-resolution']),
             'louvain_affinity' : self.args['--louvain-affinity'],
-
-            'run_kmeans' : self.args['--run-kmeans'],
-            'kmeans_n_clusters' : int(self.args['--kmeans-n-clusters']),
-
-            'run_hdbscan' : self.args['--run-hdbscan'],
-            'hdbscan_min_cluster_size' : int(self.args['--hdbscan-min-cluster-size']),
-            'hdbscan_min_samples' : int(self.args['--hdbscan-min-samples']),
 
             'run_approx_louvain' : self.args['--run-approximated-louvain'],
             'approx_louvain_ninit' : int(self.args['--approx-louvain-ninit']),

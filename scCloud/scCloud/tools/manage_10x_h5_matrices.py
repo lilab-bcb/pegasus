@@ -12,14 +12,112 @@ from . import row_attrs, excluded
 
 
 
+def load_10x_h5_file_v2(h5_in, ngene = None):
+	"""Load 10x v2 format matrix from hdf5 file
+	
+	Parameters
+	----------
+
+	h5_in : tables.File 
+		An instance of tables.File class that is connected to a 10x v2 formatted hdf5 file.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+
+	Returns
+	-------
+	
+	A dictionary containing genome-channel pair per each genome. The channels are also dictionaries containing the count matricies.
+
+	Examples
+	--------
+	>>> tools.load_10x_h5_file_v2(h5_in)
+	"""	
+	
+	results = {}
+	for i, group in enumerate(h5_in.walk_groups()):
+		if i > 0:
+			genome = group._v_name
+			
+			channel = {}
+			for node in h5_in.walk_nodes("/" + genome, "Array"):
+				channel[node.name] = node.read()
+			
+			mat = csc_matrix((channel["data"], channel["indices"], channel["indptr"]), shape=channel["shape"])
+			channel.pop("data")
+			channel.pop("indices")
+			channel.pop("indptr")
+			channel.pop("shape")
+
+			if ngene is not None and not genome.startswith("CITE_Seq"):
+				selected = mat.getnnz(axis = 0) >= ngene
+				mat = mat[:, selected]
+				channel["barcodes"] = channel["barcodes"][selected]
+				for attr in channel:
+					if (attr not in row_attrs) and (attr not in excluded):
+						channel[attr] = channel[attr][selected]
+			channel["matrix"] = mat
+
+			results[genome] = channel
+
+	return results
+
+
+
+def load_10x_h5_file_v3(h5_in, ngene = None):
+	"""Load 10x v3 format matrix from hdf5 file
+	
+	Parameters
+	----------
+
+	h5_in : tables.File 
+		An instance of tables.File class that is connected to a 10x v3 formatted hdf5 file.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+
+	Returns
+	-------
+	
+	A dictionary containing genome-channel pair per each genome. The channels are also dictionaries containing the count matricies.
+
+	Examples
+	--------
+	>>> tools.load_10x_h5_file_v3(h5_in)
+	"""	
+	
+	bigmat = csc_matrix((h5_in.get_node("/matrix/data").read(), h5_in.get_node("/matrix/indices").read(), h5_in.get_node("/matrix/indptr").read()), shape=h5_in.get_node("/matrix/shape").read())
+	barcodes = h5_in.get_node("/matrix/barcodes").read()
+	genomes = h5_in.get_node("/matrix/features/genome").read()
+	ids = h5_in.get_node("/matrix/features/id").read()
+	names = h5_in.get_node("/matrix/features/name").read()
+
+	results = {}
+	for genome in np.unique(genomes):
+		idx = genomes == genome
+		channel = {"genes" : ids[idx], "gene_names" : names[idx]}
+		mat = bigmat[idx,].copy()
+
+		if ngene is not None:
+			selected = mat.getnnz(axis = 0) >= ngene
+			channel["matrix"] = mat[:, selected]
+			channel["barcodes"] = barcodes[selected]
+		else:
+			channel["matrix"] = mat
+			channel["barcodes"] = barcodes
+
+		results[genome.decode()] = channel
+
+	return results
+
+
+
 def load_10x_h5_file(input_h5, ngene = None):
-	"""Load 10x-format matrix from h5 file
+	"""Load 10x format matrix (either v2 or v3) from hdf5 file
 	
 	Parameters
 	----------
 
 	input_h5 : `str`
-		The matrix in h5 format.
+		The matrix in 10x v2 or v3 hdf5 format.
 	ngene : `int`, optional (default: None)
 		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
@@ -33,33 +131,13 @@ def load_10x_h5_file(input_h5, ngene = None):
 	>>> tools.load_10x_h5_file('example_10x.h5')
 	"""	
 	
+	results = None
 	with tables.open_file(input_h5) as h5_in:
-		results = {}
-		for i, group in enumerate(h5_in.walk_groups()):
-			if i > 0:
-				genome = group._v_name
-				
-				channel = {}
-				for node in h5_in.walk_nodes("/" + genome, "Array"):
-					channel[node.name] = node.read()
-				
-				mat = csc_matrix((channel["data"], channel["indices"], channel["indptr"]), shape=channel["shape"])
-				channel.pop("data")
-				channel.pop("indices")
-				channel.pop("indptr")
-				channel.pop("shape")
-
-				if ngene is not None and not genome.startswith("CITE_Seq"):
-					selected = mat.getnnz(axis = 0) >= ngene
-					mat = mat[:, selected]
-					channel["barcodes"] = channel["barcodes"][selected]
-					for attr in channel:
-						if (attr not in row_attrs) and (attr not in excluded):
-							channel[attr] = channel[attr][selected]
-				channel["matrix"] = mat
-
-				results[genome] = channel
-
+		try:
+			node = h5_in.get_node("/matrix")
+			results = load_10x_h5_file_v3(h5_in, ngene)
+		except tables.exceptions.NoSuchNodeError:
+			results = load_10x_h5_file_v2(h5_in, ngene)
 	return results
 
 
@@ -95,7 +173,7 @@ def load_dropseq_file(input_file, genome):
 
 
 def write_10x_h5_file(output_h5, genome2data):
-	"""Write count matricies into one 10x-formatted hdf5 file output_h5
+	"""Write count matricies into one 10x v2 formatted hdf5 file output_h5
 
 	Parameters
 	----------

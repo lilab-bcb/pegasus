@@ -28,9 +28,7 @@ requires = ['anndata==0.6.4',
 			'pybind11',
 			'umap-learn',
 			'fitsne',
-			'xgboost',
 			'pyarrow',
-			# 'hnswlib'
 		  ]
 
 setup(

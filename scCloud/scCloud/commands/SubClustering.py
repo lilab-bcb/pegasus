@@ -18,7 +18,6 @@ Options:
 
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --correct-batch-effect                           Correct for batch effects for subclustering task.
-  --output-seurat-compatible                       Output seurat-compatible h5ad file.
   --output-loom                                    Output loom-formatted file.
 
   --random-state <seed>                            Random number generator seed. [default: 0]
@@ -39,17 +38,10 @@ Options:
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
   --louvain-affinity <affinity>                    Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
 
-  --run-kmeans                                     Run KMeans clustering algorithm on diffusion components.
-  --kmeans-n-clusters <number>                     Target at <number> clusters for K means. [default: 20]
-
   --run-approximated-louvain                       Run approximated louvain clustering algorithm.
   --approx-louvain-ninit <number>                  Number of Kmeans tries. [default: 20]
   --approx-louvain-nclusters <number>              Number of clusters for Kmeans initialization. [default: 30]
   --approx-louvain-resolution <resolution>.        Resolution parameter for louvain. [default: 1.3]
-
-  --run-hdbscan                                    Run hdbscan clustering algorithm on diffusion components.
-  --hdbscan-min-cluster-size <number>              Minimum cluster size for hdbscan. [default: 50]
-  --hdbscan-min-samples <number>                   Minimum number of samples for hdbscan. [default: 50]
 
   --run-tsne                                       Run multi-core t-SNE for visualization.
   --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter. [default: 30]
@@ -70,7 +62,6 @@ Options:
 
 Outputs:
   output_name.h5ad              Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
-  output_name.seurat.h5ad       Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
   output_name.loom              Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
@@ -88,7 +79,6 @@ Examples:
             'n_jobs' : int(self.args['--threads']),
             'genome' : None,
             'batch_correction' : self.args['--correct-batch-effect'],
-            'output_seurat_compatible' : self.args['--output-seurat-compatible'],
             'output_loom' : self.args['--output-loom'],
 
             'random_state' : int(self.args['--random-state']),
@@ -108,13 +98,6 @@ Examples:
             'run_louvain' : self.args['--run-louvain'],
             'louvain_resolution' : float(self.args['--louvain-resolution']),
             'louvain_affinity' : self.args['--louvain-affinity'],
-
-            'run_kmeans' : self.args['--run-kmeans'],
-            'kmeans_n_clusters' : int(self.args['--kmeans-n-clusters']),
-
-            'run_hdbscan' : self.args['--run-hdbscan'],
-            'hdbscan_min_cluster_size' : int(self.args['--hdbscan-min-cluster-size']),
-            'hdbscan_min_samples' : int(self.args['--hdbscan-min-samples']),
 
             'run_approx_louvain' : self.args['--run-approximated-louvain'],
             'approx_louvain_ninit' : int(self.args['--approx-louvain-ninit']),
