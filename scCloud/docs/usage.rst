@@ -986,6 +986,50 @@ to see the usage information::
 ---------------------------------
 
 
+``scCloud parquet``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Generate a PARQUET file for web-based visualization.
+
+Type::
+
+	scCloud parquet -h
+
+to see the usage information::
+
+	Usage:
+		scCloud parquet [options] <input_h5ad_file> <output_name>
+		scCloud parquet -h
+
+* Arguments:
+
+	input_h5ad_file
+		Analyzed single cell data in h5ad format.
+
+	output_name
+		Name prefix for the parquet file.
+
+* Options:
+
+	\-p <number>, -\\-threads <number>
+		Number of threads used to generate the PARQUET file. [default: 1]
+
+	\-h, -\\-help
+		Print out help information.
+
+* Outputs:
+
+	output_name.parquet
+		Generated PARQUET file that contains metadata and expression for every gene.
+
+* Examples::
+
+	scCloud parquet manton_bm.h5ad manton_bm.parquet
+
+
+---------------------------------
+
+
 ``scCloud merge_rna_adt``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
