@@ -261,7 +261,7 @@ to see the usage information::
 
 
 ``scCloud cluster``
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 Once we collected the count matrix ``example_10x.h5``, we can perform single cell analysis using ``scCloud cluster``.
 
@@ -1020,7 +1020,7 @@ to see the usage information::
 * Outputs:
 
 	output_name.parquet
-		Generated PARQUET file that contains metadata and expression for every gene.
+		Generated PARQUET file that contains metadata and expression levels for every gene.
 
 * Examples::
 
