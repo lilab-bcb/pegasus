@@ -23,7 +23,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 	print("Inputs are loaded.")
 
 	if kwargs['seurat_compatible']:
-		assert is_raw and kwargs['select_variable_genes'] and kwargs['submat_to_dense']	
+		assert is_raw and kwargs['select_variable_genes'] and kwargs['submat_to_dense']
 
 	# preprocessing
 	if is_raw:
@@ -34,7 +34,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 			mito_prefix = kwargs['mito_prefix'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], min_umis = kwargs['min_umis'], max_umis = kwargs['max_umis'], \
 			percent_mito = kwargs['percent_mito'], percent_cells = kwargs['percent_cells'], min_genes_on_raw = kwargs['min_genes_on_raw'])
 		if kwargs['seurat_compatible']:
-			adata.raw = adata # raw as count
+			raw_data = adata.copy() # raw as count
 		# normailize counts and then transform to log space
 		tools.log_norm(adata, kwargs['norm_count'])
 		# estimate bias factors
@@ -116,7 +116,6 @@ def run_pipeline(input_file, output_name, **kwargs):
 			obs = adata.obs,
 			obsm = adata.obsm,
 			uns = adata.uns,
-			raw = adata.raw,
 			var = {'var_names' : var_names,
 				   'gene_ids' : var_names,
 				   'n_cells' : np.concatenate([adata.var['n_cells'].values, [0] * cdata.shape[1]]),
@@ -132,12 +131,16 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_tsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_tsne')
 		print("Antibody embedding is done.")
 
-	# write out results
-	if kwargs['seurat_compatible']:
-		adata.uns['scale.data'] = adata_c.X
-		adata.uns['scale.data.rownames'] = adata_c.var_names.values
 
+	# write out results
 	adata.write(output_name + ".h5ad")
+
+	if kwargs['seurat_compatible']:
+		seurat_data = adata.copy()
+		seurat_data.raw = raw_data
+		seurat_data.uns['scale.data'] = adata_c.X
+		seurat_data.uns['scale.data.rownames'] = adata_c.var_names.values
+		seurat_data.write(output_name + ".seurat.h5ad")
 
 	if kwargs['output_loom']:
 		adata.write_loom(output_name + ".loom")
