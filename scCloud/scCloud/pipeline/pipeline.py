@@ -7,6 +7,9 @@ from .. import tools
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']
 
+	if 'seurat_compatible' not in kwargs:
+		kwargs['seurat_compatible'] = False
+
 	# load input data
 	if not kwargs['cite_seq']:
 		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if kwargs['subcluster'] else 'r+')
