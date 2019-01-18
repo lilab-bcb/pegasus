@@ -34,11 +34,11 @@ Outputs:
   output_name_demux_10x.h5                               RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
   output_name_ADTs.h5ad                                  Antibody tag matrix in h5ad format.
   output_name_demux.h5ad                                 Demultiplexed RNA count matrix in h5ad format.
-  output_name.ambient_hashtag.hist.png                   Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.
-  output_name.background_probabilities.bar.png           Optional output. A bar plot visualizing the estimated hashtag background probability distribution.
-  output_name.real_content.hist.png                      Optional output. A histogram plot depicting hashtag distributions of not-real-cells and real-cells as defined by total number of expressed genes in the RNA assay.
-  output_name.rna_demux.hist.png                         Optional output. A histogram plot depicting RNA UMI distribution for singlets, doublets and unknown cells.
-  output_name.gene_name.violin.png                       Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
+  output_name.ambient_hashtag.hist.pdf                   Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.
+  output_name.background_probabilities.bar.pdf           Optional output. A bar plot visualizing the estimated hashtag background probability distribution.
+  output_name.real_content.hist.pdf                      Optional output. A histogram plot depicting hashtag distributions of not-real-cells and real-cells as defined by total number of expressed genes in the RNA assay.
+  output_name.rna_demux.hist.pdf                         Optional output. A histogram plot depicting RNA UMI distribution for singlets, doublets and unknown cells.
+  output_name.gene_name.violin.pdf                       Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
   
 Examples:
   scCloud demuxEM -p 8 --hash-type cell-hashing --generate-diagnostic-plots sample_adt.csv sample_raw_gene_bc_matrices_h5.h5 sample_output

@@ -89,11 +89,11 @@ You want to analyze all four samples but correct batch effects for bone marrow a
 	scCloud cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
 	scCloud de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
 	scCloud annotate_cluster example.h5ad example.anno.txt
-	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
-	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
+	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
+	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
 	scCloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
 
-The above analysis will give you tSNE, louvain cluster labels and diffusion maps in ``example.h5ad``. You can investigate donor-specific effects by looking at ``example.composition.png``. ``example.scatter.png`` plotted tSNE colored by louvain_labels and Donor info side-by-side. You can explore the diffusion map in 3D by looking at ``example.diffmap.html``. This html maps all diffusion components into 3D using PCA.
+The above analysis will give you tSNE, louvain cluster labels and diffusion maps in ``example.h5ad``. You can investigate donor-specific effects by looking at ``example.composition.pdf``. ``example.scatter.pdf`` plotted tSNE colored by louvain_labels and Donor info side-by-side. You can explore the diffusion map in 3D by looking at ``example.diffmap.html``. This html maps all diffusion components into 3D using PCA.
 
 If you want to perform subcluster analysis by combining cluster 1 and 3, run the following command::
 
@@ -237,19 +237,19 @@ to see the usage information::
 	output_name_demux.h5ad
 		Demultiplexed RNA count matrix in h5ad format.
 
-	output_name.ambient_hashtag.hist.png
+	output_name.ambient_hashtag.hist.pdf
 		Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.
 
-	output_name.background_probabilities.bar.png
+	output_name.background_probabilities.bar.pdf
 		Optional output. A bar plot visualizing the estimated hashtag background probability distribution.
 
-	output_name.real_content.hist.png
+	output_name.real_content.hist.pdf
 		Optional output. A histogram plot depicting hashtag distributions of not-real-cells and real-cells as defined by total number of expressed genes in the RNA assay.
 
-	output_name.rna_demux.hist.png
+	output_name.rna_demux.hist.pdf
 		Optional output. A histogram plot depicting RNA UMI distribution for singlets, doublets and unknown cells.
 
-	output_name.gene_name.violin.png
+	output_name.gene_name.violin.pdf
 		Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
 
 * Examples::
@@ -619,7 +619,7 @@ to see the usage information::
   		Plot <attr> against cluster labels. This option is only used in 'composition'.
 
 	-\\-basis <basis>
-		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_tsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
 
 	-\\-attributes <attrs>
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
@@ -695,12 +695,12 @@ to see the usage information::
 
 Examples::
 
-	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
-	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
-	scCloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.png
-	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.png
-	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.png
-	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.png
+	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
+	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
+	scCloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.pdf
+	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.pdf
+	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.pdf
+	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.pdf
 
 
 ---------------------------------
