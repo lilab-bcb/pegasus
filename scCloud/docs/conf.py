@@ -23,9 +23,9 @@ copyright = '2018, Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr A
 author = 'Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.'
 
 # The short X.Y version
-version = '0.8.0'
+version = '0.9.0'
 # The full version, including alpha/beta/rc tags
-release = '0.8.0'
+release = '0.9.0'
 
 
 # -- General configuration ---------------------------------------------------

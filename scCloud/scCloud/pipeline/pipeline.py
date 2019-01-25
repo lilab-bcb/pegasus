@@ -7,6 +7,9 @@ from .. import tools
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']
 
+	if 'seurat_compatible' not in kwargs:
+		kwargs['seurat_compatible'] = False
+
 	# load input data
 	if not kwargs['cite_seq']:
 		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if kwargs['subcluster'] else 'r+')
@@ -22,12 +25,19 @@ def run_pipeline(input_file, output_name, **kwargs):
 		assert adata is not None and cdata is not None
 	print("Inputs are loaded.")
 
+	if kwargs['seurat_compatible']:
+		assert is_raw and kwargs['select_variable_genes'] and kwargs['submat_to_dense']
+
 	# preprocessing
 	if is_raw:
 		# make gene names unique
 		tools.update_var_names(adata)
 		# filter out low quality cells/genes
-		tools.filter_data(adata, mito_prefix = kwargs['mito_prefix'], filt_xlsx = kwargs['filt_xlsx'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], percent_mito = kwargs['percent_mito'], percent_cells = kwargs['percent_cells'])
+		tools.filter_data(adata, output_filt = kwargs['output_filt'], plot_filt = kwargs['plot_filt'], plot_filt_figsize = kwargs['plot_filt_figsize'], \
+			mito_prefix = kwargs['mito_prefix'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], min_umis = kwargs['min_umis'], max_umis = kwargs['max_umis'], \
+			percent_mito = kwargs['percent_mito'], percent_cells = kwargs['percent_cells'], min_genes_on_raw = kwargs['min_genes_on_raw'])
+		if kwargs['seurat_compatible']:
+			raw_data = adata.copy() # raw as count
 		# normailize counts and then transform to log space
 		tools.log_norm(adata, kwargs['norm_count'])
 		# estimate bias factors
@@ -38,14 +48,9 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
 		is_raw = True # get submat and then set is_raw to True
 
-
-	if kwargs['output_seurat_compatible']:
-		assert is_raw and kwargs['select_variable_genes'] and kwargs['submat_to_dense']	
-
-
 	# dimension reduction --- select variable genes or not
 	pca_key = kwargs['pca_key']
-	if is_raw:	
+	if is_raw:
 		if kwargs['select_variable_genes']:
 			filter_result = tools.filter_genes_dispersion(adata, kwargs['batch_correction'])
 			adata_c = tools.collect_variable_gene_matrix(adata, filter_result.gene_subset)
@@ -77,12 +82,12 @@ def run_pipeline(input_file, output_name, **kwargs):
 	# clustering
 	if kwargs['run_approx_louvain']:
 		tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'])
-	if kwargs['run_kmeans']:
-		tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
+	# if kwargs['run_kmeans']:
+	# 	tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
 	if kwargs['run_louvain']:
 		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
-	if kwargs['run_hdbscan']:
-		tools.run_hdbscan(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], min_cluster_size = kwargs['hdbscan_min_cluster_size'], min_samples = kwargs['hdbscan_min_samples'])
+	# if kwargs['run_hdbscan']:
+	# 	tools.run_hdbscan(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], min_cluster_size = kwargs['hdbscan_min_cluster_size'], min_samples = kwargs['hdbscan_min_samples'])
 
 	# visualization
 	if kwargs['run_tsne']:
@@ -113,7 +118,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		new_data = anndata.AnnData(X = hstack([adata.X, csr_matrix(adt_matrix)], format = 'csr'), 
 			obs = adata.obs,
 			obsm = adata.obsm,
-			uns = adata.uns, 
+			uns = adata.uns,
 			var = {'var_names' : var_names,
 				   'gene_ids' : var_names,
 				   'n_cells' : np.concatenate([adata.var['n_cells'].values, [0] * cdata.shape[1]]),
@@ -129,15 +134,16 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_tsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_tsne')
 		print("Antibody embedding is done.")
 
+
 	# write out results
 	adata.write(output_name + ".h5ad")
 
-	if kwargs['output_seurat_compatible']:
-		adata_c.obs = adata.obs
-		adata_c.obsm = adata.obsm
-		adata_c.uns = adata.uns
-		adata_c.raw = adata
-		adata_c.write(output_name + ".seurat.h5ad")
+	if kwargs['seurat_compatible']:
+		seurat_data = adata.copy()
+		seurat_data.raw = raw_data
+		seurat_data.uns['scale.data'] = adata_c.X
+		seurat_data.uns['scale.data.rownames'] = adata_c.var_names.values
+		seurat_data.write(output_name + ".seurat.h5ad")
 
 	if kwargs['output_loom']:
 		adata.write_loom(output_name + ".loom")

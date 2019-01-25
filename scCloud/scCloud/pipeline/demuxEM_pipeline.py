@@ -44,16 +44,16 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 
 	# generate plots
 	if kwargs['gen_plots']:
-		demuxEM.plot_adt_hist(adt, 'hto_type', output_name + '.ambient_hashtag.hist.png', alpha = 1.0)
-		demuxEM.plot_bar(adt.uns['background_probs'], adt.var_names, 'Sample ID', 'Background probability', output_name + '.background_probabilities.bar.png')
-		demuxEM.plot_adt_hist(adt, 'rna_type', output_name + '.real_content.hist.png', alpha = 0.5)
-		demuxEM.plot_rna_hist(data, output_name + '.rna_demux.hist.png')
+		demuxEM.plot_adt_hist(adt, 'hto_type', output_name + '.ambient_hashtag.hist.pdf', alpha = 1.0)
+		demuxEM.plot_bar(adt.uns['background_probs'], adt.var_names, 'Sample ID', 'Background probability', output_name + '.background_probabilities.bar.pdf')
+		demuxEM.plot_adt_hist(adt, 'rna_type', output_name + '.real_content.hist.pdf', alpha = 0.5)
+		demuxEM.plot_rna_hist(data, output_name + '.rna_demux.hist.pdf')
 		print("Diagnostic plots are generated.")
 
 	if kwargs['gen_gender_plot'] is not None:
 		tools.log_norm(data, 1e5)
 		for gene_name in kwargs['gen_gender_plot']:
-			demuxEM.plot_violin(data, {'gene' : gene_name}, '{output_name}.{gene_name}.violin.png'.format(output_name = output_name, gene_name = gene_name), title = '{gene_name}: a gender-specific gene'.format(gene_name = gene_name))
+			demuxEM.plot_violin(data, {'gene' : gene_name}, '{output_name}.{gene_name}.violin.pdf'.format(output_name = output_name, gene_name = gene_name), title = '{gene_name}: a gender-specific gene'.format(gene_name = gene_name))
 		print("Gender-specific gene expression violin plots are generated.")
 
 	# output results

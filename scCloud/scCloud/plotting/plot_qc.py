@@ -9,11 +9,12 @@ import matplotlib.pyplot as plt
 # plot_type: gene, count, mito
 def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inner = None, dpi = 500, figsize = None, xlabel = None, xtick_font = None, xtick_rotation = False, split = False, linewidth = None):
 	pt2attr = {'gene' : 'n_genes', 'count' : 'n_counts', 'mito' : 'percent_mito'}
-	pt2ylab = {'gene' : 'Number of expressed genes', 'count' : 'Number of UMIs', 'mito' : 'Percentage of mitochondrial genes'}
+	pt2ylab = {'gene' : 'Number of expressed genes', 'count' : 'Number of UMIs', 'mito' : 'Percentage of mitochondrial UMIs'}
 
 	yattr = pt2attr[plot_type]
 
-	df = data.obs[[xattr, yattr]] if hue is None else data.obs[[xattr, yattr, hue]]
+	tmp_df = data if isinstance(data, pd.core.frame.DataFrame) else data.obs
+	df = tmp_df[[xattr, yattr]] if hue is None else tmp_df[[xattr, yattr, hue]]
 
 	sns.violinplot(x = xattr, y = yattr, hue = hue, data = df, inner = inner, split = split, linewidth = linewidth)
 	ax = plt.gca()

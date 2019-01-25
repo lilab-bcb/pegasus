@@ -12,7 +12,7 @@ to see the help information::
 		scCloud -h | --help
 		scCloud -v | --version
 
-``scCloud`` has 11 sub-commands in 7 groups.
+``scCloud`` has 13 sub-commands in 8 groups.
 
 * Preprocessing:
 
@@ -51,10 +51,13 @@ to see the help information::
 	subcluster
     	Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
 
-* Single cell portal:
+* Web-based visualization:
 
 	scp_output
-		Generate output files for single cell portal.	
+		Generate output files for single cell portal.
+
+	parquet
+		Generate a PARQUET file for web-based visualization.	
 
 * CITE-Seq:
 
@@ -86,11 +89,11 @@ You want to analyze all four samples but correct batch effects for bone marrow a
 	scCloud cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
 	scCloud de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
 	scCloud annotate_cluster example.h5ad example.anno.txt
-	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
-	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
+	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
+	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
 	scCloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
 
-The above analysis will give you tSNE, louvain cluster labels and diffusion maps in ``example.h5ad``. You can investigate donor-specific effects by looking at ``example.composition.png``. ``example.scatter.png`` plotted tSNE colored by louvain_labels and Donor info side-by-side. You can explore the diffusion map in 3D by looking at ``example.diffmap.html``. This html maps all diffusion components into 3D using PCA.
+The above analysis will give you tSNE, louvain cluster labels and diffusion maps in ``example.h5ad``. You can investigate donor-specific effects by looking at ``example.composition.pdf``. ``example.scatter.pdf`` plotted tSNE colored by louvain_labels and Donor info side-by-side. You can explore the diffusion map in 3D by looking at ``example.diffmap.html``. This html maps all diffusion components into 3D using PCA.
 
 If you want to perform subcluster analysis by combining cluster 1 and 3, run the following command::
 
@@ -234,19 +237,19 @@ to see the usage information::
 	output_name_demux.h5ad
 		Demultiplexed RNA count matrix in h5ad format.
 
-	output_name.ambient_hashtag.hist.png
+	output_name.ambient_hashtag.hist.pdf
 		Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.
 
-	output_name.background_probabilities.bar.png
+	output_name.background_probabilities.bar.pdf
 		Optional output. A bar plot visualizing the estimated hashtag background probability distribution.
 
-	output_name.real_content.hist.png
+	output_name.real_content.hist.pdf
 		Optional output. A histogram plot depicting hashtag distributions of not-real-cells and real-cells as defined by total number of expressed genes in the RNA assay.
 
-	output_name.rna_demux.hist.png
+	output_name.rna_demux.hist.pdf
 		Optional output. A histogram plot depicting RNA UMI distribution for singlets, doublets and unknown cells.
 
-	output_name.gene_name.violin.png
+	output_name.gene_name.violin.pdf
 		Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
 
 * Examples::
@@ -258,7 +261,7 @@ to see the usage information::
 
 
 ``scCloud cluster``
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 Once we collected the count matrix ``example_10x.h5``, we can perform single cell analysis using ``scCloud cluster``.
 
@@ -294,11 +297,17 @@ to see the usage information::
 	-\\-cite-seq
 		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using t-SNE (the basis used for plotting is 'citeseq_tsne').
 
-  	-\\-output-filtration-results <spreadsheet>
-		Output filtration results into <spreadsheet>.
+  	-\\-output-filtration-results
+		Output filtration results as a spreadsheet.
+
+	-\\-plot-filtration-results
+		Plot filtration results as PDF files.
+
+	-\\-plot-filtration-figsize <figsize>
+		Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
 
 	-\\-output-seurat-compatible
-		Output seurat-compatible h5ad file.
+		Output seurat-compatible h5ad file. Caution: File size might be large, do not turn this option on for large data sets.
 
 	-\\-output-loom
 		Output loom-formatted file.
@@ -315,6 +324,12 @@ to see the usage information::
 	-\\-max-genes <number>
 		Only keep cells with less than <number> of genes. [default: 6000]
 
+	-\\-min-umis <number>
+		Only keep cells with at least <number> of UMIs. [default: 100]
+
+	-\\-max-umis <number>
+		Only keep cells with less than <number> of UMIs. [default: 600000]
+
 	-\\-mito-prefix <prefix>
 		Prefix for mitochondrial genes. [default: MT-]
 
@@ -323,6 +338,9 @@ to see the usage information::
 
 	-\\-gene-percent-cells <ratio>
 		Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes. [default: 0.0005]
+
+	-\\-min-genes-on-raw <number>
+		If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
 
 	-\\-counts-per-cell-after <number>
 		Total counts per cell after normalization. [default: 1e5]
@@ -365,21 +383,6 @@ to see the usage information::
 
 	-\\-louvain-affinity <affinity>
 		Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
-
-	-\\-run-kmeans
-		Run KMeans clustering algorithm on diffusion components.
-
-	-\\-kmeans-n-clusters <number>
-		Target at <number> clusters for K means. [default: 20]
-
-	-\\-run-hdbscan
-		Run hdbscan clustering algorithm on diffusion components.
-
-	-\\-hdbscan-min-cluster-size <number>
-		Minimum cluster size for hdbscan. [default: 50]
-
-	-\\-hdbscan-min-samples <number>
-		Minimum number of samples for hdbscan. [default: 50]
 
 	-\\-run-approximated-louvain
 		Run approximated louvain clustering algorithm.
@@ -435,11 +438,23 @@ to see the usage information::
 * Outputs:
 
 	output_name.h5ad
-		Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
+		Output file in h5ad format. To load this file in python, use ``import scCloud; data = scCloud.tools.read_input('output_name.h5ad', mode = 'a')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). If '--make-output-seurat-compatible' is on, this file can be loaded into R and converted into a Seurat object.
 
 	output_name.seurat.h5ad
-		Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
+		Optional output. Only exists if '--output-seurat-compatible' is set. 'output_name.h5ad' in seurat-compatible manner. This file can be loaded into R and converted into a Seurat object.
+
+	output_name.filt.xlsx
+		Optional output. Only exists if '--output-filtration-results' is set. This file has two sheets --- Cell filtration stats and Gene filtration stats. The first sheet records cell filtering results and it has 10 columns: Channel, channel name; kept, number of cells kept; median_n_genes, median number of expressed genes in kept cells; median_n_umis, median number of UMIs in kept cells; median_percent_mito, median mitochondrial rate as UMIs between mitochondrial genes and all genes in kept cells; filt, number of cells filtered out; total, total number of cells before filtration, if the input contain all barcodes, this number is the cells left after '--min-genes-on-raw' filtration; median_n_genes_before, median expressed genes per cell before filtration; median_n_umis_before, median UMIs per cell before filtration; median_percent_mito_before, median mitochondrial rate per cell before filtration. The channels are sorted in ascending order with respect to the number of kept cells per channel. The second sheet records genes that failed to pass the filtering. This sheet has 3 columns: gene, gene name; n_cells, number of cells this gene is expressed; percent_cells, the fraction of cells this gene is expressed. Genes are ranked in ascending order according to number of cells the gene is expressed. Note that only genes not expressed in any cell are removed from the data. Other filtered genes are marked as non-robust and not used for TPM-like normalization.
+
+	output_name.filt.gene.pdf
+		Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel.
 	
+	output_name.filt.UMI.pdf
+		Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel.
+	
+	output_name.filt.mito.pdf
+		Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
+
 	output_name.loom
 		Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
 
@@ -607,7 +622,7 @@ to see the usage information::
   		Plot <attr> against cluster labels. This option is only used in 'composition'.
 
 	-\\-basis <basis>
-		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_tsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
 
 	-\\-attributes <attrs>
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
@@ -683,12 +698,12 @@ to see the usage information::
 
 Examples::
 
-	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.png
-	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.png
-	scCloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.png
-	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.png
-	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.png
-	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.png
+	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
+	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
+	scCloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.pdf
+	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.pdf
+	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.pdf
+	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.pdf
 
 
 ---------------------------------
@@ -824,9 +839,6 @@ to see the usage information::
 	-\\-correct-batch-effect
 		Correct for batch effects.
 
-	-\\-output-seurat-compatible
-		Output seurat-compatible h5ad file.
-
 	-\\-output-loom
 		Output loom-formatted file.
 
@@ -868,21 +880,6 @@ to see the usage information::
 
 	-\\-louvain-affinity <affinity>
 		Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
-
-	-\\-run-kmeans
-		Run KMeans clustering algorithm on diffusion components.
-
-	-\\-kmeans-n-clusters <number>
-		Target at <number> clusters for K means. [default: 20]
-
-	-\\-run-hdbscan
-		Run hdbscan clustering algorithm on diffusion components.
-
-	-\\-hdbscan-min-cluster-size <number>
-		Minimum cluster size for hdbscan. [default: 50]
-
-	-\\-hdbscan-min-samples <number>
-		Minimum number of samples for hdbscan. [default: 50]
 
 	-\\-run-approximated-louvain
 		Run approximated louvain clustering algorithm.
@@ -940,9 +937,6 @@ to see the usage information::
 	output_name.h5ad
 		Output file in h5ad format. The clustering results are stored in the 'obs' field (e.g. 'louvain_labels' for louvain cluster labels). The PCA, t-SNE and diffusion map coordinates are stored in the 'obsm' field.
 
-	output_name.seurat.h5ad
-		Optional output. Only exists if '--output-seurat-compatible' is set. This is the Seurat-readable h5ad file.
-
 	output_name.loom
 		Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
 
@@ -990,6 +984,50 @@ to see the usage information::
 * Examples::
 
 	scCloud scp_output example.h5ad example
+
+
+---------------------------------
+
+
+``scCloud parquet``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Generate a PARQUET file for web-based visualization.
+
+Type::
+
+	scCloud parquet -h
+
+to see the usage information::
+
+	Usage:
+		scCloud parquet [options] <input_h5ad_file> <output_name>
+		scCloud parquet -h
+
+* Arguments:
+
+	input_h5ad_file
+		Analyzed single cell data in h5ad format.
+
+	output_name
+		Name prefix for the parquet file.
+
+* Options:
+
+	\-p <number>, -\\-threads <number>
+		Number of threads used to generate the PARQUET file. [default: 1]
+
+	\-h, -\\-help
+		Print out help information.
+
+* Outputs:
+
+	output_name.parquet
+		Generated PARQUET file that contains metadata and expression levels for every gene.
+
+* Examples::
+
+	scCloud parquet manton_bm.h5ad manton_bm.parquet
 
 
 ---------------------------------

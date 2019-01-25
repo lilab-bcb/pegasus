@@ -20,7 +20,7 @@ Options:
 
   --cluster-labels <attr>            Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
   --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition'.
-  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_tsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
   --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
   --restriction <restriction>...     Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value'. This option is used in 'composition' and 'scatter'.
   --apply-to-each-figure             Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict. 
@@ -52,12 +52,12 @@ Options:
   -h, --help                         Print out help information.
 
 Examples:
-  scCloud plot composition --cluster-labels louvain_labels --attribute Individual --style normalized --not-stacked Manton_BM.h5ad test.png
-  scCloud plot scatter --basis tsne --attributes louvain_labels,Individual Manton_BM.h5ad test.png
-  scCloud plot scatter_groups --cluster-labels louvain_labels --group Individual Manton_BM.h5ad test.png
-  scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP Manton_BM.h5ad test.png
-  scCloud plot scatter_gene_groups --gene CD8A --group Individual Manton_BM.h5ad test.png
-  scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' Manton_BM.h5ad test.png
+  scCloud plot composition --cluster-labels louvain_labels --attribute Individual --style normalized --not-stacked Manton_BM.h5ad test.pdf
+  scCloud plot scatter --basis tsne --attributes louvain_labels,Individual Manton_BM.h5ad test.pdf
+  scCloud plot scatter_groups --cluster-labels louvain_labels --group Individual Manton_BM.h5ad test.pdf
+  scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP Manton_BM.h5ad test.pdf
+  scCloud plot scatter_gene_groups --gene CD8A --group Individual Manton_BM.h5ad test.pdf
+  scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' Manton_BM.h5ad test.pdf
     """
     def execute(self):
         kwargs = {

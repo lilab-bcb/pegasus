@@ -18,7 +18,7 @@ Options:
   -h, --help                             Print out help information.
 
 Outputs:
-  output_name.parquet        Generated PARQUET file that contains metadata and expression for every gene.
+  output_name.parquet        Generated PARQUET file that contains metadata and expression levels for every gene.
 
 Examples:
   scCloud parquet manton_bm.h5ad manton_bm.parquet
