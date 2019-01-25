@@ -11,3 +11,4 @@ from .PARQUET import PARQUET as parquet
 from .SCPOutput import SCPOutput as scp_output
 from .CITESeq import CITESeq as merge_rna_adt
 from .CheckSampleIndexes import CheckSampleIndexes as check_indexes
+from .FindMarkers import FindMarkers as find_markers
