@@ -11,7 +11,7 @@ from lightgbm import LGBMClassifier
 
 from . import read_input
 
-def find_markers(data, label_attr, n_jobs, min_gain = 1.0, random_state = 0, remove_ribo = False):
+def find_markers(data, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0, remove_ribo = False):
 	if remove_ribo:
 		data = data[:,np.vectorize(lambda x: not x.startswith('RPL') and not x.startswith('RPS'))(data.var_names)]
 
@@ -56,7 +56,7 @@ def find_markers(data, label_attr, n_jobs, min_gain = 1.0, random_state = 0, rem
 
 
 
-def run_find_markers(input_h5ad_file, output_file, label_attr, n_jobs, min_gain = 1.0, random_state = 0, remove_ribo = False):
+def run_find_markers(input_h5ad_file, output_file, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0, remove_ribo = False):
 	data = read_input(input_h5ad_file, mode = 'a')
 	markers = find_markers(data, label_attr, n_jobs = n_jobs, min_gain = min_gain, random_state = random_state, remove_ribo = remove_ribo)
 	

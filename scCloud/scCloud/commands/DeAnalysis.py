@@ -21,6 +21,7 @@ Options:
   --mwu                            Calculate Mann-Whitney U test.
   --roc                            Calculate area under cuver in ROC curve.
   -p <threads>                     Use <threads> threads. [default: 1]
+  
   -h, --help                       Print out help information.
 
 Outputs:
