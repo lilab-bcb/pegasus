@@ -1,6 +1,12 @@
+bigquery
+new-wdl
+scCloud/docs/api/*.rst
+scCloud/docs/_build
+scCloud/scCloud/backup
+*~
+
 .DS_Store
-scrtools/.DS_Store
-wdl/.DS_Store
+scCloud/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
