@@ -12,7 +12,7 @@ to see the help information::
 		scCloud -h | --help
 		scCloud -v | --version
 
-``scCloud`` has 13 sub-commands in 8 groups.
+``scCloud`` has 14 sub-commands in 8 groups.
 
 * Preprocessing:
 
@@ -31,6 +31,9 @@ to see the help information::
   		
     de_analysis
     	Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene.
+    
+    find_markers
+		Find markers for each cluster by training classifiers using LightGBM.
     
     annotate_cluster
     	This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it works for human/mouse immune/brain cells.
@@ -528,8 +531,64 @@ to see the usage information::
 ---------------------------------
 
 
+``scCloud find_markers``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once we have the DE results, we can optionally find cluster-specific markers with gradient boosting using ``scCloud find_markers``.
+
+Type::
+
+	scCloud find_markers -h
+
+to see the usage information::
+
+	Usage:
+		scCloud find_markers [options] <input_h5ad_file> <output_spreadsheet>
+		scCloud find_markers -h
+
+* Arguments:
+
+	input_h5ad_file
+		Single cell data after running the de_analysis.
+
+	output_spreadsheet
+		Output spreadsheet with LightGBM detected markers.
+
+* Options:
+
+	-\\-labels <attr>
+		<attr> used as cluster labels. [default: louvain_labels]
+
+	-\\-remove-ribo
+		Remove ribosomal genes with either RPL or RPS as prefixes.
+
+	-\\-min-gain <gain>
+		Only report genes with a feature importance score (in gain) of at least <gain>. [default: 1.0]
+
+	-\\-random-state <seed>
+		Random state for initializing LightGBM and KMeans. [default: 0]
+
+	\-p <threads>
+		Use <threads> threads. [default: 1]
+
+	\-h, -\\-help
+		Print out help information.
+
+* Outputs:
+
+	output_spreadsheet
+		An excel spreadsheet containing detected markers. Each cluster has one tab in the spreadsheet and each tab has three columns, listing markers that are strongly up-regulated, weakly up-regulated and down-regulated.
+
+* Examples::
+
+	scCloud find_markers --labels louvain_labels --remove-ribo --min-gain 10.0 -p 10 example.h5ad example.markers.xlsx
+
+
+---------------------------------
+
+
 ``scCloud annotate_cluster``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once we have the DE results, we could optionally identify putative cell types for each cluster using ``scCloud annotate_cluster``. Currently, this subcommand works for human/mouse immune/brain cells. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
 
@@ -1027,7 +1086,7 @@ to see the usage information::
 
 * Examples::
 
-	scCloud parquet manton_bm.h5ad manton_bm.parquet
+	scCloud parquet example.h5ad example.parquet
 
 
 ---------------------------------
