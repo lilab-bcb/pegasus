@@ -3,12 +3,12 @@
 import numpy as np
 import pandas as pd
 import os
-from scipy.sparse import csc_matrix, hstack
+from scipy.sparse import csr_matrix, vstack
 import tables
 import copy
 from subprocess import check_call
 
-from . import row_attrs, excluded
+from . import col_attrs, excluded
 
 
 
@@ -26,7 +26,7 @@ def load_10x_h5_file_v2(h5_in, ngene = None):
 	Returns
 	-------
 	
-	A dictionary containing genome-channel pair per each genome. The channels are also dictionaries containing the count matricies.
+	A dictionary containing genome-channel pair per each genome. The channels are also dictionaries containing the count matricies in nsample x ngene format.
 
 	Examples
 	--------
@@ -42,18 +42,19 @@ def load_10x_h5_file_v2(h5_in, ngene = None):
 			for node in h5_in.walk_nodes("/" + genome, "Array"):
 				channel[node.name] = node.read()
 			
-			mat = csc_matrix((channel["data"], channel["indices"], channel["indptr"]), shape=channel["shape"])
+			M, N = channel["shape"]
+			mat = csr_matrix((channel["data"], channel["indices"], channel["indptr"]), shape = (N, M))
 			channel.pop("data")
 			channel.pop("indices")
 			channel.pop("indptr")
 			channel.pop("shape")
 
 			if ngene is not None and not genome.startswith("CITE_Seq"):
-				selected = mat.getnnz(axis = 0) >= ngene
-				mat = mat[:, selected]
+				selected = mat.getnnz(axis = 1) >= ngene
+				mat = mat[selected, :]
 				channel["barcodes"] = channel["barcodes"][selected]
 				for attr in channel:
-					if (attr not in row_attrs) and (attr not in excluded):
+					if (attr not in col_attrs) and (attr not in excluded):
 						channel[attr] = channel[attr][selected]
 			channel["matrix"] = mat
 
@@ -84,7 +85,8 @@ def load_10x_h5_file_v3(h5_in, ngene = None):
 	>>> tools.load_10x_h5_file_v3(h5_in)
 	"""	
 	
-	bigmat = csc_matrix((h5_in.get_node("/matrix/data").read(), h5_in.get_node("/matrix/indices").read(), h5_in.get_node("/matrix/indptr").read()), shape=h5_in.get_node("/matrix/shape").read())
+	M, N = h5_in.get_node("/matrix/shape").read()
+	bigmat = csr_matrix((h5_in.get_node("/matrix/data").read(), h5_in.get_node("/matrix/indices").read(), h5_in.get_node("/matrix/indptr").read()), shape = (N, M))
 	barcodes = h5_in.get_node("/matrix/barcodes").read()
 	genomes = h5_in.get_node("/matrix/features/genome").read()
 	ids = h5_in.get_node("/matrix/features/id").read()
@@ -94,11 +96,11 @@ def load_10x_h5_file_v3(h5_in, ngene = None):
 	for genome in np.unique(genomes):
 		idx = genomes == genome
 		channel = {"genes" : ids[idx], "gene_names" : names[idx]}
-		mat = bigmat[idx,].copy()
+		mat = bigmat[:, idx].copy()
 
 		if ngene is not None:
-			selected = mat.getnnz(axis = 0) >= ngene
-			channel["matrix"] = mat[:, selected]
+			selected = mat.getnnz(axis = 1) >= ngene
+			channel["matrix"] = mat[selected, :]
 			channel["barcodes"] = barcodes[selected]
 		else:
 			channel["matrix"] = mat
@@ -156,7 +158,7 @@ def load_dropseq_file(input_file, genome):
 	Returns
 	-------
 
-	A dictionary containing one genome-channel pair. The genome is the provided genome name. The channel is a dictionary containing the drop-seq count matrix.
+	A dictionary containing one genome-channel pair. The genome is the provided genome name. The channel is a dictionary containing the drop-seq count matrix (gene x sample).
 
 	Examples
 	--------
@@ -200,7 +202,8 @@ def write_10x_h5_file(output_h5, genome2data):
 			hd5_out.create_carray(out_group, "data", obj=output_data["matrix"].data)
 			hd5_out.create_carray(out_group, "indices", obj=output_data["matrix"].indices)
 			hd5_out.create_carray(out_group, "indptr", obj=output_data["matrix"].indptr)
-			hd5_out.create_carray(out_group, "shape", obj=output_data["matrix"].shape)
+			M, N = output_data["matrix"].shape
+			hd5_out.create_carray(out_group, "shape", obj=(N, M))
 
 			for attr, obj in output_data.items():
 				if attr not in excluded:
@@ -214,7 +217,7 @@ class aggr_matrix:
 		self.attrs = set()
 		for attr, value in channel.items():
 			self.attrs.add(attr)
-			self.out_hd5[attr] = value if attr in row_attrs else [value]
+			self.out_hd5[attr] = value if attr in col_attrs else [value]
 		self.nsample = nsample
 		self.is_dropseq = is_dropseq is not None
 
@@ -222,7 +225,7 @@ class aggr_matrix:
 		attrs_c = set(channel)
 		attrs_r = self.attrs & attrs_c # joint	
 		for attr in attrs_r:
-			if attr not in row_attrs:
+			if attr not in col_attrs:
 				self.out_hd5[attr].append(channel[attr])
 		attrs_r = self.attrs - attrs_c # only in existing
 		for attr in attrs_r:
@@ -235,17 +238,17 @@ class aggr_matrix:
 
 	def merge(self):
 		if not self.is_dropseq:
-			self.out_hd5["matrix"] = hstack(self.out_hd5["matrix"], "csc")
+			self.out_hd5["matrix"] = vstack(self.out_hd5["matrix"], "csr")
 		else:
 			df_new = pd.concat(self.out_hd5["matrix"], axis = 1, sort = True)
 			df_new.fillna(0, inplace = True)
-			self.out_hd5["matrix"] = csc_matrix(df_new.astype(int).values)
+			self.out_hd5["matrix"] = csr_matrix(df_new.astype(int).T.values)
 			self.out_hd5["genes"] = self.out_hd5["gene_names"] = df_new.index.values.astype(str)
 
 		self.out_hd5["barcodes"] = np.concatenate(self.out_hd5["barcodes"])
 
 		for attr in self.attrs:
-			if (attr not in row_attrs) and (attr not in excluded):
+			if (attr not in col_attrs) and (attr not in excluded):
 				self.out_hd5[attr] = np.concatenate(self.out_hd5[attr])
 
 
@@ -287,10 +290,10 @@ def select_only_singlets(results):
 		if not genome.startswith("CITE_Seq") and "demux_type" in channel:
 			idx = channel["demux_type"] == singlet
 			channel.pop("demux_type")
-			channel["matrix"] = channel["matrix"][:, idx]
+			channel["matrix"] = channel["matrix"][idx, :]
 			channel["barcodes"] = channel["barcodes"][idx]
 			for attr in channel:
-				if (attr not in row_attrs) and (attr not in excluded):
+				if (attr not in col_attrs) and (attr not in excluded):
 					channel[attr] = channel[attr][idx]
 
 
@@ -370,8 +373,9 @@ def aggregate_10x_matrices(csv_file, restrictions, attributes, output_file, goog
 		if select_singlets:
 			select_only_singlets(results)
 		for genome, channel in results.items():
-			channel["barcodes"] = np.array([(sample_name + '-' + x.decode()) for x in channel["barcodes"]])
-			nsample = channel["barcodes"].size
+			barcodes = np.array(['{}-{}'.format(sample_name, y[:-2] if y.endswith("-1") else y) for y in (x.decode() for x in channel["barcodes"])])
+			nsample = barcodes.size
+			channel["barcodes"] = barcodes
 			for attr in attributes:
 				channel[attr] = np.repeat(row[attr], nsample)
 			if genome in merged_map:

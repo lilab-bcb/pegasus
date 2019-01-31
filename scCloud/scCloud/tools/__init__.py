@@ -1,7 +1,7 @@
-row_attrs = {"genes", "gene_names", "antibody_names"} # row attributes
+col_attrs = {"genes", "gene_names", "antibody_names"} # column attributes for sample x gene csr matrix
 excluded = {"barcodes", "matrix"} # processed attributes
 
-from .manage_10x_h5_matrices import row_attrs, load_10x_h5_file, load_dropseq_file, write_10x_h5_file, aggregate_10x_matrices
+from .manage_10x_h5_matrices import load_10x_h5_file, load_dropseq_file, write_10x_h5_file, aggregate_10x_matrices
 from .preprocessing import read_input, update_var_names, filter_data, log_norm, run_pca, run_rpca, get_anndata_for_subclustering, filter_cells_cite_seq
 from .batch_correction import set_group_attribute, estimate_adjustment_matrices, filter_genes_dispersion, collect_variable_gene_matrix, correct_batch_effects
 from .diffusion_map import run_diffmap, run_pseudotime_calculation, calculate_affinity_matrix, calculate_normalized_affinity

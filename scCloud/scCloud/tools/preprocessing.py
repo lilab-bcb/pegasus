@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.extmath import randomized_svd
 
-from . import row_attrs, excluded, load_10x_h5_file, load_dropseq_file
+from . import col_attrs, excluded, load_10x_h5_file, load_dropseq_file
 
 
 
@@ -53,19 +53,33 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene
 	for genome, data in gdmap.items():
 		# obs_dict
 		barcodes = data["barcodes"].astype(str)
-		if np.vectorize(lambda x: x.endswith("-1"))(barcodes).sum() == barcodes.size:
-			barcodes = np.array([x[:-2] for x in barcodes]) # remove the trailing '-1'
-		obs_dict = {"obs_names" : barcodes}
-		obs_dict["Channel"] = ['-'.join(x.split('-')[:-1]) for x in barcodes]
+
+		def extract_channel(barcode):
+			fields = barcode.split('-')
+			if len(fields) == 2 and fields[-1].isdigit():
+				return fields[-1]
+			nshift = 2 if fields[-1] == '1' else 1
+			return '-'.join(fields[:-nshift])
+
+		obs_dict = {"obs_names" : barcodes, "Channel" : np.vectorize(extract_channel)(barcodes)}
+
 		for attr, value in data.items():
-			if (attr not in row_attrs) and (attr not in excluded):
+			if (attr not in col_attrs) and (attr not in excluded):
 				obs_dict[attr] = value.astype(str)
 		# var_dict
 		var_dict = {"var_names" : (data["gene_names"] if "gene_names" in data else data["antibody_names"]).astype(str)}
 		if "genes" in data:
 			var_dict["gene_ids"] = data["genes"].astype(str)
+		
+		# convert matrix to float32 if necessary
+		mat = data["matrix"]
+		if mat.dtype == np.int32:
+			mat.dtype = np.float32
+			orig_dat = mat.data.view(np.int32)
+			mat.data[:] = orig_dat
+
 		# construct h5ad object
-		results[genome] = anndata.AnnData(X = data["matrix"].transpose(), obs = obs_dict, var = var_dict)
+		results[genome] = anndata.AnnData(X = mat, obs = obs_dict, var = var_dict)
 		results[genome].uns["genome"] = genome
 
 	if len(results) == 1:
