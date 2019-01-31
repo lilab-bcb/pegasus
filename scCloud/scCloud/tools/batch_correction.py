@@ -123,16 +123,13 @@ def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, m
 	mean = np.log1p(mean)
 	# all of the following quantities are "per-gene" here
 
-	df = pd.DataFrame()
-	df['mean'] = mean
-	df['dispersion'] = dispersion
-	df['mean_bin'] = pd.cut(df['mean'], bins=20)
+	df = pd.DataFrame({'mean' : mean, 'dispersion' : dispersion, 'mean_bin' : pd.cut(mean, bins=20)})
 	disp_grouped = df.groupby('mean_bin')['dispersion']
 	disp_mean_bin = disp_grouped.mean()
 	disp_std_bin = disp_grouped.std(ddof=1)
 	df['dispersion_norm'] = (df['dispersion'].values  # use values here as index differs
-							 - disp_mean_bin[df['mean_bin']].values) \
-							 / disp_std_bin[df['mean_bin']].values
+							 - disp_mean_bin.loc[df['mean_bin']].values) \
+							 / disp_std_bin.loc[df['mean_bin']].values
 	dispersion_norm = df['dispersion_norm'].values.astype('float32')
 	max_disp = np.inf if max_disp is None else max_disp
 	dispersion_norm[np.isnan(dispersion_norm)] = 0  # similar to Seurat
