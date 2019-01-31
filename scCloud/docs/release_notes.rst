@@ -1,3 +1,10 @@
+Version 0.10.0 `January 31, 2019`
+---------------------------------
+
+Added 'scCloud find_markers' to find markers using LightGBM.
+
+Improved file loading speed and enabled the parsing of channels from barcode strings for cellranger aggregated h5 files.
+
 Version 0.9.0 `January 17, 2019`
 --------------------------------
 
