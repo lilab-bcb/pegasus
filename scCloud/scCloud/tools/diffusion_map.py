@@ -34,7 +34,6 @@ def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, 
 
 	if method == 'hnsw':
 		assert not issparse(X)
-		start = time.time()
 		knn_index = hnswlib.Index(space = 'l2', dim = X.shape[1])
 		knn_index.init_index(max_elements = nsample, ef_construction = efC, M = M, random_seed = random_state)
 		knn_index.set_ef(efS)
@@ -49,8 +48,6 @@ def calculate_affinity_matrix(X, num_threads, method = 'hnsw', K = 100, M = 20, 
 				distances[i, 1:] = distances[i, 0:-1]
 		indices = indices[:, 1:].astype(int)
 		distances = np.sqrt(distances[:, 1:])
-		end = time.time() 
-		print("hnsw kNN time = {:.2f}s.".format(end - start))
 	else:
 		assert method == 'sklearn'
 		K = K - 1

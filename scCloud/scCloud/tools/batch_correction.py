@@ -84,7 +84,9 @@ def estimate_adjustment_matrices(data):
 	end = time.time()
 	print("batch_correction.estimate_adjustment_matrices is done. Time spent = {:.2f}s.".format(end - start))
 
-def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, min_mean=0.0125, max_mean=7):	
+def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, min_mean=0.0125, max_mean=7):
+	start = time.time()
+
 	X = data.X[:,data.var['robust'].values].expm1()
 
 	mean = X.mean(axis = 0).A1
@@ -137,7 +139,8 @@ def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, m
 										 dispersion_norm > min_disp,
 										 dispersion_norm < max_disp))
 
-	print("batch_correction.filter_genes_dispersion done.")
+	end = time.time()
+	print("batch_correction.filter_genes_dispersion done. Time spent = {:.2f}s.".format(end - start))
 	print("{0} genes are selected.".format(gene_subset.sum()))
 
 	return np.rec.fromarrays((gene_subset,

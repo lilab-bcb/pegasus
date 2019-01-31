@@ -211,6 +211,8 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 	>>> adata = tools.read_input('example_ADT.csv')
 	"""
 
+	start = time.time()
+
 	if input_file.endswith('.h5'):
 		data = read_10x_h5_file(input_file, genome, return_a_dict, demux_ngene)
 	elif input_file.endswith('.dge.txt.gz'):
@@ -223,6 +225,9 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 		print("Unrecognized file type!")
 		assert False
 
+	end = time.time()
+	print("Read input is finished. Time spent = {:.2f}s.".format(end - start))
+
 	return data
 
 
@@ -230,6 +235,8 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 transfer_gene_name = [(358, 'ENSG00000268991', 'FAM231C.2'), (921, 'ENSG00000278139', 'AL358075.4'), (2207, 'ENSG00000232995', 'RGS5.2'), (5847, 'ENSG00000282827', 'AC134772.2'), (5938, 'ENSG00000271858', 'CYB561D2.2'), (6087, 'ENSG00000241572', 'PRICKLE2-AS1.2'), (7213, 'ENSG00000249428', 'CFAP99.2'), (9596, 'ENSG00000280987', 'MATR3.2'), (9605, 'ENSG00000279686', 'AC142391.1'), (10277, 'ENSG00000282913', 'BLOC1S5.2'), (10867, 'ENSG00000124593', 'AL365205.1'), (11619, 'ENSG00000268592', 'RAET1E-AS1.2'), (13877, 'ENSG00000231963', 'AL662864.1'), (16117, 'ENSG00000225655', 'BX255923.1'), (16938, 'ENSG00000282955', 'RABL6.2'), (17241, 'ENSG00000265264', 'TIMM10B.2'), (18626, 'ENSG00000282682', 'C11orf71.2'), (18984, 'ENSG00000282883', 'AKR1C3.2'), (19226, 'ENSG00000150076', 'CCDC7.2'), (19346, 'ENSG00000264404', 'BX547991.1'), (21184, 'ENSG00000282031', 'TMBIM4.2'), (21230, 'ENSG00000257815', 'LINC01481.2'), (22033, 'ENSG00000228741', 'SPATA13.2'), (22037, 'ENSG00000281899', 'AL359736.3'), (22654, 'ENSG00000274827', 'LINC01297.2'), (23662, 'ENSG00000273259', 'AL049839.2'), (24019, 'ENSG00000211974', 'AC245369.1'), (26919, 'ENSG00000279257', 'C17orf100.2'), (26962, 'ENSG00000187838', 'PLSCR3'), (27137, 'ENSG00000255104', 'AC005324.4'), (27884, 'ENSG00000263715', 'LINC02210-CRHR1'), (28407, 'ENSG00000281844', 'FBF1.2'), (30440, 'ENSG00000283027', 'CAPS.2'), (32648, 'ENSG00000235271', 'LINC01422.2')]
 
 def update_var_names(data):
+	start = time.time()
+
 	prefix = re.compile('^(' + '|'.join(data.uns['genome'].split(',')) + ')_+')
 	if prefix.match(data.var_names[0]):
 		data.var['gene_ids'] = [prefix.sub('', x) for x in data.var['gene_ids']]
@@ -251,9 +258,14 @@ def update_var_names(data):
 	
 	data.var_names = pd.Index(gsyms)
 
+	end = time.time()
+	print("update_var_names is finished. Time spent = {:.2f}s.".format(end - start))
+
 
 
 def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = None, mito_prefix = 'MT-', min_genes = 500, max_genes = 6000, min_umis = 100, max_umis = 600000, percent_mito = 0.1, percent_cells = 0.0005, min_genes_on_raw = 100):
+	start = time.time()
+
 	data.obs['n_genes'] = data.X.getnnz(axis = 1)
 	if data.obs['n_genes'].min() == 0: # if raw.h5
 		data._inplace_subset_obs(data.obs['n_genes'] >= min_genes_on_raw)
@@ -327,6 +339,8 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 	data._inplace_subset_var(var_index)
 	print("After filteration, {nc} cells and {ng} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(nc = data.shape[0], ng = data.shape[1], nrb = data.var['robust'].sum()))
 
+	end = time.time()
+	print("filter_data is finished. Time spent = {:.2f}s.".format(end - start))
 
 
 def filter_cells_cite_seq(data, max_cells):
@@ -339,11 +353,16 @@ def filter_cells_cite_seq(data, max_cells):
 
 def log_norm(data, norm_count):
 	""" Normalization and then take log """
+	start = time.time()
+
 	assert issparse(data.X)
 	mat = data.X[:, data.var['robust'].values]
 	scale = norm_count / mat.sum(axis = 1).A1
 	data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
 	data.X = data.X.log1p()
+
+	end = time.time()
+	print("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
 def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0):
 	start = time.time()
