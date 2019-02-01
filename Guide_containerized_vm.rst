@@ -7,7 +7,7 @@ How to run a containerized VM on Google Cloud
 Create a VM instance with a docker image
 ========================================
 
-1. Go to `Google Cloud Platform console<https://console.cloud.google.com>`_. Click **Navigation menu** at the top left corner. Click **Compute Engine** under *COMPUTE*. 
+1. Go to `Google Cloud Platform console`_. Click **Navigation menu** at the top left corner. Click **Compute Engine** under *COMPUTE*. 
 
 2. Click **VM instances** from the left and then click **CREATE INSTANCE** at the top. 
 
@@ -51,8 +51,13 @@ Run the created VM
 SSH remotely
 ============
 
-1. Add your public key to the VM instance by following the *Adding or removing instance-level public SSH keys* section in `Managing SSH Keys in Metadata<https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys#edit-ssh-metadata>`_.
+1. Add your public key to the VM instance by following the *Adding or removing instance-level public SSH keys* section in `Managing SSH Keys in Metadata`_.
 
-2. Use the command below to ssh remotely to the VM instance (also see *Connecting using third-party tools* section in `Connecting to Instances Using Advanced Methods<https://cloud.google.com/compute/docs/instances/connecting-advanced#provide-key>`_)::
+2. Use the command below to ssh remotely to the VM instance (also see *Connecting using third-party tools* section in `Connecting to Instances Using Advanced Methods`_)::
 	
 	ssh -i [PATH_TO_PRIVATE_KEY] [USERNAME]@[EXTERNAL_IP_ADDRESS]
+
+
+.. _Google Cloud Platform console: https://console.cloud.google.com
+.. _Managing SSH Keys in Metadata: https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys#edit-ssh-metadata
+.. _Connecting to Instances Using Advanced Methods: https://cloud.google.com/compute/docs/instances/connecting-advanced#provide-key
