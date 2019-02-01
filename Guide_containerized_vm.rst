@@ -19,9 +19,11 @@ Create a VM instance with a docker image
 
 6. Click **Advanced container options**. Change *Restart policy* to *On failure* and check *Allocate a buffer for STDIN* and *Allocate a pseudo-TTY*.
 
-7. Click the *Change* buttion under **Boot disk** if you need to increase the disk space. The default disk space is only *10G*. For example, if you want to increase the boot disk space to *200*GB, change the number under *Size (GB)* to *200* and click *Select* at the bottom right corner.
+7. To mount host directory to docker container, click *Add volume* under **Volume mounts** and fill in the table: *Volume Type* = Directory, *Mount path* = /home/userid, *Host path* = /home/userid, *Mode* = Read/write. Then click *Done*. Note that if the host path does not exist, docker will not be installed correctly.
 
-8. Click **Create** at the bottom of the form.
+8. Click the *Change* buttion under **Boot disk** if you need to increase the disk space. The default disk space is only *10G*. For example, if you want to increase the boot disk space to *200*GB, change the number under *Size (GB)* to *200* and click *Select* at the bottom right corner.
+
+9. Click **Create** at the bottom of the form.
 
 
 
@@ -43,3 +45,14 @@ Run the created VM
 6. You can check the CPU info outside the container using the command below::
 
 	cat /proc/cpuinfo
+
+
+
+SSH remotely
+============
+
+1. Add your public key to the VM instance by following the *Adding or removing instance-level public SSH keys* section in `Managing SSH Keys in Metadata<https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys#edit-ssh-metadata>`_.
+
+2. Use the command below to ssh remotely to the VM instance (also see *Connecting using third-party tools* section in `Connecting to Instances Using Advanced Methods<https://cloud.google.com/compute/docs/instances/connecting-advanced#provide-key>`_)::
+	
+	ssh -i [PATH_TO_PRIVATE_KEY] [USERNAME]@[EXTERNAL_IP_ADDRESS]
