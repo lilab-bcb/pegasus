@@ -35,7 +35,7 @@ def find_markers(data, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0,
 
 	ncat = data.obs[label_attr].cat.categories.size
 	log_exprs = ['mean_log_expression_{}'.format(i + 1) for i in range(ncat)]
-	titles = ['down', 'weak', 'strong']
+	titles = [('down', 'down_gain'), ('weak', 'weak_gain'), ('strong', 'strong_gain')]
 	markers = defaultdict(lambda: defaultdict(list))
 
 	kmeans = KMeans(n_clusters = 3, random_state = random_state)
@@ -47,7 +47,8 @@ def find_markers(data, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0,
 		for i, kmeans_label in enumerate(np.argsort(kmeans.cluster_centers_[:,0])):
 			if kmeans_label != kmeans_label_mode:
 				for clust_label in (kmeans.labels_ == kmeans_label).nonzero()[0]:
-					markers[clust_label][titles[i]].append(gene_symbol)
+					markers[clust_label][titles[i][0]].append(gene_symbol)
+					markers[clust_label][titles[i][1]].append('{:.2f}'.format(lgb.feature_importances_[gene_id]))
 
 	end = time.time()
 	print("find_markers took {:.2f}s to finish.".format(end - start))
@@ -61,22 +62,23 @@ def run_find_markers(input_h5ad_file, output_file, label_attr, n_jobs = 1, min_g
 	markers = find_markers(data, label_attr, n_jobs = n_jobs, min_gain = min_gain, random_state = random_state, remove_ribo = remove_ribo)
 	
 	nclust = len(markers)
-	keywords = ['strong', 'weak', 'down']
+	keywords = [('strong', 'strong_gain'), ('weak', 'weak_gain'), ('down', 'down_gain')]
 
 	writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
 	
 	for i in range(nclust):
 		sizes = []
-		for j, keyword in enumerate(keywords):
-			sizes.append(len(markers[i][keyword]))
+		for keyword in keywords:
+			sizes.append(len(markers[i][keyword[0]]))
 		
-		arr = np.zeros((max(sizes), 5), dtype = object)
+		arr = np.zeros((max(sizes), 8), dtype = object)
 		arr[:] = ''
 		
 		for j in range(3):
-			arr[0:sizes[j], j * 2] = markers[i][keywords[j]]
+			arr[0:sizes[j], j * 3] = markers[i][keywords[j][0]]
+			arr[0:sizes[j], j * 3 + 1] = markers[i][keywords[j][1]]
 		
-		df = pd.DataFrame(data = arr, columns = ['strongly up-regulated', '', 'weakly up-regulated', '', 'down-regulated'])
+		df = pd.DataFrame(data = arr, columns = ['strongly up-regulated', 'gain', '', 'weakly up-regulated', 'gain', '', 'down-regulated', 'gain'])
 		df.to_excel(writer, sheet_name = "{}".format(i + 1), index = False)
 
 	writer.save()	
