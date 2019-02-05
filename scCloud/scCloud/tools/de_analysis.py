@@ -10,7 +10,8 @@ import warnings
 import xlsxwriter
 import threading
 from natsort import natsorted
-from .preprocessing import read_input
+
+from . import read_input
 
 
 # assume cluster labels from 1 to n

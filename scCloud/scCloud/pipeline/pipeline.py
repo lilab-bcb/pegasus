@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import anndata
 from scipy.sparse import csr_matrix, hstack
@@ -136,8 +135,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 
 	# write out results
-	adata.write(output_name + ".h5ad")
-
+	tools.write_output(adata, output_name)
+	
 	if kwargs['seurat_compatible']:
 		seurat_data = adata.copy()
 		seurat_data.raw = raw_data
