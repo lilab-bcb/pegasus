@@ -105,7 +105,7 @@ def run_one_instance_of_kmeans(thread_no, results, n_init, n_clusters, n_jobs, X
 		results[thread_no].append(km.labels_)
 
 
-def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random_state = 0, n_clusters = 30, n_init = 20):
+def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random_state = 0, n_clusters = 30, n_init = 20, class_label = 'approx_louvain_labels'):
 	start = time.time()
 
 	X = data.obsm[rep_key].astype('float64')
@@ -143,7 +143,7 @@ def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random
 
 	labels = np.array([str(x + 1) for x in partition.membership])
 	categories = natsorted(np.unique(labels))
-	data.obs['approx_louvain_labels'] = pd.Categorical(values = labels, categories = categories)
+	data.obs[class_label] = pd.Categorical(values = labels, categories = categories)
 
 	end = time.time()
 	print("Approximated Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))

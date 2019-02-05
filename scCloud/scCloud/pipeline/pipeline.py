@@ -80,7 +80,10 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# clustering
 	if kwargs['run_approx_louvain']:
-		tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'])
+		tools.run_approximated_louvain(adata, 'X_pca', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_pca')
+		tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_dm')
+		tools.run_approximated_louvain(adata, 'X_dmnorm', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_dmn')
+
 	# if kwargs['run_kmeans']:
 	# 	tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
 	if kwargs['run_louvain']:
@@ -136,7 +139,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# write out results
 	tools.write_output(adata, output_name)
-	
+
 	if kwargs['seurat_compatible']:
 		seurat_data = adata.copy()
 		seurat_data.raw = raw_data
