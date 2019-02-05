@@ -42,9 +42,14 @@
 						"name" : "T regulatory cell",
 						"markers" : [
 							{
-								"genes" : ["CD4+", "IL2RA+", "IL7R-", "FOXP3+"],
-								"weight" : 1.0,
-								"comments" : "T reg"
+								"genes" : ["RTKN2+", "TIGIT+", "FOXP3+"],
+								"weight" : 0.8,
+								"comments" : "key T reg markers"
+							},
+							{
+								"genes" : ["CD4+", "IL2RA+"],
+								"weight" : 0.2,
+								"comments" : "key markers that do not express heavily in droplet-based RNA-Seq"
 							}
 						]
 					},
@@ -52,14 +57,14 @@
 						"name" : "Naive T cell",
 						"markers" : [
 							{
-								"genes" : ["TCF7+", "CD27+"],
-								"weight" : 0.6,
-								"comment" : "key markers"
+								"genes" : ["CCR7+", "SELL+", "IL7R+", "TCF7+", "CD27+"],
+								"weight" : 0.7,
+								"comment" : "positive markers"
 							},
 							{
-								"genes" : ["SELL+", "IL7R+", "IL2RG+", "IL2RA-", "CD44-", "CD69-"],
-								"weight" : 0.4,
-								"comment" : "so so markers"
+								"genes" : ["IL2RA-", "CD44-", "CD69-"],
+								"weight" : 0.3,
+								"comment" : "negative markers"
 							}
  						]
 					}
