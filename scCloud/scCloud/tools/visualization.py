@@ -9,7 +9,6 @@ import pkg_resources
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from umap import UMAP
 from fitsne import FItSNE
-from .diffusion_map import calculate_affinity_matrix
 
 def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'tsne'):
 	start = time.time()
@@ -70,3 +69,6 @@ def run_force_directed_layout(data, file_name, n_jobs, affinity = 'W_diffmap', K
 
 	end = time.time()
 	print("Force-directed layout is done. Time spent = {:.2f}s.".format(end - start))
+
+
+

@@ -70,5 +70,8 @@ def transform_basis(basis):
 		return 'DPC'
 	elif basis == 'fle':
 		return 'FLE'
+	else:
+		return basis
+
 
 
