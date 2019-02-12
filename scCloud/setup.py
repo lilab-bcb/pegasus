@@ -34,7 +34,7 @@ requires = ['anndata==0.6.4',
 
 setup(
 	name='scCloud',
-	version='0.10.0',
+	version='0.11.0',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scCloud',
