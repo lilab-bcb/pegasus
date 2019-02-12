@@ -158,7 +158,6 @@ Examples:
 
             'run_umap' : self.args['--run-umap'],
             'run_net_umap' : self.args['--run-net-umap'],
-            'run_umap_on_diffmap' : self.args['--umap-on-diffmap'],
             'umap_K' : int(self.args['--umap-K']),
             'umap_min_dist' : float(self.args['--umap-min-dist']),
             'umap_spread' : float(self.args['--umap-spread']),

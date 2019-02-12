@@ -89,7 +89,7 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 50, n_steps = 10000, 
 
 def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
-	selected = scCloud.tools.select_cells(data.uns[knn_indices], first_K, random_state = random_state)
+	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64')
 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01)
@@ -103,7 +103,7 @@ def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early
 
 def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
-	selected = scCloud.tools.select_cells(data.uns[knn_indices], first_K, random_state = random_state)
+	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64').copy(order = 'C')
 	X_fitsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01)
@@ -117,7 +117,7 @@ def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, ear
 
 def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
-	selected = scCloud.tools.select_cells(data.uns[knn_indices], first_K, random_state = random_state)
+	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64')
 	X_umap = calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01)
@@ -131,7 +131,7 @@ def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0
 
 def run_net_fle(data, file_name, n_jobs, K = 50, n_steps = 10000, memory = 20, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
-	selected = scCloud.tools.select_cells(data.uns[knn_indices], first_K, random_state = random_state)
+	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm['X_diffmap'][selected,:]
 	indices, distances, knn_index = calculate_nearest_neighbors(X, n_jobs, K = K, random_state = random_state, full_speed = False)
 	W = calculate_affinity_matrix(indices, distances)
