@@ -65,7 +65,7 @@ def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exa
 
 def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0):
 	start = time.time()
-	X = data.obsm[rep_key].astype('float64').copy(order = 'C')
+	X = data.obsm[rep_key].astype('float64')
 	data.obsm['X_fitsne'] = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	end = time.time()
 	print("FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
@@ -104,7 +104,7 @@ def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early
 def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
 	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
-	X = data.obsm[rep_key][selected,:].astype('float64').copy(order = 'C')
+	X = data.obsm[rep_key][selected,:].astype('float64')
 	X_fitsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01)
 	regressor.fit(X, X_fitsne)
