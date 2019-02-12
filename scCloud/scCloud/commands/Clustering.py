@@ -65,19 +65,24 @@ Options:
   --approx-louvain-resolution <resolution>         Resolution parameter for louvain. [default: 1.3]
 
   --run-tsne                                       Run multi-core t-SNE for visualization.
-  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter. [default: 30]
+  --run-net-tsne                                   Run net tSNE for visualization.
   --run-fitsne                                     Run FIt-SNE for visualization.
+  --run-net-fitsne                                 Run net FIt-SNE for visualization.
+  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter, used by both tSNE and FItSNE. [default: 30]
 
   --run-umap                                       Run umap for visualization.
-  --umap-on-diffmap                                Run umap on diffusion components.
+  --run-net-umap                                   Run net umap for visualization.
   --umap-K <K>                                     K neighbors for umap. [default: 15]
   --umap-min-dist <number>                         Umap parameter. [default: 0.1]
   --umap-spread <spread>                           Umap parameter. [default: 1.0]
 
   --run-fle                                        Run force-directed layout embedding.
+  --run-net-fle                                    Run net FLE.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-n-steps <nstep>                            Number of iterations for FLE. [default: 10000]
-  --fle-affinity <affinity>                        Affinity matrix to be used. Could be 'W_diffmap', or 'W_diffmap_norm'. [default: W_diffmap]
+
+  --net-knn-indices <string>                       kNN indices used for net-related visualization, can be either knn_indices or diffmap_knn_indices. [default: diffmap_knn_indices]
+  --net-first-K <first_K>                          Cover <first_K> neighbors for net-related visualization. [default: 5]
 
   -h, --help                                       Print out help information.
 
@@ -146,20 +151,26 @@ Examples:
             'approx_louvain_resolution' : float(self.args['--approx-louvain-resolution']),
 
             'run_tsne' : self.args['--run-tsne'],
+            'run_net_tsne' : self.args['--run-net-tsne'],
             'run_fitsne' : self.args['--run-fitsne'],
+            'run_net_fitsne' : self.args['--run-net-fitsne'],
             'tsne_perplexity' : float(self.args['--tsne-perplexity']),
 
             'run_umap' : self.args['--run-umap'],
+            'run_net_umap' : self.args['--run-net-umap'],
             'run_umap_on_diffmap' : self.args['--umap-on-diffmap'],
             'umap_K' : int(self.args['--umap-K']),
             'umap_min_dist' : float(self.args['--umap-min-dist']),
             'umap_spread' : float(self.args['--umap-spread']),
 
             'run_fle' : self.args['--run-fle'],
+            'run_net_fle' : self.args['--run-net-fle'],
             'fle_K' : int(self.args['--fle-K']),
             'fle_n_steps' : int(self.args['--fle-n-steps']),
-            'fle_affinity' : self.args['--fle-affinity'],
 
+            'knn_indices' : self.args['--net-knn-indices'],
+            'first_K' : int(self.args['--net-first-K']),
+            
             'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])
         }
 

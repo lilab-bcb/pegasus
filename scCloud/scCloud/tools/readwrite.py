@@ -209,20 +209,19 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 		data = read_dropseq_file(input_file, genome)
 	elif input_file.endswith('.h5ad'):
 		data = anndata.read_h5ad(input_file, backed = (False if mode == 'a' else mode))
-
-		input_prefix = input_file[:-5]
-		index_file = input_prefix + '.knn.hnsw.bin'
-		if os.path.isfile(index_file):
-			import hnswlib
-			knn_index = hnswlib.Index(space = 'l2', dim = data.uns['knn_dim'])
-			knn_index.load_index(index_file)
-			data.uns['knn'] = knn_index
+		# input_prefix = input_file[:-5]
+		# index_file = input_prefix + '.knn.hnsw.bin'
+		# if os.path.isfile(index_file):
+		# 	import hnswlib
+		# 	knn_index = hnswlib.Index(space = 'l2', dim = data.uns['knn_dim'])
+		# 	knn_index.load_index(index_file)
+		# 	data.uns['knn'] = knn_index
 			
-			index_file = input_prefix + '.diffmap_knn.hnsw.bin'
-			assert os.path.isfile(index_file)
-			knn_index = hnswlib.Index(space = 'l2', dim = data.uns['diffmap_knn_dim'])
-			knn_index.load_index(index_file)
-			data.uns['diffmap_knn'] = knn_index
+		# 	index_file = input_prefix + '.diffmap_knn.hnsw.bin'
+		# 	assert os.path.isfile(index_file)
+		# 	knn_index = hnswlib.Index(space = 'l2', dim = data.uns['diffmap_knn_dim'])
+		# 	knn_index.load_index(index_file)
+		# 	data.uns['diffmap_knn'] = knn_index
 	elif input_file.endswith('.csv'):
 		data = read_antibody_csv(input_file)
 	else:
@@ -239,12 +238,12 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 def write_output(data, output_name):
 	start = time.time()
 	
-	if 'knn' in data.uns:
-		data.uns['knn'].save_index(output_name + '.knn.hnsw.bin')
-		del data.uns['knn']
-	if 'diffmap_knn' in data.uns:
-		data.uns['diffmap_knn'].save_index(output_name + '.diffmap_knn.hnsw.bin')
-		del data.uns['diffmap_knn']
+	# if 'knn' in data.uns:
+	# 	data.uns['knn'].save_index(output_name + '.knn.hnsw.bin')
+	# 	del data.uns['knn']
+	# if 'diffmap_knn' in data.uns:
+	# 	data.uns['diffmap_knn'].save_index(output_name + '.diffmap_knn.hnsw.bin')
+	# 	del data.uns['diffmap_knn']
 	data.write(output_name + ".h5ad")
 	
 	end = time.time()

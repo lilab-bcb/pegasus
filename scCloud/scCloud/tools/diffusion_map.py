@@ -109,9 +109,11 @@ def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 
 
 	indices, distances, knn_index = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, method = knn_method, \
 		K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
-	if knn_index is not None:
-		data.uns['knn'] = knn_index
-		data.uns['knn_dim'] = data.obsm[rep_key].shape[1]
+	# if knn_index is not None:
+	# 	data.uns['knn'] = knn_index
+	# 	data.uns['knn_dim'] = data.obsm[rep_key].shape[1]
+	data.uns['knn_indices'] = indices
+	data.uns['knn_distances'] = distances
 	W = calculate_affinity_matrix(indices, distances)
 
 	Phi_pt, U_df, S, W_norm = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
@@ -120,18 +122,15 @@ def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 
 
 	indices, distances, knn_index = calculate_nearest_neighbors(Phi_pt, n_jobs, method = knn_method, \
 		K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
-	if knn_index is not None:
-		data.uns['diffmap_knn'] = knn_index
-		data.uns['diffmap_knn_dim'] = Phi_pt.shape[1]
-	W_diffmap = calculate_affinity_matrix(indices, distances)
-	
-	# W_diffmap_norm, diag_tmp, diag_half_tmp = calculate_normalized_affinity(W_diffmap)
+	# if knn_index is not None:
+	# 	data.uns['diffmap_knn'] = knn_index
+	# 	data.uns['diffmap_knn_dim'] = Phi_pt.shape[1]
+	data.uns['diffmap_knn_indices'] = indices
+	data.uns['diffmap_knn_distances'] = distances
 
 	data.uns['W'] = W
 	data.uns['W_norm'] = W_norm
 	data.uns['diffmap_evals'] = S
-	data.uns['W_diffmap'] = W_diffmap
-	# data.uns['W_diffmap_norm'] = W_diffmap_norm
 
 	data.obsm['X_diffmap'] = Phi_pt
 	data.obsm['X_dmnorm'] = U_df

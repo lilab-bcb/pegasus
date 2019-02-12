@@ -7,8 +7,8 @@ from .preprocessing import update_var_names, filter_data, log_norm, run_pca, run
 from .batch_correction import set_group_attribute, estimate_adjustment_matrices, filter_genes_dispersion, collect_variable_gene_matrix, correct_batch_effects
 from .nearest_neighbors import calculate_nearest_neighbors, select_cells
 from .diffusion_map import run_diffmap, run_pseudotime_calculation, calculate_affinity_matrix, calculate_normalized_affinity
-from .clustering import run_louvain, run_kmeans, run_approximated_louvain
-from .visualization import run_tsne, run_fitsne, run_umap, run_force_directed_layout
+from .clustering import run_louvain, run_approximated_louvain
+from .visualization import run_tsne, run_fitsne, run_umap, run_force_directed_layout, run_net_tsne, run_net_fitsne, run_net_umap, run_net_fle
 from .de_analysis import run_de_analysis, write_results_to_excel, collect_stat_and_t_test, fisher_test, mwu_test, calc_roc_stats
 from .gradient_boosting import find_markers, run_find_markers
 from .convert_to_parquet import convert_to_parquet, run_conversion

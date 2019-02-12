@@ -80,29 +80,39 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# clustering
 	if kwargs['run_approx_louvain']:
-		tools.run_approximated_louvain(adata, 'X_pca', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_pca')
-		tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_dm')
-		tools.run_approximated_louvain(adata, 'X_dmnorm', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_dmn')
+		# tools.run_approximated_louvain(adata, 'X_pca', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_pca')
+		# tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_dm')
+		tools.run_approximated_louvain(adata, 'X_dmnorm', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_louvain_labels')
+
+	if kwargs['run_louvain']:
+		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
 
 	# if kwargs['run_kmeans']:
 	# 	tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
-	if kwargs['run_louvain']:
-		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
 	# if kwargs['run_hdbscan']:
 	# 	tools.run_hdbscan(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], min_cluster_size = kwargs['hdbscan_min_cluster_size'], min_samples = kwargs['hdbscan_min_samples'])
 
 	# visualization
+	if kwargs['run_net_tsne']:
+		tools.run_net_tsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
+	if kwargs['run_net_fitsne']:
+		tools.run_net_fitsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
+	if kwargs['run_net_umap']:
+		tools.run_net_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
+	if kwargs['run_net_fle']:
+		tools.run_net_fle(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
+
 	if kwargs['run_tsne']:
 		tools.run_tsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
 	if kwargs['run_fitsne']:
 		tools.run_fitsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
 	if kwargs['run_umap']:
-		if kwargs['run_umap_on_diffmap']:
-			tools.run_umap(adata, 'X_diffmap', n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
-			adata.obsm['X_umap_diffmap'] = adata.obsm['X_umap']
 		tools.run_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
+		# if kwargs['run_umap_on_diffmap']:
+		# 	tools.run_umap(adata, 'X_diffmap', n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
+		# 	adata.obsm['X_umap_diffmap'] = adata.obsm['X_umap']
 	if kwargs['run_fle']:
-		tools.run_force_directed_layout(adata, output_name, affinity = kwargs['fle_affinity'], n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'])	
+		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'])
 	
 	# calculate diffusion-based pseudotime from roots
 	if kwargs['pseudotime'] is not None:

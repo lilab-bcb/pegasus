@@ -12,6 +12,10 @@ import threading
 import ctypes
 import ctypes.util
 
+from . import calculate_affinity_matrix, calculate_normalized_affinity
+
+
+
 def construct_graph(W, directed = True):
 	s, t = W.nonzero()
 	w = W[s, t].A1
@@ -27,37 +31,24 @@ aff2lab = {'W_norm' : 'louvain_labels', 'W_diffmap' : 'louvain_labels_dm', 'W_di
 
 def run_louvain(data, affinity = 'W_norm', resolution = 1.3, random_state = 0):
 	start = time.time()
+
+	W = None
+	if affinity == 'W_norm':
+		W = data.uns['W_norm']
+	elif affinity == 'W_diffmap':
+		W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'], data.uns['diffmap_knn_distances'])
+	else:
+		W_diffmap = calculate_affinity_matrix(data.uns['diffmap_knn_indices'], data.uns['diffmap_knn_distances'])
+		W, diag_tmp, diag_half_tmp = calculate_normalized_affinity(W_diffmap)
+
 	louvain.set_rng_seed(random_state)
-	G = construct_graph(data.uns[affinity])
+	G = construct_graph(W)
 	partition = louvain.find_partition(G, louvain.RBConfigurationVertexPartition, resolution_parameter = resolution)
 	labels = np.array([str(x + 1) for x in partition.membership])
 	categories = natsorted(np.unique(labels))
 	data.obs[aff2lab[affinity]] = pd.Categorical(values = labels, categories = categories)
 	end = time.time()
 	print("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
-
-
-
-# def run_hdbscan(data, rep_key, n_jobs = 1, min_cluster_size = 50, min_samples = 25):
-# 	start = time.time()
-# 	clusterer = hdbscan.HDBSCAN(core_dist_n_jobs = n_jobs, min_cluster_size = min_cluster_size, min_samples = min_samples, prediction_data = True)
-# 	clusterer.fit(data.obsm[rep_key].astype('float64'))
-	
-# 	noise_idx = clusterer.labels_ < 0
-# 	ids, counts = np.unique(clusterer.labels_[~noise_idx], return_counts = True)
-# 	label_map = dict(zip(ids[np.argsort(counts)[::-1]], [str(x + 1) for x in range(len(counts))]))
-# 	f_trans = np.vectorize(lambda x: label_map.get(x, 'noise'))
-	
-# 	labels = f_trans(clusterer.labels_)
-# 	categories = natsorted(list(label_map.values()) + ['noise'])
-# 	data.obs['hdbscan_labels'] = pd.Categorical(values = labels, categories = categories)
-
-# 	soft_clusters = np.argmax(hdbscan.all_points_membership_vectors(clusterer), axis = 1)
-# 	labels[noise_idx] = f_trans(soft_clusters[noise_idx])
-# 	data.obs['hdbscan_labels_soft'] = pd.Categorical(values = labels, categories = categories)
-
-# 	end = time.time()
-# 	print("HDBSCAN clustering is done. Time spent = {:.2f}s.".format(end - start))
 
 
 
@@ -75,27 +66,6 @@ def set_numpy_thread(number):
 			old_n = mkl_lib.mkl_get_max_threads()
 			mkl_lib.mkl_set_num_threads(ctypes.byref(ctypes.c_int(number)))
 	return old_n
-
-
-def run_kmeans(data, rep_key, n_clusters, n_init = 10, n_jobs = 1, random_state = 0):
-	start = time.time()
-
-	old_n = set_numpy_thread(1)
-	km = KMeans(n_clusters = n_clusters, n_init = n_init, n_jobs = n_jobs, random_state = random_state)
-	km.fit(data.obsm[rep_key].astype('float64'))
-	set_numpy_thread(old_n)
-
-	ids, counts = np.unique(km.labels_, return_counts = True)
-	label_map = dict(zip(ids[np.argsort(counts)[::-1]], [str(x + 1) for x in range(len(counts))]))
-	f_trans = np.vectorize(lambda x: label_map[x])
-	
-	labels = f_trans(km.labels_)
-	categories = natsorted(label_map.values())
-	data.obs['kmeans_labels'] = pd.Categorical(values = labels, categories = categories)
-
-	end = time.time()
-	print("Spectral clustering is done. Time spent = {:.2f}s".format(end - start))
-
 
 def run_one_instance_of_kmeans(thread_no, results, n_init, n_clusters, n_jobs, X, seeds):
 	results[thread_no] = []
@@ -147,3 +117,48 @@ def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random
 
 	end = time.time()
 	print("Approximated Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
+
+
+
+
+# def run_hdbscan(data, rep_key, n_jobs = 1, min_cluster_size = 50, min_samples = 25):
+# 	start = time.time()
+# 	clusterer = hdbscan.HDBSCAN(core_dist_n_jobs = n_jobs, min_cluster_size = min_cluster_size, min_samples = min_samples, prediction_data = True)
+# 	clusterer.fit(data.obsm[rep_key].astype('float64'))
+	
+# 	noise_idx = clusterer.labels_ < 0
+# 	ids, counts = np.unique(clusterer.labels_[~noise_idx], return_counts = True)
+# 	label_map = dict(zip(ids[np.argsort(counts)[::-1]], [str(x + 1) for x in range(len(counts))]))
+# 	f_trans = np.vectorize(lambda x: label_map.get(x, 'noise'))
+	
+# 	labels = f_trans(clusterer.labels_)
+# 	categories = natsorted(list(label_map.values()) + ['noise'])
+# 	data.obs['hdbscan_labels'] = pd.Categorical(values = labels, categories = categories)
+
+# 	soft_clusters = np.argmax(hdbscan.all_points_membership_vectors(clusterer), axis = 1)
+# 	labels[noise_idx] = f_trans(soft_clusters[noise_idx])
+# 	data.obs['hdbscan_labels_soft'] = pd.Categorical(values = labels, categories = categories)
+
+# 	end = time.time()
+# 	print("HDBSCAN clustering is done. Time spent = {:.2f}s.".format(end - start))
+
+# def run_kmeans(data, rep_key, n_clusters, n_init = 10, n_jobs = 1, random_state = 0):
+# 	start = time.time()
+
+# 	old_n = set_numpy_thread(1)
+# 	km = KMeans(n_clusters = n_clusters, n_init = n_init, n_jobs = n_jobs, random_state = random_state)
+# 	km.fit(data.obsm[rep_key].astype('float64'))
+# 	set_numpy_thread(old_n)
+
+# 	ids, counts = np.unique(km.labels_, return_counts = True)
+# 	label_map = dict(zip(ids[np.argsort(counts)[::-1]], [str(x + 1) for x in range(len(counts))]))
+# 	f_trans = np.vectorize(lambda x: label_map[x])
+	
+# 	labels = f_trans(km.labels_)
+# 	categories = natsorted(label_map.values())
+# 	data.obs['kmeans_labels'] = pd.Categorical(values = labels, categories = categories)
+
+# 	end = time.time()
+# 	print("Spectral clustering is done. Time spent = {:.2f}s".format(end - start))
+
+
