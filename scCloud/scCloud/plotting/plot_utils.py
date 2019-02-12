@@ -70,8 +70,17 @@ def transform_basis(basis):
 		return 'DPC'
 	elif basis == 'fle':
 		return 'FLE'
+	elif basis == 'net_tsne':
+		return 'Net-tSNE'
+	elif basis == 'net_fitsne':
+		return 'Net-FItSNE'
+	elif basis == 'net_umap':
+		return 'Net-UMAP'
+	elif basis == 'net_fle':
+		return 'Net-FLE'
 	else:
 		return basis
+	
 
 
 
