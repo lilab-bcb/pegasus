@@ -19,7 +19,8 @@ def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_
 	return tsne.fit_transform(X)
 
 def calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
-	return FItSNE(X, nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = (random_state if random_state is not None else -1))
+	# FItSNE will change X content
+	return FItSNE(X.copy(), nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = (random_state if random_state is not None else -1))
 
 def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
@@ -66,7 +67,7 @@ def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exa
 def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0):
 	start = time.time()
 	X = data.obsm[rep_key].astype('float64')
-	data.obsm['X_fitsne'] = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
+	data.obsm['X_fitsne'] = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state) 
 	end = time.time()
 	print("FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
