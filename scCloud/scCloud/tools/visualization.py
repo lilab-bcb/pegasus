@@ -26,7 +26,7 @@ def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
 	return umap.fit_transform(X)
 
-def calc_force_directed_layout(W, file_name, n_jobs, n_steps, memory):
+def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
 	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
 
@@ -78,11 +78,11 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 	end = time.time()
 	print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, n_steps = 10000, memory = 20):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20):
 	start = time.time()
 	K = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
 	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:K], data.uns['diffmap_knn_distances'][:, 0:K])
-	data.obsm['X_fle'] = calc_force_directed_layout(W, file_name, n_jobs, n_steps, memory)
+	data.obsm['X_fle'] = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
 	end = time.time()
 	print("Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start))
 
@@ -130,13 +130,13 @@ def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0
 	end = time.time()
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fle(data, file_name, n_jobs, K = 50, n_steps = 10000, memory = 20, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_fle(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
 	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm['X_diffmap'][selected,:]
 	indices, distances, knn_index = calculate_nearest_neighbors(X, n_jobs, K = K, random_state = random_state, full_speed = False)
 	W = calculate_affinity_matrix(indices, distances)
-	X_fle = calc_force_directed_layout(W, file_name, n_jobs, n_steps, memory)
+	X_fle = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = random_state)
 	regressor.fit(X, X_fle)
 	X_fle_pred = regressor.predict(data.obsm['X_diffmap'][~selected,:])
