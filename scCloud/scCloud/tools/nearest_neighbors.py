@@ -1,16 +1,15 @@
-import time 
+import time
 import numpy as np
-import pandas as pd
+
 
 from scipy.sparse import issparse
 from sklearn.neighbors import NearestNeighbors
-
-import hnswlib
 
 
 
 def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = None, K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
 	"""X is the sample by feature matrix, could be either dense or sparse"""
+
 	start_time = time.time()
 
 	nsample = X.shape[0]
@@ -20,9 +19,10 @@ def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = No
 	knn_index = None
 
 	if method == 'hnsw':
+		import hnswlib
 		assert not issparse(X)
 		knn_index = hnsw_index
-		
+
 		# Build hnsw index
 		if knn_index is None:
 			knn_index = hnswlib.Index(space = 'l2', dim = X.shape[1])
