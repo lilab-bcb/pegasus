@@ -7,7 +7,7 @@ class DeAnalysis(Base):
 Perform DE analysis.
 
 Usage:
-  scCloud de_analysis [--labels <attr> -p <threads> --alpha <alpha> --fisher --mwu --roc] <input_h5ad_file> <output_spreadsheet>
+  scCloud de_analysis [--labels <attr> --subset <attr:value> -p <threads> --alpha <alpha> --fisher --mwu --roc] <input_h5ad_file> <output_spreadsheet>
   scCloud de_analysis -h
 
 Arguments:
@@ -16,6 +16,7 @@ Arguments:
 
 Options:
   --labels <attr>                  <attr> used as cluster labels. [default: louvain_labels]
+  --subset <attr:value>            Perform DE analysis only on a subset of cells with attr == value. 
   --alpha <alpha>                  Control false discovery rate at <alpha>. [default: 0.05]
   --fisher                         Calculate Fisher's exact test.
   --mwu                            Calculate Mann-Whitney U test.
@@ -25,12 +26,13 @@ Options:
   -h, --help                       Print out help information.
 
 Outputs:
-  input_h5ad_file        DE results would be written back to the 'var' fields.
+  input_h5ad_file        DE results would be written back to the 'var' fields, provided --subset option is not set.
   output_spreadsheet     An excel spreadsheet containing DE results. Each cluster has two tabs in the spreadsheet. One is for up-regulated genes and the other is for down-regulated genes.
+  output_h5ad_file       Only present if --subset option is set. The file name is output_spreadsheet - [.xlsx] + [.h5ad]
 
 Examples:
   scCloud de_analysis --labels louvain_labels -p 26 --fisher --mwu --roc manton_bm.h5ad manton_bm_de.xlsx
     """
 
     def execute(self):
-        run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'])
+        run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'], self.args['--subset'])

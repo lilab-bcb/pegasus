@@ -8,22 +8,25 @@ from statsmodels.stats.multitest import fdrcorrection as fdr
 import sklearn.metrics as sm
 import warnings
 import xlsxwriter
-import threading
 from natsort import natsorted
+from joblib import Parallel, delayed
 
 from . import read_input
 
 
-# assume cluster labels from 1 to n
+
 def collect_contingency_table(data, X, labels = 'louvain_labels'):	
-	clusts = data.obs[labels].value_counts(sort = False)
-	data.uns["de_nclust"] = clusts.size
-	ct = np.zeros((data.var_names.size, clusts.size, 2), dtype = np.uint)
-	for label, count in clusts.iteritems():
-		i = int(label) - 1
+	if data.obs[labels].dtype.name != 'category':
+		print('Warning: {} is not categorical, scCloud will convert it to categorical.'.format(labels))
+		data.obs[labels] = pd.Categorical(data.obs[labels])
+
+	nclust = data.obs[labels].cat.categories.size
+	data.uns["de_nclust"] = nclust
+	ct = np.zeros((data.var_names.size, nclust, 2), dtype = np.uint)
+	for i, label in enumerate(data.obs[labels].cat.categories):
 		mask = np.isin(data.obs[labels], label)
 		ct[:, i, 0] = X[mask].getnnz(axis = 0)
-		ct[:, i, 1] = count - ct[:, i, 0]
+		ct[:, i, 1] = mask.sum() - ct[:, i, 0]
 	data.uns["contingency_table"] = ct
 
 
@@ -107,11 +110,14 @@ def collect_stat_and_t_test(data, X, clusts = None, labels = 'louvain_labels', n
 	ct = data.uns["contingency_table"]
 
 	if clusts is None:
-		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+		idx = (data.obs[labels].value_counts(sort = False) > 0).values
+	else:
+		idx = np.isin(data.obs[labels].cat.categories, clusts)
 
-	if len(clusts) < data.uns["de_nclust"]:
-		ct = ct[:, [int(x) - 1 for x in clusts], :]
+	if idx.sum() < data.uns["de_nclust"]:
+		ct = ct[:, idx, :]
 
+	clusts = data.obs[labels].cat.categories.values[idx]
 	total = ct.sum(axis = 1)
 
 	mask = np.isin(data.obs[labels], clusts)
@@ -165,11 +171,14 @@ def fisher_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	ct = data.uns["contingency_table"]
 
 	if clusts is None:
-		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+		idx = (data.obs[labels].value_counts(sort = False) > 0).values
+	else:
+		idx = np.isin(data.obs[labels].cat.categories, clusts)
 
-	if len(clusts) < data.uns["de_nclust"]:
-		ct = ct[:, [int(x) - 1 for x in clusts], :]
+	if idx.sum() < data.uns["de_nclust"]:
+		ct = ct[:, idx, :]
 
+	clusts = data.obs[labels].cat.categories.values[idx]
 	total = ct.sum(axis = 1)
 	
 	threads = [None] * n_jobs
@@ -230,7 +239,11 @@ def mwu_test(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1):
 	start = time.time()
 
 	if clusts is None:
-		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+		idx = (data.obs[labels].value_counts(sort = False) > 0).values
+	else:
+		idx = np.isin(data.obs[labels].cat.categories, clusts)
+
+	clusts = data.obs[labels].cat.categories.values[idx]
 
 	mask = np.isin(data.obs[labels], clusts)
 	csc_mat = X[mask].tocsc()
@@ -301,7 +314,11 @@ def calc_roc_stats(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1
 	start = time.time()
 
 	if clusts is None:
-		clusts = [str(x[0]) for x in data.obs[labels].value_counts(sort = False).iteritems() if x[1] > 1]
+		idx = (data.obs[labels].value_counts(sort = False) > 0).values
+	else:
+		idx = np.isin(data.obs[labels].cat.categories, clusts)
+
+	clusts = data.obs[labels].cat.categories.values[idx]
 	
 	mask = np.isin(data.obs[labels], clusts)
 	csc_mat = X[mask].tocsc()
@@ -322,6 +339,7 @@ def calc_roc_stats(data, X, clusts = None, labels = 'louvain_labels', n_jobs = 1
 	print("ROC statistics are calculated. Time spent = {:.2f}s.".format(end - start))
 
 	return result_list
+
 
 
 def format_short_output_cols(df, cols_short_format):
@@ -391,10 +409,20 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 
 
 
-def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc):
+def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc, subset_string):
 	start = time.time()
-	data = read_input(input_file, mode = 'r+')
-	X = data.X[:]
+	output_file = None
+	if subset_string is None:
+		data = read_input(input_file, mode = 'r+')
+		X = data.X[:]
+		output_file = input_file
+	else:
+		attr, value = subset_string.split(':')
+		data = read_input(input_file, mode = 'a')
+		data = data[data.obs[attr] == value].copy()
+		X = data.X
+		import os
+		output_file = os.path.splitext(output_excel_file)[0] + '.h5ad'
 	end = time.time()
 	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
 
@@ -418,7 +446,7 @@ def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fi
 		
 	data.var = pd.concat(de_results, axis = 1)
 	data.uns['de_labels'] = labels
-	data.write(input_file)
+	data.write(output_file)
 
 	print("Differential expression results are written back to h5ad file.")
 

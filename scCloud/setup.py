@@ -29,7 +29,8 @@ requires = ['anndata==0.6.4',
 			'umap-learn',
 			'fitsne',
 			'pyarrow',
-			'lightgbm'
+			'lightgbm',
+			'joblib'
 		  ]
 
 setup(
