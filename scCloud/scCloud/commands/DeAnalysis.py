@@ -7,7 +7,7 @@ class DeAnalysis(Base):
 Perform DE analysis.
 
 Usage:
-  scCloud de_analysis [--labels <attr> --subset <attr:value> -p <threads> --alpha <alpha> --fisher --mwu --roc] <input_h5ad_file> <output_spreadsheet>
+  scCloud de_analysis [--labels <attr> --subset <attr:value> -p <threads> --alpha <alpha> --fisher --mwu --roc --temp-folder <temp_folder>] <input_h5ad_file> <output_spreadsheet>
   scCloud de_analysis -h
 
 Arguments:
@@ -21,6 +21,7 @@ Options:
   --fisher                         Calculate Fisher's exact test.
   --mwu                            Calculate Mann-Whitney U test.
   --roc                            Calculate area under cuver in ROC curve.
+  --temp-folder <temp_folder>      Joblib temporary folder for memmapping numpy arrays.
   -p <threads>                     Use <threads> threads. [default: 1]
   
   -h, --help                       Print out help information.
@@ -35,4 +36,4 @@ Examples:
     """
 
     def execute(self):
-        run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'], self.args['--subset'])
+        run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'], self.args['--subset'], self.args['--temp-folder'])

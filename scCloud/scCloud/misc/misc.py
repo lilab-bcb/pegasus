@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import time
-import threading
 import numpy as np
 import pandas as pd
 from natsort import natsorted
-from scipy.stats import f_oneway
+from scipy.sparse import csc_matrix
 import scipy.stats as ss
+from scipy.stats import f_oneway
 from statsmodels.stats.multitest import fdrcorrection as fdr
+from joblib import Parallel, delayed
 from scCloud.tools import read_input
 
 
@@ -140,81 +141,60 @@ def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha = 0.
 
 
 
-# attr_label, for cluster; attr_cond, for condition, must has size 2
-def calc_mwu_per_thread(thread_no, results, n_jobs, obs, var_names, attr_label, attr_cond, cond_order, csc_mat):
-	clusts = obs[attr_label].cat.categories.values
-	conds = obs[attr_cond].cat.categories.values
-
-	nclust = len(clusts)
-	results[thread_no] = {}
-
-	ngene = csc_mat.shape[1]
+# labels, cluster labels for each sample; conds, conditions; cond_order, condition orders
+def calc_mwu(clust_label, labels, conds, cond_order, gene_names, data, indices, indptr, shape):
+	csc_mat = csc_matrix((data, indices, indptr), shape = shape)
+	ngene = shape[1]
 	log_fc = np.zeros(ngene)
 	U_stats = np.zeros(ngene)
 	pvals = np.zeros(ngene)
 
-	for i in range(thread_no, nclust, n_jobs):
-		idx = (obs[attr_label] == clusts[i]).values
-		exprs = np.zeros(idx.sum())
+	idx = labels == clust_label
+	exprs = np.zeros(idx.sum())
 
-		local_obs = obs[idx]
-		if cond_order is None:
-			idx_x = (local_obs[attr_cond] == conds[0]).values
-			idx_y = (local_obs[attr_cond] == conds[1]).values
+	idx_x = conds[idx] == cond_order[0]
+	idx_y = conds[idx] == cond_order[1]
+
+	local_mat = csc_mat[idx, :]
+	
+	for j in range(ngene):
+		vec = local_mat[:, j]
+		if vec.size > 0:
+			exprs[vec.indices] = vec.data
+			log_fc[j] = np.mean(exprs[idx_x]) - np.mean(exprs[idx_y])
+			U_stats[j], pvals[j] = ss.mannwhitneyu(exprs[idx_x], exprs[idx_y], alternative = 'two-sided')
 		else:
-			idx_x = (local_obs[attr_cond] == cond_order[0]).values
-			idx_y = (local_obs[attr_cond] == cond_order[1]).values
+			log_fc[j] = 0.0
+			U_stats[j] = 0.0
+			pvals[j] = 1.0
+		exprs[:] = 0.0
 
-		local_mat = csc_mat[idx, :]
-		
-		for j in range(ngene):
-			vec = local_mat[:, j]
-			if vec.size > 0:
-				exprs[vec.indices] = vec.data
-				log_fc[j] = np.mean(exprs[idx_x]) - np.mean(exprs[idx_y])
-				U_stats[j], pvals[j] = ss.mannwhitneyu(exprs[idx_x], exprs[idx_y], alternative = 'two-sided')
-			else:
-				log_fc[j] = 0.0
-				U_stats[j] = 0.0
-				pvals[j] = 1.0
-			exprs[:] = 0.0
-			if (j + 1) % 1000 == 0:
-				print("FIN {}, Clust {}".format(j + 1, clusts[i]))
-		passed, qvals = fdr(pvals)
+	passed, qvals = fdr(pvals)
 
-		df = pd.DataFrame({"log_fc": log_fc,
-						   "mwu_U": U_stats,
-						   "mwu_pval": pvals,
-						   "mwu_qval": qvals},
-						   index = var_names)
-		results[thread_no][clusts[i]] = df
+	df = pd.DataFrame({"log_fc": log_fc,
+					   "mwu_U": U_stats,
+					   "mwu_pval": pvals,
+					   "mwu_qval": qvals},
+					   index = gene_names)
 
-		print("Cluster {0} is processed.".format(clusts[i]))
+	print("Cluster {0} is processed.".format(clust_label))
+
+	return df
 
 
-def mwu_test(data, attr_label, attr_cond, cond_order = None, n_jobs = 1):
+
+def mwu_test(data, attr_label, attr_cond, cond_order = None, n_jobs = 1, temp_folder = None):
 	start = time.time()
 
 	csc_mat = data.X.tocsc()
 
-	threads = [None] * n_jobs
-	results = [None] * n_jobs
-	for i in range(n_jobs):
-		t = threading.Thread(target=calc_mwu_per_thread, args=(i, results, n_jobs, data.obs, data.var_names, attr_label, attr_cond, cond_order, csc_mat))
-		threads[i] = t
-		t.start()
+	if cond_order is None:
+		cond_order = data.obs[attr_cond].cat.categories.values
 
-	for i in range(n_jobs):
-		threads[i].join()
-
-	result_dict = {}
-	for i in range(n_jobs):
-		result_dict.update(results[i])
+	results = Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_mwu)(clust_label, data.obs[attr_label].values, data.obs[attr_cond].values, cond_order, data.var_names.values, csc_mat.data, csc_mat.indices, csc_mat.indptr, csc_mat.shape) for clust_label in data.obs[attr_label].cat.categories)
+	result_dict = {x : y for x, y in zip(data.obs[attr_label].cat.categories, results)}
 
 	end = time.time()
 	print("Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start))
 
 	return result_dict
-
-
-
