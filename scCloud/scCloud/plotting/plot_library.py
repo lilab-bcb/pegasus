@@ -460,3 +460,21 @@ def plot_heatmap(data, cluster, genes, use_raw = False, showzscore = False, titl
 	cg.ax_col_dendrogram.set_yticks([])
 
 	return cg
+
+
+### Sample usage:
+###     cg = plot_violin_genes(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
+###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+def plot_violin_genes(data, cluster, genes, subplot_size, ylab):
+	nrows = len(genes)
+	fig, axes = get_subplot_layouts(nrows = nrows, subplot_size = subplot_size, hspace = 0.3, wspace = 0.1)
+	expr_mat = data[:, genes].X.toarray()
+	df = pd.DataFrame(data = expr_mat, columns = genes)
+	df.insert(0, 'label', data.obs[cluster].values)
+	for i in range(nrows):
+		sns.violinplot(x = 'label', y = genes[i], data = df, inner = None, linewidth = 0, ax = axes[i])
+		axes[i].set_xlabel('')
+		axes[i].set_ylabel('')
+		axes[i].set_title(genes[i])
+	plt.figtext(0.02, 0.5, ylab, rotation = 'vertical', fontsize = 'xx-large')
+	return fig

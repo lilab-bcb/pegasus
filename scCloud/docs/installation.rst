@@ -1,26 +1,73 @@
 Installation
 ------------
 
-Install **scCloud** locally via Miniconda_::
+Linux
++++++
+
+Suppose your Linux user directory is ``/users/foo``. We will create two folders ``/users/foo/miniconda3`` and ``/users/foo/software``.
+
+Please use the commands below to install **scCloud** locally via Miniconda_::
 
 	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh .
 	bash Miniconda3-latest-Linux-x86_64.sh -p /users/foo/miniconda3
 	mv Miniconda3-latest-Linux-x86_64.sh /users/foo/miniconda3
 	conda create -n scCloud -y pip
-	source activate scCloud
+	conda activate scCloud
 	conda install -y -c anaconda numpy
-	conda install -y -c anaconda cython 
+	conda install -y -c anaconda cython
+	conda install -y -c anaconda pybind11 
 	conda install -y -c conda-forge fftw
+	conda install -y -c anaconda pytables
 	export CPATH=$CPATH:/users/foo/miniconda3/envs/scCloud/include
-	pip install pybind11
-	git clone https://github.com/nmslib/hnsw.git hnswlib
-	cd hnswlib/python_bindings
+	mkdir -p /users/foo/software
+	git clone https://github.com/nmslib/hnsw.git /users/foo/software/hnswlib
+	cd /users/foo/software/python_bindings
 	python setup.py install
-	cd ../..
-	git clone https://github.com/broadinstitute/scRNA-Seq.git scRNA-Seq
-	cd scRNA-Seq/scCloud
+	cd $OLDPWD
+	git clone https://github.com/bli25broad/fishers_exact_test.git /users/foo/software/fisher_test
+	cd /users/foo/software/fisher_test
 	pip install .
-	cd ../..
+	cd $OLDPWD
+	git clone https://github.com/broadinstitute/scRNA-Seq.git /users/foo/software/scRNA-Seq
+	cd /users/foo/software/scRNA-Seq/scCloud
+	pip install -e .
+	cd $OLDPWD
+
+Mac OS
+++++++
+
+Suppose your Linux user directory is ``/Users/foo``. We will create two folders ``/Users/foo/miniconda3`` and ``/Users/foo/software``.
+
+Please use the commands below to install **scCloud** locally via Miniconda_::
+
+	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh .
+	bash Miniconda3-latest-Linux-x86_64.sh -p /Users/foo/miniconda3
+	mv Miniconda3-latest-Linux-x86_64.sh /Users/foo/miniconda3
+	conda create -n scCloud -y pip
+	mkdir -p /Users/foo/miniconda3/scCloud/etc/conda/activate.d
+	mkdir -p /Users/foo/miniconda3/scCloud/etc/conda/deactivate.d
+	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > /Users/foo/miniconda3/scCloud/etc/conda/activate.d/env_vars.sh
+	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > /Users/foo/miniconda3/scCloud/etc/conda/deactivate.d/env_vars.sh
+	conda activate scCloud
+	conda install -y -c anaconda numpy
+	conda install -y -c anaconda cython
+	conda install -y -c anaconda pybind11 
+	conda install -y -c conda-forge fftw
+	conda install -y -c anaconda pytables
+	export CPATH=$CPATH:/Users/foo/miniconda3/envs/scCloud/include
+	mkdir -p /Users/foo/software
+	git clone https://github.com/nmslib/hnsw.git /Users/foo/software/hnswlib
+	cd /Users/foo/software/python_bindings
+	python setup.py install
+	cd $OLDPWD
+	git clone https://github.com/bli25broad/fishers_exact_test.git /Users/foo/software/fisher_test
+	cd /Users/foo/software/fisher_test
+	pip install .
+	cd $OLDPWD
+	git clone https://github.com/broadinstitute/scRNA-Seq.git /Users/foo/software/scRNA-Seq
+	cd /Users/foo/software/scRNA-Seq/scCloud
+	pip install -e .
+	cd $OLDPWD
 
 Use **scCloud** in UGER
 ++++++++++++++++++++++++
