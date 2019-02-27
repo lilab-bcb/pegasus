@@ -40,7 +40,7 @@ Suppose your Linux user directory is ``/Users/foo``. We will create two folders 
 
 Please use the commands below to install **scCloud** locally via Miniconda_::
 
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh .
+	curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 	bash Miniconda3-latest-Linux-x86_64.sh -p /Users/foo/miniconda3
 	mv Miniconda3-latest-Linux-x86_64.sh /Users/foo/miniconda3
 	conda create -n scCloud -y pip
@@ -51,13 +51,15 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	conda activate scCloud
 	conda install -y -c anaconda numpy
 	conda install -y -c anaconda cython
-	conda install -y -c anaconda pybind11 
+	conda install -y -c anaconda pybind11
+	conda install -y -c anaconda lightgbm
+	conda install -y -c anaconda cmake
 	conda install -y -c conda-forge fftw
 	conda install -y -c anaconda pytables
 	export CPATH=$CPATH:/Users/foo/miniconda3/envs/scCloud/include
 	mkdir -p /Users/foo/software
 	git clone https://github.com/nmslib/hnsw.git /Users/foo/software/hnswlib
-	cd /Users/foo/software/python_bindings
+	cd /Users/foo/software/hnswlib/python_bindings
 	python setup.py install
 	cd $OLDPWD
 	git clone https://github.com/bli25broad/fishers_exact_test.git /Users/foo/software/fisher_test
