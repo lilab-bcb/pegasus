@@ -43,6 +43,8 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene
 	for genome, data in gdmap.items():
 		# obs_dict
 		barcodes = data["barcodes"].astype(str)
+		if np.chararray.endswith(barcodes, '-1').sum() == barcodes.size:
+			barcodes = np.vectorize(lambda x: x[:-2])(barcodes)
 
 		def extract_channel(barcode):
 			fields = barcode.split('-')
