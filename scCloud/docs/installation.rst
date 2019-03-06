@@ -3,14 +3,16 @@ Installation
 
 Linux
 +++++
+This installation instruction has been tested on Ubuntu Linux 18.04.
 
 Suppose your Linux user directory is ``/users/foo``. We will create two folders ``/users/foo/miniconda3`` and ``/users/foo/software``.
 
 Please use the commands below to install **scCloud** locally via Miniconda_::
 
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh .
+	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh .
 	bash Miniconda3-latest-Linux-x86_64.sh -p /users/foo/miniconda3
 	mv Miniconda3-latest-Linux-x86_64.sh /users/foo/miniconda3
+	source ~/.bashrc
 	conda create -n scCloud -y pip
 	conda activate scCloud
 	conda install -y -c anaconda numpy
@@ -21,7 +23,7 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	export CPATH=$CPATH:/users/foo/miniconda3/envs/scCloud/include
 	mkdir -p /users/foo/software
 	git clone https://github.com/nmslib/hnsw.git /users/foo/software/hnswlib
-	cd /users/foo/software/python_bindings
+	cd /users/foo/software/hnswlib/python_bindings
 	python setup.py install
 	cd $OLDPWD
 	git clone https://github.com/bli25broad/fishers_exact_test.git /users/foo/software/fisher_test
