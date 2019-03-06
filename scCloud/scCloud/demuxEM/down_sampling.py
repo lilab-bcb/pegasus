@@ -6,14 +6,14 @@ from . import estimate_background_probs, demultiplex
 from scCloud.tools import read_input
 
 
-def down_sampling(data_gt, adt_gt, probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], n_threads = 1):
+def down_sampling(data_gt, adt_gt, probs, n_threads = 1):
 	f = np.vectorize(lambda x, p: np.random.binomial(int(x + 1e-4), p, size = 1)[0])
 
 	nsample = data_gt.shape[0]
 	nhto = adt_gt.X.sum()
 	
-	fracs = []	
-	accuracy = []
+	# fracs = [1.0]	
+	# accuracy = [100.0]
 	for p in probs:		
 		data = data_gt.copy()
 		adt = adt_gt.copy()
@@ -27,20 +27,18 @@ def down_sampling(data_gt, adt_gt, probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0
 		demultiplex(data, adt, n_threads = n_threads)
 		accuracy.append(sum(data.obs['assignment'].values.astype('str') == data_gt.obs['assignment'].values.astype('str')) * 100.0 / nsample)
 
-	fracs.append(1.0)
-	accuracy.append(100.0)
-
 	return fracs, accuracy
 
 
-def plot_down_sampling(rna_file, adt_file, out_file, probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], n_threads = 1, dpi = 500, figsize = None):
+def plot_down_sampling(rna_file, adt_file, out_file, probs = [i / 10.0 for i in range(9,0,-1)], n_threads = 1, dpi = 500, figsize = None):
 	data_gt = read_input(rna_file, mode = 'a')
 	adt_gt = read_input(adt_file, mode = 'a')
-	fracs, accuracy = down_sampling(data_gt, adt_gt, probs = probs, n_threads = n_threads)
+	fracs, accuracy = down_sampling(data_gt, adt_gt, probs, n_threads = n_threads)
 	plt.plot(fracs, accuracy, 'o-')
 	ax = plt.gca()
-	ax.set_xlabel("Fraction of HTO UMIs")
-	ax.set_ylabel("Accuracy (in percentage)")
+	ax.set_xlim(1.0, 0.0)
+	ax.set_xlabel("Fraction of hashtag UMIs")
+	ax.set_ylabel("Consistency")
 	if figsize is not None:
 		plt.gcf().set_size_inches(*figsize)
 	plt.savefig(out_file, dpi = dpi)

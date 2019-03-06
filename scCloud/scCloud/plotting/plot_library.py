@@ -135,14 +135,18 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 	
 	palettes = get_palettes(df.shape[1])
 	
+	rot = None
+	if len(max(df.index.astype(str), key = len)) < 5:
+		rot = 0
+
 	if logy and not stacked:
 		df_sum = df.sum(axis = 1)
 		df_new = df.cumsum(axis = 1)
 		df_new = 10 ** df_new.div(df_sum, axis = 0).mul(np.log10(df_sum), axis = 0)
 		df = df_new.diff(axis = 1).fillna(value = df_new.iloc[:, 0:1], axis = 1)
-		df.plot(kind = 'bar', stacked = False, legend = False, logy = True, ylim = (1.01, df_sum.max() * 1.7), color = palettes, ax = ax)
+		df.plot(kind = 'bar', stacked = False, legend = False, logy = True, ylim = (1.01, df_sum.max() * 1.7), color = palettes, rot = rot, ax = ax)
 	else:
-		df.plot(kind = 'bar', stacked = stacked, legend = False, logy = logy, color = palettes, ax = ax)
+		df.plot(kind = 'bar', stacked = stacked, legend = False, logy = logy, color = palettes, rot = rot, ax = ax)
 
 	ax.grid(False)
 	ax.set_xlabel('Cluster ID')
@@ -472,7 +476,8 @@ def plot_violin_genes(data, cluster, genes, subplot_size, ylab):
 	df = pd.DataFrame(data = expr_mat, columns = genes)
 	df.insert(0, 'label', data.obs[cluster].values)
 	for i in range(nrows):
-		sns.violinplot(x = 'label', y = genes[i], data = df, inner = None, linewidth = 0, ax = axes[i])
+		sns.violinplot(x = 'label', y = genes[i], data = df, inner = None, linewidth = 0, ax = axes[i], cut = 0)
+		sns.stripplot(x = 'label', y = genes[i], data = df, ax = axes[i], size = 2, color = 'k')
 		axes[i].set_xlabel('')
 		axes[i].set_ylabel('')
 		axes[i].set_title(genes[i])

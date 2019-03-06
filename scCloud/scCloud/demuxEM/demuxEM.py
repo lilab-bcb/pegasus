@@ -66,6 +66,28 @@ def get_droplet_info(probs, sample_names):
 	return ('singlet' if ids.size == 1 else 'doublet',
 			','.join([sample_names[i] for i in ids]))
 
+def calc_demux(data, adt, nsample, min_signal, probs = 'raw_probs'):
+	demux_type = np.full(data.shape[0], 'unknown', dtype = 'object')
+	assignments = np.full(data.shape[0], '', dtype = 'object')
+
+	signals = adt.obs['counts'].reindex(data.obs_names, fill_value = 0.0).values * (1.0 - data.obsm[probs][:,nsample])
+	idx = signals >= min_signal
+
+	tmp = data.obsm[probs][idx,]
+	norm_probs = tmp[:,0:nsample] / (1.0 - tmp[:,nsample])[:,None]
+
+	values1 = []
+	values2 = []
+	for i in range(norm_probs.shape[0]):
+		droplet_type, droplet_id = get_droplet_info(norm_probs[i,], adt.var_names)
+		values1.append(droplet_type)
+		values2.append(droplet_id)
+
+	demux_type[idx] = values1
+	data.obs['demux_type'] = pd.Categorical(demux_type, categories = ['singlet', 'doublet', 'unknown'])
+	assignments[idx] = values2
+	data.obs['assignment'] = pd.Categorical(assignments, categories = natsorted(np.unique(assignments)))
+
 
 
 def demultiplex(data, adt, min_signal = 10.0, alpha = 0.0, alpha_noise = 1.0, tol = 1e-6, n_threads = 1):
@@ -91,26 +113,7 @@ def demultiplex(data, adt, min_signal = 10.0, alpha = 0.0, alpha_noise = 1.0, to
 	with multiprocessing.Pool(n_threads) as pool:
 		data.obsm['raw_probs'][idx_df, :] = pool.starmap(estimate_probs, iter_array)
 
-	demux_type = np.full(data.shape[0], 'unknown', dtype = 'object')
-	assignments = np.full(data.shape[0], '', dtype = 'object')
-
-	signals = adt.obs['counts'].reindex(data.obs_names, fill_value = 0.0).values * (1.0 - data.obsm['raw_probs'][:,nsample])
-	idx = signals >= min_signal
-
-	tmp = data.obsm['raw_probs'][idx,]
-	norm_probs = tmp[:,0:nsample] / (1.0 - tmp[:,nsample])[:,None]
-
-	values1 = []
-	values2 = []
-	for i in range(norm_probs.shape[0]):
-		droplet_type, droplet_id = get_droplet_info(norm_probs[i,], adt.var_names)
-		values1.append(droplet_type)
-		values2.append(droplet_id)
-
-	demux_type[idx] = values1
-	data.obs['demux_type'] = pd.Categorical(demux_type, categories = ['singlet', 'doublet', 'unknown'])
-	assignments[idx] = values2
-	data.obs['assignment'] = pd.Categorical(assignments, categories = natsorted(np.unique(assignments)))
+	calc_demux(data, adt, nsample, min_signal)
 	
 	end = time.time()
 	print("demuxEM.demultiplex is finished. Time spent = {:.2f}s.".format(end - start))

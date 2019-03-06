@@ -16,7 +16,7 @@ def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inn
 	tmp_df = data if isinstance(data, pd.core.frame.DataFrame) else data.obs
 	df = tmp_df[[xattr, yattr]] if hue is None else tmp_df[[xattr, yattr, hue]]
 
-	sns.violinplot(x = xattr, y = yattr, hue = hue, data = df, inner = inner, split = split, linewidth = linewidth)
+	sns.violinplot(x = xattr, y = yattr, hue = hue, data = df, inner = inner, split = split, linewidth = linewidth, cut = 0)
 	ax = plt.gca()
 	ax.grid(False)
 	if xlabel is not None:

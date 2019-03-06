@@ -153,23 +153,26 @@ def plot_human_vs_mouse(data, out_file, plot_type, alpha = 0.5, dpi = 500, log =
 
 	labels = data.obs['demux_type'].astype(str)
 	labels[np.isin(data.obs['assignment'], ['Sample1MmF','Sample2MmF','Sample3MmM','Sample4MmM'])] = 'singlet_mouse'
+	# labels[np.isin(data.obs['assignment'], ['Sample5HuF','Sample6HuF','Sample7HuM','Sample8HuM'])] = 'singlet_human'
 	labels[np.isin(data.obs['assignment'], ['Sample5HuF','Sample6HuF','Sample7HuM'])] = 'singlet_human'
 	labels[np.isin(data.obs['assignment'], 'Sample8HuM')] = 'singlet_donor8'
 
 	idx_dbl = np.isin(labels, 'doublet')
 	mouse_set = {'Sample1MmF','Sample2MmF','Sample3MmM','Sample4MmM'}
+	# human_set = {'Sample5HuF','Sample6HuF','Sample7HuM','Sample8HuM'}
 	human_set = {'Sample5HuF','Sample6HuF','Sample7HuM'}
 
 	def doublet_type(assign_str):
 		ids = set(assign_str.split(','))
+		# return 'doublet_human' if ids.issubset(human_set) else ('doublet_mouse' if ids.issubset(mouse_set) else 'doublet_mix')
 		return 'doublet_human' if ids.issubset(human_set) else ('doublet_mouse' if ids.issubset(mouse_set) else ('doublet_donor8' if 'Sample8HuM' in ids else 'doublet_mix'))
 
 	labels[idx_dbl] = np.vectorize(doublet_type)(data.obs.loc[idx_dbl, 'assignment'].values)
 
+	# labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet_human', 'doublet_mouse', 'doublet_mix', 'unknown'])
+	# colors = ['red', 'blue', 'purple', 'green', 'fuchsia', 'grey']
 	labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'singlet_donor8', 'doublet_human', 'doublet_mouse', 'doublet_mix', 'doublet_donor8', 'unknown'])
 	colors = ['red', 'blue', 'greenyellow', 'purple', 'green', 'fuchsia', 'orange', 'grey']
-	# labels = pd.Categorical(labels, categories = ['singlet_human', 'singlet_mouse', 'doublet', 'unknown'])
-	# colors = ['red', 'blue', 'green', 'grey']
 
 	for k, cat in enumerate(labels.categories):
 		idx = np.isin(labels, cat)
