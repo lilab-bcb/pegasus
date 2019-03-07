@@ -75,7 +75,7 @@ def plot_dataframe_bar(df, ylabel, out_file, dpi = 500, figsize = None):
 
 
 # attrs is a dict with name: attr format; if this is a gene violin, attrs == {gene: gene_name}
-def plot_violin(data, attrs, out_file, xlabel = None, ylabel = None, title = None, dpi = 500, figsize = None, linewidth = None, log = False):
+def plot_violin(data, attrs, out_file, xlabel = None, ylabel = None, title = None, dpi = 500, figsize = None, linewidth = None, log = False, inner = 'box'):
 	df = None
 
 	if 'gene' in attrs:
@@ -101,13 +101,13 @@ def plot_violin(data, attrs, out_file, xlabel = None, ylabel = None, title = Non
 
 	if log:
 		df[ylabel] = np.log10(df[ylabel])
-		sns.violinplot(x = xlabel, y = ylabel, data = df, linewidth = linewidth)
+		sns.violinplot(x = xlabel, y = ylabel, data = df, linewidth = linewidth, cut = 0, inner = inner)
 		y_max = int(np.ceil(df[ylabel].max()))
 		loc = list(range(y_max + 1))
 		labels = [r'$10^{}$'.format(x) for x in loc]
 		plt.yticks(loc, labels)
 	else:
-		sns.violinplot(x = xlabel, y = ylabel, data = df, linewidth = linewidth)
+		sns.violinplot(x = xlabel, y = ylabel, data = df, linewidth = linewidth, cut = 0, inner = inner)
 
 	ax = plt.gca()
 	ax.grid(False)
