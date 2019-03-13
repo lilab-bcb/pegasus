@@ -7,6 +7,7 @@ from scipy.stats import zscore
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
 from matplotlib import rcParams
+from pandas.api.types import is_numeric_dtype
 
 from .plot_utils import get_palettes, transform_basis
 
@@ -194,35 +195,56 @@ def plot_scatter(data, basis, attrs, restrictions = [], nrows = None, ncols = No
 				attr = attrs[i * ncols + j]
 				alpha_value = alpha[i * ncols + j] if isinstance(alpha, list) else alpha
 
-				labels = data.obs[attr].astype(str)
-				if (not apply_to_all) and (attr in rest_dict):
-					rest_vec = rest_dict[attr]
-					idx = ~np.isin(labels, rest_vec)
-					labels[idx] = ''
-					labels = as_category(labels)
-					label_size = labels.categories.size
-					palettes = get_palettes(label_size, with_background = True, show_background = show_background)
-				else:
-					labels[unsel] = ''
-					labels = as_category(labels)
-					label_size = labels.categories.size
-					palettes = get_palettes(label_size, with_background = nunsel > 0, show_background = show_background)
+				if is_numeric_dtype(data.obs[attr]):
+					values = data.obs[attr].values
+					assert apply_to_all or (attr not in rest_dict)
+					values[unsel] = 0.0
 
-				for k, cat in enumerate(labels.categories):
-					idx = np.isin(labels, cat)
-					ax.scatter(df.iloc[idx, 0], df.iloc[idx, 1],
-						   c = palettes[k],
+					img = ax.scatter(df.iloc[:, 0], df.iloc[:, 1],
+						   c = values,
 						   s = marker_size,
 						   marker = '.',
 						   alpha = alpha_value,
 						   edgecolors = 'none',
-						   label = cat,
+						   cmap='viridis',
 						   rasterized = True)
-				ax.set_title(attr)
-				legend = ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5), frameon = False, fontsize = legend_fontsize, ncol = get_legend_ncol(label_size))
 
-				for handle in legend.legendHandles:
-					handle.set_sizes([300.0])
+					left, bottom, width, height = ax.get_position().bounds
+					rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
+					ax_colorbar = fig.add_axes(rect)
+					fig.colorbar(img, cax = ax_colorbar)
+
+				else:
+					labels = data.obs[attr].astype(str)
+					if (not apply_to_all) and (attr in rest_dict):
+						rest_vec = rest_dict[attr]
+						idx = ~np.isin(labels, rest_vec)
+						labels[idx] = ''
+						labels = as_category(labels)
+						label_size = labels.categories.size
+						palettes = get_palettes(label_size, with_background = True, show_background = show_background)
+					else:
+						labels[unsel] = ''
+						labels = as_category(labels)
+						label_size = labels.categories.size
+						palettes = get_palettes(label_size, with_background = nunsel > 0, show_background = show_background)
+
+					for k, cat in enumerate(labels.categories):
+						idx = np.isin(labels, cat)
+						ax.scatter(df.iloc[idx, 0], df.iloc[idx, 1],
+							   c = palettes[k],
+							   s = marker_size,
+							   marker = '.',
+							   alpha = alpha_value,
+							   edgecolors = 'none',
+							   label = cat,
+							   rasterized = True)
+
+					legend = ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5), frameon = False, fontsize = legend_fontsize, ncol = get_legend_ncol(label_size))
+					for handle in legend.legendHandles:
+						handle.set_sizes([300.0])
+
+				ax.set_title(attr)
 			else:
 				ax.set_frame_on(False)
 

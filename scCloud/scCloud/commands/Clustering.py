@@ -34,7 +34,7 @@ Options:
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
   --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: 100]
   --max-umis <number>                              Only keep cells with less than <number> of UMIs. [default: 600000]
-  --mito-prefix <prefix>                           Prefix for mitochondrial genes. [default: MT-]
+  --mito-prefix <prefix>                           Prefix for mitochondrial genes. If multiple prefixes are provided, separate them by comma (e.g. "MT-,mt-"). [default: MT-]
   --percent-mito <ratio>                           Only keep cells with mitochondrial ratio less than <ratio>. [default: 0.1]
   --gene-percent-cells <ratio>                     Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes. [default: 0.0005]
   --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]

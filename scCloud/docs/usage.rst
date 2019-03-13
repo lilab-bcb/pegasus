@@ -334,7 +334,7 @@ to see the usage information::
 		Only keep cells with less than <number> of UMIs. [default: 600000]
 
 	-\\-mito-prefix <prefix>
-		Prefix for mitochondrial genes. [default: MT-]
+		Prefix for mitochondrial genes. If multiple prefixes are provided, separate them by comma (e.g. "MT-,mt-"). [default: MT-]
 
 	-\\-percent-mito <ratio>
 		Only keep cells with mitochondrial ratio less than <ratio>. [default: 0.1]

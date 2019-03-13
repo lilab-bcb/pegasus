@@ -11,7 +11,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# load input data
 	if not kwargs['cite_seq']:
-		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if kwargs['subcluster'] else 'r+')
+		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if (is_raw or kwargs['subcluster']) else 'r+')
 	else:
 		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True)
 		assert len(data_dict) == 2

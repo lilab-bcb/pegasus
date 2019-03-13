@@ -50,10 +50,19 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 
 	data.obs['n_genes'] = data.X.getnnz(axis = 1)
 	if data.obs['n_genes'].min() == 0: # if raw.h5
-		data._inplace_subset_obs(data.obs['n_genes'] >= min_genes_on_raw)
+		data._inplace_subset_obs(data.obs['n_genes'].values >= min_genes_on_raw)
 	data.obs['n_counts'] = data.X.sum(axis = 1).A1
-	mito_genes = [name for name in data.var_names if name.startswith(mito_prefix)]
-	data.obs['percent_mito'] = data[:, mito_genes].X.sum(axis=1).A1 / np.maximum(data.obs['n_counts'].values, 1.0)
+
+	mito_prefixes = mito_prefix.split(',')
+
+	def startswith(name):
+		for prefix in mito_prefixes:
+			if name.startswith(prefix):
+				return True
+		return False
+
+	mito_genes = data.var_names.map(startswith).values.nonzero()[0]
+	data.obs['percent_mito'] = data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(data.obs['n_counts'].values, 1.0)
 
 	if output_filt is not None:
 		writer = pd.ExcelWriter(output_filt + '.filt.xlsx', engine='xlsxwriter')
