@@ -4,6 +4,7 @@ mpl.use("Agg")
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from natsort import natsorted
 import matplotlib.pyplot as plt
 
 # plot_type: gene, count, mito
@@ -14,8 +15,10 @@ def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inn
 	yattr = pt2attr[plot_type]
 
 	tmp_df = data if isinstance(data, pd.core.frame.DataFrame) else data.obs
-	df = tmp_df[[xattr, yattr]] if hue is None else tmp_df[[xattr, yattr, hue]]
-
+	df = (tmp_df[[xattr, yattr]] if hue is None else tmp_df[[xattr, yattr, hue]]).copy()
+	if hue is not None:
+		df[hue] = pd.Categorical(df[hue].values, categories = natsorted(np.unique(df[hue].values)))
+		
 	sns.violinplot(x = xattr, y = yattr, hue = hue, data = df, inner = inner, split = split, linewidth = linewidth, cut = 0)
 	ax = plt.gca()
 	ax.grid(False)
