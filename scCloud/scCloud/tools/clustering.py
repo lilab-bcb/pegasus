@@ -41,9 +41,13 @@ def run_louvain(data, affinity = 'W_norm', resolution = 1.3, random_state = 0):
 		W_diffmap = calculate_affinity_matrix(data.uns['diffmap_knn_indices'], data.uns['diffmap_knn_distances'])
 		W, diag_tmp, diag_half_tmp = calculate_normalized_affinity(W_diffmap)
 
-	louvain.set_rng_seed(random_state)
 	G = construct_graph(W)
-	partition = louvain.find_partition(G, louvain.RBConfigurationVertexPartition, resolution_parameter = resolution)
+
+	partition = louvain.RBConfigurationVertexPartition(G, resolution_parameter = resolution)
+	optimiser = louvain.Optimiser()
+	optimiser.set_rng_seed(random_state)
+	diff = optimiser.optimise_partition(partition)
+
 	labels = np.array([str(x + 1) for x in partition.membership])
 	categories = natsorted(np.unique(labels))
 	data.obs[aff2lab[affinity]] = pd.Categorical(values = labels, categories = categories)
@@ -102,12 +106,12 @@ def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random
 	transfer_dict = {tuple(k):v for k, v in zip(uniqs, range(uniqs.shape[0]))}
 	labels = [transfer_dict[x] for x in labels]
 
-	louvain.set_rng_seed(random_state)
 	G = construct_graph(data.uns['W_norm'])
-	partition = louvain.RBConfigurationVertexPartition(G, resolution_parameter = resolution, initial_membership = labels)
 
+	partition = louvain.RBConfigurationVertexPartition(G, resolution_parameter = resolution, initial_membership = labels)
 	partition_agg = partition.aggregate_partition()
 	optimiser = louvain.Optimiser()
+	optimiser.set_rng_seed(random_state)
 	diff = optimiser.optimise_partition(partition_agg)
 	partition.from_coarse_partition(partition_agg)
 
