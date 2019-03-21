@@ -68,11 +68,14 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd /Users/foo/software/fisher_test
 	pip install .
 	cd $OLDPWD
+	git clone https://github.com/bli25broad/louvain-igraph.git /Users/foo/software/louvain
+	cd /Users/foo/software/louvain
+	pip install .
 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 	brew install gcc
-	export PATH=/usr/local/bin:$PATH
 	sudo ln -s /usr/local/bin/gcc-8 /usr/local/bin/gcc
 	sudo ln -s /usr/local/bin/g++-8 /usr/local/bin/g++
+	export PATH=/Users/foo/miniconda3/envs/scCloud/bin:/usr/local/bin:$PATH
 	git clone https://github.com/broadinstitute/scRNA-Seq.git /Users/foo/software/scRNA-Seq
 	cd /Users/foo/software/scRNA-Seq/scCloud
 	pip install -e .
