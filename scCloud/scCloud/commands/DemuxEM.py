@@ -6,7 +6,7 @@ class DemuxEM(Base):
 Run the demuxEM pipeline for cell-hashing/nuclei-hashing data.
 
 Usage:
-  scCloud demuxEM --hash-type <type> [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
+  scCloud demuxEM [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
   scCloud demuxEM -h
 
 Arguments:
@@ -15,14 +15,13 @@ Arguments:
   output_name                             Output name. All outputs will use it as the prefix.
 
 Options:
-  --hash-type <type>                         The hash type of the data. <type> can be 'cell-hashing' for cell-hashing and 'nuclei-hashing' for nuclei-hashing.
-
   -p <number>, --threads <number>            Number of threads. [default: 1]
   --genome <genome>                          Reference genome name. If not provided, we will infer it from the expression matrix file.
+  --alpha-on-samples <alpha>                 The Dirichlet prior concentration parameter (alpha) on samples. An alpha value < 1.0 will make the prior sparse. [default: 0.0]
 
-  --min-num-genes <number>                   We only demultiplex cells/nuclei with at least <number> expressed genes. [default: 100]
+  --min-num-genes <number>                   We only demultiplex cells/nuclei with at least <number> of expressed genes. [default: 100]
+  --min-num-umis <number>                    We only demultiplex cells/nuclei with at least <number> of UMIs. [default: 100]
   --min-signal-hashtag <count>               Any cell/nucleus with less than <count> hashtags from the signal will be marked as unknown. [default: 10.0]
-  --prior-on-samples <prior>                 The sparse prior put on samples.
   --random-state <seed>                      The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 0]
 
   --generate-diagnostic-plots                Generate a series of diagnostic plots, including the background/signal between HTO counts, estimated background probabilities, HTO distributions of cells and non-cells etc.
@@ -41,17 +40,17 @@ Outputs:
   output_name.gene_name.violin.pdf                       Optional outputs. Violin plots depicting gender-specific gene expression across samples. We can have multiple plots if a gene list is provided in '--generate-gender-plot' option.
   
 Examples:
-  scCloud demuxEM -p 8 --hash-type cell-hashing --generate-diagnostic-plots sample_adt.csv sample_raw_gene_bc_matrices_h5.h5 sample_output
+  scCloud demuxEM -p 8 --generate-diagnostic-plots sample_adt.csv sample_raw_gene_bc_matrices_h5.h5 sample_output
     """
 
     def execute(self):
         kwargs = {
-            'hash_type' : self.args['--hash-type'],
             'n_jobs' : int(self.args['--threads']),
             'genome' : self.args['--genome'],
+            'alpha' : float(self.args['--alpha-on-samples']),
             'min_num_genes' : int(self.args['--min-num-genes']),
+            'min_num_umis' : int(self.args['--min-num-umis']),
             'min_signal' : float(self.args['--min-signal-hashtag']),
-            'alpha_value' : self.args['--prior-on-samples'],
             'random_state' : int(self.args['--random-state']),
             'gen_plots' : self.args['--generate-diagnostic-plots'],
             'gen_gender_plot' : self.split_string(self.args['--generate-gender-plot'])

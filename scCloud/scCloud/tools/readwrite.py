@@ -7,7 +7,7 @@ from . import col_attrs, excluded, load_10x_h5_file, load_dropseq_file
 
 
 
-def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene = None):
+def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, select_singlets = False):
 	"""Load 10x-format matrices from the h5 file into a series of h5ad objects
 	
 	Parameters
@@ -19,8 +19,8 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene
 		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
 	return_a_dict : `boolean`, optional (default: False)
 		If input file contains multiple genome groups, if concatenate them into one h5ad object or return a dictionary of genome-h5ad pairs. If this option is on, return a dict.
-	demux_ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode for demultiplexing.
+	select_singlets : `int`, optional (default: False)
+		If only keep DemuxEM-predicted singlets when loading data.
 
 	Returns
 	-------
@@ -33,7 +33,7 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene
 	>>> tools.read_10x_h5_file('example_10x.h5')
 	"""	
 
-	gdmap = load_10x_h5_file(input_h5) # gdmap , genome-data map
+	gdmap = load_10x_h5_file(input_h5, select_singlets = select_singlets) # gdmap , genome-data map
 	if genome is not None: # remove genomes not in the list
 		remove_set = set(gdmap) - set(genome.split(','))
 		for gname in remove_set:
@@ -92,14 +92,6 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, demux_ngene
 			var_dict["gene_ids"] = np.concatenate(gi_vec)
 		results = anndata.AnnData(X = hstack(Xs, format = 'csr'), obs = obs_dict, var = var_dict)
 		results.uns["genome"] = ",".join(genomes)
-
-	# for demultiplexing purpose, select only barcodes with min gene >= demux_ngene
-	if demux_ngene is not None:
-		assert isinstance(results, anndata.base.AnnData)
-		results.obs['n_genes'] = results.X.getnnz(axis = 1)
-		results.obs['n_counts'] = results.X.sum(axis = 1).A1
-		results._inplace_subset_obs(results.obs['n_genes'].values >= demux_ngene)
-		results.var['robust'] = True
 
 	return results
 
@@ -172,7 +164,7 @@ def read_antibody_csv(input_csv):
 
 
 
-def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = None, mode = 'r+'):
+def read_input(input_file, genome = None, return_a_dict = False, mode = 'r+', select_singlets = False):
 	"""Load data into memory.
 
 	This function is used to load input data into memory. Inputs can be in .h5, .h5ad, .dge.txt.gz or .csv format.
@@ -186,10 +178,10 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
 	return_a_dict : `boolean`, .h5, optional (default: False)
 		If input file contains multiple genome groups, if concatenate them into one h5ad object or return a dictionary of genome-h5ad pairs. If this option is on, return a dict.
-	demux_ngene : `int`, .h5, optional (default: None)
-		Minimum number of genes to keep a barcode for demultiplexing.
 	mode : `str`, .h5ad, optional (default: `r+`)
 		If input is in h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
+	select_singlets : `int`, optional (default: False)
+		If only keep DemuxEM-predicted singlets when loading data.
 	
 	Returns
 	-------
@@ -206,7 +198,7 @@ def read_input(input_file, genome = None, return_a_dict = False, demux_ngene = N
 	start = time.time()
 
 	if input_file.endswith('.h5'):
-		data = read_10x_h5_file(input_file, genome, return_a_dict, demux_ngene)
+		data = read_10x_h5_file(input_file, genome, return_a_dict, select_singlets)
 	elif input_file.endswith('.dge.txt.gz'):
 		data = read_dropseq_file(input_file, genome)
 	elif input_file.endswith('.h5ad'):
@@ -250,4 +242,3 @@ def write_output(data, output_name):
 	
 	end = time.time()
 	print("Write main output is finished. Time spent = {:.2f}s.".format(end - start))
-

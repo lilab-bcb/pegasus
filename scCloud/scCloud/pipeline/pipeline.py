@@ -11,9 +11,9 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# load input data
 	if not kwargs['cite_seq']:
-		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if (is_raw or kwargs['subcluster']) else 'r+')
+		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = ('a' if (is_raw or kwargs['subcluster']) else 'r+'), select_singlets = kwargs['select_singlets'])
 	else:
-		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True)
+		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True, select_singlets = kwargs['select_singlets'])
 		assert len(data_dict) == 2
 		adata = cdata = None
 		for genome, data in data_dict.items():
@@ -143,7 +143,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adata = new_data
 		print("ADT count matrix is attached.")
 
-		tools.run_tsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_tsne')
+		tools.run_fitsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_fitsne')
 		print("Antibody embedding is done.")
 
 

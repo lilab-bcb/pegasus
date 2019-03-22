@@ -3,21 +3,22 @@ import numpy as np
 import pandas as pd
 from .. import tools, demuxEM
 
+
+
 def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
-	assert kwargs['hash_type'] in {'nuclei-hashing', 'cell-hashing'}
-	if kwargs['hash_type'] == 'nuclei-hashing':
-		kwargs['alpha'] = 0.0
-	elif kwargs['hash_type'] == 'cell-hashing':
-		kwargs['alpha'] = 0.5
-
-	if kwargs['alpha_value'] is not None:
-		kwargs['alpha'] = float(kwargs['alpha_value'])
-
 	# load input data
 	adt = tools.read_input(input_adt_file)
 	print("ADT file is loaded.")
-	data = tools.read_input(input_rna_file, genome = kwargs['genome'], demux_ngene = kwargs['min_num_genes'])
+	data = tools.read_input(input_rna_file, genome = kwargs['genome'])
 	print("RNA file is loaded.")
+
+	# Filter the RNA matrix
+	data.obs['n_genes'] = data.X.getnnz(axis = 1)
+	data.obs['n_counts'] = data.X.sum(axis = 1).A1
+	obs_index = np.logical_and.reduce((data.obs['n_genes'] >= kwargs['min_num_genes'], data.obs['n_counts'] >= kwargs['min_num_umis']))
+	data._inplace_subset_obs(obs_index)
+	data.var['robust'] = True
+
 	# run demuxEM
 	demuxEM.estimate_background_probs(adt, random_state = kwargs['random_state'])
 	print("Background probability distribution is estimated.")

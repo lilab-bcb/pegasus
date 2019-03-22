@@ -12,7 +12,7 @@ from . import col_attrs, excluded
 
 
 
-def load_10x_h5_file_v2(h5_in, ngene = None):
+def load_10x_h5_file_v2(h5_in, ngene = None, select_singlets = False):
 	"""Load 10x v2 format matrix from hdf5 file
 	
 	Parameters
@@ -33,7 +33,21 @@ def load_10x_h5_file_v2(h5_in, ngene = None):
 	>>> tools.load_10x_h5_file_v2(h5_in)
 	"""	
 	
+	def channel_select(channel, selected):
+		channel["matrix"] =  channel["matrix"][selected, :]
+		channel["barcodes"] = channel["barcodes"][selected]
+		for attr in channel:
+			if (attr not in col_attrs) and (attr not in excluded):
+				channel[attr] = channel[attr][selected]
+		return channel["barcodes"]
+
+
+
 	results = {}
+
+	cite_seq_name = None
+	selected_barcodes = None
+
 	for i, group in enumerate(h5_in.walk_groups()):
 		if i > 0:
 			genome = group._v_name
@@ -43,22 +57,34 @@ def load_10x_h5_file_v2(h5_in, ngene = None):
 				channel[node.name] = node.read()
 			
 			M, N = channel["shape"]
-			mat = csr_matrix((channel["data"], channel["indices"], channel["indptr"]), shape = (N, M))
+			channel["matrix"] = csr_matrix((channel["data"], channel["indices"], channel["indptr"]), shape = (N, M))
 			channel.pop("data")
 			channel.pop("indices")
 			channel.pop("indptr")
 			channel.pop("shape")
 
-			if ngene is not None and not genome.startswith("CITE_Seq"):
-				selected = mat.getnnz(axis = 1) >= ngene
-				mat = mat[selected, :]
-				channel["barcodes"] = channel["barcodes"][selected]
-				for attr in channel:
-					if (attr not in col_attrs) and (attr not in excluded):
-						channel[attr] = channel[attr][selected]
-			channel["matrix"] = mat
+
+			if genome.startswith("CITE_Seq"):
+				cite_seq_name = genome
+			else:
+				if (ngene is not None) or (select_singlets and "demux_type" in channel):
+					if ngene is not None:
+						selected = mat.getnnz(axis = 1) >= ngene
+					else:
+						selected = channel["demux_type"] == "singlet".encode()
+						channel.pop("demux_type")
+
+					selected_barcodes = channel_select(channel, selected)
+
 
 			results[genome] = channel
+
+	if (cite_seq_name is not None) and (selected_barcodes is not None):
+		selected_barcodes = pd.Index(selected_barcodes)
+		channel = results[cite_seq_name]
+		citeseq_barcodes = pd.Index(channel["barcodes"])
+		selected = citeseq_barcodes.isin(selected_barcodes)
+		channel_select(channel, selected)
 
 	return results
 
@@ -112,7 +138,7 @@ def load_10x_h5_file_v3(h5_in, ngene = None):
 
 
 
-def load_10x_h5_file(input_h5, ngene = None):
+def load_10x_h5_file(input_h5, ngene = None, select_singlets = False):
 	"""Load 10x format matrix (either v2 or v3) from hdf5 file
 	
 	Parameters
@@ -139,7 +165,7 @@ def load_10x_h5_file(input_h5, ngene = None):
 			node = h5_in.get_node("/matrix")
 			results = load_10x_h5_file_v3(h5_in, ngene)
 		except tables.exceptions.NoSuchNodeError:
-			results = load_10x_h5_file_v2(h5_in, ngene)
+			results = load_10x_h5_file_v2(h5_in, ngene, select_singlets)
 	return results
 
 
@@ -165,7 +191,7 @@ def load_dropseq_file(input_file, genome):
 	>>> tools.load_dropseq_file('example.umi.dge.txt.gz', 'GRCh38')
 	"""
 
-	df = pd.read_table(input_file, header = 0, index_col = 0, compression = 'gzip')
+	df = pd.read_csv(input_file, header = 0, index_col = 0, sep = '\t', compression = 'gzip')
 	channel = {"barcodes" : np.array([x.encode() for x in df.columns]), 
 			   "matrix" : df}
 	results = {genome : channel}
@@ -282,22 +308,6 @@ def parse_restriction_string(rstr):
 				content.add(prefix + str(i))
 	return (name, isin, content)
 
-
-
-def select_only_singlets(results):
-	singlet = "singlet".encode()
-	for genome, channel in results.items():
-		if not genome.startswith("CITE_Seq") and "demux_type" in channel:
-			idx = channel["demux_type"] == singlet
-			channel.pop("demux_type")
-			channel["matrix"] = channel["matrix"][idx, :]
-			channel["barcodes"] = channel["barcodes"][idx]
-			for attr in channel:
-				if (attr not in col_attrs) and (attr not in excluded):
-					channel[attr] = channel[attr][idx]
-
-
-
 def aggregate_10x_matrices(csv_file, restrictions, attributes, output_file, google_cloud = False, select_singlets = False, ngene = None, is_dropseq = None):
 	"""Aggregate channel-specific 10x count matrices into one big count matrix.
 
@@ -369,9 +379,7 @@ def aggregate_10x_matrices(csv_file, restrictions, attributes, output_file, goog
 			check_call(call_args)
 			input_hd5_file = '{0}_tmp_h5.h5'.format(sample_name)
 		
-		results = load_10x_h5_file(input_hd5_file, ngene) if is_dropseq is None else load_dropseq_file(input_hd5_file, is_dropseq)
-		if select_singlets:
-			select_only_singlets(results)
+		results = load_10x_h5_file(input_hd5_file, ngene, select_singlets) if is_dropseq is None else load_dropseq_file(input_hd5_file, is_dropseq)
 		for genome, channel in results.items():
 			barcodes = np.array(['{}-{}'.format(sample_name, y[:-2] if y.endswith("-1") else y) for y in (x.decode() for x in channel["barcodes"])])
 			nsample = barcodes.size

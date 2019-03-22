@@ -18,8 +18,9 @@ Options:
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
   --genome <genome>                                A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
-  
-  --cite-seq                                       Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using t-SNE (the basis used for plotting is 'citeseq_tsne').
+
+  --select-singlets                                Only select DemuxEM-predicted singlets for analysis.  
+  --cite-seq                                       Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
 
   --output-filtration-results                      Output filtration results as a spreadsheet.
   --plot-filtration-results                        Plot filtration results as PDF files.
@@ -107,6 +108,7 @@ Examples:
             'processed' : self.args['--processed'],
             'subcluster' : False,
 
+            'select_singlets' : self.args['--select-singlets'],
             'cite_seq' : self.args['--cite-seq'],
 
             'output_filt' : self.args['<output_name>'] if self.args['--output-filtration-results'] else None,
