@@ -302,6 +302,9 @@ to see the usage information::
 
 	-\\-cite-seq
 		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
+	
+	-\\-cite-seq-capping <percentile>
+		For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
 
   	-\\-output-filtration-results
 		Output filtration results as a spreadsheet.

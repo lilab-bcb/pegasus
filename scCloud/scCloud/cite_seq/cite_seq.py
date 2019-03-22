@@ -45,3 +45,8 @@ def merge_rna_and_adt_data(input_raw_h5, input_csv, antibody_control_csv, output
 	print("Loaded the ADT matrix.")
 	write_10x_h5_file(output_10x_h5, results)
 	print("Merged output is written.")
+
+def capping(adt_matrix, percentile):
+	for i in range(adt_matrix.shape[1]):
+		cap = np.percentile(adt_matrix[:, i], percentile)
+		adt_matrix[adt_matrix[:, i] > cap, i] = cap

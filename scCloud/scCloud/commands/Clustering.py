@@ -21,6 +21,7 @@ Options:
 
   --select-singlets                                Only select DemuxEM-predicted singlets for analysis.  
   --cite-seq                                       Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
+  --cite-seq-capping <percentile>                  For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
 
   --output-filtration-results                      Output filtration results as a spreadsheet.
   --plot-filtration-results                        Plot filtration results as PDF files.
@@ -110,6 +111,7 @@ Examples:
 
             'select_singlets' : self.args['--select-singlets'],
             'cite_seq' : self.args['--cite-seq'],
+            'cite_seq_capping' : float(self.args['--cite-seq-capping']),
 
             'output_filt' : self.args['<output_name>'] if self.args['--output-filtration-results'] else None,
             'plot_filt' : self.args['<output_name>'] if self.args['--plot-filtration-results'] else None,

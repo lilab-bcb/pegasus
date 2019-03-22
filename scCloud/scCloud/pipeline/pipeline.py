@@ -1,7 +1,7 @@
 import numpy as np
 import anndata
 from scipy.sparse import csr_matrix, hstack
-from .. import tools 
+from scCloud import tools, cite_seq
 
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']
@@ -124,6 +124,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adt_matrix = np.zeros((adata.shape[0], cdata.shape[1]), dtype = 'float32')
 		idx = adata.obs_names.isin(cdata.obs_names)
 		adt_matrix[idx, :] = cdata[adata.obs_names[idx],].X.toarray()
+		if abs(100.0 - kwargs['cite_seq_capping']) > 1e-4:
+			cite_seq.capping(adt_matrix, kwargs['cite_seq_capping'])
 
 		var_names = np.concatenate([adata.var_names, ['AD-' + x for x in cdata.var_names]])
 
