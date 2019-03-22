@@ -687,7 +687,7 @@ to see the usage information::
   		Plot <attr> against cluster labels. This option is only used in 'composition'.
 
 	-\\-basis <basis>
-		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_tsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_fitsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: fitsne]
 
 	-\\-attributes <attrs>
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
