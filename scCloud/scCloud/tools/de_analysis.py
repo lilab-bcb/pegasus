@@ -331,7 +331,7 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 		col_names = ["{0}_{1}".format(x, clust_id) for x in cols]		
 		df_up = pd.DataFrame(df.loc[idx_up.values, col_names])
 		df_up.rename(columns = lambda x: '_'.join(x.split('_')[:-1]), inplace = True)
-		df_up.sort_values(by = "WAD_score", ascending = False, inplace = True)		
+		df_up.sort_values(by = "auc" if has_roc else "WAD_score", ascending = False, inplace = True)		
 		# format output as excel table
 		df_up = format_short_output_cols(df_up, cols_short_format)		
 		worksheet = workbook.add_worksheet(name = "{0} up".format(clust_id))
@@ -345,7 +345,7 @@ def write_results_to_excel(output_file, df, alpha = 0.05):
 								
 		df_down = pd.DataFrame(df.loc[idx_down.values, col_names])
 		df_down.rename(columns = lambda x: '_'.join(x.split('_')[:-1]), inplace = True)
-		df_down.sort_values(by = "WAD_score", ascending = True, inplace = True)
+		df_down.sort_values(by = "auc" if has_roc else "WAD_score", ascending = True, inplace = True)
 		# format output as excel table
 		worksheet = workbook.add_worksheet(name = "{0} dn".format(clust_id))
 		df_down = format_short_output_cols(df_down, cols_short_format)
