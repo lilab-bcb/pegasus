@@ -1,7 +1,7 @@
 import numpy as np
 import anndata
 from scipy.sparse import csr_matrix, hstack
-from .. import tools 
+from scCloud import tools, cite_seq
 
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']
@@ -11,9 +11,9 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# load input data
 	if not kwargs['cite_seq']:
-		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = 'a' if (is_raw or kwargs['subcluster']) else 'r+')
+		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = ('a' if (is_raw or kwargs['subcluster']) else 'r+'), select_singlets = kwargs['select_singlets'])
 	else:
-		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True)
+		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True, select_singlets = kwargs['select_singlets'])
 		assert len(data_dict) == 2
 		adata = cdata = None
 		for genome, data in data_dict.items():
@@ -124,6 +124,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adt_matrix = np.zeros((adata.shape[0], cdata.shape[1]), dtype = 'float32')
 		idx = adata.obs_names.isin(cdata.obs_names)
 		adt_matrix[idx, :] = cdata[adata.obs_names[idx],].X.toarray()
+		if abs(100.0 - kwargs['cite_seq_capping']) > 1e-4:
+			cite_seq.capping(adt_matrix, kwargs['cite_seq_capping'])
 
 		var_names = np.concatenate([adata.var_names, ['AD-' + x for x in cdata.var_names]])
 
@@ -143,7 +145,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adata = new_data
 		print("ADT count matrix is attached.")
 
-		tools.run_tsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_tsne')
+		tools.run_fitsne(adata, 'CITE-Seq', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], out_basis = 'citeseq_fitsne')
 		print("Antibody embedding is done.")
 
 

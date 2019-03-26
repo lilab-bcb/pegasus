@@ -48,7 +48,7 @@ def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
 				'GraphLayout', input_graph_file, output_coord_file, layout, str(n_steps), str(n_jobs)])
 	print("Force-directed layout is generated.")
 
-	fle_coords = pd.read_table(output_coord_file, header = 0, index_col = 0).values
+	fle_coords = pd.read_csv(output_coord_file, header = 0, index_col = 0, sep = '\t').values
 	check_call(['rm', '-f', input_graph_file])
 	check_call(['rm', '-f', output_coord_file])
 
@@ -56,33 +56,33 @@ def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
 
 
 
-def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0):
+def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'tsne'):
 	start = time.time()
 	X = data.obsm[rep_key].astype('float64')
 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
-	data.obsm['X_tsne'] = X_tsne
+	data.obsm['X_' + out_basis] = X_tsne
 	end = time.time()
 	print("tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0):
+def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'fitsne'):
 	start = time.time()
 	X = data.obsm[rep_key].astype('float64')
-	data.obsm['X_fitsne'] = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state) 
+	data.obsm['X_' + out_basis] = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state) 
 	end = time.time()
 	print("FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0):
+def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, out_basis = 'umap'):
 	start = time.time()
 	X = data.obsm[rep_key].astype('float64')
-	data.obsm['X_umap'] = calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state)
+	data.obsm['X_' + out_basis] = calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state)
 	end = time.time()
 	print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, out_basis = 'fle'):
 	start = time.time()
 	K = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
 	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:K], data.uns['diffmap_knn_distances'][:, 0:K])
-	data.obsm['X_fle'] = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
+	data.obsm['X_' + out_basis] = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
 	end = time.time()
 	print("Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start))
 

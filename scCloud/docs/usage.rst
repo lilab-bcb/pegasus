@@ -183,7 +183,7 @@ Type::
 to see the usage information::
 
 	Usage:
-		scCloud demuxEM --hash-type <type> [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
+		scCloud demuxEM [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
 		scCloud demuxEM -h
 
 * Arguments:
@@ -199,23 +199,23 @@ to see the usage information::
 
 * Options:
 
-	-\\-hash-type <type>
-		The hash type of the data. <type> can be 'cell-hashing' for cell-hashing and 'nuclei-hashing' for nuclei-hashing.
-
   	\-p <number>, -\\-threads <number>
 		Number of threads. [default: 1]
 
 	-\\-genome <genome>
 		Reference genome name. If not provided, we will infer it from the expression matrix file.
 
+	-\\-alpha-on-samples <alpha>
+		The Dirichlet prior concentration parameter (alpha) on samples. An alpha value < 1.0 will make the prior sparse. [default: 0.0]
+
 	-\\-min-num-genes <number>
-		We only demultiplex cells/nuclei with at least <number> expressed genes. [default: 100]
+		We only demultiplex cells/nuclei with at least <number> of expressed genes. [default: 100]
+
+	-\\-min-num-umis <number>
+		We only demultiplex cells/nuclei with at least <number> of UMIs. [default: 100] 
 
 	-\\-min-signal-hashtag <count>
 		Any cell/nucleus with less than <count> hashtags from the signal will be marked as unknown. [default: 10.0]
-
-	-\\-prior-on-samples <prior>
-		The sparse prior put on samples.
 
 	-\\-random-state <seed>
 		The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 0]
@@ -297,8 +297,14 @@ to see the usage information::
 	-\\-genome <genome>
 		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
   
+	-\\-select-singlets
+		Only select DemuxEM-predicted singlets for analysis.
+
 	-\\-cite-seq
-		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using t-SNE (the basis used for plotting is 'citeseq_tsne').
+		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
+	
+	-\\-cite-seq-capping <percentile>
+		For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
 
   	-\\-output-filtration-results
 		Output filtration results as a spreadsheet.
@@ -681,7 +687,7 @@ to see the usage information::
   		Plot <attr> against cluster labels. This option is only used in 'composition'.
 
 	-\\-basis <basis>
-		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_tsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_fitsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: fitsne]
 
 	-\\-attributes <attrs>
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.

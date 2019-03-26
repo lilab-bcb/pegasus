@@ -69,7 +69,11 @@ def load_10x_h5_file_v2(h5_in, ngene = None, select_singlets = False):
 			else:
 				if (ngene is not None) or (select_singlets and "demux_type" in channel):
 					if ngene is not None:
+<<<<<<< HEAD
 						selected = channel["matrix"].getnnz(axis = 1) >= ngene
+=======
+						selected = mat.getnnz(axis = 1) >= ngene
+>>>>>>> refs/remotes/origin/master
 					else:
 						selected = channel["demux_type"] == "singlet".encode()
 						channel.pop("demux_type")

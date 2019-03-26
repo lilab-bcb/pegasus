@@ -20,7 +20,7 @@ Options:
 
   --cluster-labels <attr>            Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
   --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition'.
-  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', 'diffmap_pca', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'. If CITE-Seq data is used, basis can also be 'citeseq_tsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: tsne]
+  --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', 'diffmap_pca', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'. If CITE-Seq data is used, basis can also be 'citeseq_fitsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: fitsne]
   --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
   --restriction <restriction>...     Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value'. This option is used in 'composition' and 'scatter'.
   --apply-to-each-figure             Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict. 
