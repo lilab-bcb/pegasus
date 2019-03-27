@@ -2,7 +2,6 @@ import time
 import numpy as np
 import pandas as pd
 
-import igraph
 import louvain
 # import hdbscan
 from sklearn.cluster import KMeans
@@ -12,20 +11,9 @@ import threading
 import ctypes
 import ctypes.util
 
-from . import calculate_affinity_matrix, calculate_normalized_affinity
+from . import calculate_affinity_matrix, calculate_normalized_affinity, construct_graph
 
 
-
-def construct_graph(W, directed = True):
-	s, t = W.nonzero()
-	w = W[s, t].A1
-	G = igraph.Graph(directed = directed)
-	G.add_vertices(W.shape[0])
-	G.add_edges(zip(s, t))
-	G.es['weight'] = w
-	assert G.vcount() == W.shape[0]
-
-	return G
 
 aff2lab = {'W_norm' : 'louvain_labels', 'W_diffmap' : 'louvain_labels_dm', 'W_diffmap_norm' : 'louvain_labels_dmn'}
 

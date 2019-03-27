@@ -11,7 +11,7 @@ from umap import UMAP
 from fitsne import FItSNE
 from sklearn.neural_network import MLPRegressor
 
-from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cells
+from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cells, construct_graph
 
 
 def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
@@ -27,6 +27,7 @@ def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	return umap.fit_transform(X)
 
 def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
+	
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
 	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
 
