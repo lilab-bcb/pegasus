@@ -27,21 +27,13 @@ def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	return umap.fit_transform(X)
 
 def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
-	
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
+	G = construct_graph(W, adjust_weights = True)
+	G.write(input_graph_file)
+	print(input_graph_file + ' is written.')			
+
 	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
 
-	with open(input_graph_file, 'w') as writer:	
-		n_obs = W.shape[0]
-		writer.write("*Vertices {n_obs}\n".format(n_obs = n_obs))
-		for i in range(n_obs):
-			writer.write("{node} \"{node}\"\n".format(node = i + 1))
-		writer.write("*Edges\n")
-		rows, cols = W.nonzero()
-		for i, j in zip(rows, cols):
-			if i < j:
-				writer.write("{u} {v} {w:.6g}\n".format(u = i + 1, v = j + 1, w = W[i, j]))
-	print(input_graph_file + ' is written.')			
 
 	classpath = os.path.dirname(pkg_resources.resource_filename('scCloud', 'ext/GraphLayout.class')) + ':' + \
 				pkg_resources.resource_filename('scCloud', 'ext/gephi-toolkit-0.9.2-all.jar')

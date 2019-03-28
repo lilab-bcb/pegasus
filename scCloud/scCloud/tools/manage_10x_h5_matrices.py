@@ -68,14 +68,13 @@ def load_10x_h5_file_v2(h5_in, ngene = None, select_singlets = False):
 				cite_seq_name = genome
 			else:
 				if (ngene is not None) or (select_singlets and "demux_type" in channel):
+					selected = np.ones(N, dtype = bool)
 					if ngene is not None:
-						selected = mat.getnnz(axis = 1) >= ngene
-					else:
-						selected = channel["demux_type"] == "singlet".encode()
+						selected = selected & (mat.getnnz(axis = 1) >= ngene)
+					if select_singlets:
+						selected = selected & (channel["demux_type"] == "singlet".encode())
 						channel.pop("demux_type")
-
 					selected_barcodes = channel_select(channel, selected)
-
 
 			results[genome] = channel
 
