@@ -47,6 +47,7 @@ def calculate_affinity_matrix(indices, distances):
 	W.data /= z[W.row]
 	W.data /= z[W.col]
 	W = W.tocsr()
+	W.eliminate_zeros()
 
 	print("Constructing affinity matrix is done.")
 
