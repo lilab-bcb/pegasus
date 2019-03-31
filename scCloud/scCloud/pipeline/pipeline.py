@@ -112,8 +112,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 		# 	tools.run_umap(adata, 'X_diffmap', n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
 		# 	adata.obsm['X_umap_diffmap'] = adata.obsm['X_umap']
 	if kwargs['run_fle']:
-		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], random_state = kwargs['random_state'])
-		
+		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'])
+
 	# calculate diffusion-based pseudotime from roots
 	if kwargs['pseudotime'] is not None:
 		assert 'X_diffmap' in adata.obsm.keys()

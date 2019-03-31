@@ -81,7 +81,9 @@ Options:
   --run-fle                                        Run force-directed layout embedding.
   --run-net-fle                                    Run net FLE.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
-  --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. If we cannot reach the target change within 10,000 iterations, we stop the algorithm as well. [default: 2.0]
+  --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. [default: 2.0]
+  --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 10000]
+  --fle-3D                                         Calculate 3D force-directed layout. 
 
   --net-knn-indices <string>                       kNN indices used for net-related visualization, can be either knn_indices or diffmap_knn_indices. [default: diffmap_knn_indices]
   --net-first-K <first_K>                          Cover <first_K> neighbors for net-related visualization. [default: 5]
@@ -170,6 +172,8 @@ Examples:
             'run_net_fle' : self.args['--run-net-fle'],
             'fle_K' : int(self.args['--fle-K']),
             'fle_target_change_per_node' : float(self.args['--fle-target-change-per-node']),
+            'fle_target_steps' : int(self.args['--fle-target-steps']),
+            'fle_3D' : self.args['--fle-3D'],
 
             'knn_indices' : self.args['--net-knn-indices'],
             'first_K' : int(self.args['--net-first-K']),
