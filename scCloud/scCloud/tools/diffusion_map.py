@@ -25,6 +25,7 @@ def get_symmetric_matrix(csr_mat):
 	sym_mat.data[idx] /= 2.0
 	return sym_mat
 
+# We should not modify distances array!
 def calculate_affinity_matrix(indices, distances):
 	nsample = indices.shape[0]
 	K = indices.shape[1]
@@ -33,12 +34,13 @@ def calculate_affinity_matrix(indices, distances):
 	sigmas_sq = np.square(sigmas)
 
 	# calculate local-scaled kernel
+	normed_dist = np.zeros((nsample, K), dtype = float)
 	for i in range(nsample):
 		numers = 2.0 * sigmas[i] * sigmas[indices[i,:]]
 		denoms = sigmas_sq[i] + sigmas_sq[indices[i,:]]
-		distances[i,:] = np.sqrt(numers / denoms) * np.exp(-np.square(distances[i,:]) / denoms)
+		normed_dist[i,:] = np.sqrt(numers / denoms) * np.exp(-np.square(distances[i,:]) / denoms)
 
-	W = csr_matrix((distances.ravel(), (np.repeat(range(nsample), K), indices.ravel())), shape = (nsample, nsample))
+	W = csr_matrix((normed_dist.ravel(), (np.repeat(range(nsample), K), indices.ravel())), shape = (nsample, nsample))
 	W = get_symmetric_matrix(W)
 
 	# density normalization
@@ -108,11 +110,8 @@ def reduce_diffmap_to_3d(Phi_pt, random_state = 0):
 def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
 	start = time.time()
 
-	indices, distances, knn_index = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, method = knn_method, \
+	indices, distances = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, method = knn_method, \
 		K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
-	# if knn_index is not None:
-	# 	data.uns['knn'] = knn_index
-	# 	data.uns['knn_dim'] = data.obsm[rep_key].shape[1]
 	data.uns['knn_indices'] = indices
 	data.uns['knn_distances'] = distances
 	W = calculate_affinity_matrix(indices, distances)
@@ -121,11 +120,8 @@ def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 
 
 	Phi_reduced = reduce_diffmap_to_3d(Phi_pt, random_state = random_state)
 
-	indices, distances, knn_index = calculate_nearest_neighbors(Phi_pt, n_jobs, method = knn_method, \
+	indices, distances = calculate_nearest_neighbors(Phi_pt, n_jobs, method = knn_method, \
 		K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
-	# if knn_index is not None:
-	# 	data.uns['diffmap_knn'] = knn_index
-	# 	data.uns['diffmap_knn_dim'] = Phi_pt.shape[1]
 	data.uns['diffmap_knn_indices'] = indices
 	data.uns['diffmap_knn_distances'] = distances
 

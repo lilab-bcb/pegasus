@@ -50,7 +50,7 @@ def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = No
 	end_time = time.time()
 	print("Nearest neighbor search is finished in {:.2f}s.".format(end_time - start_time))
 
-	return (indices, distances, knn_index)
+	return (indices, distances)
 
 
 
