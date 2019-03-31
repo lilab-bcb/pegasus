@@ -35,7 +35,7 @@ requires = ['anndata==0.6.4',
 
 setup(
 	name='scCloud',
-	version='0.12.0',
+	version='0.13.0',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/broadinstitute/scRNA-Seq/tree/master/scCloud',
@@ -63,7 +63,7 @@ setup(
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],
 		'scCloud.check_sample_indexes' : ['chromium-dna-sample-indexes-plate.json'],
-		'scCloud': ['ext/GraphLayout.java', 'ext/GraphLayout.class', 'ext/gephi-toolkit-0.9.2-all.jar']
+		'scCloud': ['ext/forceatlas2-3d.jar', 'ext/gephi-toolkit-0.9.2-all.jar']
 	},
 	entry_points={
 		'console_scripts': [

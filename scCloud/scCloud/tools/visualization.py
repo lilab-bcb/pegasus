@@ -26,7 +26,7 @@ def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
 	return umap.fit_transform(X)
 
-def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
+def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, memory, random_state):
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
 	G = construct_graph(W, adjust_weights = True)
 	G.write(input_graph_file)
@@ -34,11 +34,10 @@ def calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory):
 
 	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
 
-
-	classpath = os.path.dirname(pkg_resources.resource_filename('scCloud', 'ext/GraphLayout.class')) + ':' + \
-				pkg_resources.resource_filename('scCloud', 'ext/gephi-toolkit-0.9.2-all.jar')
+	classpath = pkg_resources.resource_filename('scCloud', 'ext/forceatlas2-3d.jar') + ':' + pkg_resources.resource_filename('scCloud', 'ext/gephi-toolkit-0.9.2-all.jar')
 	check_call(['java', '-Djava.awt.headless=true', '-Xmx{memory}g'.format(memory = memory), '-cp', classpath, \
-				'GraphLayout', input_graph_file, output_coord_file, layout, str(n_steps), str(n_jobs)])
+				'org.gephi.layout.plugin.forceAtlas2_3d.Main', '--input', input_graph_file, '--output', file_name + '.coords', \
+				'--nthreads', str(n_jobs), '--seed', str(random_state), '--2d', '--targetChangePerNode', str(target_change_per_node)])
 	print("Force-directed layout is generated.")
 
 	fle_coords = pd.read_csv(output_coord_file, header = 0, index_col = 0, sep = '\t').values
@@ -71,11 +70,11 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 	end = time.time()
 	print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, out_basis = 'fle'):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 1.0, memory = 8, random_state = 0, out_basis = 'fle'):
 	start = time.time()
 	K = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
 	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:K], data.uns['diffmap_knn_distances'][:, 0:K])
-	data.obsm['X_' + out_basis] = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
+	data.obsm['X_' + out_basis] = calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, memory, random_state);
 	end = time.time()
 	print("Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start))
 
@@ -124,17 +123,19 @@ def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 def run_net_fle(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
-	start = time.time()
-	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
-	X = data.obsm['X_diffmap'][selected,:]
-	indices, distances, knn_index = calculate_nearest_neighbors(X, n_jobs, K = K, random_state = random_state, full_speed = False)
-	W = calculate_affinity_matrix(indices, distances)
-	X_fle = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
-	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = random_state)
-	regressor.fit(X, X_fle)
-	X_fle_pred = regressor.predict(data.obsm['X_diffmap'][~selected,:])
-	data.obsm['X_net_fle'] = np.zeros((data.shape[0], 2))
-	data.obsm['X_net_fle'][selected,:] = X_fle
-	data.obsm['X_net_fle'][~selected,:] = X_fle_pred
-	end = time.time()
+	# start = time.time()
+	# selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
+	# X = data.obsm['X_diffmap'][selected,:]
+	# indices, distances, knn_index = calculate_nearest_neighbors(X, n_jobs, K = K, random_state = random_state, full_speed = False)
+	# W = calculate_affinity_matrix(indices, distances)
+	# X_fle = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
+	# regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = random_state)
+	# regressor.fit(X, X_fle)
+	# X_fle_pred = regressor.predict(data.obsm['X_diffmap'][~selected,:])
+	# data.obsm['X_net_fle'] = np.zeros((data.shape[0], 2))
+	# data.obsm['X_net_fle'][selected,:] = X_fle
+	# data.obsm['X_net_fle'][~selected,:] = X_fle_pred
+	# end = time.time()
 	print("Net FLE is calculated. Time spent = {:.2f}s.".format(end - start))
+
+
