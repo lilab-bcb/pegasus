@@ -15,12 +15,12 @@ from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cel
 
 
 def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
-	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, random_state = random_state)
+	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, random_state = random_state, verbose = 1)
 	return tsne.fit_transform(X)
 
 def calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
 	# FItSNE will change X content
-	return FItSNE(X.copy(), nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = (random_state if random_state is not None else -1))
+	return FItSNE(X.copy(), nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = random_state)
 
 def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
