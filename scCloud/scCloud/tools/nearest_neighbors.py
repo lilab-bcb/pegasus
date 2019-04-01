@@ -54,20 +54,20 @@ def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = No
 
 
 
-def select_cells(indices, first_K, random_state = 0):
-	nsample = indices.shape[0]
-	K = indices.shape[1]
+def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 0):
+	nsample = distances.shape[0]
+
+	probs = np.zeros(nsample)
+	if alpha == 0.0:
+		probs[:] = 1.0 # uniform
+	elif alpha == 1.0:
+		probs[:] = distances[:, K - 1]
+	else:
+		probs[:] = distances[:, K - 1] ** alpha
+	probs /= probs.sum()
+
 	np.random.seed(random_state)
-	orders = np.random.permutation(nsample)
 	selected = np.zeros(nsample, dtype = bool)
-	covered = np.zeros(nsample, dtype = bool)
-	for cell_id in orders:
-		if not covered[cell_id]:
-			covered[cell_id] = True
-			selected[cell_id] = True
-			for i in range(first_K):
-				covered[indices[cell_id, i]] = True
+	selected[np.random.choice(nsample, size = int(nsample * frac), replace = False, p = probs)] = True
+	
 	return selected
-
-
-
