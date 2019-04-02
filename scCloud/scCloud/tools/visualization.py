@@ -37,9 +37,9 @@ def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, tar
 
 	output_coord_file = '{file_name}.coords.txt'.format(file_name = file_name)
 
-	classpath = pkg_resources.resource_filename('scCloud', 'ext/forceatlas2-3d.jar') + ':' + pkg_resources.resource_filename('scCloud', 'ext/gephi-toolkit-0.9.2-all.jar')
+	classpath = pkg_resources.resource_filename('scCloud', 'ext/forceatlas2.jar') + ':' + pkg_resources.resource_filename('scCloud', 'ext/gephi-toolkit-0.9.2-all.jar')
 	command = ['java', '-Djava.awt.headless=true', '-Xmx{memory}g'.format(memory = memory), '-cp', classpath, \
-				'org.gephi.layout.plugin.forceAtlas2_3d.Main', '--input', input_graph_file, '--output', file_name + '.coords', \
+				'kco.forceatlas2.Main', '--input', input_graph_file, '--output', file_name + '.coords', \
 				'--nthreads', str(n_jobs), '--seed', str(random_state), '--targetChangePerNode', str(target_change_per_node), '--targetSteps', str(target_steps)]
 	if not is3d:
 		command.append('--2d')
