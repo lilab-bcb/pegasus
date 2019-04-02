@@ -63,7 +63,7 @@ setup(
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],
 		'scCloud.check_sample_indexes' : ['chromium-dna-sample-indexes-plate.json'],
-		'scCloud': ['ext/forceatlas2-3d.jar', 'ext/gephi-toolkit-0.9.2-all.jar']
+		'scCloud': ['ext/forceatlas2.jar', 'ext/gephi-toolkit-0.9.2-all.jar']
 	},
 	entry_points={
 		'console_scripts': [
