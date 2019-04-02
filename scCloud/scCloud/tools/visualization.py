@@ -83,17 +83,17 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per
 
 
 
-def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_tsne'):
 	start = time.time()
-	selected = select_cells(data.uns['knn_distances'], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64')
 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
-	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = 100)
+	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
 	regressor.fit(X, X_tsne)
 	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
-	data.obsm['X_net_tsne'] = np.zeros((data.shape[0], 2), dtype = np.float64)
-	data.obsm['X_net_tsne'][selected,:] = X_tsne
-	data.obsm['X_net_tsne'][~selected,:] = X_tsne_pred
+	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
+	Y_init[selected,:] = X_tsne
+	Y_init[~selected,:] = X_tsne_pred
+	data.obsm['X_' + out_basis] = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
 	end = time.time()
 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 

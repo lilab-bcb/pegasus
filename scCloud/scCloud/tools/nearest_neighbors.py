@@ -56,6 +56,8 @@ def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = No
 
 
 def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 100):
+	start_time = time.time()
+
 	nsample = distances.shape[0]
 
 	probs = np.zeros(nsample)
@@ -70,6 +72,9 @@ def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 100):
 	np.random.seed(random_state)
 	selected = np.zeros(nsample, dtype = bool)
 	selected[np.random.choice(nsample, size = int(nsample * frac), replace = False, p = probs)] = True
+	
+	end_time = time.time()
+	print('select_cells finished. Time spent = {:.2}s.'.format(end_time - start_time))
 	
 	return selected
 

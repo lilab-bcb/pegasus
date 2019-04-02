@@ -44,26 +44,34 @@ Options:
   --approx-louvain-resolution <resolution>.        Resolution parameter for louvain. [default: 1.3]
 
   --run-tsne                                       Run multi-core t-SNE for visualization.
-  --run-net-tsne                                   Run net tSNE for visualization.
   --run-fitsne                                     Run FIt-SNE for visualization.
-  --run-net-fitsne                                 Run net FIt-SNE for visualization.
-  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter. [default: 30]
+  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter, used by both tSNE, FItSNE net-tSNE and net-FItSNE. [default: 30]
 
   --run-umap                                       Run umap for visualization.
-  --run-net-umap                                   Run net umap for visualization.
   --umap-K <K>                                     K neighbors for umap. [default: 15]
   --umap-min-dist <number>                         Umap parameter. [default: 0.1]
   --umap-spread <spread>                           Umap parameter. [default: 1.0]
 
   --run-fle                                        Run force-directed layout embedding.
-  --run-net-fle                                    Run net FLE.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. [default: 2.0]
   --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 10000]
   --fle-3D                                         Calculate 3D force-directed layout. 
 
-  --net-knn-indices <string>                       kNN indices used for net-related visualization, can be either knn_indices or diffmap_knn_indices. [default: diffmap_knn_indices]
-  --net-first-K <first_K>                          Cover <first_K> neighbors for net-related visualization. [default: 5]
+  --net-down-sample-fraction <frac>                Down sampling fraction for net-related visualization. [default: 0.1]
+  --net-down-sample-K <K>                          Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
+  --net-down-sample-alpha <alpha>                  Weighted down sample, proportional to radius^alpha. [default: 1.0]
+
+  --net-regressor-L2-alpha <alpha>                 L2 penalty parameter for the deep net regressor. [default: 0.1]
+
+  --run-net-tsne                                   Run net tSNE for visualization.
+  --net-tsne-polish-learning-rate <rate>           After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates. [default: 100000.0]
+  --net-tsne-polish-niter <niter>                  Number of iterations for polishing tSNE run. [default: 150]
+  --net-tsne-out-basis <basis>                     Output basis for net-tSNE. [default: net_tsne]
+
+  --run-net-fitsne                                 Run net FIt-SNE for visualization.
+  --run-net-umap                                   Run net umap for visualization.
+  --run-net-fle                                    Run net FLE.
 
   -h, --help                                       Print out help information.
 
@@ -111,27 +119,20 @@ Examples:
             'approx_louvain_nclusters' : int(self.args['--approx-louvain-nclusters']),
             'approx_louvain_resolution' : float(self.args['--approx-louvain-resolution']),
 
-            'run_tsne' : self.args['--run-tsne'],
+            'net_ds_frac' : float(self.args['--net-down-sample-fraction']),
+            'net_ds_K' : int(self.args['--net-down-sample-K']),
+            'net_ds_alpha' : float(self.args['--net-down-sample-alpha']),
+
+            'net_alpha' : float(self.args['--net-regressor-L2-alpha']),
+
             'run_net_tsne' : self.args['--run-net-tsne'],
-            'run_fitsne' : self.args['--run-fitsne'],
+            'net_polish_learing_rate' : float(self.args['--net-tsne-polish-learning-rate']),
+            'net_polish_niter' : int(self.args['--net-tsne-polish-niter']),
+            'net_tsne_basis' : self.args['--net-tsne-out-basis'],
+
             'run_net_fitsne' : self.args['--run-net-fitsne'],
-            'tsne_perplexity' : float(self.args['--tsne-perplexity']),
-
-            'run_umap' : self.args['--run-umap'],
             'run_net_umap' : self.args['--run-net-umap'],
-            'umap_K' : int(self.args['--umap-K']),
-            'umap_min_dist' : float(self.args['--umap-min-dist']),
-            'umap_spread' : float(self.args['--umap-spread']),
-
-            'run_fle' : self.args['--run-fle'],
             'run_net_fle' : self.args['--run-net-fle'],
-            'fle_K' : int(self.args['--fle-K']),
-            'fle_target_change_per_node' : float(self.args['--fle-target-change-per-node']),
-            'fle_target_steps' : int(self.args['--fle-target-steps']),
-            'fle_3D' : self.args['--fle-3D'],
-
-            'knn_indices' : self.args['--net-knn-indices'],
-            'first_K' : int(self.args['--net-first-K']),
 
             'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])
         }
