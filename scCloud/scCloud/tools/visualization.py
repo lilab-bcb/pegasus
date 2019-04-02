@@ -17,7 +17,9 @@ from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cel
 
 def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state, init = 'random', n_iter = 1000):
 	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, random_state = random_state, verbose = 1, init = init, n_iter = n_iter)
-	return tsne.fit_transform(X)
+	X_tsne = tsne.fit_transform(X)
+	print("Final error = {}".format(tsne.kl_divergence_))
+	return X_tsne
 
 def calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
 	# FItSNE will change X content
