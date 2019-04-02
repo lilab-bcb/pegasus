@@ -155,7 +155,7 @@ def log_norm(data, norm_count):
 	end = time.time()
 	print("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
-def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0):
+def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 100):
 	start = time.time()
 	if issparse(data.X):
 		data.X = data.X.toarray()
@@ -177,7 +177,7 @@ def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0
 	end = time.time()
 	print("PCA is done. Time spent = {:.2f}s.".format(end - start))
 
-def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
+def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 100):
 	""" smooth outliers, then no center/scale data """
 	start = time.time()
 

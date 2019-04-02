@@ -11,11 +11,11 @@ from lightgbm import LGBMClassifier
 
 from . import read_input
 
-def find_markers(data, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0, remove_ribo = False):
+def find_markers(data, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 100, remove_ribo = False):
 	if remove_ribo:
 		data = data[:,np.vectorize(lambda x: not x.startswith('RPL') and not x.startswith('RPS'))(data.var_names)]
 
-	X_train, X_test, y_train, y_test = train_test_split(data.X, data.obs[label_attr], test_size = 0.1, random_state = 0, stratify = data.obs[label_attr])
+	X_train, X_test, y_train, y_test = train_test_split(data.X, data.obs[label_attr], test_size = 0.1, random_state = random_state, stratify = data.obs[label_attr])
 
 	# start = time.time()
 	# xgb = XGBClassifier(n_jobs = n_jobs, n_gpus = 0)
@@ -57,7 +57,7 @@ def find_markers(data, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0,
 
 
 
-def run_find_markers(input_h5ad_file, output_file, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 0, remove_ribo = False):
+def run_find_markers(input_h5ad_file, output_file, label_attr, n_jobs = 1, min_gain = 1.0, random_state = 100, remove_ribo = False):
 	data = read_input(input_h5ad_file, mode = 'a')
 	markers = find_markers(data, label_attr, n_jobs = n_jobs, min_gain = min_gain, random_state = random_state, remove_ribo = remove_ribo)
 	

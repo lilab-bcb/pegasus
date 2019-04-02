@@ -43,7 +43,7 @@ Options:
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
   
-  --random-state <seed>                            Random number generator seed. [default: 0]
+  --random-state <seed>                            Random number generator seed. [default: 100]
 
   --run-uncentered-pca                             Run uncentered PCA.
   --no-variable-gene-selection                     Do not select variable genes.

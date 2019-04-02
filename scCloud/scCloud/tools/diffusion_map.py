@@ -65,7 +65,7 @@ def calculate_normalized_affinity(W):
 
 	return W_norm, diag, diag_half
 
-def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = 0):
+def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = 100):
 	assert issparse(W)
 
 	start = time.time()
@@ -100,14 +100,14 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', r
 
 	return Phi_pt, U_df, S, W_norm
 
-def reduce_diffmap_to_3d(Phi_pt, random_state = 0):
+def reduce_diffmap_to_3d(Phi_pt, random_state = 100):
 	pca = PCA(n_components = 3, random_state = random_state)
 	Phi_reduced = pca.fit_transform(Phi_pt)
 	print("Reduce diffmap to 3D is done.")
 
 	return Phi_reduced
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 100, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
 	start = time.time()
 
 	indices, distances = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, method = knn_method, \

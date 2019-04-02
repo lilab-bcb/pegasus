@@ -14,13 +14,14 @@ from sklearn.neural_network import MLPRegressor
 from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cells, construct_graph
 
 
+
 def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state, init = 'random', n_iter = 1000):
 	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, random_state = random_state, verbose = 1, init = init, n_iter = n_iter)
 	return tsne.fit_transform(X)
 
 def calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
 	# FItSNE will change X content
-	return FItSNE(X.copy(), nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = random_state)
+	return FItSNE(X.astype('float64'), nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = random_state)
 
 def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
@@ -51,29 +52,26 @@ def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, tar
 
 
 
-def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'tsne'):
+def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, out_basis = 'tsne'):
 	start = time.time()
-	X = data.obsm[rep_key].astype('float64')
-	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
+	X_tsne = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	data.obsm['X_' + out_basis] = X_tsne
 	end = time.time()
 	print("tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'fitsne'):
+def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, out_basis = 'fitsne'):
 	start = time.time()
-	X = data.obsm[rep_key].astype('float64')
-	data.obsm['X_' + out_basis] = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state) 
+	data.obsm['X_' + out_basis] = calc_fitsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state) 
 	end = time.time()
 	print("FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, out_basis = 'umap'):
+def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 100, out_basis = 'umap'):
 	start = time.time()
-	X = data.obsm[rep_key].astype('float64')
-	data.obsm['X_' + out_basis] = calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state)
+	data.obsm['X_' + out_basis] = calc_umap(data.obsm[rep_key], n_components, n_neighbors, min_dist, spread, random_state)
 	end = time.time()
 	print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 0, out_basis = 'fle'):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 100, out_basis = 'fle'):
 	start = time.time()
 	K = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
 	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:K], data.uns['diffmap_knn_distances'][:, 0:K])
@@ -83,12 +81,12 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per
 
 
 
-def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
-	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
+	selected = select_cells(data.uns['knn_distances'], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64')
 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
-	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01)
+	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = 100)
 	regressor.fit(X, X_tsne)
 	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
 	data.obsm['X_net_tsne'] = np.zeros((data.shape[0], 2), dtype = np.float64)
@@ -97,7 +95,7 @@ def run_net_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early
 	end = time.time()
 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
 	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64')
@@ -111,7 +109,7 @@ def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, ear
 	end = time.time()
 	print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
 	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	X = data.obsm[rep_key][selected,:].astype('float64')
@@ -125,7 +123,7 @@ def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0
 	end = time.time()
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fle(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, random_state = 0, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_fle(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	# start = time.time()
 	# selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
 	# X = data.obsm['X_diffmap'][selected,:]

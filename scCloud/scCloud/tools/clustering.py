@@ -17,7 +17,7 @@ from . import calculate_affinity_matrix, calculate_normalized_affinity, construc
 
 aff2lab = {'W_norm' : 'louvain_labels', 'W_diffmap' : 'louvain_labels_dm', 'W_diffmap_norm' : 'louvain_labels_dmn'}
 
-def run_louvain(data, affinity = 'W_norm', resolution = 1.3, random_state = 0):
+def run_louvain(data, affinity = 'W_norm', resolution = 1.3, random_state = 100):
 	start = time.time()
 
 	W = None
@@ -67,7 +67,7 @@ def run_one_instance_of_kmeans(thread_no, results, n_init, n_clusters, n_jobs, X
 		results[thread_no].append(km.labels_)
 
 
-def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random_state = 0, n_clusters = 30, n_init = 20, class_label = 'approx_louvain_labels'):
+def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random_state = 100, n_clusters = 30, n_init = 20, class_label = 'approx_louvain_labels'):
 	start = time.time()
 
 	X = data.obsm[rep_key].astype('float64')
@@ -134,7 +134,7 @@ def run_approximated_louvain(data, rep_key, n_jobs = 1, resolution = 1.3, random
 # 	end = time.time()
 # 	print("HDBSCAN clustering is done. Time spent = {:.2f}s.".format(end - start))
 
-# def run_kmeans(data, rep_key, n_clusters, n_init = 10, n_jobs = 1, random_state = 0):
+# def run_kmeans(data, rep_key, n_clusters, n_init = 10, n_jobs = 1, random_state = 100):
 # 	start = time.time()
 
 # 	old_n = set_numpy_thread(1)

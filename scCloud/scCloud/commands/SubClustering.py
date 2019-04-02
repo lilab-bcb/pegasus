@@ -20,7 +20,7 @@ Options:
   --correct-batch-effect                           Correct for batch effects for subclustering task.
   --output-loom                                    Output loom-formatted file.
 
-  --random-state <seed>                            Random number generator seed. [default: 0]
+  --random-state <seed>                            Random number generator seed. [default: 100]
 
   --run-uncentered-pca                             Run uncentered PCA.
   --no-variable-gene-selection                     Do not select variable genes.
