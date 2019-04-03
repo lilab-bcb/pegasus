@@ -108,18 +108,21 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_net_umap(adata, pca_key, selected, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], net_alpha = kwargs['net_alpha'], \
 		                   polish_learning_rate = kwargs['net_umap_polish_learing_rate'], polish_n_epochs = kwargs['net_umap_polish_nepochs'], out_basis = kwargs['net_umap_basis'])
 
-	# if kwargs['run_net_fle']:
-	# 	tools.run_net_fle(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
+	if kwargs['run_net_fle']:
+		selected = tools.select_cells(adata.uns['diffmap_knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
+		tools.run_net_fle(adata, selected, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], \
+			target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'], ds_full_speed = kwargs['net_fle_ds_full_speed'], \
+			net_alpha = kwargs['net_alpha'], polish_target_steps = kwargs['net_fle_polish_target_steps'], out_basis = kwargs['net_fle_basis'])
 
 	if kwargs['run_tsne']:
 		tools.run_tsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
+
 	if kwargs['run_fitsne']:
 		tools.run_fitsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
+
 	if kwargs['run_umap']:
 		tools.run_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
-		# if kwargs['run_umap_on_diffmap']:
-		# 	tools.run_umap(adata, 'X_diffmap', n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
-		# 	adata.obsm['X_umap_diffmap'] = adata.obsm['X_umap']
+
 	if kwargs['run_fle']:
 		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'])
 

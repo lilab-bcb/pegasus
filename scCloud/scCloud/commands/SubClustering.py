@@ -78,6 +78,9 @@ Options:
   --net-umap-out-basis <basis>                     Output basis for net-UMAP. [default: net_umap]
 
   --run-net-fle                                    Run net FLE.
+  --net-fle-ds-full-speed                          If run full-speed kNN on down-sampled data points.
+  --net-polish-target-steps <steps>                After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 150]
+  --net-fle-out-basis <basis>                      Output basis for net-FLE. [default: net_fle]
 
   -h, --help                                       Print out help information.
 
@@ -145,6 +148,9 @@ Examples:
             'net_umap_basis' : self.args['--net-umap-out-basis'],
             
             'run_net_fle' : self.args['--run-net-fle'],
+            'net_fle_ds_full_speed' : self.args['--net-fle-ds-full-speed'],
+            'net_polish_target_steps' : int(self.args['--net-polish-target-steps']),
+            'net_fle_basis' : self.args['--net-fle-out-basis'],
 
             'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])
         }

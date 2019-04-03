@@ -29,10 +29,10 @@ def calc_fitsne(X, nthreads, no_dims, perplexity, early_exag_coeff, learning_rat
 
 def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state, init = 'spectral', n_epochs = None, learning_rate  = 1.0):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state, \
-		init = init, n_epochs = n_epochs, learning_rate = learning_rate)
+		init = init, n_epochs = n_epochs, learning_rate = learning_rate, verbose = True)
 	return umap.fit_transform(X)
 
-def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, target_steps, is3d, memory, random_state):
+def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, target_steps, is3d, memory, random_state, init = None):
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
 	G = construct_graph(W, adjust_weights = True)
 	G.write(input_graph_file)
@@ -46,6 +46,17 @@ def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, tar
 				'--nthreads', str(n_jobs), '--seed', str(random_state), '--targetChangePerNode', str(target_change_per_node), '--targetSteps', str(target_steps)]
 	if not is3d:
 		command.append('--2d')
+
+	if init is not None:
+		if not id3d:
+			df = pd.DataFrame(data = init, columns = ['x', 'y'], index = range(1, init.shape[0] + 1))
+		else:
+			df = pd.DataFrame(data = init, columns = ['x', 'y', 'z'], index = range(1, init.shape[0] + 1))
+		df.index.name = 'id'
+		init_coord_file = '{file_name}.init.coords.txt'.format(file_name = file_name)
+		df.to_csv(init_coord_file, sep = '\t', float_format = '%.2f')
+		command.extend(['--coords', init_coord_file])
+	print(command)
 	check_call(command)
 	print("Force-directed layout is generated.")
 
@@ -78,8 +89,8 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 
 def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 100, out_basis = 'fle'):
 	start = time.time()
-	K = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
-	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:K], data.uns['diffmap_knn_distances'][:, 0:K])
+	realK = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
+	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:realK], data.uns['diffmap_knn_distances'][:, 0:realK])
 	data.obsm['X_' + out_basis] = calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, target_steps, is3d, memory, random_state);
 	end = time.time()
 	print("Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start))
@@ -140,20 +151,31 @@ def run_net_umap(data, rep_key, selected, n_components = 2, n_neighbors = 15, mi
 	end = time.time()
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fle(data, file_name, n_jobs, K = 50, layout = 'fa', n_steps = 10000, memory = 20, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
-	# start = time.time()
-	# selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
-	# X = data.obsm['X_diffmap'][selected,:]
-	# indices, distances, knn_index = calculate_nearest_neighbors(X, n_jobs, K = K, random_state = random_state, full_speed = False)
-	# W = calculate_affinity_matrix(indices, distances)
-	# X_fle = calc_force_directed_layout(W, file_name, n_jobs, layout, n_steps, memory)
-	# regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = random_state)
-	# regressor.fit(X, X_fle)
-	# X_fle_pred = regressor.predict(data.obsm['X_diffmap'][~selected,:])
-	# data.obsm['X_net_fle'] = np.zeros((data.shape[0], 2))
-	# data.obsm['X_net_fle'][selected,:] = X_fle
-	# data.obsm['X_net_fle'][~selected,:] = X_fle_pred
-	# end = time.time()
+def run_net_fle(data, selected, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 100, \
+	ds_full_speed = False, net_alpha = 0.1, polish_target_steps = 150, out_basis = 'net_fle'):
+	start = time.time()
+	X = data.obsm[rep_key][selected,:]
+	
+	indices, distances = calculate_nearest_neighbors(X, n_jobs, K = K, random_state = random_state, full_speed = ds_full_speed)
+	W = calculate_affinity_matrix(indices, distances)
+	X_fle = calc_force_directed_layout(W, file_name + '.small', n_jobs, target_change_per_node, target_steps, is3d, memory, random_state);
+	
+	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
+	net_start = time.time()
+	regressor.fit(X.astype('float64'), X_fle)
+	net_end = time.time()
+	print("Deep regressor finished in {:.2f}s".format(net_end - net_start))
+	
+	X_fle_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
+	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
+	Y_init[selected,:] = X_fle
+	Y_init[~selected,:] = X_fle_pred
+
+	realK = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
+	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:realK], data.uns['diffmap_knn_distances'][:, 0:realK])
+	data.obsm['X_' + out_basis] = calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, polish_target_steps, is3d, memory, random_state, init = Y_init);
+	end = time.time()
+
 	print("Net FLE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
