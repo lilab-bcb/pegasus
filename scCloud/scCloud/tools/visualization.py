@@ -27,8 +27,9 @@ def calc_fitsne(X, nthreads, no_dims, perplexity, early_exag_coeff, learning_rat
 	return FItSNE(X.astype('float64'), nthreads = nthreads, no_dims = no_dims, perplexity = perplexity, early_exag_coeff = early_exag_coeff, learning_rate = learning_rate, \
 		rand_seed = rand_seed, initialization = initialization, max_iter = max_iter, stop_early_exag_iter = stop_early_exag_iter, mom_switch_iter = mom_switch_iter)
 
-def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
-	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
+def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state, init = 'spectral', n_epochs = None, learning_rate  = 1.0):
+	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state, \
+		init = init, n_epochs = n_epochs, learning_rate = learning_rate)
 	return umap.fit_transform(X)
 
 def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, target_steps, is3d, memory, random_state):
@@ -93,7 +94,7 @@ def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity =
 	net_start = time.time()
 	regressor.fit(X.astype('float64'), X_tsne)
 	net_end = time.time()
-	print("Deep regressor finished in {:.2}s".format(net_end - net_start))
+	print("Deep regressor finished in {:.2f}s".format(net_end - net_start))
 	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
 	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
 	Y_init[selected,:] = X_tsne
@@ -103,35 +104,39 @@ def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity =
 	end = time.time()
 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_tsne'):
+def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_fitsne'):
 	start = time.time()
 	X = data.obsm[rep_key][selected,:]
-	X_tsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
+	X_fitsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
 	net_start = time.time()
-	regressor.fit(X.astype('float64'), X_tsne)
+	regressor.fit(X.astype('float64'), X_fitsne)
 	net_end = time.time()
-	print("Deep regressor finished in {:.2}s".format(net_end - net_start))
-	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
+	print("Deep regressor finished in {:.2f}s".format(net_end - net_start))
+	X_fitsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
 	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
-	Y_init[selected,:] = X_tsne
-	Y_init[~selected,:] = X_tsne_pred
+	Y_init[selected,:] = X_fitsne
+	Y_init[~selected,:] = X_fitsne_pred
 	data.obsm['X_' + out_basis] = calc_fitsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, 
 		initialization = Y_init, max_iter = polish_n_iter, stop_early_exag_iter = 0, mom_switch_iter = 0)
 	end = time.time()
 	print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_umap(data, rep_key, selected, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 100, net_alpha = 0.1, polish_n_epochs = 30, polish_learning_rate = 10.0, out_basis = 'net_umap'):
 	start = time.time()
-	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
-	X = data.obsm[rep_key][selected,:].astype('float64')
+	X = data.obsm[rep_key][selected,:]
 	X_umap = calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state)
-	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = random_state)
-	regressor.fit(X, X_umap)
+	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
+	net_start = time.time()
+	regressor.fit(X.astype('float64'), X_umap)
+	net_end = time.time()
+	print("Deep regressor finished in {:.2f}s".format(net_end - net_start))
 	X_umap_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
-	data.obsm['X_net_umap'] = np.zeros((data.shape[0], 2), dtype = np.float64)
-	data.obsm['X_net_umap'][selected,:] = X_umap
-	data.obsm['X_net_umap'][~selected,:] = X_umap_pred
+	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
+	Y_init[selected,:] = X_umap
+	Y_init[~selected,:] = X_umap_pred
+	data.obsm['X_' + out_basis] = calc_umap(data.obsm[rep_key], n_components, n_neighbors, min_dist, spread, random_state, \
+		init = Y_init, n_epochs = polish_n_epochs, learning_rate = polish_learning_rate)
 	end = time.time()
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 

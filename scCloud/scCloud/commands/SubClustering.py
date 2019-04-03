@@ -73,6 +73,10 @@ Options:
   --net-fitsne-out-basis <basis>                   Output basis for net-FItSNE. [default: net_fitsne]
 
   --run-net-umap                                   Run net umap for visualization.
+  --net-umap-polish-learning-rate <rate>           After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 10.0]
+  --net-umap-polish-nepochs <nepochs>              Number of iterations for polishing UMAP run. [default: 30]
+  --net-umap-out-basis <basis>                     Output basis for net-UMAP. [default: net_umap]
+
   --run-net-fle                                    Run net FLE.
 
   -h, --help                                       Print out help information.
@@ -136,6 +140,10 @@ Examples:
             'net_fitsne_basis' : self.args['--net-fitsne-out-basis'],
 
             'run_net_umap' : self.args['--run-net-umap'],
+            'net_umap_polish_learing_rate' : float(self.args['--net-umap-polish-learning-rate']),
+            'net_umap_polish_nepochs' : int(self.args['--net-umap-polish-nepochs']),
+            'net_umap_basis' : self.args['--net-umap-out-basis'],
+            
             'run_net_fle' : self.args['--run-net-fle'],
 
             'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])

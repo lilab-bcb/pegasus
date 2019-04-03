@@ -103,8 +103,11 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_net_tsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_alpha'], \
 		                   polish_learning_rate = kwargs['net_polish_learing_rate'], polish_n_iter = kwargs['net_polish_niter'], out_basis = kwargs['net_fitsne_basis'])
 
-	# if kwargs['run_net_umap']:
-	# 	tools.run_net_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
+	if kwargs['run_net_umap']:
+		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
+		tools.run_net_umap(adata, pca_key, selected, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], net_alpha = kwargs['net_alpha'], \
+		                   polish_learning_rate = kwargs['net_umap_polish_learing_rate'], polish_n_epochs = kwargs['net_umap_polish_nepochs'], out_basis = kwargs['net_umap_basis'])
+
 	# if kwargs['run_net_fle']:
 	# 	tools.run_net_fle(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], n_steps = kwargs['fle_n_steps'], random_state = kwargs['random_state'], knn_indices = kwargs['knn_indices'], first_K = kwargs['first_K'])
 
