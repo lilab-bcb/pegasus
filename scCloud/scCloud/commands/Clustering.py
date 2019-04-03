@@ -92,7 +92,9 @@ Options:
   --net-tsne-polish-niter <niter>                  Number of iterations for polishing tSNE run. [default: 150]
   --net-tsne-out-basis <basis>                     Output basis for net-tSNE. [default: net_tsne]
 
-  --run-net-fitsne                                 Run net FIt-SNE for visualization.
+  --run-net-fitsne                                 Run net FIt-SNE for visualization. polish parameters are shared with net-tSNE.
+  --net-fitsne-out-basis <basis>                   Output basis for net-FItSNE. [default: net_fitsne]
+
   --run-net-umap                                   Run net umap for visualization.
   --run-net-fle                                    Run net FLE.
 
@@ -191,6 +193,8 @@ Examples:
             'net_tsne_basis' : self.args['--net-tsne-out-basis'],
 
             'run_net_fitsne' : self.args['--run-net-fitsne'],
+            'net_fitsne_basis' : self.args['--net-fitsne-out-basis'],
+
             'run_net_umap' : self.args['--run-net-umap'],
             'run_net_fle' : self.args['--run-net-fle'],
 

@@ -98,38 +98,26 @@ def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity =
 	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
 	Y_init[selected,:] = X_tsne
 	Y_init[~selected,:] = X_tsne_pred
-	data.obsm['X_' + out_basis] = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
+	data.obsm['X_' + out_basis] = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, \
+		init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
 	end = time.time()
 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-# def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_tsne'):
-# 	start = time.time()
-# 	X = data.obsm[rep_key][selected,:]
-# 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
-# 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
-# 	net_start = time.time()
-# 	regressor.fit(X.astype('float64'), X_tsne)
-# 	net_end = time.time()
-# 	print("Deep regressor finished in {:.2}s".format(net_end - net_start))
-# 	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
-# 	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
-# 	Y_init[selected,:] = X_tsne
-# 	Y_init[~selected,:] = X_tsne_pred
-# 	data.obsm['X_' + out_basis] = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
-# 	end = time.time()
-# 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
-
-def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
+def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_tsne'):
 	start = time.time()
-	selected = select_cells(data.uns[knn_indices], first_K, random_state = random_state)
-	X = data.obsm[rep_key][selected,:].astype('float64')
-	X_fitsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
-	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = 0.01, random_state = random_state)
-	regressor.fit(X, X_fitsne)
-	X_fitsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
-	data.obsm['X_net_fitsne'] = np.zeros((data.shape[0], 2), dtype = np.float64)
-	data.obsm['X_net_fitsne'][selected,:] = X_fitsne
-	data.obsm['X_net_fitsne'][~selected,:] = X_fitsne_pred
+	X = data.obsm[rep_key][selected,:]
+	X_tsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
+	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
+	net_start = time.time()
+	regressor.fit(X.astype('float64'), X_tsne)
+	net_end = time.time()
+	print("Deep regressor finished in {:.2}s".format(net_end - net_start))
+	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
+	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
+	Y_init[selected,:] = X_tsne
+	Y_init[~selected,:] = X_tsne_pred
+	data.obsm['X_' + out_basis] = calc_fitsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, 
+		initialization = Y_init, max_iter = polish_n_iter, stop_early_exag_iter = 0, mom_switch_iter = 0)
 	end = time.time()
 	print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
