@@ -16,14 +16,16 @@ from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cel
 
 
 def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state, init = 'random', n_iter = 1000, n_iter_early_exag = 250):
-	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, random_state = random_state, verbose = 1, init = init, n_iter = n_iter, n_iter_early_exag = n_iter_early_exag)
+	tsne = TSNE(n_jobs = n_jobs, n_components = n_components, perplexity = perplexity, early_exaggeration = early_exaggeration, learning_rate = learning_rate, \
+		random_state = random_state, verbose = 1, init = init, n_iter = n_iter, n_iter_early_exag = n_iter_early_exag)
 	X_tsne = tsne.fit_transform(X)
 	print("Final error = {}".format(tsne.kl_divergence_))
 	return X_tsne
 
-def calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state):
+def calc_fitsne(X, nthreads, no_dims, perplexity, early_exag_coeff, learning_rate, rand_seed, initialization = None, max_iter = 1000, stop_early_exag_iter = 250, mom_switch_iter = 250):
 	# FItSNE will change X content
-	return FItSNE(X.astype('float64'), nthreads = n_jobs, no_dims = n_components, perplexity = perplexity, early_exag_coeff = early_exaggeration, learning_rate = learning_rate, rand_seed = random_state)
+	return FItSNE(X.astype('float64'), nthreads = nthreads, no_dims = no_dims, perplexity = perplexity, early_exag_coeff = early_exag_coeff, learning_rate = learning_rate, \
+		rand_seed = rand_seed, initialization = initialization, max_iter = max_iter, stop_early_exag_iter = stop_early_exag_iter, mom_switch_iter = mom_switch_iter)
 
 def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state):
 	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state)
@@ -85,17 +87,37 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per
 
 def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_tsne'):
 	start = time.time()
-	X = data.obsm[rep_key][selected,:].astype('float64')
+	X = data.obsm[rep_key][selected,:]
 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
-	regressor.fit(X, X_tsne)
+	net_start = time.time()
+	regressor.fit(X.astype('float64'), X_tsne)
+	net_end = time.time()
+	print("Deep regressor finished in {:.2}s".format(net_end - net_start))
 	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
 	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
 	Y_init[selected,:] = X_tsne
 	Y_init[~selected,:] = X_tsne_pred
-	data.obsm['X_' + out_basis] = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
+	data.obsm['X_' + out_basis] = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
 	end = time.time()
 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
+
+# def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_rate = 1e5, polish_n_iter = 150, out_basis = 'net_tsne'):
+# 	start = time.time()
+# 	X = data.obsm[rep_key][selected,:]
+# 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
+# 	regressor = MLPRegressor(hidden_layer_sizes = (100, 70, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = net_alpha, random_state = random_state)
+# 	net_start = time.time()
+# 	regressor.fit(X.astype('float64'), X_tsne)
+# 	net_end = time.time()
+# 	print("Deep regressor finished in {:.2}s".format(net_end - net_start))
+# 	X_tsne_pred = regressor.predict(data.obsm[rep_key][~selected,:].astype('float64'))
+# 	Y_init = np.zeros((data.shape[0], 2), dtype = np.float64)
+# 	Y_init[selected,:] = X_tsne
+# 	Y_init[~selected,:] = X_tsne_pred
+# 	data.obsm['X_' + out_basis] = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, polish_learning_rate, random_state, init = Y_init, n_iter = polish_n_iter, n_iter_early_exag = 0)
+# 	end = time.time()
+# 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 def run_net_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, knn_indices = 'diffmap_knn_indices', first_K = 5):
 	start = time.time()
