@@ -9,6 +9,7 @@ from .nearest_neighbors import calculate_nearest_neighbors, select_cells
 from .diffusion_map import run_diffmap, run_pseudotime_calculation, calculate_affinity_matrix, calculate_normalized_affinity
 from .graph_operations import construct_graph
 from .clustering import run_louvain, run_approximated_louvain
+from .net_regressor import net_train_and_predict
 from .visualization import run_tsne, run_fitsne, run_umap, run_force_directed_layout, run_net_tsne, run_net_fitsne, run_net_umap, run_net_fle
 from .de_analysis import run_de_analysis, write_results_to_excel, collect_stat_and_t_test, fisher_test, mwu_test, calc_roc_stats
 from .gradient_boosting import find_markers, run_find_markers
