@@ -12,12 +12,12 @@ class MaxStdScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X):
-        X = check_array(X, copy = self.copy, warn_on_dtype = True, estimator = self, dtype = np.float64)
+        X = check_array(X, copy = self.copy, estimator = self, dtype = np.float64)
         self.scaler = np.max(np.std(X, axis = 0)) / self.factor
         return self
 
     def transform(self, X):
-        X = check_array(X, copy = self.copy, warn_on_dtype = True, estimator = self, dtype = np.float64)
+        X = check_array(X, copy = self.copy, estimator = self, dtype = np.float64)
         X /= self.scaler
 
         return X
@@ -26,7 +26,7 @@ class MaxStdScaler(BaseEstimator, TransformerMixin):
         if copy is None:
             copy = self.copy
 
-        X = check_array(X, copy = copy, warn_on_dtype = True, estimator = self, dtype = np.float64)
+        X = check_array(X, copy = copy, estimator = self, dtype = np.float64)
         X *= self.scaler
 
         return X
@@ -43,6 +43,7 @@ def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose
 
     regressor = MLPRegressor(hidden_layer_sizes = (100, 75, 50, 25), activation = 'relu', solver = 'sgd', learning_rate = 'adaptive', alpha = alpha, random_state = random_state)
     regressor.fit(X_train, y_train)
+    print(regressor.loss_)
 
     y_pred = scaler_y.inverse_transform(regressor.predict(scaler_x.transform(X_pred)), copy = False)
 

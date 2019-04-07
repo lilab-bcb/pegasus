@@ -95,24 +95,24 @@ def run_pipeline(input_file, output_name, **kwargs):
 	# visualization
 	if kwargs['run_net_tsne']:
 		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
-		tools.run_net_tsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_alpha'], \
-		                   polish_learning_rate = kwargs['net_polish_learing_rate'], polish_n_iter = kwargs['net_polish_niter'], out_basis = kwargs['net_tsne_basis'])
+		tools.run_net_tsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
+		                   polish_learning_frac = kwargs['net_tsne_polish_learing_frac'], polish_n_iter = kwargs['net_tsne_polish_niter'], out_basis = kwargs['net_tsne_basis'])
 
 	if kwargs['run_net_fitsne']:
 		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
-		tools.run_net_tsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_alpha'], \
-		                   polish_learning_rate = kwargs['net_polish_learing_rate'], polish_n_iter = kwargs['net_polish_niter'], out_basis = kwargs['net_fitsne_basis'])
+		tools.run_net_fitsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
+		                   polish_learning_frac = kwargs['net_fitsne_polish_learing_frac'], polish_n_iter = kwargs['net_fitsne_polish_niter'], out_basis = kwargs['net_fitsne_basis'])
 
 	if kwargs['run_net_umap']:
 		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
-		tools.run_net_umap(adata, pca_key, selected, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], net_alpha = kwargs['net_alpha'], \
-		                   polish_learning_rate = kwargs['net_umap_polish_learing_rate'], polish_n_epochs = kwargs['net_umap_polish_nepochs'], out_basis = kwargs['net_umap_basis'])
+		tools.run_net_umap(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
+		                   ds_full_speed = kwargs['net_ds_full_speed'], polish_learning_rate = kwargs['net_umap_polish_learing_rate'], polish_n_epochs = kwargs['net_umap_polish_nepochs'], out_basis = kwargs['net_umap_basis'])
 
 	if kwargs['run_net_fle']:
 		selected = tools.select_cells(adata.uns['diffmap_knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
 		tools.run_net_fle(adata, selected, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], \
-			target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'], ds_full_speed = kwargs['net_fle_ds_full_speed'], \
-			net_alpha = kwargs['net_alpha'], polish_target_steps = kwargs['net_fle_polish_target_steps'], out_basis = kwargs['net_fle_basis'])
+			target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'], ds_full_speed = kwargs['net_ds_full_speed'], \
+			net_alpha = kwargs['net_l2'], polish_target_steps = kwargs['net_fle_polish_target_steps'], out_basis = kwargs['net_fle_basis'])
 
 	if kwargs['run_tsne']:
 		tools.run_tsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])

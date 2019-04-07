@@ -85,24 +85,27 @@ Options:
   --net-down-sample-K <K>                          Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
   --net-down-sample-alpha <alpha>                  Weighted down sample, proportional to radius^alpha. [default: 1.0]
 
-  --net-regressor-L2-alpha <alpha>                 L2 penalty parameter for the deep net regressor. [default: 0.1]
+  --net-regressor-L2-penalty <value>               L2 penalty parameter for the deep net regressor. [default: 0.1]
+  --net-ds-full-speed                              For net-UMAP and net-FLE, use full speed for the down-sampled data.
 
   --run-net-tsne                                   Run net tSNE for visualization.
-  --net-tsne-polish-learning-rate <rate>           After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates. [default: 100000.0]
+  --net-tsne-polish-learning-frac <frac>           After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.33]
   --net-tsne-polish-niter <niter>                  Number of iterations for polishing tSNE run. [default: 150]
   --net-tsne-out-basis <basis>                     Output basis for net-tSNE. [default: net_tsne]
 
-  --run-net-fitsne                                 Run net FIt-SNE for visualization. polish parameters are shared with net-tSNE.
+  --run-net-fitsne                                 Run net FIt-SNE for visualization.
+  --net-fitsne-polish-learning-frac <frac>         After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.5]
+  --net-fitsne-polish-niter <niter>                Number of iterations for polishing FItSNE run. [default: 150]
   --net-fitsne-out-basis <basis>                   Output basis for net-FItSNE. [default: net_fitsne]
 
   --run-net-umap                                   Run net umap for visualization.
-  --net-umap-polish-learning-rate <rate>           After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 10.0]
-  --net-umap-polish-nepochs <nepochs>              Number of iterations for polishing UMAP run. [default: 30]
+  --net-umap-polish-learning-rate <rate>           After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 1.0]
+  --net-umap-polish-nepochs <nepochs>              Number of iterations for polishing UMAP run. [default: 40]
   --net-umap-out-basis <basis>                     Output basis for net-UMAP. [default: net_umap]
 
   --run-net-fle                                    Run net FLE.
   --net-fle-ds-full-speed                          If run full-speed kNN on down-sampled data points.
-  --net-polish-target-steps <steps>                After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 150]
+  --net-fle-polish-target-steps <steps>            After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
   --net-fle-out-basis <basis>                      Output basis for net-FLE. [default: net_fle]
 
   -h, --help                                       Print out help information.
@@ -192,14 +195,17 @@ Examples:
             'net_ds_K' : int(self.args['--net-down-sample-K']),
             'net_ds_alpha' : float(self.args['--net-down-sample-alpha']),
 
-            'net_alpha' : float(self.args['--net-regressor-L2-alpha']),
+            'net_l2' : float(self.args['--net-regressor-L2-penalty']),
+            'net_ds_full_speed' : self.args['--net-ds-full-speed'],
 
             'run_net_tsne' : self.args['--run-net-tsne'],
-            'net_polish_learing_rate' : float(self.args['--net-tsne-polish-learning-rate']),
-            'net_polish_niter' : int(self.args['--net-tsne-polish-niter']),
+            'net_tsne_polish_learing_frac' : float(self.args['--net-tsne-polish-learning-frac']),
+            'net_tsne_polish_niter' : int(self.args['--net-tsne-polish-niter']),
             'net_tsne_basis' : self.args['--net-tsne-out-basis'],
 
             'run_net_fitsne' : self.args['--run-net-fitsne'],
+            'net_fitsne_polish_learing_frac' : float(self.args['--net-fitsne-polish-learning-frac']),
+            'net_fitsne_polish_niter' : int(self.args['--net-fitsne-polish-niter']),
             'net_fitsne_basis' : self.args['--net-fitsne-out-basis'],
 
             'run_net_umap' : self.args['--run-net-umap'],
@@ -209,7 +215,7 @@ Examples:
 
             'run_net_fle' : self.args['--run-net-fle'],
             'net_fle_ds_full_speed' : self.args['--net-fle-ds-full-speed'],
-            'net_polish_target_steps' : int(self.args['--net-polish-target-steps']),
+            'net_fle_polish_target_steps' : int(self.args['--net-fle-polish-target-steps']),
             'net_fle_basis' : self.args['--net-fle-out-basis'],
 
             'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])
