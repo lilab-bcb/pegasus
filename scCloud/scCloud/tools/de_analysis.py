@@ -43,28 +43,28 @@ def calc_stat_and_t(i, clust_label, labels, gene_names, data, indices, indptr, s
 	n1 = clust_mat.shape[0]
 	n2 = n - n1
 
-	assert n1 > 1 and n2 > 1
+	assert n1 > 0 and n2 > 0
 
-	sm1_1 = clust_mat.sum(axis = 0).A1
-	sm2_1 = clust_mat.power(2).sum(axis = 0).A1
-
-	mean1 = sm1_1 / n1
-	mean2 = (sm1 - sm1_1) / n2
-
-	s1sqr = (sm2_1 - n1 * (mean1 ** 2)) / (n1 - 1)
-	s2sqr = ((sm2 - sm2_1) - n2 * (mean2 ** 2)) / (n2 - 1)
-
-	var_est = s1sqr / n1 + s2sqr / n2
-	
 	pvals[:] = 1.01
 	qvals[:] = 1.01
 
-	idx = var_est > 0.0
-	if idx.sum() > 0:
-		tscore = (mean1[idx] - mean2[idx]) / np.sqrt(var_est[idx])
-		v = (var_est[idx] ** 2) / ((s1sqr[idx] / n1) ** 2 / (n1 - 1) + (s2sqr[idx] / n2) ** 2 / (n2 - 1))
-		pvals[idx] = ss.t.sf(np.fabs(tscore), v) * 2.0 # two-sided
-		passed, qvals[idx] = fdr(pvals[idx])
+	sm1_1 = clust_mat.sum(axis = 0).A1
+	mean1 = sm1_1 / n1
+	mean2 = (sm1 - sm1_1) / n2
+
+	if n1 > 1 and n2 > 1:
+		sm2_1 = clust_mat.power(2).sum(axis = 0).A1
+		s1sqr = (sm2_1 - n1 * (mean1 ** 2)) / (n1 - 1)
+		s2sqr = ((sm2 - sm2_1) - n2 * (mean2 ** 2)) / (n2 - 1)
+
+		var_est = s1sqr / n1 + s2sqr / n2
+		
+		idx = var_est > 0.0
+		if idx.sum() > 0:
+			tscore = (mean1[idx] - mean2[idx]) / np.sqrt(var_est[idx])
+			v = (var_est[idx] ** 2) / ((s1sqr[idx] / n1) ** 2 / (n1 - 1) + (s2sqr[idx] / n2) ** 2 / (n2 - 1))
+			pvals[idx] = ss.t.sf(np.fabs(tscore), v) * 2.0 # two-sided
+			passed, qvals[idx] = fdr(pvals[idx])
 
 	# calculate WAD, Weighted Average Difference, https://almob.biomedcentral.com/articles/10.1186/1748-7188-3-8
 	log_fold_change = mean1 - mean2
