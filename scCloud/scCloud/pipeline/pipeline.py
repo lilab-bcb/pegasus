@@ -94,11 +94,11 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# clustering
 	if kwargs['run_approx_louvain']:
-		tools.run_approximated_louvain(adata, kwargs['approx_louvain_basis'], affinity = kwargs['approx_louvain_affinity'], resolution = kwargs['approx_louvain_resolution'], n_clusters = kwargs['approx_louvain_nclusters'], \
+		tools.run_approximated_louvain(adata, 'X_' + kwargs['approx_louvain_basis'], affinity = kwargs['approx_louvain_affinity'], resolution = kwargs['approx_louvain_resolution'], n_clusters = kwargs['approx_louvain_nclusters'], \
 			n_init = kwargs['approx_louvain_ninit'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'], temp_folder = kwargs['temp_folder'], class_label = 'approx_louvain_labels')
 
 	if kwargs['run_approx_leiden']:
-		tools.run_approximated_leiden(adata, kwargs['approx_leiden_basis'], affinity = kwargs['approx_leiden_affinity'], resolution = kwargs['approx_leiden_resolution'], n_clusters = kwargs['approx_leiden_nclusters'], \
+		tools.run_approximated_leiden(adata, 'X_' + kwargs['approx_leiden_basis'], affinity = kwargs['approx_leiden_affinity'], resolution = kwargs['approx_leiden_resolution'], n_clusters = kwargs['approx_leiden_nclusters'], \
 			n_init = kwargs['approx_leiden_ninit'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'], temp_folder = kwargs['temp_folder'], class_label = 'approx_leiden_labels')
 
 	if kwargs['run_louvain']:
