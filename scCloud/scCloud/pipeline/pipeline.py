@@ -87,7 +87,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		end_time = time.time()
 		print("KNN for diffusion components is finished. Time spent = {:.2f}s.".format(end_time - start_time))
 
-		adata.obsm['X_diffmap_pca'] = tools.reduce_diffmap_to_3d(adata.obsm['X_diffmap'], random_state = random_state)
+		adata.obsm['X_diffmap_pca'] = tools.reduce_diffmap_to_3d(adata.obsm['X_diffmap'], random_state = kwargs['random_state'])
 	else:
 		assert 'X_diffmap' in adata.obsm.keys()
 
