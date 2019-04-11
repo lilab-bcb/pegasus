@@ -46,7 +46,7 @@ Options:
   --leiden-class-label <label>                     Leiden cluster label name in AnnData. [default: leiden_labels]
 
   --run-approximated-louvain                       Run approximated louvain clustering algorithm.
-  --approx-louvain-basis <basis>                   Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: 'diffmap']
+  --approx-louvain-basis <basis>                   Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
   --approx-louvain-nclusters <number>              Number of clusters for Kmeans initialization. [default: 30]
   --approx-louvain-ninit <number>                  Number of Kmeans tries. [default: 20]
   --approx-louvain-resolution <resolution>         Resolution parameter for louvain. [default: 1.3]
@@ -54,7 +54,7 @@ Options:
   --approx-louvain-class-label <label>             Approximated louvain label name in AnnData. [default: approx_louvain_labels]
 
   --run-approximated-leiden                        Run approximated leiden clustering algorithm.
-  --approx-leiden-basis <basis>                    Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: 'diffmap']
+  --approx-leiden-basis <basis>                    Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
   --approx-leiden-nclusters <number>               Number of clusters for Kmeans initialization. [default: 30]
   --approx-leiden-ninit <number>                   Number of Kmeans tries. [default: 20]
   --approx-leiden-resolution <resolution>          Resolution parameter for leiden. [default: 1.3]
@@ -128,7 +128,7 @@ Examples:
 
             'random_state' : int(self.args['--random-state']),
             'temp_folder' : self.args['--temp-folder'],
-            
+
             'run_dimension_reduction' : True,
             'pca_key' : 'X_pca' if not self.args['--run-uncentered-pca'] else 'X_rpca',
             'select_variable_genes' : not self.args['--no-variable-gene-selection'],
