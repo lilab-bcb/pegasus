@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 
 
 
-def estimate_background_probs(adt, random_state = 100):
+def estimate_background_probs(adt, random_state = 0):
 	adt.obs['counts'] = adt.X.sum(axis = 1).A1
 	counts_log10 = np.log10(adt.obs['counts'].values.reshape(-1, 1))
 	kmeans = KMeans(n_clusters = 2, random_state = random_state).fit(counts_log10)

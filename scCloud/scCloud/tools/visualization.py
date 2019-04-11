@@ -37,7 +37,7 @@ def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state, init
 
 def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, target_steps, is3d, memory, random_state, init = None):
 	input_graph_file = '{file_name}.net'.format(file_name = file_name)
-	G = construct_graph(W, adjust_weights = True)
+	G = construct_graph(W)
 	G.write(input_graph_file)
 	print(input_graph_file + ' is written.')			
 
@@ -71,7 +71,7 @@ def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, tar
 
 
 
-def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, out_basis = 'tsne'):
+def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'tsne'):
 	start = time.time()
 	X_tsne = calc_tsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
 	data.obsm['X_' + out_basis] = X_tsne
@@ -79,14 +79,14 @@ def run_tsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exa
 	print("tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, out_basis = 'fitsne'):
+def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, out_basis = 'fitsne'):
 	start = time.time()
 	data.obsm['X_' + out_basis] = calc_fitsne(data.obsm[rep_key], n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state) 
 	end = time.time()
 	print("FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 100, out_basis = 'umap'):
+def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, out_basis = 'umap'):
 	start = time.time()
 	assert 'knn_indices' in data.uns
 	knn_indices = np.insert(data.uns['knn_indices'][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis = 1)
@@ -96,7 +96,7 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, 
 	print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 100, out_basis = 'fle'):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 0, out_basis = 'fle'):
 	start = time.time()
 	realK = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
 	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:realK], data.uns['diffmap_knn_distances'][:, 0:realK])
@@ -106,7 +106,7 @@ def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per
 
 
 
-def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_frac = 0.33, polish_n_iter = 150, out_basis = 'net_tsne'):
+def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, net_alpha = 0.1, polish_learning_frac = 0.33, polish_n_iter = 150, out_basis = 'net_tsne'):
 	start = time.time()
 	X = data.obsm[rep_key][selected,:]
 	X_tsne = calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
@@ -127,7 +127,7 @@ def run_net_tsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity =
 	print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 100, net_alpha = 0.1, polish_learning_frac = 0.5, polish_n_iter = 150, out_basis = 'net_fitsne'):
+def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity = 30, early_exaggeration = 12, learning_rate = 1000, random_state = 0, net_alpha = 0.1, polish_learning_frac = 0.5, polish_n_iter = 150, out_basis = 'net_fitsne'):
 	start = time.time()
 	X = data.obsm[rep_key][selected,:]
 	X_fitsne = calc_fitsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_rate, random_state)
@@ -148,7 +148,7 @@ def run_net_fitsne(data, rep_key, selected, n_jobs, n_components = 2, perplexity
 	print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_net_umap(data, rep_key, selected, n_jobs, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 100, ds_full_speed = False, net_alpha = 0.1, polish_n_epochs = 30, polish_learning_rate = 10.0, out_basis = 'net_umap'):
+def run_net_umap(data, rep_key, selected, n_jobs, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, ds_full_speed = False, net_alpha = 0.1, polish_n_epochs = 30, polish_learning_rate = 10.0, out_basis = 'net_umap'):
 	start = time.time()
 	X = data.obsm[rep_key][selected,:]
 
@@ -179,7 +179,7 @@ def run_net_umap(data, rep_key, selected, n_jobs, n_components = 2, n_neighbors 
 	end = time.time()
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fle(data, selected, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 100, \
+def run_net_fle(data, selected, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 0, \
 	ds_full_speed = False, net_alpha = 0.1, polish_target_steps = 1500, out_basis = 'net_fle'):
 	start = time.time()
 	X = data.obsm['X_diffmap'][selected,:]

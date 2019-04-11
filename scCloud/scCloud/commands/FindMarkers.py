@@ -17,7 +17,7 @@ Options:
   --labels <attr>              <attr> used as cluster labels. [default: louvain_labels]
   --remove-ribo                Remove ribosomal genes with either RPL or RPS as prefixes.
   --min-gain <gain>            Only report genes with a feature importance score (in gain) of at least <gain>. [default: 1.0]
-  --random-state <seed>        Random state for initializing LightGBM and KMeans. [default: 100]
+  --random-state <seed>        Random state for initializing LightGBM and KMeans. [default: 0]
   -p <threads>                 Use <threads> threads. [default: 1]
 
   -h, --help                   Print out help information.

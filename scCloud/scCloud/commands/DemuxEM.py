@@ -22,7 +22,7 @@ Options:
   --min-num-genes <number>                   We only demultiplex cells/nuclei with at least <number> of expressed genes. [default: 100]
   --min-num-umis <number>                    We only demultiplex cells/nuclei with at least <number> of UMIs. [default: 100]
   --min-signal-hashtag <count>               Any cell/nucleus with less than <count> hashtags from the signal will be marked as unknown. [default: 10.0]
-  --random-state <seed>                      The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 100]
+  --random-state <seed>                      The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 0]
 
   --generate-diagnostic-plots                Generate a series of diagnostic plots, including the background/signal between HTO counts, estimated background probabilities, HTO distributions of cells and non-cells etc.
   --generate-gender-plot <genes>             Generate violin plots using gender-specific genes (e.g. Xist). <gene> is a comma-separated list of gene names. 

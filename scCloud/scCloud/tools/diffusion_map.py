@@ -25,6 +25,7 @@ def get_symmetric_matrix(csr_mat):
 	sym_mat.data[idx] /= 2.0
 	return sym_mat
 
+
 # We should not modify distances array!
 def calculate_affinity_matrix(indices, distances):
 	nsample = indices.shape[0]
@@ -55,6 +56,7 @@ def calculate_affinity_matrix(indices, distances):
 
 	return W
 
+
 def calculate_normalized_affinity(W):
 	diag = W.sum(axis = 1).A1
 	diag_half = np.sqrt(diag)
@@ -65,7 +67,8 @@ def calculate_normalized_affinity(W):
 
 	return W_norm, diag, diag_half
 
-def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = 100):
+
+def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = 0):
 	assert issparse(W)
 
 	start = time.time()
@@ -92,22 +95,16 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', r
 	Phi = U / diag_half[:, np.newaxis]
 	S_new = S / (1 - alpha * S)
 
-	U_df = U * S #symmetric diffusion component
+	# U_df = U * S #symmetric diffusion component
 	Phi_pt = Phi * S_new #asym pseudo component
 
 	end = time.time()
 	print("Calculating diffusion map is done.")
 
-	return Phi_pt, U_df, S, W_norm
+	return Phi_pt, S #, U_df, W_norm
 
-def reduce_diffmap_to_3d(Phi_pt, random_state = 100):
-	pca = PCA(n_components = 3, random_state = random_state)
-	Phi_reduced = pca.fit_transform(Phi_pt)
-	print("Reduce diffmap to 3D is done.")
 
-	return Phi_reduced
-
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 100, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
 	start = time.time()
 
 	indices, distances = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, method = knn_method, \
@@ -116,25 +113,26 @@ def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 
 	data.uns['knn_distances'] = distances
 	W = calculate_affinity_matrix(indices, distances)
 
-	Phi_pt, U_df, S, W_norm = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
-
-	Phi_reduced = reduce_diffmap_to_3d(Phi_pt, random_state = random_state)
-
-	indices, distances = calculate_nearest_neighbors(Phi_pt, n_jobs, method = knn_method, \
-		K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
-	data.uns['diffmap_knn_indices'] = indices
-	data.uns['diffmap_knn_distances'] = distances
+	Phi_pt, S = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
 
 	data.uns['W'] = W
-	data.uns['W_norm'] = W_norm
-	data.uns['diffmap_evals'] = S
-
 	data.obsm['X_diffmap'] = Phi_pt
-	data.obsm['X_dmnorm'] = U_df
-	data.obsm['X_diffmap_pca'] = Phi_reduced
+	data.uns['diffmap_evals'] = S
+	# data.uns['W_norm'] = W_norm
+	# data.obsm['X_dmnorm'] = U_df
+
 	end = time.time()
 	print("run_diffmap finished. Time spent = {:.2f}s.".format(end - start))
 
+
+def reduce_diffmap_to_3d(Phi_pt, random_state = 0):
+	start = time.time()
+	pca = PCA(n_components = 3, random_state = random_state)
+	Phi_reduced = pca.fit_transform(Phi_pt)
+	end = time.time()
+	print("Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start))
+
+	return Phi_reduced
 
 
 def run_pseudotime_calculation(data, roots):

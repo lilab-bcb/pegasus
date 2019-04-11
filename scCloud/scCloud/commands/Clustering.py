@@ -43,7 +43,8 @@ Options:
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
   
-  --random-state <seed>                            Random number generator seed. [default: 100]
+  --random-state <seed>                            Random number generator seed. [default: 0]
+  --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
   --run-uncentered-pca                             Run uncentered PCA.
   --no-variable-gene-selection                     Do not select variable genes.
@@ -59,12 +60,29 @@ Options:
 
   --run-louvain                                    Run louvain clustering algorithm.
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
-  --louvain-affinity <affinity>                    Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
+  --louvain-affinity <affinity>                    Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+  --louvain-class-label <label>                    Louvain cluster label name in AnnData. [default: louvain_labels]
+
+  --run-leiden                                     Run leiden clustering algorithm.
+  --leiden-resolution <resolution>                 Resolution parameter for the leiden clustering algorithm. [default: 1.3]
+  --leiden-affinity <affinity>                     Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+  --leiden-class-label <label>                     Leiden cluster label name in AnnData. [default: leiden_labels]
 
   --run-approximated-louvain                       Run approximated louvain clustering algorithm.
-  --approx-louvain-ninit <number>                  Number of Kmeans tries. [default: 20]
+  --approx-louvain-basis <basis>                   Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: 'diffmap']
   --approx-louvain-nclusters <number>              Number of clusters for Kmeans initialization. [default: 30]
+  --approx-louvain-ninit <number>                  Number of Kmeans tries. [default: 20]
   --approx-louvain-resolution <resolution>         Resolution parameter for louvain. [default: 1.3]
+  --approx-louvain-affinity <affinity>             Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+  --approx-louvain-class-label <label>             Approximated louvain label name in AnnData. [default: approx_louvain_labels]
+
+  --run-approximated-leiden                        Run approximated leiden clustering algorithm.
+  --approx-leiden-basis <basis>                    Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: 'diffmap']
+  --approx-leiden-nclusters <number>               Number of clusters for Kmeans initialization. [default: 30]
+  --approx-leiden-ninit <number>                   Number of Kmeans tries. [default: 20]
+  --approx-leiden-resolution <resolution>          Resolution parameter for leiden. [default: 1.3]
+  --approx-leiden-affinity <affinity>              Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+  --approx-leiden-class-label <label>              Approximated leiden label name in AnnData. [default: approx_louvain_labels]
 
   --run-tsne                                       Run multi-core t-SNE for visualization.
   --run-fitsne                                     Run FIt-SNE for visualization.
@@ -78,7 +96,7 @@ Options:
   --run-fle                                        Run force-directed layout embedding.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. [default: 2.0]
-  --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 10000]
+  --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
   --fle-3D                                         Calculate 3D force-directed layout. 
 
   --net-down-sample-fraction <frac>                Down sampling fraction for net-related visualization. [default: 0.1]
@@ -156,6 +174,7 @@ Examples:
             'norm_count' : float(self.args['--counts-per-cell-after']),
 
             'random_state' : int(self.args['--random-state']),
+            'temp_folder' : self.args['--temp-folder'],
             
             'pca_key' : 'X_pca' if not self.args['--run-uncentered-pca'] else 'X_rpca',
             'select_variable_genes' : not self.args['--no-variable-gene-selection'],
@@ -170,11 +189,28 @@ Examples:
             'run_louvain' : self.args['--run-louvain'],
             'louvain_resolution' : float(self.args['--louvain-resolution']),
             'louvain_affinity' : self.args['--louvain-affinity'],
+            'louvain_class_label' : self.args['--louvain-class-label'],
+
+            'run_leiden' : self.args['--run-leiden'],
+            'leiden_resolution' : float(self.args['--leiden-resolution']),
+            'leiden_affinity' : self.args['--leiden-affinity'],
+            'leiden_class_label' : self.args['--leiden-class-label'],
 
             'run_approx_louvain' : self.args['--run-approximated-louvain'],
-            'approx_louvain_ninit' : int(self.args['--approx-louvain-ninit']),
+            'approx_louvain_basis' : self.args['--approx-louvain-basis'],
             'approx_louvain_nclusters' : int(self.args['--approx-louvain-nclusters']),
+            'approx_louvain_ninit' : int(self.args['--approx-louvain-ninit']),
             'approx_louvain_resolution' : float(self.args['--approx-louvain-resolution']),
+            'approx_louvain_affinity' : self.args['--approx-louvain-affinity'],
+            'approx_louvain_class_label' : self.args['--approx-louvain-class-label'],
+
+            'run_approx_leiden' : self.args['--run-approximated-leiden'],
+            'approx_leiden_basis' : self.args['--approx-leiden-basis'],
+            'approx_leiden_nclusters' : int(self.args['--approx-leiden-nclusters']),
+            'approx_leiden_ninit' : int(self.args['--approx-leiden-ninit']),
+            'approx_leiden_resolution' : float(self.args['--approx-leiden-resolution']),
+            'approx_leiden_affinity' : self.args['--approx-leiden-affinity'],
+            'approx_leiden_class_label' : self.args['--approx-leiden-class-label'],
 
             'run_tsne' : self.args['--run-tsne'],
             'run_fitsne' : self.args['--run-fitsne'],

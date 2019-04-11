@@ -8,7 +8,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 
-def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = None, K = 100, M = 20, efC = 200, efS = 200, random_state = 100, full_speed = False):
+def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = None, K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
 	"""X is the sample by feature matrix, could be either dense or sparse"""
 
 	start_time = time.time()
@@ -55,7 +55,7 @@ def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = No
 
 
 
-def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 100):
+def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 0):
 	start_time = time.time()
 
 	nsample = distances.shape[0]

@@ -72,25 +72,42 @@ def run_pipeline(input_file, output_name, **kwargs):
 	else:
 		assert pca_key in adata.obsm.keys()
 
+
 	# diffusion map
 	if is_raw:
 		tools.run_diffmap(adata, pca_key, n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
+
+		import time
+		start_time = time.time()
+
+		indices, distances = tools.calculate_nearest_neighbors(adata.obsm['X_diffmap'], kwargs['n_jobs'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
+		data.uns['diffmap_knn_indices'] = indices
+		data.uns['diffmap_knn_distances'] = distances
+		
+		end_time = time.time()
+		print("KNN for diffusion components is finished. Time spent = {:.2f}s.".format(end_time - start_time))
+
+		adata.obsm['X_diffmap_pca'] = tools.reduce_diffmap_to_3d(adata.obsm['X_diffmap'], random_state = random_state)
 	else:
 		assert 'X_diffmap' in adata.obsm.keys()
 
+
 	# clustering
 	if kwargs['run_approx_louvain']:
-		# tools.run_approximated_louvain(adata, 'X_pca', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_pca')
-		# tools.run_approximated_louvain(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_dm')
-		tools.run_approximated_louvain(adata, 'X_dmnorm', n_jobs = kwargs['n_jobs'], resolution = kwargs['approx_louvain_resolution'], random_state = kwargs['random_state'], n_clusters = kwargs['approx_louvain_nclusters'], n_init = kwargs['approx_louvain_ninit'], class_label = 'approx_louvain_labels')
+		tools.run_approximated_louvain(adata, kwargs['approx_louvain_basis'], affinity = kwargs['approx_louvain_affinity'], resolution = kwargs['approx_louvain_resolution'], n_clusters = kwargs['approx_louvain_nclusters'], \
+			n_init = kwargs['approx_louvain_ninit'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'], temp_folder = kwargs['temp_folder'], class_label = 'approx_louvain_labels')
+
+	if kwargs['run_approx_leiden']:
+		tools.run_approximated_leiden(adata, kwargs['approx_leiden_basis'], affinity = kwargs['approx_leiden_affinity'], resolution = kwargs['approx_leiden_resolution'], n_clusters = kwargs['approx_leiden_nclusters'], \
+			n_init = kwargs['approx_leiden_ninit'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'], temp_folder = kwargs['temp_folder'], class_label = 'approx_leiden_labels')
 
 	if kwargs['run_louvain']:
-		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'])
+		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'], class_label = kwargs['louvain_class_label'])
 
-	# if kwargs['run_kmeans']:
-	# 	tools.run_kmeans(adata, 'X_diffmap', kwargs['kmeans_n_clusters'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'])
-	# if kwargs['run_hdbscan']:
-	# 	tools.run_hdbscan(adata, 'X_diffmap', n_jobs = kwargs['n_jobs'], min_cluster_size = kwargs['hdbscan_min_cluster_size'], min_samples = kwargs['hdbscan_min_samples'])
+	if kwargs['run_leiden']:
+		tools.run_leiden(adata, affinity = kwargs['leiden_affinity'], resolution = kwargs['leiden_resolution'], random_state = kwargs['random_state'], class_label = kwargs['leiden_class_label'])
+
+
 
 	# visualization
 	if kwargs['run_net_tsne']:
@@ -114,6 +131,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 			target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'], ds_full_speed = kwargs['net_ds_full_speed'], \
 			net_alpha = kwargs['net_l2'], polish_target_steps = kwargs['net_fle_polish_target_steps'], out_basis = kwargs['net_fle_basis'])
 
+
 	if kwargs['run_tsne']:
 		tools.run_tsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
 
@@ -125,6 +143,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	if kwargs['run_fle']:
 		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'])
+
 
 	# calculate diffusion-based pseudotime from roots
 	if kwargs['pseudotime'] is not None:

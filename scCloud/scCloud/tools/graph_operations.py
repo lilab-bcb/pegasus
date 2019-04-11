@@ -5,7 +5,7 @@ from scipy.sparse import issparse
 
 
 
-def construct_graph(W, directed = False, adjust_weights = False):
+def construct_graph(W, directed = False, adjust_weights = True):
 	start_time = time.time()
 
 	assert issparse(W)
@@ -33,6 +33,6 @@ def construct_graph(W, directed = False, adjust_weights = False):
 	G.es['weight'] = w
 
 	end_time = time.time()
-	print("Graph is constructed. Time spent = {:.2}s.".format(end_time - start_time))
+	print("Graph is constructed. Time spent = {:.2f}s.".format(end_time - start_time))
 
 	return G
