@@ -81,8 +81,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 		start_time = time.time()
 
 		indices, distances = tools.calculate_nearest_neighbors(adata.obsm['X_diffmap'], kwargs['n_jobs'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
-		data.uns['diffmap_knn_indices'] = indices
-		data.uns['diffmap_knn_distances'] = distances
+		adata.uns['diffmap_knn_indices'] = indices
+		adata.uns['diffmap_knn_distances'] = distances
 		
 		end_time = time.time()
 		print("KNN for diffusion components is finished. Time spent = {:.2f}s.".format(end_time - start_time))
