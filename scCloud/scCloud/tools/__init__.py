@@ -8,7 +8,7 @@ from .batch_correction import set_group_attribute, estimate_adjustment_matrices,
 from .nearest_neighbors import calculate_nearest_neighbors, select_cells
 from .diffusion_map import run_diffmap, run_pseudotime_calculation, calculate_affinity_matrix, calculate_normalized_affinity, reduce_diffmap_to_3d
 from .graph_operations import construct_graph
-from .clustering import run_louvain, run_approximated_louvain
+from .clustering import run_louvain, run_leiden, run_approximated_louvain, run_approximated_leiden
 from .net_regressor import net_train_and_predict
 from .visualization import run_tsne, run_fitsne, run_umap, run_force_directed_layout, run_net_tsne, run_net_fitsne, run_net_umap, run_net_fle
 from .de_analysis import run_de_analysis, write_results_to_excel, collect_stat_and_t_test, fisher_test, mwu_test, calc_roc_stats
