@@ -31,6 +31,14 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $CONDA_PATH/software/fisher_test
 	pip install .
 	cd $OLDPWD
+	git clone https://github.com/bli25broad/Multicore-TSNE.git $CONDA_PATH/software/MulticoreTSNE
+	cd $CONDA_PATH/software/MulticoreTSNE
+	pip install .
+	cd $OLDPWD
+	git clone https://github.com/bli25broad/umap.git $CONDA_PATH/software/umap
+	cd $CONDA_PATH/software/umap
+	pip install .
+	cd $OLDPWD
 	git clone https://github.com/broadinstitute/scRNA-Seq.git $CONDA_PATH/software/scRNA-Seq
 	cd $CONDA_PATH/software/scRNA-Seq/scCloud
 	pip install -e .
@@ -78,6 +86,14 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
 	cd $CONDA_PATH/software/louvain
 	pip install .
+	git clone https://github.com/bli25broad/Multicore-TSNE.git $CONDA_PATH/software/MulticoreTSNE
+	cd $CONDA_PATH/software/MulticoreTSNE
+	pip install .
+	cd $OLDPWD
+	git clone https://github.com/bli25broad/umap.git $CONDA_PATH/software/umap
+	cd $CONDA_PATH/software/umap
+	pip install .
+	cd $OLDPWD
 	git clone https://github.com/broadinstitute/scRNA-Seq.git $CONDA_PATH/software/scRNA-Seq
 	cd $CONDA_PATH/software/scRNA-Seq/scCloud
 	pip install -e .
