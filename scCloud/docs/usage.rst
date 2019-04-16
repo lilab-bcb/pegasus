@@ -302,7 +302,7 @@ to see the usage information::
 
 	-\\-cite-seq
 		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
-	
+
 	-\\-cite-seq-capping <percentile>
 		For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
 
@@ -357,6 +357,9 @@ to see the usage information::
 	-\\-random-state <seed>
 		Random number generator seed. [default: 0]
 
+	-\\-temp-folder <temp_folder>
+		joblib temporary folder for memmapping numpy arrays.
+
 	-\\-run-uncentered-pca
 		Run uncentered PCA.
 
@@ -393,17 +396,50 @@ to see the usage information::
 	-\\-louvain-affinity <affinity>
 		Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
 
+	-\\-louvain-class-label <label>
+		Louvain cluster label name in AnnData. [default: louvain_labels]
+
 	-\\-run-approximated-louvain
 		Run approximated louvain clustering algorithm.
 
-	-\\-approx-louvain-ninit <number>
-		Number of Kmeans tries. [default: 20]
+	-\\-approx-louvain-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
 
 	-\\-approx-louvain-nclusters <number>
 		Number of clusters for Kmeans initialization. [default: 30]
 
+	-\\-approx-louvain-ninit <number>
+		Number of Kmeans tries. [default: 20]
+
 	-\\-approx-louvain-resolution <resolution>.
 		Resolution parameter for louvain. [default: 1.3]
+
+	-\\-approx-louvain-affinity <affinity>
+		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+
+	-\\-approx-louvain-class-label <label>
+		Approximated louvain label name in AnnData. [default: approx_louvain_labels]
+
+	-\\-run-approximated-leiden
+		Run approximated leiden clustering algorithm.
+
+	-\\-approx-leiden-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
+
+	-\\-approx-leiden-nclusters <number>
+		Number of clusters for Kmeans initialization. [default: 30]
+
+	-\\-approx-leiden-ninit <number>
+		Number of Kmeans tries. [default: 20]
+
+	-\\-approx-leiden-resolution <resolution>
+		Resolution parameter for leiden. [default: 1.3]
+
+	-\\-approx-leiden-affinity <affinity>
+		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+
+	-\\-approx-leiden-class-label <label>
+		Approximated leiden label name in AnnData. [default: approx_louvain_labels]
 
 	-\\-run-tsne
 		Run multi-core t-SNE for visualization.
@@ -416,9 +452,6 @@ to see the usage information::
 
   	-\\-run-umap
   		Run umap for visualization.
-
-	-\\-umap-on-diffmap
-		Run umap on diffusion components.
 
 	-\\-umap-K <K>
 		K neighbors for umap. [default: 15]
@@ -435,11 +468,77 @@ to see the usage information::
 	-\\-fle-K <K>
 		K neighbors for building graph for FLE. [default: 50]
 
-	-\\-fle-n-steps <nstep>
-		Number of iterations for FLE. [default: 10000]
+	-\\-fle-target-change-per-node <change>
+		Target change per node to stop forceAtlas2. [default: 2.0]
 
-	-\\-fle-affinity <affinity>
-		Affinity matrix to be used. Could be 'W_diffmap', or 'W_diffmap_norm'. [default: W_diffmap]
+	-\\-fle-target-steps <steps>
+		Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
+
+	-\\-fle-3D
+		Calculate 3D force-directed layout.
+
+	-\\-net-down-sample-fraction <frac>
+		Down sampling fraction for net-related visualization. [default: 0.1]
+
+	-\\-net-down-sample-K <K>
+		Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
+
+	-\\-net-down-sample-alpha <alpha>
+		Weighted down sample, proportional to radius^alpha. [default: 1.0]
+
+	-\\-net-regressor-L2-penalty <value>
+		L2 penalty parameter for the deep net regressor. [default: 0.1]
+
+	-\\-net-ds-full-speed
+		For net-UMAP and net-FLE, use full speed for the down-sampled data.
+
+	-\\-run-net-tsne
+		Run net tSNE for visualization.
+
+	-\\-net-tsne-polish-learning-frac <frac>
+		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.33]
+
+	-\\-net-tsne-polish-niter <niter>
+		Number of iterations for polishing tSNE run. [default: 150]
+
+	-\\-net-tsne-out-basis <basis>
+		Output basis for net-tSNE. [default: net_tsne]
+
+	-\\-run-net-fitsne
+		Run net FIt-SNE for visualization.
+
+	-\\-net-fitsne-polish-learning-frac <frac>
+		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.5]
+
+	-\\-net-fitsne-polish-niter <niter>
+		Number of iterations for polishing FItSNE run. [default: 150]
+
+	-\\-net-fitsne-out-basis <basis>
+		Output basis for net-FItSNE. [default: net_fitsne]
+
+	-\\-run-net-umap
+		Run net umap for visualization.
+
+	-\\-net-umap-polish-learning-rate <rate>
+		After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 1.0]
+
+	-\\-net-umap-polish-nepochs <nepochs>
+		Number of iterations for polishing UMAP run. [default: 40]
+
+	-\\-net-umap-out-basis <basis>
+		Output basis for net-UMAP. [default: net_umap]
+
+	-\\-run-net-fle
+		Run net FLE.
+
+	-\\-net-fle-ds-full-speed
+		If run full-speed kNN on down-sampled data points.
+
+	-\\-net-fle-polish-target-steps <steps>
+		After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
+
+	-\\-net-fle-out-basis <basis>
+		Output basis for net-FLE. [default: net_fle]
 
 	\-h, -\\-help
 		Print out help information.
@@ -910,6 +1009,9 @@ to see the usage information::
 	-\\-random-state <seed>
 		Random number generator seed. [default: 0]
 
+	-\\-temp-folder <temp_folder>
+		Joblib temporary folder for memmapping numpy arrays.
+
 	-\\-run-uncentered-pca
 		Run uncentered PCA.
 
@@ -946,17 +1048,62 @@ to see the usage information::
 	-\\-louvain-affinity <affinity>
 		Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
 
+	-\\-louvain-class-label <label>
+		Louvain cluster label name in AnnData. [default: louvain_labels]
+
+	-\\-run-leiden
+		Run leiden clustering algorithm.
+
+	-\\-leiden-resolution <resolution>
+		Resolution parameter for the leiden clustering algorithm. [default: 1.3]
+
+	-\\-leiden-affinity <affinity>
+		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+
+	-\\-leiden-class-label <label>
+		Leiden cluster label name in AnnData. [default: leiden_labels]
+
 	-\\-run-approximated-louvain
 		Run approximated louvain clustering algorithm.
 
-	-\\-approx-louvain-ninit <number>
-		Number of Kmeans tries. [default: 20]
+	-\\-approx-louvain-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
 
 	-\\-approx-louvain-nclusters <number>
 		Number of clusters for Kmeans initialization. [default: 30]
 
+	-\\-approx-louvain-ninit <number>
+		Number of Kmeans tries. [default: 20]
+
 	-\\-approx-louvain-resolution <resolution>.
 		Resolution parameter for louvain. [default: 1.3]
+
+	-\\-approx-louvain-affinity <affinity>
+		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+
+	-\\-approx-louvain-class-label <label>
+		Approximated louvain label name in AnnData. [default: approx_louvain_labels]
+
+	-\\-run-approximated-leiden
+		Run approximated leiden clustering algorithm.
+
+	-\\-approx-leiden-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
+
+	-\\-approx-leiden-nclusters <number>
+		Number of clusters for Kmeans initialization. [default: 30]
+
+	-\\-approx-leiden-ninit <number>
+		Number of Kmeans tries. [default: 20]
+
+	-\\-approx-leiden-resolution <resolution>
+		Resolution parameter for leiden. [default: 1.3]
+
+	-\\-approx-leiden-affinity <affinity>
+		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+
+	-\\-approx-leiden-class-label <label>
+		Approximated leiden label name in AnnData. [default: approx_louvain_labels]
 
 	-\\-run-tsne
 		Run multi-core t-SNE for visualization.
@@ -969,9 +1116,6 @@ to see the usage information::
 
   	-\\-run-umap
   		Run umap for visualization.
-
-	-\\-umap-on-diffmap
-		Run umap on diffusion components.
 
 	-\\-umap-K <K>
 		K neighbors for umap. [default: 15]
@@ -988,11 +1132,77 @@ to see the usage information::
 	-\\-fle-K <K>
 		K neighbors for building graph for FLE. [default: 50]
 
-	-\\-fle-n-steps <nstep>
-		Number of iterations for FLE. [default: 10000]
+	-\\-fle-target-change-per-node <change>
+		Target change per node to stop forceAtlas2. [default: 2.0]
 
-	-\\-fle-affinity <affinity>
-		Affinity matrix to be used. Could be 'W_diffmap', or 'W_diffmap_norm'. [default: W_diffmap]
+	-\\-fle-target-steps <steps>
+		Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
+
+	-\\-fle-3D
+		Calculate 3D force-directed layout.
+
+	-\\-net-down-sample-fraction <frac>
+		Down sampling fraction for net-related visualization. [default: 0.1]
+
+	-\\-net-down-sample-K <K>
+		Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
+
+	-\\-net-down-sample-alpha <alpha>
+		 Weighted down sample, proportional to radius^alpha. [default: 1.0]
+
+	-\\-net-regressor-L2-penalty <value>
+		L2 penalty parameter for the deep net regressor. [default: 0.1]
+
+	-\\-net-ds-full-speed
+		For net-UMAP and net-FLE, use full speed for the down-sampled data.
+
+	-\\-run-net-tsne
+		Run net tSNE for visualization.
+
+	-\\-net-tsne-polish-learning-frac <frac>
+		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.33]
+
+	-\\-net-tsne-polish-niter <niter>
+		Number of iterations for polishing tSNE run. [default: 150]
+
+	-\\-net-tsne-out-basis <basis>
+		Output basis for net-tSNE. [default: net_tsne]
+
+	-\\-run-net-fitsne
+		Run net FIt-SNE for visualization.
+
+	-\\-net-fitsne-polish-learning-frac <frac>
+		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.5]
+
+	-\\-net-fitsne-polish-niter <niter>
+		Number of iterations for polishing FItSNE run. [default: 150]
+
+	-\\-net-fitsne-out-basis <basis>
+		Output basis for net-FItSNE. [default: net_fitsne]
+
+	-\\-run-net-umap
+		Run net umap for visualization.
+
+	-\\-net-umap-polish-learning-rate <rate>
+		After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 1.0]
+
+	-\\-net-umap-polish-nepochs <nepochs>
+		Number of iterations for polishing UMAP run. [default: 40]
+
+	-\\-net-umap-out-basis <basis>
+		Output basis for net-UMAP. [default: net_umap]
+
+	-\\-run-net-fle
+		Run net FLE.
+
+	-\\-net-fle-ds-full-speed
+		If run full-speed kNN on down-sampled data points.
+
+	-\\-net-fle-polish-target-steps <steps>
+		After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
+
+	-\\-net-fle-out-basis <basis>
+		Output basis for net-FLE. [default: net_fle]
 
 	\-h, -\\-help
 		Print out help information.
@@ -1007,7 +1217,7 @@ to see the usage information::
 
 * Examples::
 
-	scCloud subcluster --subset_selection louvain_labels:1,3  --subset_selection Donor:1 -p 20 --correct-batch-effect example.h5ad example_sub
+	scCloud subcluster -p 20 --correct-batch-effect --subset-selection louvain_labels:3,6 --subset-selection Condition:CB_nonmix --run-tsne --run-louvain manton_bm.h5ad manton_bm_subset
 
 
 ---------------------------------
