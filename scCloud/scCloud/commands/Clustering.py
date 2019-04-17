@@ -82,7 +82,7 @@ Options:
   --approx-leiden-ninit <number>                   Number of Kmeans tries. [default: 20]
   --approx-leiden-resolution <resolution>          Resolution parameter for leiden. [default: 1.3]
   --approx-leiden-affinity <affinity>              Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
-  --approx-leiden-class-label <label>              Approximated leiden label name in AnnData. [default: approx_louvain_labels]
+  --approx-leiden-class-label <label>              Approximated leiden label name in AnnData. [default: approx_leiden_labels]
 
   --run-tsne                                       Run multi-core t-SNE for visualization.
   --run-fitsne                                     Run FIt-SNE for visualization.
