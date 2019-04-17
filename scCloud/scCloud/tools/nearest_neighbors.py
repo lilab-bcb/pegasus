@@ -8,28 +8,29 @@ from sklearn.neighbors import NearestNeighbors
 
 
 
-def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', hnsw_index = None, K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
+def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
 	"""X is the sample by feature matrix, could be either dense or sparse"""
 
 	start_time = time.time()
 
 	nsample = X.shape[0]
-	if nsample < 500:
+	
+	if nsample <= 1000:
 		method = 'sklearn'
 
-	knn_index = None
+	if nsample < K:
+		print("Warning: in calculate_nearest_neighbors, number of samples = {} < K = {}!\n Set K to {}.".format(nsample, K, nsample))
+		K = nsample
 
+	knn_index = None
 	if method == 'hnsw':
 		import hnswlib
 		assert not issparse(X)
-		knn_index = hnsw_index
-
 		# Build hnsw index
-		if knn_index is None:
-			knn_index = hnswlib.Index(space = 'l2', dim = X.shape[1])
-			knn_index.init_index(max_elements = nsample, ef_construction = efC, M = M, random_seed = random_state)
-			knn_index.set_num_threads(num_threads if full_speed else 1)
-			knn_index.add_items(X)
+		knn_index = hnswlib.Index(space = 'l2', dim = X.shape[1])
+		knn_index.init_index(max_elements = nsample, ef_construction = efC, M = M, random_seed = random_state)
+		knn_index.set_num_threads(num_threads if full_speed else 1)
+		knn_index.add_items(X)
 
 		# KNN query
 		knn_index.set_ef(efS)
@@ -59,6 +60,10 @@ def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 0):
 	start_time = time.time()
 
 	nsample = distances.shape[0]
+
+	if K > distances.shape[1]:
+		print("Warning: in select_cells, K = {} > the number of calculated nearest neighbors!\nSet K to {}".format(K, distances.shape[1]))
+		K = distances.shape[1]
 
 	probs = np.zeros(nsample)
 	if alpha == 0.0:
