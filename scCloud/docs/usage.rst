@@ -439,7 +439,7 @@ to see the usage information::
 		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
 
 	-\\-approx-leiden-class-label <label>
-		Approximated leiden label name in AnnData. [default: approx_louvain_labels]
+		Approximated leiden label name in AnnData. [default: approx_leiden_labels]
 
 	-\\-run-tsne
 		Run multi-core t-SNE for visualization.
