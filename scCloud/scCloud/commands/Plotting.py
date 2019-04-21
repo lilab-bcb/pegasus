@@ -11,15 +11,15 @@ Usage:
   scCloud plot -h
 
 Arguments:
-  plot_type              Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', and 'heatmap'.
+  plot_type              Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', 'heatmap', and 'qc_violin'.
   input_h5ad_file        Single cell data with clustering done by Scanpy in h5ad file format.
   output_file            Output image file.
 
 Options:
   --dpi <dpi>                        DPI value for the figure. [default: 500]
 
-  --cluster-labels <attr>            Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
-  --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition'.
+  --cluster-labels <attr>            Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', 'heatmap', and 'qc_violin'.
+  --attribute <attr>                 Plot <attr> against cluster labels. This option is only used in 'composition' and 'qc_violin'.
   --basis <basis>                    Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', 'diffmap_pca', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'. If CITE-Seq data is used, basis can also be 'citeseq_fitsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: fitsne]
   --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
   --restriction <restriction>...     Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value'. This option is used in 'composition' and 'scatter'.
@@ -49,6 +49,10 @@ Options:
   --show-zscore                      If show zscore in heatmap.
   --heatmap-title <title>            Title for heatmap.
 
+  --qc-type <type>                   Plot qc_violin by annotation, <type> can be either 'gene', 'count' (UMI), or 'mito' (mitochondrial rate). [default: gene]
+  --qc-xtick-font <font>             X tick font for qc_violin. [default: 5]
+  --qc-line-width <width>            Line width for qc_violin. [default: 0.5]
+
   -h, --help                         Print out help information.
 
 Examples:
@@ -58,6 +62,7 @@ Examples:
   scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP Manton_BM.h5ad test.pdf
   scCloud plot scatter_gene_groups --gene CD8A --group Individual Manton_BM.h5ad test.pdf
   scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' Manton_BM.h5ad test.pdf
+  scCloud plot qc_violin --qc-type gene --cluster-labels louvain_labels --attribute Channel --subplot-size 7,5 --qc-xtick-font 5 --qc-line-width 0.5 Manton_BM.h5ad test.pdf
     """
     def execute(self):
         kwargs = {
@@ -83,9 +88,12 @@ Examples:
             'hspace' : float(self.args['--hspace']) if self.args['--hspace'] is not None else None,
             'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
             'use_raw' : self.args['--use-raw'],
+            'showall' : not self.args['--do-not-show-all'],
             'showzscore' : self.args['--show-zscore'],
             'title' : self.args['--heatmap-title'],
-            'showall' : not self.args['--do-not-show-all']
+            'qc_type' : self.args['--qc-type'],
+            'qc_xtick_font' : int(self.args['--qc-xtick-font']),
+            'qc_line_width' : float(self.args['--qc-line-width'])
         }
 
         if self.args['--alpha'] is None:
