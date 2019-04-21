@@ -51,6 +51,7 @@ Options:
 
   --qc-type <type>                   Plot qc_violin by annotation, <type> can be either 'gene', 'count' (UMI), or 'mito' (mitochondrial rate). [default: gene]
   --qc-xtick-font <font>             X tick font for qc_violin. [default: 5]
+  --qc-xtick-rotation                If rotate x label.
   --qc-line-width <width>            Line width for qc_violin. [default: 0.5]
 
   -h, --help                         Print out help information.
@@ -93,6 +94,7 @@ Examples:
             'title' : self.args['--heatmap-title'],
             'qc_type' : self.args['--qc-type'],
             'qc_xtick_font' : int(self.args['--qc-xtick-font']),
+            'qc_xtick_rotation' : self.args['--qc-xtick-rotation'],
             'qc_line_width' : float(self.args['--qc-line-width'])
         }
 

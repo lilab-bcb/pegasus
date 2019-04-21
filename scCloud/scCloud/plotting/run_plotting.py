@@ -22,9 +22,9 @@ def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
 
 	if plot_type == 'qc_violin':
 		if kwargs['attr'] is None:
-			plot_qc_violin(adata, kwargs['qc_type'], output_file, xattr = kwargs['cluster'], xlabel = kwargs['cluster'], xtick_font = kwargs['qc_xtick_font'], figsize = kwargs['subplot_size'], linewidth = kwargs['qc_line_width'])
+			plot_qc_violin(adata, kwargs['qc_type'], output_file, xattr = kwargs['cluster'], xlabel = kwargs['cluster'], xtick_font = kwargs['qc_xtick_font'], xtick_rotation = kwargs['qc_xtick_rotation'], figsize = kwargs['subplot_size'], linewidth = kwargs['qc_line_width'])
 		else:
-			plot_qc_violin(adata, kwargs['qc_type'], output_file, xattr = kwargs['cluster'], hue = kwargs['attr'], xlabel = kwargs['cluster'], xtick_font = kwargs['qc_xtick_font'], split = True, figsize = kwargs['subplot_size'], linewidth = kwargs['qc_line_width'])
+			plot_qc_violin(adata, kwargs['qc_type'], output_file, xattr = kwargs['cluster'], hue = kwargs['attr'], xlabel = kwargs['cluster'], xtick_font = kwargs['qc_xtick_font'], xtick_rotation = kwargs['qc_xtick_rotation'], split = True, figsize = kwargs['subplot_size'], linewidth = kwargs['qc_line_width'])
 	else:
 		assert plot_type in pop_list
 		pop_set = pop_list[plot_type].copy()
