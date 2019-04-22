@@ -118,6 +118,7 @@ Examples:
             'processed' : True,
             'subcluster' : True,
             'cite_seq' : False,
+            'select_singlets' : False,
             
             'subset_selections' : self.args['--subset-selection'],
 
@@ -166,6 +167,21 @@ Examples:
             'approx_leiden_resolution' : float(self.args['--approx-leiden-resolution']),
             'approx_leiden_affinity' : self.args['--approx-leiden-affinity'],
             'approx_leiden_class_label' : self.args['--approx-leiden-class-label'],
+
+            'run_tsne' : self.args['--run-tsne'],
+            'run_fitsne' : self.args['--run-fitsne'],
+            'tsne_perplexity' : float(self.args['--tsne-perplexity']),
+
+            'run_umap' : self.args['--run-umap'],
+            'umap_K' : int(self.args['--umap-K']),
+            'umap_min_dist' : float(self.args['--umap-min-dist']),
+            'umap_spread' : float(self.args['--umap-spread']),
+
+            'run_fle' : self.args['--run-fle'],
+            'fle_K' : int(self.args['--fle-K']),
+            'fle_target_change_per_node' : float(self.args['--fle-target-change-per-node']),
+            'fle_target_steps' : int(self.args['--fle-target-steps']),
+            'fle_3D' : self.args['--fle-3D'],
 
             'net_ds_frac' : float(self.args['--net-down-sample-fraction']),
             'net_ds_K' : int(self.args['--net-down-sample-K']),
