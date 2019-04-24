@@ -3,14 +3,14 @@ Installation
 
 Linux
 +++++
-This installation instruction has been tested on Ubuntu Linux 18.04.
+This installation instruction has been tested on Ubuntu Linux 18.04 and 19.04.
 
-Suppose your Linux user directory is ``/users/foo``. We will create two folders ``/users/foo/miniconda3`` and ``/users/foo/software``.
+Suppose your Linux user directory is ``/home/foo``. We will create two folders ``/home/foo/miniconda3`` and ``/home/foo/software``.
 
 Please use the commands below to install **scCloud** locally via Miniconda_::
 
 	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh .
-	export CONDA_PATH=/users/foo
+	export CONDA_PATH=/home/foo
 	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
 	mv Miniconda3-latest-Linux-x86_64.sh $CONDA_PATH/miniconda3
 	source ~/.bashrc
@@ -21,6 +21,8 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	conda install -y -c anaconda pybind11 
 	conda install -y -c conda-forge fftw
 	conda install -y -c anaconda pytables
+	conda install -y -c anaconda cmake
+	conda install -y -c anaconda libxml2
 	export CPATH=$CPATH:$CONDA_PATH/miniconda3/envs/scCloud/include
 	mkdir -p $CONDA_PATH/software
 	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
@@ -29,6 +31,10 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $OLDPWD
 	git clone https://github.com/bli25broad/fishers_exact_test.git $CONDA_PATH/software/fisher_test
 	cd $CONDA_PATH/software/fisher_test
+	pip install .
+	cd $OLDPWD
+	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
+	cd $CONDA_PATH/software/louvain
 	pip install .
 	cd $OLDPWD
 	git clone https://github.com/bli25broad/Multicore-TSNE.git $CONDA_PATH/software/MulticoreTSNE
@@ -86,6 +92,7 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
 	cd $CONDA_PATH/software/louvain
 	pip install .
+	cd $OLDPWD
 	git clone https://github.com/bli25broad/Multicore-TSNE.git $CONDA_PATH/software/MulticoreTSNE
 	cd $CONDA_PATH/software/MulticoreTSNE
 	pip install .
