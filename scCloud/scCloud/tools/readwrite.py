@@ -35,9 +35,14 @@ def read_10x_h5_file(input_h5, genome = None, return_a_dict = False, select_sing
 
 	gdmap = load_10x_h5_file(input_h5, select_singlets = select_singlets) # gdmap , genome-data map
 	if genome is not None: # remove genomes not in the list
-		remove_set = set(gdmap) - set(genome.split(','))
+		requested_genomes = set(genome.split(','))
+		available_genomes = set(gdmap)
+		remove_set = available_genomes - requested_genomes
 		for gname in remove_set:
 			gdmap.pop(gname)
+		for genome in requested_genomes:
+			if genome not in gdmap:
+				raise ValueError('Genome {} does not exist in {}.'.format(genome, ', '.join(available_genomes)))
 
 	results = {}
 	for genome, data in gdmap.items():
