@@ -16,6 +16,7 @@ def plot_qc_violin(data, plot_type, out_file, xattr = 'Channel', hue = None, inn
 
 	tmp_df = data if isinstance(data, pd.core.frame.DataFrame) else data.obs
 	df = (tmp_df[[xattr, yattr]] if hue is None else tmp_df[[xattr, yattr, hue]]).copy()
+	df[xattr] = pd.Categorical(df[xattr].values, categories = natsorted(np.unique(df[xattr].values)))
 	if hue is not None:
 		df[hue] = pd.Categorical(df[hue].values, categories = natsorted(np.unique(df[hue].values)))
 		

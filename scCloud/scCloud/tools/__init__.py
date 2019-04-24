@@ -15,4 +15,5 @@ from .de_analysis import run_de_analysis, write_results_to_excel, collect_stat_a
 from .gradient_boosting import find_markers, run_find_markers
 from .convert_to_parquet import convert_to_parquet, run_conversion
 from .scp_output import run_scp_output, scp_write_coords, scp_write_metadata, scp_write_expression
+from .down_sampling import down_sample
 from .logging import Logging

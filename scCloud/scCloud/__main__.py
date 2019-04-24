@@ -29,6 +29,7 @@ Sub-commands:
     merge_rna_adt           Merge RNA and ADT matrices into one 10x-formatted hdf5 file.
   MISC:
     check_indexes           Check CITE-Seq/hashing indexes to avoid index collision.
+    down_sample             Down sample molecule_info to get raw_feature matrix.
     
 Options:
   -h, --help          Show help information.
