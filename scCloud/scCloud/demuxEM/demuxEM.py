@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 
 
 def estimate_background_probs(adt, random_state = 0):
-	adt.obs['counts'] = adt.X.sum(axis = 1).A1
+	adt.obs['counts'] = adt.X.sum(axis = 1).A1 if adt.shape[1] > 1 else adt.X
 	counts_log10 = np.log10(adt.obs['counts'].values.reshape(-1, 1))
 	kmeans = KMeans(n_clusters = 2, random_state = random_state).fit(counts_log10)
 	signal = 0 if kmeans.cluster_centers_[0] > kmeans.cluster_centers_[1] else 1
@@ -17,7 +17,7 @@ def estimate_background_probs(adt, random_state = 0):
 	adt.obs.loc[kmeans.labels_ == signal, 'hto_type'] = 'signal'
 
 	idx = np.isin(adt.obs['hto_type'], 'background')
-	pvec = adt.X[idx, ].sum(axis = 0).A1
+	pvec = adt.X[idx,].sum(axis = 0).A1 if adt.shape[1] > 1 else np.array(adt.X[idx,].sum())
 	pvec /= pvec.sum()
 
 	adt.uns['background_probs'] = pvec
@@ -100,20 +100,31 @@ def demultiplex(data, adt, min_signal = 10.0, alpha = 0.0, alpha_noise = 1.0, to
 	adt.obs['rna_type'] = 'background'
 	adt.obs.loc[data.obs_names[idx_df], 'rna_type'] = 'signal'
 
-	ncalc = idx_df.sum()
-	if ncalc < data.shape[0]:
-		nzero = data.shape[0] - ncalc
-		print("Warning: {} cells do not have ADTs, percentage = {:.2f}%.".format(nzero, nzero * 100.0 / data.shape[0]))
-	adt_small = adt[data.obs_names[idx_df],].X.toarray()
+	if nsample == 1:
+		print("Warning: detect only one barcode, no need to demultiplex!")
+		data.obsm['raw_probs'] = np.zeros((data.shape[0], nsample + 1))
+		data.obsm['raw_probs'][:, 0] = 1.0
+		data.obsm['raw_probs'][:, 1] = 0.0
+		data.obs['demux_type'] = 'singlet'
+		data.obs['assignment'] = adt.var_names[0]
+	else:
+		if nsample == 2:
+			print("Warning: detect only two barcodes, demultiplexing accuracy might be affected!")
 
-	data.obsm['raw_probs'] = np.zeros((data.shape[0], nsample + 1))
-	data.obsm['raw_probs'][:, nsample] = 1.0
+		ncalc = idx_df.sum()
+		if ncalc < data.shape[0]:
+			nzero = data.shape[0] - ncalc
+			print("Warning: {} cells do not have ADTs, percentage = {:.2f}%.".format(nzero, nzero * 100.0 / data.shape[0]))
+		adt_small = adt[data.obs_names[idx_df],].X.toarray()
 
-	iter_array = [(adt_small[i,], adt.uns['background_probs'], alpha, alpha_noise, tol) for i in range(ncalc)]
-	with multiprocessing.Pool(n_threads) as pool:
-		data.obsm['raw_probs'][idx_df, :] = pool.starmap(estimate_probs, iter_array)
+		data.obsm['raw_probs'] = np.zeros((data.shape[0], nsample + 1))
+		data.obsm['raw_probs'][:, nsample] = 1.0
 
-	calc_demux(data, adt, nsample, min_signal)
+		iter_array = [(adt_small[i,], adt.uns['background_probs'], alpha, alpha_noise, tol) for i in range(ncalc)]
+		with multiprocessing.Pool(n_threads) as pool:
+			data.obsm['raw_probs'][idx_df, :] = pool.starmap(estimate_probs, iter_array)
+
+		calc_demux(data, adt, nsample, min_signal)
 	
 	end = time.time()
 	print("demuxEM.demultiplex is finished. Time spent = {:.2f}s.".format(end - start))
