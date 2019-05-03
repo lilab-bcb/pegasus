@@ -18,6 +18,9 @@ def convert_to_parquet(data, output_name, nthreads):
 	if 'X_tsne' in data.obsm.keys():
 		df['TSNE_X'] = data.obsm['X_tsne'][:, 0]
 		df['TSNE_Y'] = data.obsm['X_tsne'][:, 1]
+	if 'X_fitsne' in data.obsm.keys():
+		df['FITSNE_X'] = data.obsm['X_fitsne'][:, 0]
+		df['FITSNE_Y'] = data.obsm['X_fitsne'][:, 1]
 	if 'X_umap' in data.obsm.keys():
 		df['UMAP_X'] = data.obsm['X_umap'][:, 0]
 		df['UMAP_Y'] = data.obsm['X_umap'][:, 1]
