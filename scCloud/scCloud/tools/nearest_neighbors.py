@@ -1,6 +1,6 @@
 import time
 import numpy as np
-
+import pandas as pd
 
 from scipy.sparse import issparse
 from scipy.stats import entropy
@@ -104,7 +104,7 @@ def calc_kBJSD(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder 
 
 	attr_values = data.obs[attr].values.copy()
 	attr_values.categories = range(nbatch)
-	attr_values = attr_values.astype(int)
+	#attr_values = attr_values.astype(int)
 
 	knn_indices = data.uns[knn_keyword + '_indices'][:, 0 : K - 1]
 	kBJSD_arr = np.array(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
