@@ -33,6 +33,10 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $CONDA_PATH/software/fisher_test
 	pip install .
 	cd $OLDPWD
+	git clone https://github.com/lilab-cbb/anndata.git $CONDA_PATH/software/anndata
+	cd $CONDA_PATH/software/anndata
+	pip install .
+	cd $OLDPWD
 	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
 	cd $CONDA_PATH/software/louvain
 	pip install .
@@ -82,6 +86,10 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $OLDPWD
 	git clone https://github.com/bli25broad/fishers_exact_test.git $CONDA_PATH/software/fisher_test
 	cd $CONDA_PATH/software/fisher_test
+	pip install .
+	cd $OLDPWD
+	git clone https://github.com/lilab-cbb/anndata.git $CONDA_PATH/software/anndata
+	cd $CONDA_PATH/software/anndata
 	pip install .
 	cd $OLDPWD
 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
