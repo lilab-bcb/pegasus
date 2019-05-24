@@ -63,8 +63,8 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 
 	curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 	export CONDA_PATH=/Users/foo
-	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
-	mv Miniconda3-latest-Linux-x86_64.sh $CONDA_PATH/miniconda3
+	bash Miniconda3-latest-MacOSX-x86_64.sh -p $CONDA_PATH/miniconda3
+	mv Miniconda3-latest-MacOSX-x86_64.sh $CONDA_PATH/miniconda3
 	conda create -n scCloud -y pip
 	mkdir -p $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/activate.d
 	mkdir -p $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/deactivate.d
@@ -94,8 +94,8 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $OLDPWD
 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 	brew install gcc
-	sudo ln -s /usr/local/bin/gcc-8 /usr/local/bin/gcc
-	sudo ln -s /usr/local/bin/g++-8 /usr/local/bin/g++
+	sudo ln -s /usr/local/bin/gcc-9 /usr/local/bin/gcc
+	sudo ln -s /usr/local/bin/g++-9 /usr/local/bin/g++
 	export PATH=$CONDA_PATH/miniconda3/envs/scCloud/bin:/usr/local/bin:$PATH
 	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
 	cd $CONDA_PATH/software/louvain
