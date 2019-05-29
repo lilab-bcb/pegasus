@@ -457,7 +457,7 @@ to see the usage information::
 		K neighbors for umap. [default: 15]
 
 	-\\-umap-min-dist <number>
-		Umap parameter. [default: 0.1]
+		Umap parameter. [default: 0.5]
 
 	-\\-umap-spread <spread>
 		Umap parameter. [default: 1.0]
