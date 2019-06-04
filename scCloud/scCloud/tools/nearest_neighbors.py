@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.sparse import issparse
-from scipy.stats import entropy
+from scipy.stats import entropy, chi2
 from sklearn.neighbors import NearestNeighbors
 
 
@@ -110,3 +110,43 @@ def calc_kBJSD(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder 
 	kBJSD_arr = np.array(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
 
 	return kBJSD_arr.mean()
+
+
+def calc_kBET_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist, K):
+	indices = np.append(knn_indices[pos], [pos])
+	df = ideal_dist.size - 1
+
+	observed_counts = pd.Series(attr_values[indices]).value_counts(sort = False).values
+	expected_counts = ideal_dist * K
+	static = np.sum(np.divide(np.square(np.subtract(observed_counts, expected_counts)), expected_counts))
+	p_value = 1 - chi2.cdf(static, df)
+	return (static, p_value)
+
+
+def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder = None):
+	"""
+	This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
+
+	:return:
+		static_mean: average chi-square static over all the data points.
+		pvalue_mean: average p-value over all the data points.
+	"""
+	assert attr in data.obs and data.obs[attr].dtype.name == 'category'
+
+	from joblib import Parallel, delayed
+
+	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
+	nsample = data.shape[0]	
+	nbatch = ideal_dist.size
+
+	attr_values = data.obs[attr].values.copy()
+	attr_values.categories = range(nbatch)
+
+	knn_indices = data.uns[knn_keyword + '_indices'][:, 0 : K - 1]
+	kBET_arr = np.array(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBET_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist, K) for i in range(nsample)))
+
+	res = kBET_arr.mean(axis = 0)
+	static_mean = res[0]
+	pvalue_mean = res[1]
+
+	return (static_mean, pvalue_mean)
