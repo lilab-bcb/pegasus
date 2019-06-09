@@ -48,34 +48,21 @@ def run_pipeline(input_file, output_name, **kwargs):
 		is_raw = True # get submat and then set is_raw to True
 
 	# dimension reduction --- select variable genes or not
-	pca_key = kwargs['pca_key']
 	if is_raw:
-		if kwargs['select_variable_genes']:
-			filter_result = tools.filter_genes_dispersion(adata, kwargs['batch_correction'])
-			adata_c = tools.collect_variable_gene_matrix(adata, filter_result.gene_subset)
-			if kwargs['submat_to_dense']:
-				adata_c.X = adata_c.X.toarray()
-			if kwargs['batch_correction']:
-				tools.correct_batch_effects(adata_c)
-		
-			# dimension reduction
-			if pca_key == 'X_pca':
-				tools.run_pca(adata_c, nPC = kwargs['nPC'], random_state = kwargs['random_state'])
-			else:
-				tools.run_rpca(adata_c, nPC = kwargs['nPC'], random_state = kwargs['random_state'])
-			adata.obsm[pca_key] = adata_c.obsm[pca_key]
-		else:
-			assert pca_key == 'X_rpca'
-			if kwargs['batch_correction']:
-				tools.correct_batch_effects(adata)
-			tools.run_rpca(adata, nPC = kwargs['nPC'], random_state = kwargs['random_state'])
+		if kwargs['select_hvg']:
+			tools.select_highly_variable_genes(adata, kwargs['batch_correction'], flavor = kwargs['hvg_flavor'], n_top = kwargs['hvg_ngenes'])
+		adata_c = tools.collect_highly_variable_gene_matrix(adata) # select hvg matrix and convert to dense
+		if kwargs['batch_correction']:
+			tools.correct_batch_effects(adata_c)
+		tools.run_pca(adata_c, nPC = kwargs['nPC'], random_state = kwargs['random_state'])		
+		adata.obsm['X_pca'] = adata_c.obsm['X_pca']
 	else:
-		assert pca_key in adata.obsm.keys()
+		assert 'X_pca' in adata.obsm.keys()
 
 
 	# diffusion map
 	if is_raw:
-		tools.run_diffmap(adata, pca_key, n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
+		tools.run_diffmap(adata, 'X_pca', n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
 
 		import time
 		start_time = time.time()
@@ -112,17 +99,17 @@ def run_pipeline(input_file, output_name, **kwargs):
 	# visualization
 	if kwargs['run_net_tsne']:
 		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
-		tools.run_net_tsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
+		tools.run_net_tsne(adata, 'X_pca', selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
 		                   polish_learning_frac = kwargs['net_tsne_polish_learing_frac'], polish_n_iter = kwargs['net_tsne_polish_niter'], out_basis = kwargs['net_tsne_basis'])
 
 	if kwargs['run_net_fitsne']:
 		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
-		tools.run_net_fitsne(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
+		tools.run_net_fitsne(adata, 'X_pca', selected, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
 		                   polish_learning_frac = kwargs['net_fitsne_polish_learing_frac'], polish_n_iter = kwargs['net_fitsne_polish_niter'], out_basis = kwargs['net_fitsne_basis'])
 
 	if kwargs['run_net_umap']:
 		selected = tools.select_cells(adata.uns['knn_distances'], kwargs['net_ds_frac'], K = kwargs['net_ds_K'], alpha = kwargs['net_ds_alpha'], random_state = kwargs['random_state'])
-		tools.run_net_umap(adata, pca_key, selected, n_jobs = kwargs['n_jobs'], n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
+		tools.run_net_umap(adata, 'X_pca', selected, n_jobs = kwargs['n_jobs'], n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'], net_alpha = kwargs['net_l2'], \
 		                   ds_full_speed = kwargs['net_ds_full_speed'], polish_learning_rate = kwargs['net_umap_polish_learing_rate'], polish_n_epochs = kwargs['net_umap_polish_nepochs'], out_basis = kwargs['net_umap_basis'])
 
 	if kwargs['run_net_fle']:
@@ -133,13 +120,13 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 
 	if kwargs['run_tsne']:
-		tools.run_tsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
+		tools.run_tsne(adata, 'X_pca', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
 
 	if kwargs['run_fitsne']:
-		tools.run_fitsne(adata, pca_key, n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
+		tools.run_fitsne(adata, 'X_pca', n_jobs = kwargs['n_jobs'], perplexity = kwargs['tsne_perplexity'], random_state = kwargs['random_state'])
 
 	if kwargs['run_umap']:
-		tools.run_umap(adata, pca_key, n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
+		tools.run_umap(adata, 'X_pca', n_neighbors = kwargs['umap_K'], min_dist = kwargs['umap_min_dist'], spread = kwargs['umap_spread'], random_state = kwargs['random_state'])
 
 	if kwargs['run_fle']:
 		tools.run_force_directed_layout(adata, output_name, n_jobs = kwargs['n_jobs'], K = kwargs['fle_K'], target_change_per_node = kwargs['fle_target_change_per_node'], target_steps = kwargs['fle_target_steps'], is3d = kwargs['fle_3D'], random_state = kwargs['random_state'])
@@ -168,10 +155,9 @@ def run_pipeline(input_file, output_name, **kwargs):
 				   'gene_ids' : var_names,
 				   'n_cells' : np.concatenate([adata.var['n_cells'].values, [0] * cdata.shape[1]]),
 				   'percent_cells' : np.concatenate([adata.var['percent_cells'].values, [0.0] * cdata.shape[1]]), 
-				   'robust' : np.concatenate([adata.var['robust'].values, [False] * cdata.shape[1]])
+				   'robust' : np.concatenate([adata.var['robust'].values, [False] * cdata.shape[1]]),
+				   'highly_variable_genes' : np.concatenate([adata.var['highly_variable_genes'].values, [False] * cdata.shape[1]])
 				  })
-		if 'selected' in adata.var:
-			new_data.var['selected'] = np.concatenate([adata.var['selected'].values, [False] * cdata.shape[1]])
 		new_data.obsm['CITE-Seq'] = adt_matrix
 		adata = new_data
 		print("ADT count matrix is attached.")

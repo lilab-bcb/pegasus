@@ -109,6 +109,7 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 	data.var['n_cells'] = data.X.getnnz(axis = 0)
 	data.var['percent_cells'] = data.var['n_cells'] / data.shape[0]
 	data.var['robust'] = data.var['percent_cells'] >= percent_cells
+	data.var['highly_variable_genes'] = data.var['robust'] # default all robust genes are "highly" variable
 
 	if output_filt is not None:
 		idx = data.var['robust'] == False
@@ -159,6 +160,7 @@ def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0
 
 	if max_value is not None:
 		data.X[data.X > max_value] = max_value
+		data.X[data.X < -max_value] = -max_value
 
 	pca = PCA(n_components = nPC, random_state = random_state)
 	X_pca = pca.fit_transform(data.X)	

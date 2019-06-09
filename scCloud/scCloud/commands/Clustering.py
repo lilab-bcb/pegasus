@@ -28,9 +28,6 @@ Options:
   --plot-filtration-figsize <figsize>              Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
   --output-seurat-compatible                       Output seurat-compatible h5ad file. Caution: File size might be large, do not turn this option on for large data sets.
   --output-loom                                    Output loom-formatted file.
-  --correct-batch-effect                           Correct for batch effects.
-  --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
-
   
   --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
@@ -42,14 +39,18 @@ Options:
   --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
-  
+
+  --correct-batch-effect                           Correct for batch effects.
+  --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+
+  --select-hvg-flavor <flavor>                     Highly variable gene selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
+  --select-hvg-ngenes <ngenes>                     Select top <ngenes> highly variable genes if <flavor> is scCloud. [default: 2000]
+  --no-select-hvg                                  Do not select highly variable genes.
+
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
-  --run-uncentered-pca                             Run uncentered PCA.
-  --no-variable-gene-selection                     Do not select variable genes.
-  --no-submat-to-dense                             Do not convert variable-gene-selected submatrix to a dense matrix.
-  --nPC <number>                                   Number of PCs. [default: 50]
+  --nPC <number>                                   Number of principal components. [default: 50]
 
   --nDC <number>                                   Number of diffusion components. [default: 50]
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
@@ -159,8 +160,6 @@ Examples:
 
             'seurat_compatible' : self.args['--output-seurat-compatible'],
             'output_loom' : self.args['--output-loom'],
-            'batch_correction' : self.args['--correct-batch-effect'],
-            'group_attribute' : self.args['--batch-group-by'],
 
             'min_genes' : int(self.args['--min-genes']),
             'max_genes' : int(self.args['--max-genes']),
@@ -173,12 +172,16 @@ Examples:
 
             'norm_count' : float(self.args['--counts-per-cell-after']),
 
+            'batch_correction' : self.args['--correct-batch-effect'],
+            'group_attribute' : self.args['--batch-group-by'],
+
+            'select_hvg' : not self.args['--no-select-hvg'],
+            'hvg_flavor' : self.args['--select-hvg-flavor'],
+            'hvg_ngenes' : int(self.args['--select-hvg-ngenes']),
+
             'random_state' : int(self.args['--random-state']),
             'temp_folder' : self.args['--temp-folder'],
             
-            'pca_key' : 'X_pca' if not self.args['--run-uncentered-pca'] else 'X_rpca',
-            'select_variable_genes' : not self.args['--no-variable-gene-selection'],
-            'submat_to_dense' : not self.args['--no-submat-to-dense'],
             'nPC' : int(self.args['--nPC']),
 
             'nDC' : int(self.args['--nDC']),

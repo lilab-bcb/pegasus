@@ -2,9 +2,14 @@ import time
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
-from scipy.sparse import issparse
-from scipy.stats.mstats import gmean
+from scipy.sparse import issparse, csr_matrix
 from collections import defaultdict
+
+from numba import njit
+from math import sqrt
+
+import skmisc.loess as sl
+
 
 def set_group_attribute(data, attribute_string):
 	if attribute_string is None:
@@ -26,6 +31,15 @@ def set_group_attribute(data, attribute_string):
 		assert attribute_string in data.obs.columns
 		data.obs['Group'] = data.obs[attribute_string]
 
+
+
+def collect_highly_variable_gene_matrix(data):
+	data_c = data[:, data.var['highly_variable_genes']].copy()
+	data_c.X = data_c.X.toarray()
+	return data_c
+
+
+
 def estimate_adjustment_matrices(data):
 	start = time.time()
 
@@ -35,129 +49,63 @@ def estimate_adjustment_matrices(data):
 		return None
 
 	means = np.zeros((data.shape[1], channels.size))
+	partial_sum = np.zeros((data.shape[1], channels.size))
+	ncells = np.zeros(channels.size)
 	stds = np.zeros((data.shape[1], channels.size))
 
 	group_dict = defaultdict(list)
-	is_sparse = issparse(data.X)
+	assert issparse(data.X)
 
 	for i, channel in enumerate(channels):
 		idx = np.isin(data.obs['Channel'], channel)
-		mat = data.X[idx]
+		mat = data.X[idx].astype(np.float64)
 
-		if is_sparse:
-			if mat.shape[0] == 1:
-				means[:, i] = mat.toarray()[0]
-				stds[:, i] = np.zeros(mat.shape[1])
-			else:
-				means[:, i] = mat.mean(axis = 0).A1
-				m2 = mat.power(2).sum(axis = 0).A1
-				stds[:, i] = ((m2 - mat.shape[0] * (means[:, i] ** 2)) / (mat.shape[0] - 1.0)) ** 0.5
+		ncells[i] = mat.shape[0]
+		if ncells[i] == 1:
+			means[:, i] = mat.toarray()[0]
 		else:
-			means[:, i] = np.mean(mat, axis = 0)
-			stds[:, i] = np.std(mat, axis = 0)
-			
+			means[:, i] = mat.mean(axis = 0).A1
+			m2 = mat.power(2).sum(axis = 0).A1
+			partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
+
 		group = data.obs['Group'][idx.nonzero()[0][0]]
 		group_dict[group].append(i)
 
-	stds[stds < 1e-6] = 1e-12 # avoid gmean warning	
+	partial_sum[partial_sum < 1e-6] = 0.0
 
+	overall_means = np.dot(means, ncells) / data.shape[0]
+	batch_adjusted_vars = np.zeros(data.shape[1])
 	groups = data.obs['Group'].unique()
 	for group in groups:
-		gm = np.mean(means[:, group_dict[group]], axis = 1)
-		gs = ma.getdata(gmean(ma.masked_less(stds[:, group_dict[group]], 1e-6), axis = 1))
+		gchannels = group_dict[group]
+		ncell = ncells[gchannels].sum()
+		gm = np.dot(means[:, gchannels], ncells[gchannels]) / ncell
+		gs = partial_sum[:, gchannels].sum(axis = 1) / ncell
 
-		for i in group_dict[group]:
+		if groups.size > 1:
+			batch_adjusted_vars += ncell * ((gm - overall_means) ** 2)
+
+		for i in gchannels:
+			if ncells[i] > 1:
+				stds[:, i] = (partial_sum[:, i] / (ncells[i] - 1.0)) ** 0.5
 			outliers = stds[:, i] < 1e-6
 			normals = np.logical_not(outliers)
 			stds[outliers, i] = 1.0
 			stds[normals, i] = gs[normals] / stds[normals, i]
 			means[:, i] = gm - stds[:, i] * means[:, i]
 
-	means[abs(means) < 1e-6] = 0.0
-	stds[abs(stds - 1.0) < 1e-6] = 1.0
-
 	data.uns['Channels'] = channels
 	data.uns['Groups'] = groups
 	data.varm['means'] = means
 	data.varm['stds'] = stds
 
+	data.var['ba_mean'] = overall_means
+	data.var['ba_var'] = (batch_adjusted_vars + partial_sum.sum(axis = 1)) / (data.shape[0] - 1.0)
+
 	end = time.time()
 	print("batch_correction.estimate_adjustment_matrices is done. Time spent = {:.2f}s.".format(end - start))
 
-def filter_genes_dispersion(data, consider_batch, min_disp=0.5, max_disp=None, min_mean=0.0125, max_mean=7):
-	start = time.time()
 
-	X = data.X[:,data.var['robust'].values].expm1()
-
-	mean = X.mean(axis = 0).A1
-	var = np.zeros(X.shape[1])
-
-	if consider_batch and 'Channels' not in data.uns:
-		print("Warning: Batch correction parameters are not calculated. Switch to not considering batch for variable gene selection.")
-		consider_batch = False
-	
-	if consider_batch:
-		for channel in data.uns['Channels']:
-			mat = X[np.isin(data.obs['Channel'], channel)]
-			if mat.shape[0] == 0:
-				continue
-			m1 = mat.mean(axis = 0).A1
-			m2 = mat.power(2).sum(axis = 0).A1
-			var += m2 - mat.shape[0] * (m1 ** 2)
-
-		if data.uns['Groups'].size > 1:
-			for group in data.uns['Groups']:
-				mat = X[np.isin(data.obs['Group'], group)]
-				if mat.shape[0] == 0:
-					continue
-				var += mat.shape[0] * (mat.mean(axis = 0).A1 - mean) ** 2
-		var /= X.shape[0] - 1 
-	else:
-		m2 = X.power(2).sum(axis = 0).A1
-		var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
-
-	# now actually compute the dispersion
-	mean[mean == 0] = 1e-12  # set entries equal to zero to small value
-	dispersion = var / mean
-
-	dispersion[dispersion == 0] = np.nan
-	dispersion = np.log(dispersion)
-	mean = np.log1p(mean)
-	# all of the following quantities are "per-gene" here
-
-	df = pd.DataFrame({'mean' : mean, 'dispersion' : dispersion, 'mean_bin' : pd.cut(mean, bins=20)})
-	disp_grouped = df.groupby('mean_bin')['dispersion']
-	disp_mean_bin = disp_grouped.mean()
-	disp_std_bin = disp_grouped.std(ddof=1)
-	df['dispersion_norm'] = (df['dispersion'].values  # use values here as index differs
-							 - disp_mean_bin.loc[df['mean_bin']].values) \
-							 / disp_std_bin.loc[df['mean_bin']].values
-	dispersion_norm = df['dispersion_norm'].values.astype('float32')
-	max_disp = np.inf if max_disp is None else max_disp
-	dispersion_norm[np.isnan(dispersion_norm)] = 0  # similar to Seurat
-	gene_subset = np.logical_and.reduce((mean > min_mean, mean < max_mean,
-										 dispersion_norm > min_disp,
-										 dispersion_norm < max_disp))
-
-	end = time.time()
-	print("batch_correction.filter_genes_dispersion done. Time spent = {:.2f}s.".format(end - start))
-	print("{0} genes are selected.".format(gene_subset.sum()))
-
-	return np.rec.fromarrays((gene_subset,
-							  df['mean'].values,
-							  df['dispersion'].values,
-							  df['dispersion_norm'].values.astype('float32', copy=False)),
-							  dtype=[('gene_subset', bool),
-									 ('means', 'float32'),
-									 ('dispersions', 'float32'),
-									 ('dispersions_norm', 'float32')])
-
-def collect_variable_gene_matrix(data, gene_subset):
-	variable_gene_index = np.zeros(data.shape[1], dtype = bool)
-	variable_gene_index[data.var['robust'].values] = gene_subset
-	data.var['selected'] = variable_gene_index
-	data_c = data[:, variable_gene_index].copy()
-	return data_c
 
 def correct_batch_effects(data):
 	start = time.time()
@@ -166,22 +114,89 @@ def correct_batch_effects(data):
 		print("Warning: Batch correction parameters are not calculated. Batch correction skipped!")
 		return None
 
-	if issparse(data.X):
-		for i, channel in enumerate(data.uns['Channels']):
-			idx = np.isin(data.obs['Channel'], channel)
-			if idx.sum() == 0:
-				continue
-			idx = np.repeat(idx, np.diff(data.X.indptr))
-			data.X.data[idx] = data.X.data[idx] * data.varm['stds'][:,i][data.X.indices[idx]] + data.varm['means'][:, i][data.X.indices[idx]]
-		data.X.data[data.X.data < 0.0] = 0.0
-	else:		
-		m = data.shape[1]
-		for i, channel in enumerate(data.uns['Channels']):
-			idx = np.isin(data.obs['Channel'], channel)
-			if idx.sum() == 0:
-				continue
-			data.X[idx] = data.X[idx] * np.reshape(data.varm['stds'][:, i], newshape = (1, m)) + np.reshape(data.varm['means'][:, i], newshape = (1, m))
-		data.X[data.X < 0.0] = 0.0
+	assert not issparse(data.X)
+	m = data.shape[1]
+	for i, channel in enumerate(data.uns['Channels']):
+		idx = np.isin(data.obs['Channel'], channel)
+		if idx.sum() == 0:
+			continue
+		data.X[idx] = data.X[idx] * np.reshape(data.varm['stds'][:, i], newshape = (1, m)) + np.reshape(data.varm['means'][:, i], newshape = (1, m))
+	data.X[data.X < 0.0] = 0.0
 
 	end = time.time()
 	print("batch_correction.correct_batch_effects done. Time spent = {:.2f}s".format(end - start))
+
+
+
+def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top = 2000, span = 0.02, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7):
+	start = time.time()
+
+	if consider_batch and 'Channels' not in data.uns:
+		print("Warning: Batch correction parameters are not calculated. Switch to not considering batch for variable gene selection.")
+		consider_batch = False
+
+
+	robust_idx = data.var['robust'].values
+	hvg_index = np.zeros(robust_idx.sum(), dtype = bool)
+
+	if flavor == 'scCloud':
+		if consider_batch:
+			mean = data.var.loc[robust_idx, 'ba_mean']
+			var = data.var.loc[robust_idx, 'ba_var']
+		else:
+			X = data.X[:, robust_idx]
+			mean = X.mean(axis = 0).A1
+			m2 = X.power(2).sum(axis = 0).A1	
+			var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
+
+		lobj = sl.loess(mean, var, span = span, degree = 2)
+		lobj.fit()
+		delta = var - lobj.outputs.fitted_values
+		hvg_index[np.argsort(delta)[::-1][:n_top]] = True
+	else:
+		assert flavor == 'Seurat'
+		X = data.X[:, robust_idx].expm1()
+		mean = X.mean(axis = 0).A1
+		var = np.zeros(X.shape[1])
+
+		if consider_batch:
+			for channel in data.uns['Channels']:
+				mat = X[np.isin(data.obs['Channel'], channel)]
+				if mat.shape[0] == 0:
+					continue
+				m1 = mat.mean(axis = 0).A1
+				m2 = mat.power(2).sum(axis = 0).A1
+				var += m2 - mat.shape[0] * (m1 ** 2)
+
+			if data.uns['Groups'].size > 1:
+				for group in data.uns['Groups']:
+					mat = X[np.isin(data.obs['Group'], group)]
+					if mat.shape[0] == 0:
+						continue
+					var += mat.shape[0] * ((mat.mean(axis = 0).A1 - mean) ** 2)
+			var /= X.shape[0] - 1.0 
+		else:
+			m2 = X.power(2).sum(axis = 0).A1
+			var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
+
+		dispersion = np.full(X.shape[1], np.nan)
+		idx_valid = (mean > 0.0) & (var > 0.0)
+		dispersion[idx_valid] = var[idx_valid] / mean[idx_valid]
+
+		mean = np.log1p(mean)
+		dispersion = np.log(dispersion)
+
+		df = pd.DataFrame({'log_dispersion' : dispersion, 'bin' : pd.cut(mean, bins = 20)})
+		log_disp_groups = df.groupby('bin')['log_dispersion']
+		log_disp_mean = log_disp_groups.mean()
+		log_disp_std = log_disp_groups.std(ddof = 1)
+		log_disp_zscore = (df['log_dispersion'].values - log_disp_mean.loc[df['bin']].values) / log_disp_std.loc[df['bin']].values
+		log_disp_zscore[np.isnan(log_disp_zscore)] = 0.0
+
+		hvg_index = np.logical_and.reduce((mean > min_mean, mean < max_mean, log_disp_zscore > min_disp, log_disp_zscore < max_disp))
+	
+	data.var.loc[robust_idx, 'highly_variable_genes'] = hvg_index
+
+	end = time.time()
+	print("batch_correction.select_highly_variable_genes done. Time spent = {:.2f}s.".format(end - start))
+	print("{0} genes are selected.".format(data.var['selected'].sum()))

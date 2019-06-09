@@ -20,12 +20,13 @@ Options:
   --correct-batch-effect                           Correct for batch effects for subclustering task.
   --output-loom                                    Output loom-formatted file.
 
+  --select-hvg-flavor <flavor>                     Highly variable gene selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
+  --select-hvg-ngenes <ngenes>                     Select top <ngenes> highly variable genes if <flavor> is scCloud. [default: 2000]
+  --no-select-hvg                                  Do not select highly variable genes.
+
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
-  --run-uncentered-pca                             Run uncentered PCA.
-  --no-variable-gene-selection                     Do not select variable genes.
-  --no-submat-to-dense                             Do not convert variable-gene-selected submatrix to a dense matrix.
   --nPC <number>                                   Number of PCs. [default: 50]
 
   --nDC <number>                                   Number of diffusion components. [default: 50]
@@ -127,16 +128,15 @@ Examples:
             'batch_correction' : self.args['--correct-batch-effect'],
             'output_loom' : self.args['--output-loom'],
 
+            'select_hvg' : not self.args['--no-select-hvg'],
+            'hvg_flavor' : self.args['--select-hvg-flavor'],
+            'hvg_ngenes' : int(self.args['--select-hvg-ngenes']),
+
             'random_state' : int(self.args['--random-state']),
             'temp_folder' : self.args['--temp-folder'],
 
-            'run_dimension_reduction' : True,
-            'pca_key' : 'X_pca' if not self.args['--run-uncentered-pca'] else 'X_rpca',
-            'select_variable_genes' : not self.args['--no-variable-gene-selection'],
-            'submat_to_dense' : not self.args['--no-submat-to-dense'],
             'nPC' : int(self.args['--nPC']),
 
-            'run_diffmap' : True,
             'nDC' : int(self.args['--nDC']),
             'diffmap_alpha' : float(self.args['--diffmap-alpha']),
             'diffmap_K' : int(self.args['--diffmap-K']),
