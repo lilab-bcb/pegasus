@@ -172,28 +172,6 @@ def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0
 	end = time.time()
 	print("PCA is done. Time spent = {:.2f}s.".format(end - start))
 
-def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
-	""" smooth outliers, then no center/scale data """
-	start = time.time()
-
-	# Smooth out outliers
-	means, variances = mean_variance_axis(data.X, axis = 0)
-	stds = np.sqrt(variances * (data.X.shape[0] / (data.X.shape[0] - 1))) # make it unbiased
-	assert (stds == 0.0).sum() == 0
-
-	data_new = (data.X.data - means[data.X.indices]) / stds[data.X.indices]
-	outliers = data_new > max_value
-	data.X.data[outliers] = max_value * stds[data.X.indices[outliers]] + means[data.X.indices[outliers]]
-
-	if scale:
-		data.X.data /= stds[data.X.indices]
-
-	U, S, VT = randomized_svd(data.X, n_components = nPC, random_state = random_state)
-	data.obsm['X_rpca'] = U * S
-
-	end = time.time()
-	print("RPCA is done. Time spent = {:.2f}s.".format(end - start))
-
 def parse_subset_selections(subset_selections):	
 	subsets_dict = {}
 	for subset_str in subset_selections:
@@ -235,3 +213,29 @@ def get_anndata_for_subclustering(data, subset_selections):
 	print("{0} cells are selected.".format(newdata.shape[0]))
 	
 	return newdata
+
+
+
+
+# def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
+# 	""" smooth outliers, then no center/scale data """
+# 	start = time.time()
+
+# 	# Smooth out outliers
+# 	means, variances = mean_variance_axis(data.X, axis = 0)
+# 	stds = np.sqrt(variances * (data.X.shape[0] / (data.X.shape[0] - 1))) # make it unbiased
+# 	assert (stds == 0.0).sum() == 0
+
+# 	data_new = (data.X.data - means[data.X.indices]) / stds[data.X.indices]
+# 	outliers = data_new > max_value
+# 	data.X.data[outliers] = max_value * stds[data.X.indices[outliers]] + means[data.X.indices[outliers]]
+
+# 	if scale:
+# 		data.X.data /= stds[data.X.indices]
+
+# 	U, S, VT = randomized_svd(data.X, n_components = nPC, random_state = random_state)
+# 	data.obsm['X_rpca'] = U * S
+
+# 	end = time.time()
+# 	print("RPCA is done. Time spent = {:.2f}s.".format(end - start))
+
