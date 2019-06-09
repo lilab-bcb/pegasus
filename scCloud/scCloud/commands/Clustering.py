@@ -91,7 +91,7 @@ Options:
 
   --run-umap                                       Run umap for visualization.
   --umap-K <K>                                     K neighbors for umap. [default: 15]
-  --umap-min-dist <number>                         Umap parameter. [default: 0.1]
+  --umap-min-dist <number>                         Umap parameter. [default: 0.5]
   --umap-spread <spread>                           Umap parameter. [default: 1.0]
 
   --run-fle                                        Run force-directed layout embedding.
