@@ -31,7 +31,8 @@ requires = ['anndata==0.6.4',
 			'fitsne',
 			'pyarrow',
 			'lightgbm',
-			'joblib'
+			'joblib',
+			'scikit-misc'
 		  ]
 
 setup(
