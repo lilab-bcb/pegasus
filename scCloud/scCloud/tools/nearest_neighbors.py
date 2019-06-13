@@ -87,13 +87,13 @@ def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 0):
 
 def calc_kBET_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist, K):
 	indices = np.append(knn_indices[pos], [pos])
-	df = ideal_dist.size - 1
+	dof = ideal_dist.size - 1
 
 	observed_counts = pd.Series(attr_values[indices]).value_counts(sort = False).values
 	expected_counts = ideal_dist * K
-	static = np.sum(np.divide(np.square(np.subtract(observed_counts, expected_counts)), expected_counts))
-	p_value = 1 - chi2.cdf(static, df)
-	return (static, p_value)
+	stat = np.sum(np.divide(np.square(np.subtract(observed_counts, expected_counts)), expected_counts))
+	p_value = 1 - chi2.cdf(stat, dof)
+	return (stat, p_value)
 
 
 def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder = None):
@@ -101,7 +101,7 @@ def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder =
 	This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
 
 	:return:
-		static_mean: average chi-square static over all the data points.
+		stat_mean: average chi-square statistic over all the data points.
 		pvalue_mean: average p-value over all the data points.
 	"""
 	assert attr in data.obs and data.obs[attr].dtype.name == 'category'
@@ -119,10 +119,10 @@ def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder =
 	kBET_arr = np.array(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBET_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist, K) for i in range(nsample)))
 
 	res = kBET_arr.mean(axis = 0)
-	static_mean = res[0]
+	stat_mean = res[0]
 	pvalue_mean = res[1]
 
-	return (static_mean, pvalue_mean)
+	return (stat_mean, pvalue_mean)
 
 
 

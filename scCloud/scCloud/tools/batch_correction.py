@@ -199,4 +199,4 @@ def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top
 
 	end = time.time()
 	print("batch_correction.select_highly_variable_genes done. Time spent = {:.2f}s.".format(end - start))
-	print("{0} genes are selected.".format(data.var['selected'].sum()))
+	print("{0} genes are selected.".format(data.var['highly_variable_genes'].sum()))
