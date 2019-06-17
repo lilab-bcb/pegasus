@@ -66,11 +66,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 		import time
 		start_time = time.time()
-
-		indices, distances = tools.calculate_nearest_neighbors(adata.obsm['X_diffmap'], kwargs['n_jobs'], K = kwargs['diffmap_K'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
-		adata.uns['diffmap_knn_indices'] = indices
-		adata.uns['diffmap_knn_distances'] = distances
-		
+		tools.get_kNN(adata, 'X_diffmap', kwargs['diffmap_K'], n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
 		end_time = time.time()
 		print("KNN for diffusion components is finished. Time spent = {:.2f}s.".format(end_time - start_time))
 
@@ -78,6 +74,12 @@ def run_pipeline(input_file, output_name, **kwargs):
 	else:
 		assert 'X_diffmap' in adata.obsm.keys()
 
+	# calculate kBET
+	if kwargs['kBET']:
+		stat_mean, pvalue_mean, accept_rate = tools.calc_kBET(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], alpha = kwargs['kBET_alpha'], n_jobs = kwargs['n_jobs'])
+		print("kBET stat_mean = {:.2f}, pvalue_mean = {:.4f}, accept_rate = {:.2%}.".format(stat_mean, pvalue_mean, accept_rate))
+		if kwargs['kBJSD']:
+			print("kBJSD mean = {:.4f}".format(tools.calc_kBJSD(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], n_jobs = kwargs['n_jobs'])))
 
 	# clustering
 	if kwargs['run_approx_louvain']:

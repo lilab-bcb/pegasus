@@ -9,7 +9,7 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import euclidean_distances
 
-from . import calculate_nearest_neighbors
+from . import get_kNN
 
 
 
@@ -104,13 +104,10 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', r
 	return Phi_pt, S #, U_df, W_norm
 
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, knn_method = 'hnsw', eigen_solver = 'randomized', M = 20, efC = 200, efS = 200, full_speed = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, eigen_solver = 'randomized', full_speed = False):
 	start = time.time()
 
-	indices, distances = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, method = knn_method, \
-		K = K, M = M, efC = efC, efS = efS, random_state = random_state, full_speed = full_speed)
-	data.uns['knn_indices'] = indices
-	data.uns['knn_distances'] = distances
+	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
 	W = calculate_affinity_matrix(indices, distances)
 
 	Phi_pt, S = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)

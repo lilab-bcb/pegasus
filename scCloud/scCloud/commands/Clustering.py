@@ -52,6 +52,12 @@ Options:
 
   --nPC <number>                                   Number of principal components. [default: 50]
 
+  --kBET                                           Calculate kBET.
+  --kBET-batch <batch>                             kBET batch keyword.
+  --kBET-alpha <alpha>                             kBET rejection alpha. [default: 0.05]
+  --kBET-K <K>                                     kBET K. [default: 25]
+  --kBJSD                                          Calculate kBJSD.
+
   --nDC <number>                                   Number of diffusion components. [default: 50]
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
   --diffmap-K <K>                                  Number of neighbors used for constructing affinity matrix. [default: 100]
@@ -183,6 +189,12 @@ Examples:
             'temp_folder' : self.args['--temp-folder'],
             
             'nPC' : int(self.args['--nPC']),
+
+            'kBET' : self.args['--kBET'],
+            'kBET_batch' : self.args['--kBET-batch'],
+            'kBET_alpha' : float(self.args['--kBET-alpha']),
+            'kBET_K': int(self.args['--kBET-K']),
+            'kBJSD' : self.args['--kBJSD'],
 
             'nDC' : int(self.args['--nDC']),
             'diffmap_alpha' : float(self.args['--diffmap-alpha']),

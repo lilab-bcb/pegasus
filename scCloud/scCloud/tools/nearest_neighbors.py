@@ -9,7 +9,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', K = 100, M = 20, efC = 200, efS = 200, random_state = 0, full_speed = False):
-	"""X is the sample by feature matrix, could be either dense or sparse"""
+	"""X is the sample by feature matrix"""
 
 	start_time = time.time()
 
@@ -52,7 +52,31 @@ def calculate_nearest_neighbors(X, num_threads, method = 'hnsw', K = 100, M = 20
 	end_time = time.time()
 	print("Nearest neighbor search is finished in {:.2f}s.".format(end_time - start_time))
 
-	return (indices, distances)
+	return indices, distances
+
+
+def get_kNN(data, rep_key, K, n_jobs = 1, random_state = 0, full_speed = False):
+	indices_key = 'knn_indices'
+	distances_key = 'knn_distances'
+	if rep_key != 'X_pca':
+		indices_key = rep_key[2:] + '_' + indices_key
+		distances_key = rep_key[2:] + '_' + distances_key
+
+	indices = distances = None
+	need_calc = True
+	if indices_key in data.uns:
+		exist_K = data.uns[indices_key].shape[1] + 1
+		if K <= exist_K:
+			indices = data.uns[indices_key]
+			distances = data.uns[distances_key]
+			need_calc = False
+
+	if need_calc:
+		indices, distances = calculate_nearest_neighbors(data.obsm[rep_key], n_jobs, K = K, random_state = random_state, full_speed = full_speed)
+		data.uns[indices_key] = indices
+		data.uns[distances_key] = distances
+
+	return indices, distances
 
 
 
@@ -96,7 +120,7 @@ def calc_kBET_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist, K):
 	return (stat, p_value)
 
 
-def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder = None):
+def calc_kBET(data, attr, rep_key = 'X_pca', K = 25, alpha = 0.05, n_jobs = 1, random_state = 0, temp_folder = None):
 	"""
 	This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
 
@@ -104,7 +128,9 @@ def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder =
 		stat_mean: average chi-square statistic over all the data points.
 		pvalue_mean: average p-value over all the data points.
 	"""
-	assert attr in data.obs and data.obs[attr].dtype.name == 'category'
+	assert attr in data.obs
+	if data.obs[attr].dtype.name != 'category':
+		data.obs[attr] = pd.Categorical(data.obs[attr])
 
 	from joblib import Parallel, delayed
 
@@ -115,41 +141,46 @@ def calc_kBET(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder =
 	attr_values = data.obs[attr].values.copy()
 	attr_values.categories = range(nbatch)
 
-	knn_indices = data.uns[knn_keyword + '_indices'][:, 0 : K - 1]
-	kBET_arr = np.array(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBET_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist, K) for i in range(nsample)))
+	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
+	knn_indices = indices[:, 0 : K - 1]
+	kBET_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBET_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist, K) for i in range(nsample)))
 
 	res = kBET_arr.mean(axis = 0)
 	stat_mean = res[0]
 	pvalue_mean = res[1]
+	accept_rate = (kBET_arr[:, 1] >= alpha).sum() / nsample
 
-	return (stat_mean, pvalue_mean)
+	return (stat_mean, pvalue_mean, accept_rate)
 
 
 
+def calc_JSD(P, Q):
+	M = (P + Q) / 2
+	return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
 
-# def calc_JSD(P, Q):
-# 	M = (P + Q) / 2
-# 	return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
 
-# def calc_kBJSD_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist):
-# 	idx = np.append(knn_indices[pos], [pos])
-# 	empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
-# 	return calc_JSD(ideal_dist, empirical_dist)
+def calc_kBJSD_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist):
+	idx = np.append(knn_indices[pos], [pos])
+	empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
+	return calc_JSD(ideal_dist, empirical_dist)
 
-# def calc_kBJSD(data, attr, knn_keyword = 'knn', K = 25, n_jobs = 1, temp_folder = None):
-# 	assert attr in data.obs and data.obs[attr].dtype.name == 'category'
 
-# 	from joblib import Parallel, delayed
+def calc_kBJSD(data, attr, rep_key = 'X_pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
+	assert attr in data.obs
+	if data.obs[attr].dtype.name != 'category':
+		data.obs[attr] = pd.Categorical(data.obs[attr])
 
-# 	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
-# 	nsample = data.shape[0]	
-# 	nbatch = ideal_dist.size
+	from joblib import Parallel, delayed
 
-# 	attr_values = data.obs[attr].values.copy()
-# 	attr_values.categories = range(nbatch)
-# 	#attr_values = attr_values.astype(int)
+	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
+	nsample = data.shape[0]	
+	nbatch = ideal_dist.size
 
-# 	knn_indices = data.uns[knn_keyword + '_indices'][:, 0 : K - 1]
-# 	kBJSD_arr = np.array(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
+	attr_values = data.obs[attr].values.copy()
+	attr_values.categories = range(nbatch)
 
-# 	return kBJSD_arr.mean()
+	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
+	knn_indices = indices[:, 0 : K - 1]
+	kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
+
+	return kBJSD_arr.mean()

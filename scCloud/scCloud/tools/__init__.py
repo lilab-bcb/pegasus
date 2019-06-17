@@ -5,7 +5,7 @@ from .manage_10x_h5_matrices import load_10x_h5_file, load_dropseq_file, write_1
 from .readwrite import read_input, write_output
 from .preprocessing import update_var_names, filter_data, log_norm, run_pca, get_anndata_for_subclustering, filter_cells_cite_seq
 from .batch_correction import select_highly_variable_genes, set_group_attribute, collect_highly_variable_gene_matrix, estimate_adjustment_matrices, correct_batch_effects
-from .nearest_neighbors import calculate_nearest_neighbors, select_cells, calc_kBET
+from .nearest_neighbors import calculate_nearest_neighbors, get_kNN, select_cells, calc_kBET, calc_kBJSD
 from .diffusion_map import run_diffmap, run_pseudotime_calculation, calculate_affinity_matrix, calculate_normalized_affinity, reduce_diffmap_to_3d
 from .graph_operations import construct_graph
 from .clustering import run_louvain, run_leiden, run_approximated_louvain, run_approximated_leiden
