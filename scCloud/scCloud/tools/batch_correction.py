@@ -9,7 +9,7 @@ from numba import njit
 from math import sqrt
 
 import skmisc.loess as sl
-
+from scCloud.plotting import plot_hvg
 
 def set_group_attribute(data, attribute_string):
 	if attribute_string is None:
@@ -128,7 +128,7 @@ def correct_batch_effects(data):
 
 
 
-def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top = 2000, span = 0.02, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7):
+def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top = 2000, span = 0.02, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7, plot_hvg_fig = None):
 	start = time.time()
 
 	if consider_batch and 'Channels' not in data.uns:
@@ -151,8 +151,22 @@ def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top
 
 		lobj = sl.loess(mean, var, span = span, degree = 2)
 		lobj.fit()
+		
+		rank1 = np.zeros(hvg_index.size, dtype = int)
+		rank2 = np.zeros(hvg_index.size, dtype = int)
+
 		delta = var - lobj.outputs.fitted_values
-		hvg_index[np.argsort(delta)[::-1][:n_top]] = True
+		fc = var / lobj.outputs.fitted_values
+
+		rank1[np.argsort(delta)[::-1]] = range(hvg_index.size)
+		rank2[np.argsort(fc)[::-1]] = range(hvg_index.size)
+		rank = rank1 + rank2
+
+		hvg_index[np.argsort(rank)[:n_top]] = True
+
+		if plot_hvg_fig is not None:
+			plot_hvg(mean, var, lobj.outputs.fitted_values, hvg_index, plot_hvg_fig + '.hvg.pdf')
+
 	else:
 		assert flavor == 'Seurat'
 		X = data.X[:, robust_idx].expm1()

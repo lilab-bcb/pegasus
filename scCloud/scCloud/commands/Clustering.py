@@ -46,6 +46,7 @@ Options:
   --select-hvg-flavor <flavor>                     Highly variable gene selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
   --select-hvg-ngenes <ngenes>                     Select top <ngenes> highly variable genes if <flavor> is scCloud. [default: 2000]
   --no-select-hvg                                  Do not select highly variable genes.
+  --plot-hvg                                       Plot highly variable gene selection.
 
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
@@ -142,6 +143,7 @@ Outputs:
   output_name.filt.gene.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel.
   output_name.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel.
   output_name.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
+  output_name.hvg.pdf              Optional output. Only exists if '--plot-hvg' is set. This file contains a scatter plot describing the highly variable gene selection procedure.
   output_name.loom                 Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
@@ -184,6 +186,7 @@ Examples:
             'select_hvg' : not self.args['--no-select-hvg'],
             'hvg_flavor' : self.args['--select-hvg-flavor'],
             'hvg_ngenes' : int(self.args['--select-hvg-ngenes']),
+            'plot_hvg' : self.args['<output_name>'] if self.args['--plot-hvg'] else None,
 
             'random_state' : int(self.args['--random-state']),
             'temp_folder' : self.args['--temp-folder'],

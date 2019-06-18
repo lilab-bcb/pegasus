@@ -152,7 +152,7 @@ def plot_composition(data, cluster, attr, style = 'frequency', stacked = True, l
 	ax.grid(False)
 	ax.set_xlabel('Cluster ID')
 	ax.set_ylabel('Percentage' if style != 'count' else 'Count')
-	ax.set_title("AMI = {0:.4f}".format(adjusted_mutual_info_score(data.obs.loc[selected, cluster], data.obs.loc[selected, attr])))
+	ax.set_title("AMI = {0:.4f}".format(adjusted_mutual_info_score(data.obs.loc[selected, cluster], data.obs.loc[selected, attr], average_method = 'arithmetic')))
 	ax.legend(loc = 'center left', bbox_to_anchor = (1.05, 0.5))
 
 	return fig
