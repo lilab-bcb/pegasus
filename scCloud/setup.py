@@ -32,7 +32,9 @@ requires = ['anndata==0.6.4',
 			'pyarrow',
 			'lightgbm',
 			'joblib',
-			'scikit-misc'
+			'scikit-misc',
+			'holoviews',
+			'hvplot'
 		  ]
 
 setup(
