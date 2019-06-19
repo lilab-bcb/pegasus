@@ -162,6 +162,9 @@ def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top
 		rank2[np.argsort(fc)[::-1]] = range(hvg_index.size)
 		rank = rank1 + rank2
 
+		data.var['hvg_rank'] = -1
+		data.var.loc[robust_idx, 'hvg_rank'] = rank
+
 		hvg_index[np.argsort(rank)[:n_top]] = True
 
 		if plot_hvg_fig is not None:
