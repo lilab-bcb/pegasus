@@ -50,7 +50,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 	# dimension reduction --- select variable genes or not
 	if is_raw:
 		if kwargs['select_hvg']:
-			tools.select_highly_variable_genes(adata, kwargs['batch_correction'], flavor = kwargs['hvg_flavor'], n_top = kwargs['hvg_ngenes'], plot_hvg_fig = kwargs['plot_hvg'])
+			tools.select_highly_variable_genes(adata, kwargs['batch_correction'], flavor = kwargs['hvg_flavor'], n_top = kwargs['hvg_ngenes'], plot_hvg_fig = kwargs['plot_hvg'], n_jobs = kwargs['n_jobs'])
 		adata_c = tools.collect_highly_variable_gene_matrix(adata) # select hvg matrix and convert to dense
 		if kwargs['batch_correction']:
 			tools.correct_batch_effects(adata_c)
