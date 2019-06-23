@@ -12,6 +12,7 @@ from scCloud.plotting import plot_hvg
 
 def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg_fig = None):
 	robust_idx = data.var['robust'].values
+	hvg_index = np.zeros(robust_idx.sum(), dtype = bool)
 
 	if consider_batch:
 		mean = data.var.loc[robust_idx, 'ba_mean']
@@ -31,8 +32,6 @@ def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg
 	delta = var - lobj.outputs.fitted_values
 	fc = var / lobj.outputs.fitted_values
 
-	hvg_index = np.zeros(robust_idx.sum(), dtype = bool)
-
 	rank1[np.argsort(delta)[::-1]] = range(hvg_index.size)
 	rank2[np.argsort(fc)[::-1]] = range(hvg_index.size)
 	hvg_rank = rank1 + rank2
@@ -48,7 +47,7 @@ def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg
 
 
 def select_hvg_seurat_single(X, n_top = None, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7):
-	# X = X.copy().expm1()
+	X = X.copy().expm1()
 	mean = X.mean(axis = 0).A1
 	m2 = X.power(2).sum(axis = 0).A1
 	var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
@@ -101,7 +100,7 @@ def select_hvg_seurat_multi(X, channels, cell2channel, n_top, n_jobs = 1):
 
 def select_hvg_seurat(data, consider_batch, n_top = 2000, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7, n_jobs = 1):
 	robust_idx = data.var['robust'].values
-	X = data.X[:, robust_idx].expm1()
+	X = data.X[:, robust_idx]
 
 	hvg_rank = select_hvg_seurat_multi(X, data.uns['Channels'], data.obs['Channel'], n_top, n_jobs = n_jobs) if consider_batch \
 		  else select_hvg_seurat_single(X, n_top = n_top, min_disp = min_disp, max_disp = max_disp, min_mean = min_mean, max_mean = max_mean)

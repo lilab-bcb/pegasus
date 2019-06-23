@@ -95,7 +95,7 @@
 					"comment" : ""
 				},
 				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
+					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
 					"weight" : 0.1,
 					"comment" : "MHC II"
 				}
@@ -131,9 +131,9 @@
 					"comment" : "not monocyte"
 				},
 				{
-					"genes" : ["FCGR3A+", "FCGR3B+"],
+					"genes" : ["FCGR3A+"],
 					"weight" : 0.05,
-					"comment" : "CD16"
+					"comment" : "CD16a"
 				},
 				{
 					"genes" : ["ITGAL+", "ITGAM+"],
@@ -144,7 +144,7 @@
 		},
 
 		{
-			"name" : "Monocyte",
+			"name" : "CD14+ Monocyte",
 			"markers" : [
 				{
 					"genes" : ["VCAN+"],
@@ -163,55 +163,36 @@
 				},
 				{
 					"genes" : ["CD14+"],
-					"weight" : 0.08,
+					"weight" : 0.16,
 					"comment" : "marker for CD14+ monocyte"
 				},
 				{
-					"genes" : ["FCGR3A+", "FCGR3B+"],
-					"weight" : 0.08,
-					"comment" : "markers for CD16+ monocyte"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
-					"weight" : 0.1,
+					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
+					"weight" : 0.2,
 					"comment" : "MHC II"
+				}
+			]
+		},
+
+		{
+			"name" : "CD16+ Monocyte",
+			"markers" : [
+				{
+					"genes" : ["FCGR3A+"],
+					"weight" : 0.2,
+					"comment" : "CD16a, key marker"
 				},
 				{
-					"genes" : ["ITGAL+", "ITGAM+", "CSF3R+", "CSF1R+", "CX3CR1+"],
-					"weight" : 0.1,
-					"comment" : "other non-specific markers"
-				}				
-			],
-			"subtypes" : {
-				"title" : "Monocyte subtype markers",
-				"cell_types" : [
-					{
-						"name" : "CD14+ Monocyte",
-						"markers" : [
-							{
-								"genes" : ["CD14+"],
-								"weight" : 0.5,
-								"comment" : "positive marker"
-							},
-							{
-								"genes" : ["FCGR3A-", "FCGR3B-"],
-								"weight" : 0.5,
-								"comment" : "negative markers"
-							}
-						]
-					},
-					{
-						"name" : "CD16+ Monocyte",
-						"markers" : [
-							{
-								"genes" : ["FCGR3A+", "FCGR3B+"],
-								"weight" : 1.0,
-								"comment" : "CD16"
-							}
-						]
-					}
-				]
-			}
+					"genes" : ["ASAH1+", "MS4A7+", "IFITM2+", "IFITM3+"],
+					"weight" : 0.6,
+					"comment" : "important markers from Chloe et al Science 2017 paper"
+				},
+				{
+					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
+					"weight" : 0.2,
+					"comment" : "MHC II"
+				}
+			]
 		},
 
 		{
