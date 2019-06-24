@@ -137,21 +137,6 @@
 								"comments" : "marker for memory B cell"
 							}
 						]
-					},
-					{
-						"name" : "Naive B cell",
-						"markers" : [
-							{
-								"genes" : ["IGHD+"],
-								"weight" : 0.5,
-								"comment" : "mature B cell marker"
-							},
-							{
-								"genes" : ["CD27-"],
-								"weight" : 0.5,
-								"comment" : "not memory B cell"
-							}
- 						]
 					}
 				]
 			}
@@ -329,7 +314,7 @@
 					"genes" : ["MS4A1-"],
 					"weight" : 0.2,
 					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
-				},				
+				}				
 			]
 		},
 
