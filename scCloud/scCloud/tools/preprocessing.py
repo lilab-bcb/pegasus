@@ -109,7 +109,9 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 	data.var['n_cells'] = data.X.getnnz(axis = 0)
 	data.var['percent_cells'] = data.var['n_cells'] / data.shape[0]
 	data.var['robust'] = data.var['percent_cells'] >= percent_cells
+
 	data.var['highly_variable_genes'] = data.var['robust'] # default all robust genes are "highly" variable
+	data.var['hvg_rank'] = -1 # default all ranks are -1
 
 	if output_filt is not None:
 		idx = data.var['robust'] == False
