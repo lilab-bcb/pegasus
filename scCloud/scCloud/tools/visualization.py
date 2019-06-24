@@ -86,7 +86,7 @@ def run_fitsne(data, rep_key, n_jobs, n_components = 2, perplexity = 30, early_e
 	print("FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.1, spread = 1.0, random_state = 0, out_basis = 'umap'):
+def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.5, spread = 1.0, random_state = 0, out_basis = 'umap'):
 	start = time.time()
 	assert 'knn_indices' in data.uns
 	knn_indices = np.insert(data.uns['knn_indices'][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis = 1)
