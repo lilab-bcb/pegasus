@@ -77,29 +77,84 @@
 			"markers" : [
 				{
 					"genes" : ["CD19+"],
-					"weight" : 0.18
+					"weight" : 0.17
 				},
 				{
 					"genes" : ["MS4A1+"],
-					"weight" : 0.18,
+					"weight" : 0.12,
 					"comment" : "CD20"
 				},
 				{
 					"genes" : ["CD79A+", "CD79B+"],
-					"weight" : 0.36,
+					"weight" : 0.34,
 					"comment" : "CD79"
 				},
 				{
 					"genes" : ["MZB1+"],
-					"weight" : 0.18,
+					"weight" : 0.17,
 					"comment" : ""
 				},
 				{
 					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
-					"weight" : 0.1,
+					"weight" : 0.2,
 					"comment" : "MHC II"
 				}
-			]
+			],
+			"subtypes" : {
+				"title" : "B cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Pro B cell",
+						"markers" : [
+							{
+								"genes" : ["CD34+"],
+								"weight" : 1.0,
+								"comment" : "Stemness"
+							}
+						]
+					},
+					{
+						"name" : "Pre B cell",
+						"markers" : [
+							{
+								"genes" : ["IGLL1+"],
+								"weight" : 0.5,
+								"comment" : "Surrogate light chain gene"
+							},
+							{
+								"genes" : ["CD34-"],
+								"weight" : 0.5,
+								"comment" : "No CD34 expression"
+							}
+						]
+					},
+					{
+						"name" : "Memory B cell",
+						"markers" : [
+							{
+								"genes" : ["CD27+"],
+								"weight" : 1.0,
+								"comments" : "marker for memory B cell"
+							}
+						]
+					},
+					{
+						"name" : "Naive B cell",
+						"markers" : [
+							{
+								"genes" : ["IGHD+"],
+								"weight" : 0.5,
+								"comment" : "mature B cell marker"
+							},
+							{
+								"genes" : ["CD27-"],
+								"weight" : 0.5,
+								"comment" : "not memory B cell"
+							}
+ 						]
+					}
+				]
+			}
 		},
 
 		{
@@ -126,18 +181,13 @@
 					"comment" : "not T cell"
 				},
 				{
-					"genes" : ["CD14-"],
-					"weight" : 0.1,
-					"comment" : "not monocyte"
-				},
-				{
 					"genes" : ["FCGR3A+"],
-					"weight" : 0.05,
+					"weight" : 0.1,
 					"comment" : "CD16a"
 				},
 				{
 					"genes" : ["ITGAL+", "ITGAM+"],
-					"weight" : 0.05,
+					"weight" : 0.1,
 					"comment" : "CD11a,CD11b"
 				}
 			]
@@ -199,38 +249,18 @@
 			"name" : "Conventional dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["HLA-DPB1+", "HLA-DPA1+", "HLA-DQA1+"],
+					"genes" : ["HLA-DPA1+", "HLA-DPB1+", "HLA-DQA1+", "HLA-DQB1+"],
 					"weight" : 0.4,
 					"comment" : "key markers"
 				},
 				{
-					"genes" : ["ITGAX+"],
-					"weight" : 0.1,
-					"comment" : "CD11c"
+					"genes" : ["FCER1A+", "CLEC10A+"],
+					"weight" : 0.4,
+					"comment" : "key markers 2"
 				},
 				{
-					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
-					"weight" : 0.1,
-					"comment" : "not T cell"
-				},
-				{
-					"genes" : ["NCAM1-"],
-					"weight" : 0.1,
-					"comment" : "not NK cell"
-				},
-				{
-					"genes" : ["CD19-"],
-					"weight" : 0.1,
-					"comment" : "not B cell"
-				},				
-				{
-					"genes" : ["CD14-"],
-					"weight" : 0.1,
-					"comment" : "not monocyte"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
-					"weight" : 0.1,
+					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
+					"weight" : 0.2,
 					"comment" : "MHC II"
 				}				
 			],
@@ -241,7 +271,7 @@
 						"name" : "CD1C+ cDC",
 						"markers" : [
 							{
-								"genes" : ["CD1C+", "CD1E+", "FCER1A+", "CLEC10A+", "FCGR2B+"],
+								"genes" : ["CD1C+"],
 								"weight" : 1.0,
 								"comment" : "CD1C"
  							}
@@ -251,7 +281,7 @@
 						"name" : "CD141+ cDC",
 						"markers" : [
 							{
-								"genes" : ["THBD+", "CLEC9A+", "CADM1+", "XCR1+"],
+								"genes" : ["THBD+"],
 								"weight" : 1.0,
 								"comment" : "CD141"
  							}
@@ -265,38 +295,13 @@
 			"name" : "Plasmacytoid dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["IL3RA+", "GZMB+", "JCHAIN+", "IRF7+", "TCF4+", "LILRA4+", "CLEC4C+"],
-					"weight" : 0.4,
+					"genes" : ["JCHAIN+", "LILRA4+", "GZMB+", "MZB1+", "IL3RA+", "SERPINF1+", "ITM2C+", "IRF7+"],
+					"weight" : 0.8,
 					"comment" : "important pDC markers"
 				},
 				{
-					"genes" : ["ITGAX-"],
-					"weight" : 0.1,
-					"comment" : "CD11c, not cDC"
-				},
-				{
-					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
-					"weight" : 0.1,
-					"comment" : "not T cell"
-				},
-				{
-					"genes" : ["NCAM1-"],
-					"weight" : 0.1,
-					"comment" : "not NK cell"
-				},
-				{
-					"genes" : ["CD19-"],
-					"weight" : 0.1,
-					"comment" : "not B cell"
-				},				
-				{
-					"genes" : ["CD14-"],
-					"weight" : 0.1,
-					"comment" : "not monocyte"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+", "HLA-DRB3+", "HLA-DRB4+", "HLA-DRB5+"],
-					"weight" : 0.1,
+					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
+					"weight" : 0.2,
 					"comment" : "MHC II"
 				}
 			]
@@ -306,25 +311,25 @@
 			"name" : "Plasma cell",
 			"markers" : [
 				{
-					"genes" : ["CD38+", "XBP1+"],
+					"genes" : ["CD38+", "XBP1+", "CD27+", "SLAMF7+"],
 					"weight" : 0.4,
 					"comment" : "important markers"
 				},
 				{
-					"genes" : ["CD27+", "SLAMF7+"],
-					"weight" : 0.3,
-					"comment" : "so so markers"
+					"genes" : ["TNFRSF17+", "TNFRSF13B+"],
+					"weight" : 0.2,
+					"comment" : "TNF-receptor superfamily"
 				},
 				{
-					"genes" : ["CD19-", "MS4A1-"],
+					"genes" : ["IGHA1+", "IGHG1+"],
 					"weight" : 0.2,
-					"comment" : "not B cell"
-				},				
+					"comment" : "class switching happened"
+				},
 				{
-					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
-					"weight" : 0.1,
-					"comment" : "not T cell"
-				}
+					"genes" : ["MS4A1-"],
+					"weight" : 0.2,
+					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
+				},				
 			]
 		},
 
