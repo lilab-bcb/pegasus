@@ -6,7 +6,7 @@ class CITESeq(Base):
 Merge RNA and ADT matrices for CITE-Seq data.
 
 Usage:
-  scCloud merge_rna_adt <input_raw_gene_bc_matrices_h5.h5> <input_adt_csv_file> <output_10x.h5>
+  scCloud merge_rna_adt [options] <input_raw_gene_bc_matrices_h5.h5> <input_adt_csv_file> <output_10x.h5>
   scCloud merge_rna_adt -h
 
 Arguments:
