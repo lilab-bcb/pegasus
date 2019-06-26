@@ -22,16 +22,19 @@ def load_antibody_csv(input_csv, antibody_control_csv):
 	adt_matrix = np.stack(stacks, axis = 1).astype(float)
 	antibody_names = np.array([x.encode() for x in antibody_names])
 
-	series = pd.read_csv(antibody_control_csv, header = 0, index_col = 0, squeeze = True)
-	idx = np.zeros(len(antibody_names), dtype = bool)
-	for antibody, control in series.iteritems():
-		pos_a = antibody_to_pos[antibody]
-		pos_c = antibody_to_pos[control]
-		idx[pos_a] = True
-		# convert to log expression
-		adt_matrix[:, pos_a] = np.maximum(np.log(adt_matrix[:, pos_a] + 1.0) - np.log(adt_matrix[:, pos_c] + 1.0), 0.0)
-	adt_matrix = adt_matrix[:, idx]
-	antibody_names = antibody_names[idx]
+	if antibody_control_csv is None:
+		adt_matrix = np.log(adt_matrix + 1.0)
+	else:
+		series = pd.read_csv(antibody_control_csv, header = 0, index_col = 0, squeeze = True)
+		idx = np.zeros(len(antibody_names), dtype = bool)
+		for antibody, control in series.iteritems():
+			pos_a = antibody_to_pos[antibody]
+			pos_c = antibody_to_pos[control]
+			idx[pos_a] = True
+			# convert to log expression
+			adt_matrix[:, pos_a] = np.maximum(np.log(adt_matrix[:, pos_a] + 1.0) - np.log(adt_matrix[:, pos_c] + 1.0), 0.0)
+		adt_matrix = adt_matrix[:, idx]
+		antibody_names = antibody_names[idx]
 
 	channel = {"barcodes" : barcodes, "antibody_names" : antibody_names, "matrix" : csr_matrix(adt_matrix)}
 	return channel
