@@ -1320,7 +1320,7 @@ Type::
 to see the usage information::
 
 	Usage:
-		scCloud merge_rna_adt <input_raw_gene_bc_matrices_h5.h5> <input_adt_csv_file> <antibody_control_csv> <output_10x.h5>
+		scCloud merge_rna_adt <input_raw_gene_bc_matrices_h5.h5> <input_adt_csv_file> <output_10x.h5>
 		scCloud merge_rna_adt -h
 
 * Arguments:
@@ -1331,13 +1331,13 @@ to see the usage information::
 	input_adt_csv_file
 		Input ADT (antibody tag) count matrix in CSV format.
 
-	antibody_control_csv
-		A CSV file containing the IgG control information for each antibody.
-
 	output_10x.h5
 		Merged output file in 10x hdf5 format.
 
 * Options:
+
+	\--antibody-control-csv <antibody_control_csv_file>
+		A CSV file containing the IgG control information for each antibody.
 
 	\-h, -\\-help
 		Print out help information.
@@ -1349,7 +1349,8 @@ to see the usage information::
 
 * Examples::
 
-	scCloud merge_rna_adt example_raw_h5.h5 example_adt.csv antibody_control.csv example_merged_raw_10x.h5
+	scCloud merge_rna_adt example_raw_h5.h5 example_adt.csv example_merged_raw_10x.h5
+	scCloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5 example_adt.csv example_merged_raw_10x.h5
 
 
 ---------------------------------
