@@ -78,8 +78,8 @@ def run_pipeline(input_file, output_name, **kwargs):
 	if kwargs['kBET']:
 		stat_mean, pvalue_mean, accept_rate = tools.calc_kBET(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], alpha = kwargs['kBET_alpha'], n_jobs = kwargs['n_jobs'])
 		print("kBET stat_mean = {:.2f}, pvalue_mean = {:.4f}, accept_rate = {:.2%}.".format(stat_mean, pvalue_mean, accept_rate))
-		if kwargs['kBJSD']:
-			print("kBJSD mean = {:.4f}".format(tools.calc_kBJSD(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], n_jobs = kwargs['n_jobs'])))
+		# if kwargs['kBJSD']:
+		# 	print("kBJSD mean = {:.4f}".format(tools.calc_kBJSD(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], n_jobs = kwargs['n_jobs'])))
 
 	# clustering
 	if kwargs['run_approx_louvain']:

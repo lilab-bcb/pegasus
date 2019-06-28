@@ -109,15 +109,20 @@ def select_cells(distances, frac, K = 25, alpha = 1.0, random_state = 0):
 
 
 
-def calc_kBET_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist, K):
-	indices = np.append(knn_indices[pos], [pos])
+def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
 	dof = ideal_dist.size - 1
 
-	observed_counts = pd.Series(attr_values[indices]).value_counts(sort = False).values
-	expected_counts = ideal_dist * K
-	stat = np.sum(np.divide(np.square(np.subtract(observed_counts, expected_counts)), expected_counts))
-	p_value = 1 - chi2.cdf(stat, dof)
-	return (stat, p_value)
+	ns = knn_indices.shape[0]
+	results = np.zeros((ns, 2))
+	for i in range(ns):
+		observed_counts = pd.Series(attr_values[knn_indices[i,:]]).value_counts(sort = False).values
+		expected_counts = ideal_dist * K
+		stat = np.sum(np.divide(np.square(np.subtract(observed_counts, expected_counts)), expected_counts))
+		p_value = 1 - chi2.cdf(stat, dof)
+		results[i, 0] = stat
+		results[i, 1] = p_value
+
+	return results
 
 
 def calc_kBET(data, attr, rep_key = 'X_pca', K = 25, alpha = 0.05, n_jobs = 1, random_state = 0, temp_folder = None):
@@ -135,15 +140,25 @@ def calc_kBET(data, attr, rep_key = 'X_pca', K = 25, alpha = 0.05, n_jobs = 1, r
 	from joblib import Parallel, delayed
 
 	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
-	nsample = data.shape[0]	
+	nsample = data.shape[0]
 	nbatch = ideal_dist.size
 
 	attr_values = data.obs[attr].values.copy()
 	attr_values.categories = range(nbatch)
 
 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
-	knn_indices = indices[:, 0 : K - 1]
-	kBET_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBET_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist, K) for i in range(nsample)))
+	knn_indices = np.concatenate((np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis = 1) # add query as 1-nn
+
+	# partition into chunks
+	if nsample < n_jobs:
+		n_jobs = nsample
+	starts = np.zeros(n_jobs + 1, dtype = int)
+	quotient = nsample // n_jobs
+	remainder = nsample % n_jobs
+	for i in range(n_jobs):
+		starts[i + 1] = starts[i] + quotient + (1 if i < remainder else 0)
+
+	kBET_arr = np.concatenate(Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBET_for_one_chunk)(knn_indices[starts[i]:starts[i + 1], :], attr_values, ideal_dist, K) for i in range(n_jobs)))
 
 	res = kBET_arr.mean(axis = 0)
 	stat_mean = res[0]
@@ -154,33 +169,53 @@ def calc_kBET(data, attr, rep_key = 'X_pca', K = 25, alpha = 0.05, n_jobs = 1, r
 
 
 
-def calc_JSD(P, Q):
-	M = (P + Q) / 2
-	return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
-
-
-def calc_kBJSD_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist):
-	idx = np.append(knn_indices[pos], [pos])
-	empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
-	return calc_JSD(ideal_dist, empirical_dist)
-
-
-def calc_kBJSD(data, attr, rep_key = 'X_pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
+def calc_kSIM(data, attr, rep_key = 'X_pca', K = 25, min_rate = 0.9, n_jobs = 1, random_state = 0):
+	"""
+	This kSIM metric measures if attr are not diffused too much
+	"""
 	assert attr in data.obs
-	if data.obs[attr].dtype.name != 'category':
-		data.obs[attr] = pd.Categorical(data.obs[attr])
-
-	from joblib import Parallel, delayed
-
-	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
-	nsample = data.shape[0]	
-	nbatch = ideal_dist.size
-
-	attr_values = data.obs[attr].values.copy()
-	attr_values.categories = range(nbatch)
+	nsample = data.shape[0]
 
 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
-	knn_indices = indices[:, 0 : K - 1]
-	kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
+	knn_indices = np.concatenate((np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis = 1) # add query as 1-nn
 
-	return kBJSD_arr.mean()
+	labels = np.reshape(data.obs[attr].values[knn_indices.ravel()], (-1, K))
+	same_labs = labels == labels[:, 0].reshape(-1, 1)
+	correct_rates = same_labs.sum(axis = 1) / K
+
+	kSIM_mean = correct_rates.mean()
+	kSIM_accept_rate = (correct_rates >= min_rate).sum() / nsample
+
+	return (kSIM_mean, kSIM_accept_rate)
+
+
+# def calc_JSD(P, Q):
+# 	M = (P + Q) / 2
+# 	return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
+
+
+# def calc_kBJSD_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist):
+# 	idx = np.append(knn_indices[pos], [pos])
+# 	empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
+# 	return calc_JSD(ideal_dist, empirical_dist)
+
+
+# def calc_kBJSD(data, attr, rep_key = 'X_pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
+# 	assert attr in data.obs
+# 	if data.obs[attr].dtype.name != 'category':
+# 		data.obs[attr] = pd.Categorical(data.obs[attr])
+
+# 	from joblib import Parallel, delayed
+
+# 	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
+# 	nsample = data.shape[0]	
+# 	nbatch = ideal_dist.size
+
+# 	attr_values = data.obs[attr].values.copy()
+# 	attr_values.categories = range(nbatch)
+
+# 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
+# 	knn_indices = indices[:, 0 : K - 1]
+# 	kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
+
+# 	return kBJSD_arr.mean()
