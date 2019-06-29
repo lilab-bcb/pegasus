@@ -3,6 +3,9 @@ import numpy as np
 import numpy.ma as ma
 import pandas as pd
 
+from scipy.sparse import issparse
+from collections import defaultdict
+
 from joblib import Parallel, delayed
 
 import skmisc.loess as sl
@@ -10,11 +13,58 @@ from scCloud.plotting import plot_hvg
 
 
 
+def calc_ba_mean_and_var(data):
+	assert ('Channels' in data.uns) and ('Groups' in data.uns)
+	assert issparse(data.X)
+
+	channels = data.uns['Channels']
+	group_dict = defaultdict(list)
+
+	means = np.zeros((data.shape[1], channels.size))
+	partial_sum = np.zeros((data.shape[1], channels.size))
+	ncells = np.zeros(channels.size)
+
+	for i, channel in enumerate(channels):
+		idx = np.isin(data.obs['Channel'], channel)
+		mat = data.X[idx].astype(np.float64)
+
+		ncells[i] = mat.shape[0]
+		if ncells[i] > 0:
+			if ncells[i] == 1:
+				means[:, i] = mat.toarray()[0]
+			else:
+				means[:, i] = mat.mean(axis = 0).A1
+				m2 = mat.power(2).sum(axis = 0).A1
+				partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
+
+			group = data.obs['Group'][idx.nonzero()[0][0]]
+			group_dict[group].append(i)
+
+	partial_sum[partial_sum < 1e-6] = 0.0
+
+	overall_means = np.dot(means, ncells) / data.shape[0]
+	batch_adjusted_vars = np.zeros(data.shape[1])
+
+	groups = data.uns['Groups']
+	for group in groups:
+		gchannels = group_dict[group]
+		ncell = ncells[gchannels].sum()
+		gm = np.dot(means[:, gchannels], ncells[gchannels]) / ncell
+
+		if groups.size > 1:
+			batch_adjusted_vars += ncell * ((gm - overall_means) ** 2)
+
+	data.var['ba_mean'] = overall_means
+	data.var['ba_var'] = (batch_adjusted_vars + partial_sum.sum(axis = 1)) / (data.shape[0] - 1.0)
+
+
 def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg_fig = None):
 	robust_idx = data.var['robust'].values
 	hvg_index = np.zeros(robust_idx.sum(), dtype = bool)
 
 	if consider_batch:
+		if ('ba_mean' not in data.var) or ('ba_var' not in data.var):
+			calc_ba_mean_and_var(data)			
 		mean = data.var.loc[robust_idx, 'ba_mean']
 		var = data.var.loc[robust_idx, 'ba_var']
 	else:

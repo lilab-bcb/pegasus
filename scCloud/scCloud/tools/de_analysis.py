@@ -11,7 +11,7 @@ import xlsxwriter
 from natsort import natsorted
 from joblib import Parallel, delayed
 
-from . import read_input
+from . import read_input, non_de_attrs
 
 
 
@@ -379,7 +379,7 @@ def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fi
 	end = time.time()
 	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
 
-	non_de = [x for x in ['gene_ids', 'n_cells', 'percent_cells', 'robust', 'highly_variable_genes'] if x in data.var]
+	non_de = [x for x in non_de_attrs if x in data.var]
 	de_results = [data.var[non_de]]
 
 	print("Begin t_test.")

@@ -75,7 +75,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		assert 'X_diffmap' in adata.obsm.keys()
 
 	# calculate kBET
-	if kwargs['kBET']:
+	if ('kBET' in kwargs) and kwargs['kBET']:
 		stat_mean, pvalue_mean, accept_rate = tools.calc_kBET(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], alpha = kwargs['kBET_alpha'], n_jobs = kwargs['n_jobs'])
 		print("kBET stat_mean = {:.2f}, pvalue_mean = {:.4f}, accept_rate = {:.2%}.".format(stat_mean, pvalue_mean, accept_rate))
 		# if kwargs['kBJSD']:
