@@ -4,6 +4,9 @@ import pandas as pd
 from joblib import Parallel, delayed
 from natsort import natsorted
 
+import ctypes
+import ctypes.util
+
 import louvain
 import leidenalg
 from sklearn.cluster import KMeans
@@ -62,16 +65,28 @@ def run_leiden(data, affinity = 'W', partition_type = 'RBC', resolution = 1.3, n
 
 
 def set_numpy_thread_to_one():
-	import ctypes
-	import ctypes.util
+	library_type = None
+	library_obj = None
+	previous_num = None
+
 	mkl_loc = ctypes.util.find_library('mkl_rt')
 	if mkl_loc is not None:
 		mkl_lib = ctypes.cdll.LoadLibrary(mkl_loc)
+
+		library_type = 'mkl'
+		library_obj = mkl_lib
+		previous_num = mkl_lib.mkl_get_max_threads()
+
 		mkl_lib.mkl_set_num_threads(ctypes.byref(ctypes.c_int(1)))
 	else:		
 		openblas_loc = ctypes.util.find_library('openblas')		
 		if openblas_loc is not None:
 			openblas_lib = ctypes.cdll.LoadLibrary(openblas_loc)
+
+			library_type = 'openblas'
+			library_obj = openblas_lib
+			previous_num = openblas_lib.openblas_get_num_threads()
+
 			openblas_lib.openblas_set_num_threads(1)
 		else:
 			import os
@@ -82,13 +97,30 @@ def set_numpy_thread_to_one():
 				part2 = ':' + os.environ['LD_LIBRARY_PATH'] if 'LD_LIBRARY_PATH' in os.environ else ''
 				os.environ['LD_LIBRARY_PATH'] = path + part2
 				openblas_lib = ctypes.cdll.LoadLibrary(openblas_loc)
+
+				library_type = 'openblas'
+				library_obj = openblas_lib
+				previous_num = openblas_lib.openblas_get_num_threads()
+
 				openblas_lib.openblas_set_num_threads(1)
 
+	return library_type, library_obj, previous_num
+
+
+def recover_numpy_thread(library_type, library_obj, value):
+	if library_type == 'mkl':
+		library_obj.mkl_set_num_threads(ctypes.byref(ctypes.c_int(value)))
+	elif library_type == 'openblas':
+		library_obj.openblas_set_num_threads(value)
+
+
 def run_one_instance_of_kmeans(n_clusters, X, seed):
-	set_numpy_thread_to_one()
+	library_type, library_obj, value = set_numpy_thread_to_one()
 	km = KMeans(n_clusters = n_clusters, n_init = 1, n_jobs = 1, random_state = seed)
 	km.fit(X)
+	recover_numpy_thread(library_type, library_obj, value)
 	return km.labels_
+
 
 def run_multiple_kmeans(data, rep_key, n_jobs, n_clusters, n_init, random_state, temp_folder):
 	start = time.time()
@@ -97,7 +129,7 @@ def run_multiple_kmeans(data, rep_key, n_jobs, n_clusters, n_init, random_state,
 
 	np.random.seed(random_state)
 	seeds = np.random.randint(np.iinfo(np.int32).max, size = n_init)
-	results = Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(run_one_instance_of_kmeans)(n_clusters, X, seed) for seed in seeds)
+	results = Parallel(n_jobs = n_jobs, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(run_one_instance_of_kmeans)(n_clusters, X, seed) for seed in seeds) # Note that if n_jobs == 1, joblib will not fork a new process.
 
 	labels = list(zip(*results))
 	uniqs = np.unique(labels, axis = 0)
