@@ -67,7 +67,7 @@ def calculate_normalized_affinity(W):
 	return W_norm, diag, diag_half
 
 
-def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, random_state = 0):
+def calculate_diffusion_map(W, n_dc = 50, alpha = 0.5, random_state = 0):
 	assert issparse(W)
 
 	start = time.time()
@@ -101,7 +101,7 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, random_state = 0):
 	return Phi_pt, S #, U_df, W_norm
 
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, full_speed = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 50, alpha = 0.5, K = 100, random_state = 0, full_speed = False):
 	start = time.time()
 
 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
