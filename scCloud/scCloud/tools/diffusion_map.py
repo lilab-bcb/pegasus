@@ -5,7 +5,6 @@ import pandas as pd
 from scipy.sparse import issparse, csr_matrix
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
-from sklearn.utils.extmath import randomized_svd
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import euclidean_distances
 
@@ -68,7 +67,7 @@ def calculate_normalized_affinity(W):
 	return W_norm, diag, diag_half
 
 
-def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', random_state = 0):
+def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, random_state = 0):
 	assert issparse(W)
 
 	start = time.time()
@@ -80,13 +79,11 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', r
 	W_norm, diag, diag_half = calculate_normalized_affinity(W)
 	print("Calculating normalized affinity matrix is done.")
 
-	if solver == 'randomized':
-		U, S, VT = randomized_svd(W_norm, n_components = n_dc, random_state = random_state)
-	else:
-		assert solver == 'eigsh'
-		S, U = eigsh(W_norm, k = n_dc)
-		S = S[::-1]
-		U = U[:, ::-1]
+	np.random.seed(random_state)
+	v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
+	S, U = eigsh(W_norm, k = n_dc, v0 = v0)
+	S = S[::-1]
+	U = U[:, ::-1]
 
 	# remove the first eigen value and vector
 	S = S[1:]
@@ -104,13 +101,13 @@ def calculate_diffusion_map(W, n_dc = 100, alpha = 0.5, solver = 'randomized', r
 	return Phi_pt, S #, U_df, W_norm
 
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, eigen_solver = 'randomized', full_speed = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 100, alpha = 0.5, K = 100, random_state = 0, full_speed = False):
 	start = time.time()
 
 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
 	W = calculate_affinity_matrix(indices, distances)
 
-	Phi_pt, S = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = eigen_solver, random_state = random_state)
+	Phi_pt, S = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, random_state = random_state)
 
 	data.uns['W'] = W
 	data.obsm['X_diffmap'] = Phi_pt
