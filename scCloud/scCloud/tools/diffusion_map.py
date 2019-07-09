@@ -81,43 +81,45 @@ def calculate_diffusion_map(W, n_dc = 50, alpha = 0.5, solver = 'eigsh', random_
 	W_norm, diag, diag_half = calculate_normalized_affinity(W)
 	print("Calculating normalized affinity matrix is done.")
 
-	if solver == 'eigsh':
+	if solver == 'randomized':
+		U, S, VT = randomized_svd(W_norm, n_components = n_dc, random_state = random_state)
+		signs = np.sign((U * VT.transpose()).sum(axis = 0)) # get eigenvalue signs
+		Lambda = signs * S # get eigenvalues 
+	else:
+		assert solver == 'eigsh'
 		np.random.seed(random_state)
 		v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
-		S, U = eigsh(W_norm, k = n_dc, v0 = v0)
-		S = S[::-1]
+		Lambda, U = eigsh(W_norm, k = n_dc, v0 = v0)
+		Lambda = Lambda[::-1]
 		U = U[:, ::-1]
-	else:
-		assert solver == 'randomized'
-		U, S, VT = randomized_svd(W_norm, n_components = n_dc, random_state = random_state)
-
+		
 	# remove the first eigen value and vector
-	S = S[1:]
+	Lambda = Lambda[1:]
 	U = U[:, 1:]
 
 	Phi = U / diag_half[:, np.newaxis]
-	S_new = S / (1 - alpha * S)
+	Lambda_new = Lambda / (1 - alpha * Lambda)
 
-	# U_df = U * S #symmetric diffusion component
-	Phi_pt = Phi * S_new #asym pseudo component
+	# U_df = U * Lambda #symmetric diffusion component
+	Phi_pt = Phi * Lambda_new #asym pseudo component
 
 	end = time.time()
 	print("Calculating diffusion map is done.")
 
-	return Phi_pt, S #, U_df, W_norm
+	return Phi_pt, Lambda #, U_df, W_norm
 
 
-def run_diffmap(data, rep_key, n_jobs = 1, n_components = 50, alpha = 0.5, K = 100, solver = 'eigsh', random_state = 0, full_speed = False):
+def run_diffmap(data, rep_key, n_jobs = 1, n_components = 50, alpha = 0.5, K = 100, solver = 'randomized', random_state = 0, full_speed = False):
 	start = time.time()
 
 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
 	W = calculate_affinity_matrix(indices, distances)
 
-	Phi_pt, S = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = solver, random_state = random_state)
+	Phi_pt, Lambda = calculate_diffusion_map(W, n_dc = n_components, alpha = alpha, solver = solver, random_state = random_state)
 
 	data.uns['W'] = W
 	data.obsm['X_diffmap'] = Phi_pt
-	data.uns['diffmap_evals'] = S
+	data.uns['diffmap_evals'] = Lambda
 	# data.uns['W_norm'] = W_norm
 	# data.obsm['X_dmnorm'] = U_df
 

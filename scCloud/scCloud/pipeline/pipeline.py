@@ -62,7 +62,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# diffusion map
 	if is_raw:
-		tools.run_diffmap(adata, 'X_pca', n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], solver = kwargs['solver'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
+		tools.run_diffmap(adata, 'X_pca', n_jobs = kwargs['n_jobs'], n_components = kwargs['nDC'], alpha = kwargs['diffmap_alpha'], K = kwargs['diffmap_K'], solver = kwargs['diffmap_solver'], random_state = kwargs['random_state'], full_speed = kwargs['diffmap_full_speed'])
 
 		import time
 		start_time = time.time()
