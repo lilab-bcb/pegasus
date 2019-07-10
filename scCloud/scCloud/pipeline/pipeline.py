@@ -94,7 +94,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		tools.run_louvain(adata, affinity = kwargs['louvain_affinity'], resolution = kwargs['louvain_resolution'], random_state = kwargs['random_state'], class_label = kwargs['louvain_class_label'])
 
 	if kwargs['run_leiden']:
-		tools.run_leiden(adata, affinity = kwargs['leiden_affinity'], resolution = kwargs['leiden_resolution'], random_state = kwargs['random_state'], class_label = kwargs['leiden_class_label'])
+		tools.run_leiden(adata, affinity = kwargs['leiden_affinity'], resolution = kwargs['leiden_resolution'], n_iter = kwargs['leiden_niter'], random_state = kwargs['random_state'], class_label = kwargs['leiden_class_label'])
 
 
 

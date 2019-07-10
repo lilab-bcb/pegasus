@@ -74,6 +74,7 @@ Options:
   --run-leiden                                     Run leiden clustering algorithm.
   --leiden-resolution <resolution>                 Resolution parameter for the leiden clustering algorithm. [default: 1.3]
   --leiden-affinity <affinity>                     Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+  --leiden-niter <niter>                           Number of iterations of running the Leiden algorithm. If <niter> is negative, run Leiden iteratively until no improvement. [default: -1]
   --leiden-class-label <label>                     Leiden cluster label name in AnnData. [default: leiden_labels]
 
   --run-approximated-louvain                       Run approximated louvain clustering algorithm.
@@ -212,6 +213,7 @@ Examples:
             'run_leiden' : self.args['--run-leiden'],
             'leiden_resolution' : float(self.args['--leiden-resolution']),
             'leiden_affinity' : self.args['--leiden-affinity'],
+            'leiden_niter' : int(self.args['--leiden-niter']),
             'leiden_class_label' : self.args['--leiden-class-label'],
 
             'run_approx_louvain' : self.args['--run-approximated-louvain'],

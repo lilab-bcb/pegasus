@@ -41,7 +41,7 @@ def run_louvain(data, affinity = 'W', partition_type = 'RBC', resolution = 1.3, 
 	print("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_leiden(data, affinity = 'W', partition_type = 'RBC', resolution = 1.3, n_iter = 2, random_state = 0, class_label = 'leiden_labels'):
+def run_leiden(data, affinity = 'W', partition_type = 'RBC', resolution = 1.3, n_iter = -1, random_state = 0, class_label = 'leiden_labels'):
 	start = time.time()
 
 	W = None
