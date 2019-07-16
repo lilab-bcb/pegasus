@@ -45,6 +45,7 @@ Options:
 
   --select-hvg-flavor <flavor>                     Highly variable gene selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
   --select-hvg-ngenes <ngenes>                     Select top <ngenes> highly variable genes. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
+  --benchmark-time                                 This option is used for benchmarking time, will calculate mean and variance even if they are calculated in batch correction.
   --no-select-hvg                                  Do not select highly variable genes.
   --plot-hvg                                       Plot highly variable gene selection.
 
@@ -187,6 +188,7 @@ Examples:
             'select_hvg' : not self.args['--no-select-hvg'],
             'hvg_flavor' : self.args['--select-hvg-flavor'],
             'hvg_ngenes' : int(self.args['--select-hvg-ngenes']) if self.args['--select-hvg-ngenes'] != 'None' else None,
+            'benchmark_time' : self.args['--benchmark-time'],
             'plot_hvg' : self.args['<output_name>'] if self.args['--plot-hvg'] else None,
 
             'random_state' : int(self.args['--random-state']),

@@ -58,12 +58,12 @@ def calc_ba_mean_and_var(data):
 	data.var['ba_var'] = (batch_adjusted_vars + partial_sum.sum(axis = 1)) / (data.shape[0] - 1.0)
 
 
-def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg_fig = None):
+def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg_fig = None, benchmark_time = False):
 	robust_idx = data.var['robust'].values
 	hvg_index = np.zeros(robust_idx.sum(), dtype = bool)
 
 	if consider_batch:
-		if ('ba_mean' not in data.var) or ('ba_var' not in data.var):
+		if benchmark_time or ('ba_mean' not in data.var) or ('ba_var' not in data.var):
 			calc_ba_mean_and_var(data)			
 		mean = data.var.loc[robust_idx, 'ba_mean']
 		var = data.var.loc[robust_idx, 'ba_var']
@@ -162,7 +162,7 @@ def select_hvg_seurat(data, consider_batch, n_top = 2000, min_disp = 0.5, max_di
 
 
 
-def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top = 2000, span = 0.02, plot_hvg_fig = None, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7, n_jobs = 1):
+def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top = 2000, span = 0.02, plot_hvg_fig = None, min_disp = 0.5, max_disp = np.inf, min_mean = 0.0125, max_mean = 7, n_jobs = 1, benchmark_time = False):
 	start = time.time()
 
 	if consider_batch and 'Channels' not in data.uns:
@@ -170,7 +170,7 @@ def select_highly_variable_genes(data, consider_batch, flavor = 'scCloud', n_top
 		consider_batch = False
 
 	if flavor == 'scCloud':
-		select_hvg_scCloud(data, consider_batch, n_top = n_top, span = span, plot_hvg_fig = plot_hvg_fig)
+		select_hvg_scCloud(data, consider_batch, n_top = n_top, span = span, plot_hvg_fig = plot_hvg_fig, benchmark_time = benchmark_time)
 	else:
 		assert flavor == 'Seurat'
 		select_hvg_seurat(data, consider_batch, n_top = n_top, min_disp = min_disp, max_disp = max_disp, min_mean = min_mean, max_mean = max_mean, n_jobs = n_jobs)
