@@ -1,7 +1,7 @@
 import numpy as np
 import anndata
 from scipy.sparse import csr_matrix, hstack
-from scCloud import tools, cite_seq
+from scCloud_temp import tools, cite_seq
 
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']

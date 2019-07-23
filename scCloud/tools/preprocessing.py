@@ -94,7 +94,7 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 		df_plot_after.reset_index(drop = True, inplace = True)
 		df_plot_after['status'] = 'filtered'
 		df_plot = pd.concat((df_plot_before, df_plot_after), axis = 0)
-		from scCloud.plotting import plot_qc_violin
+		from scCloud_temp.plotting import plot_qc_violin
 		figsize = None
 		if plot_filt_figsize is not None:
 			width, height = plot_filt_figsize.split(',')

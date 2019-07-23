@@ -9,7 +9,7 @@ from collections import defaultdict
 from joblib import Parallel, delayed
 
 import skmisc.loess as sl
-from scCloud.plotting import plot_hvg
+from scCloud_temp.plotting import plot_hvg
 
 
 
