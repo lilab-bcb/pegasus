@@ -1,7 +1,7 @@
 import time
 import pkg_resources
 
-from scCloud_temp.tools import read_input
+from scCloud.tools import read_input
 from . import annotate_cluster
 
 def run_annotate_cluster(input_file, output_file, threshold, ignoreNA = False, json_file = "human"):

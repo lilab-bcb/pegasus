@@ -1,6 +1,6 @@
 import time
 import re
-import numpy as np 
+import numpy as np
 import pandas as pd
 import xlsxwriter
 from collections import Counter
@@ -22,14 +22,14 @@ def update_var_names(data):
 		data.var_names = pd.Index([prefix.sub('', x) for x in data.var_names])
 
 	gsyms = data.var_names.values
-	
+
 	dup_ids = Counter()
 	for i in range(gsyms.size):
 		idn = dup_ids[gsyms[i]]
 		dup_ids[gsyms[i]] += 1
 		if idn > 0:
 			gsyms[i] = gsyms[i] + ".{}".format(idn)
-	
+
 	data.var_names = pd.Index(gsyms)
 
 	end = time.time()
@@ -68,8 +68,8 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 		df_plot_before.reset_index(drop = True, inplace = True)
 		df_plot_before['status'] = 'original'
 
-	# Filter cells		
-	obs_index = np.logical_and.reduce((data.obs['n_genes'] >= min_genes, 
+	# Filter cells
+	obs_index = np.logical_and.reduce((data.obs['n_genes'] >= min_genes,
 									   data.obs['n_genes'] < max_genes,
 									   data.obs['n_counts'] >= min_umis,
 									   data.obs['n_counts'] < max_umis,
@@ -94,7 +94,7 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 		df_plot_after.reset_index(drop = True, inplace = True)
 		df_plot_after['status'] = 'filtered'
 		df_plot = pd.concat((df_plot_before, df_plot_after), axis = 0)
-		from scCloud_temp.plotting import plot_qc_violin
+		from scCloud.plotting import plot_qc_violin
 		figsize = None
 		if plot_filt_figsize is not None:
 			width, height = plot_filt_figsize.split(',')
@@ -130,6 +130,7 @@ def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = 
 
 
 def filter_cells_cite_seq(data, max_cells):
+	assert issparse(data.X)
 	data.obs['n_counts'] = data.X.sum(axis = 1).A1
 	obs_index = np.zeros(data.shape[0], dtype = bool)
 	obs_index[np.argsort(data.obs['n_counts'].values)[::-1][:max_cells]] = True
@@ -164,7 +165,7 @@ def run_pca(data, standardize = True, max_value = 10, nPC = 50, random_state = 0
 		data.X[data.X < -max_value] = -max_value
 
 	pca = PCA(n_components = nPC, random_state = random_state)
-	X_pca = pca.fit_transform(data.X)	
+	X_pca = pca.fit_transform(data.X)
 	data.obsm['X_pca'] = X_pca
 	data.varm['PCs'] = pca.components_.T
 	data.uns['pca'] = {}

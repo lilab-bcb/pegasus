@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from . import estimate_background_probs, demultiplex
-from scCloud_temp.tools import read_input
+from scCloud.tools import read_input
 
 
 def down_sampling(data_gt, adt_gt, probs, n_threads = 1):
@@ -11,13 +11,13 @@ def down_sampling(data_gt, adt_gt, probs, n_threads = 1):
 
 	nsample = data_gt.shape[0]
 	nhto = adt_gt.X.sum()
-	
-	fracs = []	
+
+	fracs = []
 	accuracy = []
-	for p in probs:		
+	for p in probs:
 		data = data_gt.copy()
 		adt = adt_gt.copy()
-		
+
 		adt.X.data = f(adt.X.data, p)
 		idx = adt.X.sum(axis = 1).A1 > 0
 		adt = adt[idx, ].copy()

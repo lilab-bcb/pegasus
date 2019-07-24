@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as pl
 
-from scCloud_temp.tools import read_input
+from scCloud.tools import read_input
 from .plot_utils import transform_basis
 from .plot_qc import plot_qc_violin
 from . import plot_library, iplot_library

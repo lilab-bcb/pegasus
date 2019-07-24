@@ -1,7 +1,7 @@
 import numpy as np
 import anndata
 from scipy.sparse import csr_matrix, hstack
-from scCloud_temp import tools, cite_seq
+from scCloud import tools, cite_seq
 
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']
@@ -54,7 +54,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 		adata_c = tools.collect_highly_variable_gene_matrix(adata) # select hvg matrix and convert to dense
 		if kwargs['batch_correction']:
 			tools.correct_batch_effects(adata_c)
-		tools.run_pca(adata_c, nPC = kwargs['nPC'], random_state = kwargs['random_state'])		
+		tools.run_pca(adata_c, nPC = kwargs['nPC'], random_state = kwargs['random_state'])
 		adata.obsm['X_pca'] = adata_c.obsm['X_pca']
 	else:
 		assert 'X_pca' in adata.obsm.keys()
@@ -149,14 +149,14 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 		var_names = np.concatenate([adata.var_names, ['AD-' + x for x in cdata.var_names]])
 
-		new_data = anndata.AnnData(X = hstack([adata.X, csr_matrix(adt_matrix)], format = 'csr'), 
+		new_data = anndata.AnnData(X = hstack([adata.X, csr_matrix(adt_matrix)], format = 'csr'),
 			obs = adata.obs,
 			obsm = adata.obsm,
 			uns = adata.uns,
 			var = {'var_names' : var_names,
 				   'gene_ids' : var_names,
 				   'n_cells' : np.concatenate([adata.var['n_cells'].values, [0] * cdata.shape[1]]),
-				   'percent_cells' : np.concatenate([adata.var['percent_cells'].values, [0.0] * cdata.shape[1]]), 
+				   'percent_cells' : np.concatenate([adata.var['percent_cells'].values, [0.0] * cdata.shape[1]]),
 				   'robust' : np.concatenate([adata.var['robust'].values, [False] * cdata.shape[1]]),
 				   'highly_variable_genes' : np.concatenate([adata.var['highly_variable_genes'].values, [False] * cdata.shape[1]])
 				  })

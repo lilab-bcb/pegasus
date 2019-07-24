@@ -9,7 +9,7 @@ import scipy.stats as ss
 from scipy.stats import f_oneway
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from joblib import Parallel, delayed
-from scCloud_temp.tools import read_input
+from scCloud.tools import read_input
 
 
 
@@ -31,7 +31,7 @@ def search_genes(data, gene_list, measure = 'percentage'):
 	Returns
 	-------
 	`pandas.DataFrame`
-		A data frame containing marker expressions in each cluster.		
+		A data frame containing marker expressions in each cluster.
 
 	Examples
 	--------
@@ -46,7 +46,7 @@ def search_de_genes(data, gene_list, test = 'fisher', thre = 1.5):
 	"""Extract and display differential expression analysis results of markers for each cluster from an `anndata` object.
 
 	This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
-	
+
 	Parameters
 	----------
 
@@ -58,7 +58,7 @@ def search_de_genes(data, gene_list, test = 'fisher', thre = 1.5):
 		Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
 	thre : `float`, optional (default: `1.5`)
 		Fold change threshold to determine if the marker is a strong DE (`++` or `--`) or weak DE (`+` or `-`).
-	
+
 	Returns
 	-------
 	`pandas.DataFrame`
@@ -106,7 +106,7 @@ def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha = 0.
 		values = value_str.split(',')
 		selected = selected & np.isin(data.obs[attr], values)
 	gene_list = np.array(glist)
-	gene_list = gene_list[np.isin(gene_list, data.var_names)]	
+	gene_list = gene_list[np.isin(gene_list, data.var_names)]
 	newdat = data[selected, :][:, gene_list].copy()
 	newdat.X = newdat.X.toarray()
 	group_attr, tmp_str = group_str.split(':')
@@ -156,7 +156,7 @@ def calc_mwu(clust_label, labels, conds, cond_order, gene_names, data, indices, 
 	idx_y = conds[idx] == cond_order[1]
 
 	local_mat = csc_mat[idx, :]
-	
+
 	for j in range(ngene):
 		vec = local_mat[:, j]
 		if vec.size > 0:

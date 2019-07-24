@@ -32,9 +32,7 @@ requires = ['anndata==0.6.4',
 			'pyarrow',
 			'lightgbm',
 			'joblib',
-			'scikit-misc',
-			'holoviews',
-			'hvplot'
+			'scikit-misc'
 		  ]
 
 setup(
@@ -60,7 +58,7 @@ setup(
 		'Operating System :: POSIX :: Linux',
 		'Topic :: Scientific/Engineering :: Bio-Informatics'
 	],
-	keywords='single cell RNA-Seq data analysis', 
+	keywords='single cell RNA-Seq data analysis',
 	packages=find_packages(),
 	install_requires=requires,
 	python_requires='~=3.5',

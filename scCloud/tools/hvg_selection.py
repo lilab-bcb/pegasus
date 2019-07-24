@@ -9,7 +9,7 @@ from collections import defaultdict
 from joblib import Parallel, delayed
 
 import skmisc.loess as sl
-from scCloud_temp.plotting import plot_hvg
+from scCloud.plotting import plot_hvg
 
 
 
@@ -64,18 +64,18 @@ def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg
 
 	if consider_batch:
 		if benchmark_time or ('ba_mean' not in data.var) or ('ba_var' not in data.var):
-			calc_ba_mean_and_var(data)			
+			calc_ba_mean_and_var(data)
 		mean = data.var.loc[robust_idx, 'ba_mean']
 		var = data.var.loc[robust_idx, 'ba_var']
 	else:
 		X = data.X[:, robust_idx]
 		mean = X.mean(axis = 0).A1
-		m2 = X.power(2).sum(axis = 0).A1	
+		m2 = X.power(2).sum(axis = 0).A1
 		var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
 
 	lobj = sl.loess(mean, var, span = span, degree = 2)
 	lobj.fit()
-	
+
 	rank1 = np.zeros(hvg_index.size, dtype = int)
 	rank2 = np.zeros(hvg_index.size, dtype = int)
 
@@ -133,7 +133,7 @@ def select_hvg_seurat_multi(X, channels, cell2channel, n_top, n_jobs = 1):
 	Xs = []
 	for channel in channels:
 		Xs.append(X[np.isin(cell2channel, channel)])
-	
+
 	res_arr = np.array(Parallel(n_jobs = n_jobs)(delayed(select_hvg_seurat_single)(Xs[i], n_top) for i in range(channels.size)))
 	selected = res_arr >= 0
 	shared = selected.sum(axis = 0)
