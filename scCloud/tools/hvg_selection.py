@@ -59,6 +59,8 @@ def calc_ba_mean_and_var(data):
 
 
 def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg_fig = None, benchmark_time = False):
+	if 'robust' not in data.var:
+		raise ValueError('Please run `qc_metrics` to identify robust genes')
 	robust_idx = data.var['robust'].values
 	hvg_index = np.zeros(robust_idx.sum(), dtype = bool)
 
@@ -91,7 +93,11 @@ def select_hvg_scCloud(data, consider_batch, n_top = 2000, span = 0.02, plot_hvg
 	if plot_hvg_fig is not None:
 		plot_hvg(mean, var, lobj.outputs.fitted_values, hvg_index, plot_hvg_fig + '.hvg.pdf')
 
+	if 'hvg_rank' not in data.var:
+		data.var['hvg_rank'] = -1
 	data.var.loc[robust_idx, 'hvg_rank'] = hvg_rank
+	if 'highly_variable_genes' not in data.var:
+		data.var['highly_variable_genes'] = True
 	data.var.loc[robust_idx, 'highly_variable_genes'] = hvg_index
 
 

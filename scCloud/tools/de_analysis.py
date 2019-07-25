@@ -371,24 +371,10 @@ def write_results_to_excel(output_file, df, alpha=0.05):
 	print("Excel spreadsheet is written.")
 
 
-def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc, subset_string,
-					temp_folder):
-	start = time.time()
-	output_file = None
-	if subset_string is None:
-		data = read_input(input_file, mode='r+')
-		X = data.X[:]
-		output_file = input_file
-	else:
-		attr, value = subset_string.split(':')
-		data = read_input(input_file, mode='a')
-		data = data[data.obs[attr] == value].copy()
-		X = data.X
-		import os
-		output_file = os.path.splitext(output_excel_file)[0] + '.h5ad'
-	end = time.time()
-	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
+def markers(data, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=True):
+	__markers(data, data.X, labels, n_jobs=n_jobs, run_fisher=run_fisher, run_mwu=run_mwu, run_roc=run_roc)
 
+def __markers(data, X, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=True):
 	non_de = [x for x in non_de_attrs if x in data.var]
 	de_results = [data.var[non_de]]
 
@@ -409,6 +395,26 @@ def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fi
 
 	data.var = pd.concat(de_results, axis=1)
 	data.uns['de_labels'] = labels
+
+def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc, subset_string,
+					temp_folder):
+	start = time.time()
+	output_file = None
+	if subset_string is None:
+		data = read_input(input_file, mode='r+')
+		X = data.X[:]
+		output_file = input_file
+	else:
+		attr, value = subset_string.split(':')
+		data = read_input(input_file, mode='a')
+		data = data[data.obs[attr] == value].copy()
+		X = data.X
+		import os
+		output_file = os.path.splitext(output_excel_file)[0] + '.h5ad'
+
+	end = time.time()
+	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
+	__markers(data, X, labels, n_jobs, run_fisher, run_mwu, run_roc)
 	data.write(output_file)
 
 	print("Differential expression results are written back to h5ad file.")

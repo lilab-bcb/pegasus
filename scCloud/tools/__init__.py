@@ -4,7 +4,7 @@ non_de_attrs = ['gene_ids', 'n_cells', 'percent_cells', 'robust', 'highly_variab
 
 from .manage_10x_h5_matrices import load_10x_h5_file, load_dropseq_file, write_10x_h5_file, aggregate_10x_matrices
 from .readwrite import read_input, write_output
-from .preprocessing import update_var_names, filter_data, log_norm, run_pca, filter_cells_cite_seq
+from .preprocessing import update_var_names, filter_data, log_norm, run_pca, filter_cells_cite_seq, qc_metrics
 from .hvg_selection import select_highly_variable_genes, collect_highly_variable_gene_matrix
 from .batch_correction import set_group_attribute, estimate_adjustment_matrices, correct_batch_effects
 from .nearest_neighbors import calculate_nearest_neighbors, get_kNN, select_cells, calc_kBET, calc_kSIM

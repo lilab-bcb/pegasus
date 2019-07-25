@@ -35,7 +35,32 @@ def update_var_names(data):
 	end = time.time()
 	print("update_var_names is finished. Time spent = {:.2f}s.".format(end - start))
 
+def qc_metrics(data, mito_prefix = 'MT-', percent_cells = 0.0005):
+	"""
+	Sets n_genes, n_counts, percent_mito on adata.obs and n_cells, percent_cells, and robust on data.var
 
+	:param data:
+		Annotated data matrix
+	:param mito_prefix: str
+		String that mitochrondrial genes start with
+	:param percent_cells: float
+		Cutoff for a feature to be `robust`
+	"""
+	data.obs['n_genes'] = data.X.getnnz(axis = 1)
+	data.obs['n_counts'] = data.X.sum(axis = 1).A1
+	mito_prefixes = mito_prefix.split(',')
+
+	def startswith(name):
+		for prefix in mito_prefixes:
+			if name.startswith(prefix):
+				return True
+		return False
+
+	mito_genes = data.var_names.map(startswith).values.nonzero()[0]
+	data.obs['percent_mito'] = data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(data.obs['n_counts'].values, 1.0)
+	data.var['n_cells'] = data.X.getnnz(axis = 0)
+	data.var['percent_cells'] = data.var['n_cells'] / data.shape[0]
+	data.var['robust'] = data.var['percent_cells'] >= percent_cells
 
 def filter_data(data, output_filt = None, plot_filt = None, plot_filt_figsize = None, mito_prefix = 'MT-', min_genes = 500, max_genes = 6000, min_umis = 100, max_umis = 600000, percent_mito = 0.1, percent_cells = 0.0005, min_genes_on_raw = 100):
 	start = time.time()
