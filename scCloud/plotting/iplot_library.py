@@ -1,11 +1,8 @@
-import holoviews as hv
 import plotly.offline as py
 from natsort import natsorted
 
 from .plot_utils import get_palettes
 
-hv.extension('bokeh')
-import hvplot.pandas
 import numpy as np
 import pandas as pd
 import scipy.sparse
