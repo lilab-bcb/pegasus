@@ -371,8 +371,8 @@ def write_results_to_excel(output_file, df, alpha=0.05):
 	print("Excel spreadsheet is written.")
 
 
-def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc, subset_string,
-					temp_folder):
+def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha = 0.05, run_fisher = False, run_mwu = False, run_roc = False, subset_string = None,
+					temp_folder = None):
 	start = time.time()
 	output_file = None
 	if subset_string is None:

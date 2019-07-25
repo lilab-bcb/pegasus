@@ -96,7 +96,7 @@ def run_umap(data, rep_key, n_components = 2, n_neighbors = 15, min_dist = 0.5, 
 	print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 0, out_basis = 'fle'):
+def run_force_directed_layout(data, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 5000, is3d = False, memory = 8, random_state = 0, out_basis = 'fle'):
 	start = time.time()
 	realK = min(K - 1, data.uns['diffmap_knn_indices'].shape[1]) # K - 1: exclude self
 	W = calculate_affinity_matrix(data.uns['diffmap_knn_indices'][:, 0:realK], data.uns['diffmap_knn_distances'][:, 0:realK])
@@ -179,7 +179,7 @@ def run_net_umap(data, rep_key, selected, n_jobs, n_components = 2, n_neighbors 
 	end = time.time()
 	print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-def run_net_fle(data, selected, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 10000, is3d = False, memory = 8, random_state = 0, \
+def run_net_fle(data, selected, file_name, n_jobs, K = 50, target_change_per_node = 2.0, target_steps = 5000, is3d = False, memory = 8, random_state = 0, \
 	ds_full_speed = False, net_alpha = 0.1, polish_target_steps = 1500, out_basis = 'net_fle'):
 	start = time.time()
 	X = data.obsm['X_diffmap'][selected,:]
