@@ -371,7 +371,7 @@ def write_results_to_excel(output_file, df, alpha=0.05):
 	print("Excel spreadsheet is written.")
 
 
-def run_de_analysis(input_file, output_excel_file, labels = 'louvain_labels', n_jobs, alpha = 0.05, run_fisher = False, run_mwu = False, run_roc = False, subset_string = None,
+def run_de_analysis(input_file, output_excel_file, labels = 'louvain_labels', n_jobs = 1, alpha = 0.05, run_fisher = False, run_mwu = False, run_roc = False, subset_string = None,
 					temp_folder = None):
 	start = time.time()
 	output_file = None
