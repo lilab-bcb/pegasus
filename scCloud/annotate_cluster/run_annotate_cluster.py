@@ -4,7 +4,7 @@ import pkg_resources
 from scCloud.tools import read_input
 from . import annotate_cluster
 
-def run_annotate_cluster(input_file, output_file, threshold, ignoreNA = False, json_file = "human"):
+def run_annotate_cluster(input_file, output_file, threshold = 0.5, ignoreNA = False, json_file = "human"):
 	start = time.time()
 	if json_file == "human_immune":
 		json_file = pkg_resources.resource_filename('scCloud.annotate_cluster', 'human_immune_cell_markers.json')
