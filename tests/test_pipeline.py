@@ -1,60 +1,58 @@
-import os
 import unittest
-
-import scCloud_temp.pipeline
+import subprocess
+import os
+import scCloud as sc
+import pandas as pd
+import numpy as np
+import scipy.sparse
 
 
 class TestPipeline(unittest.TestCase):
-    def tearDown(self):
-        os.remove('test.h5')
-        os.remove('test.h5ad')
+	def tearDown(self):
+		os.remove('test_3k_pbmc.h5ad')
+		os.remove('test_3k_pbmc.hvg.pdf')
 
-    def test_run(self):
-        scCloud_temp.tools.aggregate_10x_matrices('data/aggregate_test.csv', restrictions=None, attributes=['Version'],
-                                                  output_file='test.h5',
-                                                  google_cloud=False, select_singlets=False, ngene=None, is_dropseq=None)
 
-        scCloud_temp.pipeline.run_pipeline('test.h5', 'test',
-                                           cite_seq=False,
-                                           output_filtration_results=False,
-                                           output_seurat_compatible=False,
-                                           output_loom=False,
-                                           batch_correction=True,
-                                           filt_xlsx=None,
-                                           processed=False,
-                                           submat_to_dense=True,
-                                           select_variable_genes=True,
-                                           genome='mm10',
-                                           pca_key='X_pca',
-                                           n_jobs=1,
-                                           diffmap_full_speed=True,
-                                           subcluster=False,
-                                           run_approx_louvain=True,
-                                           group_attribute='Version',
-                                           min_genes=500,
-                                           max_genes=6000,
-                                           mito_prefix="MT-",
-                                           percent_mito=0.1,
-                                           percent_cells=0.0005,
-                                           norm_count=1.00E+05,
-                                           random_state=0,
-                                           nPC=50,
-                                           nDC=50,
-                                           diffmap_K=100,
-                                           diffmap_alpha=0.5,
-                                           run_louvain=True,
-                                           louvain_resolution=1.3,
-                                           run_kmeans=True,
-                                           run_hdbscan=False,
-                                           run_fle=False,
-                                           pseudotime=None,
-                                           kmeans_n_clusters=10,
-                                           louvain_affinity='W_norm',
-                                           approx_louvain_ninit=20,
-                                           approx_louvain_nclusters=30,
-                                           approx_louvain_resolution=1.3,
-                                           run_tsne=True,
-                                           tsne_perplexity=30,
-                                           run_fitsne=False,
-                                           run_umap=False,
-                                           umap_on_diffmap=False)
+	def test_cluster(self):
+		subprocess.call(
+			['scCloud', 'cluster', os.path.join('data', '3k_pbmc'), 'test_3k_pbmc', '--run-leiden',
+			 '--run-approximated-leiden', '--run-tsne', '--run-umap',
+			 '--run-net-tsne', '--run-net-fitsne', '--run-net-umap', '--run-fitsne'])
+		test_data = sc.tools.read_input('test_3k_pbmc.h5ad')
+		data = sc.tools.read_input(os.path.join('output', 'test_3k_pbmc.h5ad'))
+		self.assertEqual((test_data.X[()] != data.X[()]).sum(), 0)
+		pd.testing.assert_frame_equal(test_data.obs, data.obs)
+		pd.testing.assert_frame_equal(test_data.var, data.var)
+		self.assertListEqual(list(test_data.uns.keys()), list(data.uns.keys()))
+		self.assertListEqual(list(test_data.obsm_keys()), list(data.obsm_keys()))
+		for key in data.uns_keys():
+			test_val = test_data.uns[key]
+			val = data.uns[key]
+			if scipy.sparse.issparse(val):
+				val = val.toarray()
+				test_val = test_val.toarray()
+			np.testing.assert_array_equal(test_val, val)
+		for key in data.obsm_keys():
+			test_val = test_data.obsm[key]
+			val = data.obsm[key]
+			if scipy.sparse.issparse(val):
+				val = val.toarray()
+				test_val = test_val.toarray()
+			np.testing.assert_array_equal(test_val, val)
+
+
+	# '--run-approximated-louvain',
+	# '--run-louvain',
+	# '--run-fle',
+	# '--run-net-fle'
+	# '--plot-hvg',
+
+
+	def test_de_analysis(self):
+		subprocess.run(
+			['scCloud', 'de_analysis', os.path.join('output', 'test_3k_pbmc.h5ad'), 'out_marker.de.xlsx', '--fisher',
+			 '--mwu', '--roc', '--labels', 'leiden_labels'])
+		test_output = pd.read_excel('out_marker.de.xlsx', sheet_name=None)
+		output = pd.read_excel(os.path.join('output', 'out_marker.de.xlsx'), sheet_name=None)
+		for key in output:
+			pd.testing.assert_frame_equal(test_output[key], output[key])
