@@ -8,8 +8,6 @@ import pkg_resources
 
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from umap import UMAP
-from fitsne import FItSNE
-
 
 from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cells, construct_graph, net_train_and_predict
 
@@ -25,6 +23,15 @@ def calc_tsne(X, n_jobs, n_components, perplexity, early_exaggeration, learning_
 
 def calc_fitsne(X, nthreads, no_dims, perplexity, early_exag_coeff, learning_rate, rand_seed, initialization = None, max_iter = 1000, stop_early_exag_iter = 250, mom_switch_iter = 250):
 	# FItSNE will change X content
+
+	# Check if fftw3 is installed.
+	import ctypes.util
+	fftw3_loc = ctypes.util.find_library('fftw3')
+	if fftw3_loc is None:
+		raise Exception("Please install 'fftw3' first to use the FIt-SNE feature!")
+
+	from fitsne import FItSNE
+
 	return FItSNE(X.astype('float64'), nthreads = nthreads, no_dims = no_dims, perplexity = perplexity, early_exag_coeff = early_exag_coeff, learning_rate = learning_rate, \
 		rand_seed = rand_seed, initialization = initialization, max_iter = max_iter, stop_early_exag_iter = stop_early_exag_iter, mom_switch_iter = mom_switch_iter)
 
