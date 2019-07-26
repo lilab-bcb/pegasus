@@ -49,8 +49,8 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $CONDA_PATH/software/umap
 	pip install .
 	cd $OLDPWD
-	git clone https://github.com/broadinstitute/scRNA-Seq.git $CONDA_PATH/software/scRNA-Seq
-	cd $CONDA_PATH/software/scRNA-Seq/scCloud
+	git clone https://github.com/klarman-cell-observatory/scCloudPy.git $CONDA_PATH/software/scCloudPy
+	cd $CONDA_PATH/software/scCloudPy/scCloud
 	pip install -e .
 	cd $OLDPWD
 
@@ -93,10 +93,7 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	pip install .
 	cd $OLDPWD
 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-	brew install gcc
-	sudo ln -s /usr/local/bin/gcc-9 /usr/local/bin/gcc
-	sudo ln -s /usr/local/bin/g++-9 /usr/local/bin/g++
-	export PATH=$CONDA_PATH/miniconda3/envs/scCloud/bin:/usr/local/bin:$PATH
+	export MACOSX_DEPLOYMENT_TARGET=10.9
 	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
 	cd $CONDA_PATH/software/louvain
 	pip install .
@@ -109,8 +106,8 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $CONDA_PATH/software/umap
 	pip install .
 	cd $OLDPWD
-	git clone https://github.com/broadinstitute/scRNA-Seq.git $CONDA_PATH/software/scRNA-Seq
-	cd $CONDA_PATH/software/scRNA-Seq/scCloud
+	git clone https://github.com/klarman-cell-observatory/scCloudPy.git $CONDA_PATH/software/scCloudPy
+	cd $CONDA_PATH/software/scCloudPy/scCloud
 	pip install -e .
 	cd $OLDPWD
 
