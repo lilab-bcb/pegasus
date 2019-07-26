@@ -6,28 +6,29 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
-requires = ['anndata==0.6.4',
+requires = ['anndata@git+https://github.com/lilab-cbb/anndata',
 			'matplotlib>=2.0.0',
 			'pandas>=0.21',
 			'Cython',
 			'scipy==1.2.1',
 			'seaborn',
-			'scikit-learn>=0.19.1',
+			'scikit-learn>=0.19.1, <= 0.21.1',
 			'statsmodels',
 			'natsort',
+			'numba<0.44.0'
 			'numpy',
 			'tables',
 			'xlsxwriter',
-			'fisher',
+			'fisher@git+https://github.com/bli25broad/fishers_exact_test',
 			'loompy',
 			'louvain',
 			'leidenalg',
-			'MulticoreTSNE',
+			'MulticoreTSNE@git+https://github.com/bli25broad/Multicore-TSNE',
 			'docopt',
 			'setuptools',
 			'plotly',
 			'pybind11',
-			'umap-learn',
+			'umap-learn@git+https://github.com/bli25broad/umap',
 			'fitsne',
 			'pyarrow',
 			'lightgbm==2.2.1',
@@ -37,7 +38,7 @@ requires = ['anndata==0.6.4',
 
 setup(
 	name='scCloud',
-	version='0.13.0',
+	version='0.13.0.post1',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/klarman-cell-observatory/scCloudPy',
@@ -62,6 +63,9 @@ setup(
 	keywords='single cell RNA-Seq data analysis',
 	packages=find_packages(),
 	install_requires=requires,
+	dependency_links=[
+		''
+	],
 	python_requires='~=3.5',
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],
