@@ -15,11 +15,11 @@ from sklearn.utils.extmath import randomized_svd
 
 def update_var_names(data):
 	start = time.time()
-
-	prefix = re.compile('^(' + '|'.join(data.uns['genome'].split(',')) + ')_+')
-	if prefix.match(data.var_names[0]):
-		data.var['gene_ids'] = [prefix.sub('', x) for x in data.var['gene_ids']]
-		data.var_names = pd.Index([prefix.sub('', x) for x in data.var_names])
+	if 'genome' in data.uns:
+		prefix = re.compile('^(' + '|'.join(data.uns['genome'].split(',')) + ')_+')
+		if prefix.match(data.var_names[0]):
+			data.var['gene_ids'] = [prefix.sub('', x) for x in data.var['gene_ids']]
+			data.var_names = pd.Index([prefix.sub('', x) for x in data.var_names])
 
 	gsyms = data.var_names.values
 

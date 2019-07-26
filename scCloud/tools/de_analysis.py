@@ -374,7 +374,7 @@ def write_results_to_excel(output_file, df, alpha=0.05):
 def markers(data, labels, n_jobs, run_fisher, run_mwu, run_roc):
 	__markers(data, data.X, labels, n_jobs=n_jobs, run_fisher=run_fisher, run_mwu=run_mwu, run_roc=run_roc)
 
-def __markers(data, X, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=True):
+def __markers(data, X, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=True, temp_folder=None):
 	non_de = [x for x in non_de_attrs if x in data.var]
 	de_results = [data.var[non_de]]
 
@@ -396,10 +396,8 @@ def __markers(data, X, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=
 	data.var = pd.concat(de_results, axis=1)
 	data.uns['de_labels'] = labels
 
-def run_de_analysis(input_file, output_excel_file, labels = 'louvain_labels', n_jobs = 1, alpha = 0.05, run_fisher = False, run_mwu = False, run_roc = False, subset_string = None,
-					temp_folder = None):
+def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc, subset_string, temp_folder):
 	start = time.time()
-	output_file = None
 	if subset_string is None:
 		data = read_input(input_file, mode='r+')
 		X = data.X[:]
@@ -414,7 +412,7 @@ def run_de_analysis(input_file, output_excel_file, labels = 'louvain_labels', n_
 
 	end = time.time()
 	print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
-	__markers(data, X, labels = labels, n_jobs = n_jobs, run_fisher = run_fisher, run_mwu = run_mwu, run_roc = run_roc)
+	__markers(data, X, labels = labels, n_jobs = n_jobs, run_fisher = run_fisher, run_mwu = run_mwu, run_roc = run_roc, temp_folder=temp_folder)
 	data.write(output_file)
 
 	print("Differential expression results are written back to h5ad file.")

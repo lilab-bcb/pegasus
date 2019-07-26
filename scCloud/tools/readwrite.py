@@ -227,8 +227,8 @@ def read_input(input_file, genome = None, return_a_dict = False, mode = 'r+', se
 	elif input_file.endswith('.mtx') or input_file.endswith('.mtx.gz') or os.path.isdir(input_file):
 		data = __read_mtx(input_file)
 	else:
-		print("Unrecognized file type!")
-		assert False
+		raise ValueError("Unrecognized file type")
+
 
 	end = time.time()
 	print("Read input is finished. Time spent = {:.2f}s.".format(end - start))
@@ -252,10 +252,10 @@ def __read_mtx(path):
 	# feature ID, name, type for v3 features.tsv.gz
 
 	var = pd.read_csv(os.path.join(parent_directory, 'features.tsv.gz' if is_10x_v3 else 'genes.tsv'), sep='\t',
-		header=None, index_col=1, names=['id', 'name', 'type'] if is_10x_v3 else ['id', 'name'])
+		header=None, index_col=1, names=['gene_ids', 'var_names', 'feature_type'] if is_10x_v3 else ['gene_ids', 'var_names'])
 	var.index = anndata.utils.make_index_unique(var.index)
 	obs = pd.read_csv(os.path.join(parent_directory, 'barcodes.tsv.gz' if is_10x_v3 else 'barcodes.tsv'), sep='\t',
-		header=None, index_col=0, names=['barcode'])
+		header=None, index_col=0, names=['obs_names'])
 	cell_count, gene_count = x.shape
 	if len(obs)!=cell_count:
 		raise ValueError(
