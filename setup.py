@@ -20,6 +20,7 @@ requires = ['anndata@git+https://github.com/lilab-cbb/anndata',
 			'tables',
 			'xlsxwriter',
 			'fisher@git+https://github.com/bli25broad/fishers_exact_test',
+			'hnswlib@git+https://github.com/lilab-cbb/hnswlib',
 			'loompy',
 			'louvain@git+https://github.com/bli25broad/louvain-igraph',
 			'leidenalg',
@@ -63,9 +64,6 @@ setup(
 	keywords='single cell RNA-Seq data analysis',
 	packages=find_packages(),
 	install_requires=requires,
-	dependency_links=[
-		''
-	],
 	python_requires='~=3.5',
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],
