@@ -16,43 +16,16 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	source ~/.bashrc
 	conda create -n scCloud -y pip
 	conda activate scCloud
-	conda install -y -c anaconda numpy
-	conda install -y -c anaconda cython
-	conda install -y -c anaconda pybind11 
-	conda install -y -c conda-forge fftw
-	conda install -y -c anaconda pytables
-	conda install -y -c anaconda cmake
-	conda install -y -c anaconda libxml2
-	export CPATH=$CPATH:$CONDA_PATH/miniconda3/envs/scCloud/include
 	mkdir -p $CONDA_PATH/software
-	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
-	cd $CONDA_PATH/software/hnswlib/python_bindings
-	python setup.py install
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/fishers_exact_test.git $CONDA_PATH/software/fisher_test
-	cd $CONDA_PATH/software/fisher_test
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/lilab-cbb/anndata.git $CONDA_PATH/software/anndata
-	cd $CONDA_PATH/software/anndata
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
-	cd $CONDA_PATH/software/louvain
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/Multicore-TSNE.git $CONDA_PATH/software/MulticoreTSNE
-	cd $CONDA_PATH/software/MulticoreTSNE
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/umap.git $CONDA_PATH/software/umap
-	cd $CONDA_PATH/software/umap
-	pip install .
-	cd $OLDPWD
 	git clone https://github.com/klarman-cell-observatory/scCloudPy.git $CONDA_PATH/software/scCloudPy
 	cd $CONDA_PATH/software/scCloudPy/scCloud
 	pip install -e .
 	cd $OLDPWD
+	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
+	cd $CONDA_PATH/software/hnswlib/python_bindings
+	python setup.py install
+	cd $OLDPWD
+	
 
 Mac OS
 ++++++
@@ -71,44 +44,15 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/activate.d/env_vars.sh
 	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/deactivate.d/env_vars.sh
 	conda activate scCloud
-	conda install -y -c anaconda numpy
-	conda install -y -c anaconda cython
-	conda install -y -c anaconda pybind11
-	conda install -y -c anaconda lightgbm
-	conda install -y -c anaconda cmake
-	conda install -y -c anaconda pytables
-	conda install -y -c conda-forge fftw
-	export CPATH=$CPATH:$CONDA_PATH/miniconda3/envs/scCloud/include
 	mkdir -p $CONDA_PATH/software
-	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
-	cd $CONDA_PATH/software/hnswlib/python_bindings
-	python setup.py install
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/fishers_exact_test.git $CONDA_PATH/software/fisher_test
-	cd $CONDA_PATH/software/fisher_test
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/lilab-cbb/anndata.git $CONDA_PATH/software/anndata
-	cd $CONDA_PATH/software/anndata
-	pip install .
-	cd $OLDPWD
-	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 	export MACOSX_DEPLOYMENT_TARGET=10.9
-	git clone https://github.com/bli25broad/louvain-igraph.git $CONDA_PATH/software/louvain
-	cd $CONDA_PATH/software/louvain
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/Multicore-TSNE.git $CONDA_PATH/software/MulticoreTSNE
-	cd $CONDA_PATH/software/MulticoreTSNE
-	pip install .
-	cd $OLDPWD
-	git clone https://github.com/bli25broad/umap.git $CONDA_PATH/software/umap
-	cd $CONDA_PATH/software/umap
-	pip install .
-	cd $OLDPWD
 	git clone https://github.com/klarman-cell-observatory/scCloudPy.git $CONDA_PATH/software/scCloudPy
 	cd $CONDA_PATH/software/scCloudPy/scCloud
 	pip install -e .
+	cd $OLDPWD
+	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
+	cd $CONDA_PATH/software/hnswlib/python_bindings
+	python setup.py install
 	cd $OLDPWD
 
 Use **scCloud** in UGER
