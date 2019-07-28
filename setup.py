@@ -15,7 +15,7 @@ requires = ['anndata@git+https://github.com/lilab-cbb/anndata',
 			'scikit-learn>=0.19.1, <= 0.21.1',
 			'statsmodels',
 			'natsort',
-			'numba<0.44.0'
+			'numba<0.44.0',
 			'numpy',
 			'tables',
 			'xlsxwriter',
