@@ -21,10 +21,6 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $CONDA_PATH/software/scCloudPy/scCloud
 	pip install -e .
 	cd $OLDPWD
-	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
-	cd $CONDA_PATH/software/hnswlib/python_bindings
-	python setup.py install
-	cd $OLDPWD
 	
 
 Mac OS
@@ -50,9 +46,6 @@ Please use the commands below to install **scCloud** locally via Miniconda_::
 	cd $CONDA_PATH/software/scCloudPy/scCloud
 	pip install -e .
 	cd $OLDPWD
-	git clone https://github.com/nmslib/hnsw.git $CONDA_PATH/software/hnswlib
-	cd $CONDA_PATH/software/hnswlib/python_bindings
-	python setup.py install
 	cd $OLDPWD
 
 Use **scCloud** in UGER
