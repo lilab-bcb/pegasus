@@ -6,8 +6,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
-requires = ['anndata@git+https://github.com/lilab-cbb/anndata',
-			'matplotlib>=2.0.0',
+requires = ['matplotlib>=2.0.0',
 			'pandas>=0.21',
 			'Cython',
 			'scipy==1.2.1',
@@ -19,22 +18,23 @@ requires = ['anndata@git+https://github.com/lilab-cbb/anndata',
 			'numpy',
 			'tables',
 			'xlsxwriter',
-			'fisher@git+https://github.com/bli25broad/fishers_exact_test',
-			'hnswlib@git+https://github.com/lilab-cbb/hnswlib',
 			'loompy',
-			'louvain@git+https://github.com/bli25broad/louvain-igraph',
 			'leidenalg',
-			'MulticoreTSNE@git+https://github.com/bli25broad/Multicore-TSNE',
 			'docopt',
 			'setuptools',
 			'plotly',
 			'pybind11',
-			'umap-learn@git+https://github.com/bli25broad/umap',
 			'fitsne',
 			'pyarrow',
 			'lightgbm==2.2.1',
 			'joblib',
-			'scikit-misc'
+			'scikit-misc',
+			'anndata-modified',
+			'fisher-modified',
+			'hnswlib-modified',
+			'louvain-github',
+			'MulticoreTSNE-modified',
+			'umap-learn-modified'
 		  ]
 
 setup(
