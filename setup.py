@@ -25,6 +25,7 @@ requires = ['matplotlib>=2.0.0',
 			'plotly',
 			'pybind11',
 			'fitsne',
+			'umap-learn',
 			'pyarrow',
 			'lightgbm==2.2.1',
 			'joblib',
@@ -33,8 +34,7 @@ requires = ['matplotlib>=2.0.0',
 			'fisher-modified',
 			'hnswlib-modified',
 			'louvain-github',
-			'MulticoreTSNE-modified',
-			'umap-learn-modified'
+			'MulticoreTSNE-modified'
 		  ]
 
 setup(
@@ -43,7 +43,7 @@ setup(
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/klarman-cell-observatory/scCloudPy',
-	author='Bo Li, Joshua Gould, Siranush Sarkizova, Marcin Tabaka, Orr Ashenberg, et al.',
+	author='Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, Marcin Tabaka, Orr Ashenberg, et al.',
 	author_email='libo@broadinstitute.org, jgould@broadinstitute.org, sarkizova@broadinstitue.org, mtabaka@broadinstitute.org, orr@broadinstitute.org',
 	classifiers=[ # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 		'Development Status :: 3 - Alpha',

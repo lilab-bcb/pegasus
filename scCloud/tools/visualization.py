@@ -1,13 +1,14 @@
 import time
 import numpy as np
 import pandas as pd
+import scipy
 from subprocess import check_call
 
 import os
 import pkg_resources
 
 from MulticoreTSNE import MulticoreTSNE as TSNE
-from umap import UMAP
+import umap
 
 from . import calculate_affinity_matrix, calculate_nearest_neighbors, select_cells, construct_graph, net_train_and_predict
 
@@ -36,10 +37,56 @@ def calc_fitsne(X, nthreads, no_dims, perplexity, early_exag_coeff, learning_rat
 		rand_seed = rand_seed, initialization = initialization, max_iter = max_iter, stop_early_exag_iter = stop_early_exag_iter, mom_switch_iter = mom_switch_iter)
 
 
+# Running umap using our own kNN indices
 def calc_umap(X, n_components, n_neighbors, min_dist, spread, random_state, init = 'spectral', n_epochs = None, learning_rate  = 1.0, knn_indices = None, knn_dists = None):
-	umap = UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state, \
+	umap_obj = umap.UMAP(n_components = n_components, n_neighbors = n_neighbors, min_dist = min_dist, spread = spread, random_state = random_state, \
 		init = init, n_epochs = n_epochs, learning_rate = learning_rate, verbose = True)
-	return umap.fit_transform(X, knn_indices = knn_indices, knn_dists = knn_dists)
+
+	embedding = None
+	if X.shape[0] < 4096 or knn_indices is None:
+		embedding = umap_obj.fit_transform(X)
+	else:
+		assert knn_dists is not None
+		# preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
+		from sklearn.utils import check_random_state, check_array
+
+		X = check_array(X, dtype = np.float32, accept_sparse = 'csr')
+		umap_obj._raw_data = X
+		if umap_obj.a is None or umap_obj.b is None:
+			umap_obj._a, umap_obj._b = umap.umap_.find_ab_params(umap_obj.spread, umap_obj.min_dist)
+		else:
+			umap_obj._a = umap_obj.a
+			umap_obj._b = umap_obj.b
+		umap_obj._metric_kwds = umap_obj.metric_kwds if umap_obj.metric_kwds is not None else {}
+		umap_obj._target_metric_kwds = {}
+		_init = check_array(umap_obj.init, dtype = np.float32, accept_sparse = False) if isinstance(umap_obj.init, np.ndarray) else umap_obj.init
+		umap_obj._initial_alpha = umap_obj.learning_rate
+		umap_obj._validate_parameters()
+
+		if umap_obj.verbose:
+			print(str(umap_obj))
+
+		if scipy.sparse.isspmatrix_csr(X):
+			if not X.has_sorted_indices:
+				X.sort_indices()
+			umap_obj._sparse_data = True
+		else:
+			umap_obj._sparse_data = False
+
+		_random_state = check_random_state(umap_obj.random_state)
+
+		if umap_obj.verbose:
+			print("Construct fuzzy simplicial set")
+
+		umap_obj._small_data = False
+		umap_obj.graph_ = umap.umap_.fuzzy_simplicial_set(X, umap_obj.n_neighbors, _random_state, umap_obj.metric, umap_obj._metric_kwds, knn_indices, knn_dists, umap_obj.angular_rp_forest, umap_obj.set_op_mix_ratio, umap_obj.local_connectivity, umap_obj.verbose)
+
+		_n_epochs = umap_obj.n_epochs if umap_obj.n_epochs is not None else 0
+		if umap_obj.verbose:
+			print("Construct embedding")
+		embedding = umap.umap_.simplicial_set_embedding(X, umap_obj.graph_, umap_obj.n_components, umap_obj._initial_alpha, umap_obj._a, umap_obj._b, umap_obj.repulsion_strength, umap_obj.negative_sample_rate, _n_epochs, _init, _random_state, umap_obj.metric, umap_obj._metric_kwds, umap_obj.verbose)
+
+	return embedding
 
 
 def calc_force_directed_layout(W, file_name, n_jobs, target_change_per_node, target_steps, is3d, memory, random_state, init = None):
