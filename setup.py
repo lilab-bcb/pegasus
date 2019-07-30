@@ -24,7 +24,6 @@ requires = ['matplotlib>=2.0.0',
 			'setuptools',
 			'plotly',
 			'pybind11',
-			'fitsne',
 			'umap-learn',
 			'pyarrow',
 			'lightgbm==2.2.1',
@@ -39,7 +38,7 @@ requires = ['matplotlib>=2.0.0',
 
 setup(
 	name='scCloud',
-	version='0.13.0.post1',
+	version='0.13.0.post2',
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/klarman-cell-observatory/scCloudPy',
@@ -64,6 +63,10 @@ setup(
 	keywords='single cell RNA-Seq data analysis',
 	packages=find_packages(),
 	install_requires=requires,
+	extras_require=dict(
+		fitsne=['fitsne'],
+		mkl=['mkl']
+	),
 	python_requires='~=3.5',
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],
