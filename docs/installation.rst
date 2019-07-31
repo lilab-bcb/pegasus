@@ -25,7 +25,7 @@ Others
 
 For Ubuntu, install the following packages::
 
-	sudo apt install build-essential cmake libxml2 wget
+	sudo apt install build-essential cmake libxml2-dev wget
 
 For macOS, install by::
 
