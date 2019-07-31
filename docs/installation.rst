@@ -51,7 +51,11 @@ Alternatively, if you want to use ``mkl`` package for speed improvement, type::
 
 	pip3 install scCloud[mkl]
 
-If you want to use scCloud's FIt-SNE feature. First, install fftw_ package. Then type::
+If you want to use scCloud's FIt-SNE feature. First, install ``fftw`` library::
+
+	sudo apt install libfftw3-dev
+
+Then type::
 
 	pip3 install scCloud[fitsne]
 
@@ -65,12 +69,13 @@ Or if you want both extra features, type::
 
 .. _Python website: https://www.python.org/downloads/mac-osx/
 
-.. _fftw: http://www.fftw.org/
 
 macOS
 ######
 
-``pip3`` is already installed. Follow the same steps as above for Linux.
+``pip3`` is already installed. Follow the same steps as above for Linux, except that when installing ``fftw``, you have to go to its website_ for instruction.
+
+.. _website: http://www.fftw.org/
 
 ------------------------
 
