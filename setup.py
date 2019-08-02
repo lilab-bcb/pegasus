@@ -1,3 +1,4 @@
+import versioneer
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -38,12 +39,13 @@ requires = ['matplotlib>=2.0.0',
 
 setup(
 	name='scCloud',
-	version='0.13.0.post2',
+	version=versioneer.get_version(),
+	cmdclass=versioneer.get_cmdclass(),
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/klarman-cell-observatory/scCloudPy',
 	author='Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, Marcin Tabaka, Orr Ashenberg, et al.',
-	author_email='libo@broadinstitute.org, jgould@broadinstitute.org, sarkizova@broadinstitue.org, mtabaka@broadinstitute.org, orr@broadinstitute.org',
+	author_email='libo@broadinstitute.org, yyang43@mgh.harvard.edu, jgould@broadinstitute.org, sarkizova@broadinstitue.org, mtabaka@broadinstitute.org, orr@broadinstitute.org',
 	classifiers=[ # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 		'Development Status :: 3 - Alpha',
 		'Intended Audience :: Developers',
