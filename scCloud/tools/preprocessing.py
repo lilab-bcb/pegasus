@@ -1,9 +1,7 @@
 import time
-import re
 import numpy as np
 import pandas as pd
 import xlsxwriter
-from collections import Counter
 
 from scipy.sparse import issparse
 from sklearn.preprocessing import StandardScaler
@@ -12,28 +10,6 @@ from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.extmath import randomized_svd
 
 
-
-def update_var_names(data):
-	start = time.time()
-	if 'genome' in data.uns:
-		prefix = re.compile('^(' + '|'.join(data.uns['genome'].split(',')) + ')_+')
-		if prefix.match(data.var_names[0]):
-			data.var['gene_ids'] = [prefix.sub('', x) for x in data.var['gene_ids']]
-			data.var_names = pd.Index([prefix.sub('', x) for x in data.var_names])
-
-	gsyms = data.var_names.values
-
-	dup_ids = Counter()
-	for i in range(gsyms.size):
-		idn = dup_ids[gsyms[i]]
-		dup_ids[gsyms[i]] += 1
-		if idn > 0:
-			gsyms[i] = gsyms[i] + ".{}".format(idn)
-
-	data.var_names = pd.Index(gsyms)
-
-	end = time.time()
-	print("update_var_names is finished. Time spent = {:.2f}s.".format(end - start))
 
 def qc_metrics(data, mito_prefix = 'MT-', percent_cells = 0.0005):
 	"""

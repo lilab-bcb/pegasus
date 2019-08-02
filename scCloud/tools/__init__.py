@@ -1,9 +1,6 @@
-col_attrs = {"genes", "gene_names", "antibody_names"} # column attributes for sample x gene csr matrix
-excluded = {"barcodes", "matrix"} # processed attributes
 non_de_attrs = ['gene_ids', 'n_cells', 'percent_cells', 'robust', 'highly_variable_genes', 'hvg_rank', 'ba_mean', 'ba_var'] # attributes kept before DE analysis
 
-from .manage_10x_h5_matrices import load_10x_h5_file, load_dropseq_file, write_10x_h5_file, aggregate_10x_matrices
-from .readwrite import read_input, write_output
+from .aggregate_matrices import aggregate_matrices
 from .preprocessing import update_var_names, filter_data, log_norm, run_pca, filter_cells_cite_seq, qc_metrics
 from .hvg_selection import select_highly_variable_genes, collect_highly_variable_gene_matrix
 from .batch_correction import set_group_attribute, estimate_adjustment_matrices, correct_batch_effects
