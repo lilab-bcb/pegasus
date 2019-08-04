@@ -1,3 +1,4 @@
+import versioneer
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -24,8 +25,7 @@ requires = ['matplotlib>=2.0.0',
 			'setuptools',
 			'plotly',
 			'pybind11',
-			'fitsne',
-			'umap-learn',
+			'umap-learn>=0.3.9',
 			'pyarrow',
 			'lightgbm==2.2.1',
 			'joblib',
@@ -39,12 +39,13 @@ requires = ['matplotlib>=2.0.0',
 
 setup(
 	name='scCloud',
-	version='0.13.0.post1',
+	version=versioneer.get_version(),
+	cmdclass=versioneer.get_cmdclass(),
 	description='scRNA-Seq analysis tools that scale to millions of cells',
 	long_description = long_description,
 	url='https://github.com/klarman-cell-observatory/scCloudPy',
 	author='Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, Marcin Tabaka, Orr Ashenberg, et al.',
-	author_email='libo@broadinstitute.org, jgould@broadinstitute.org, sarkizova@broadinstitue.org, mtabaka@broadinstitute.org, orr@broadinstitute.org',
+	author_email='libo@broadinstitute.org, yyang43@mgh.harvard.edu, jgould@broadinstitute.org, sarkizova@broadinstitue.org, mtabaka@broadinstitute.org, orr@broadinstitute.org',
 	classifiers=[ # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 		'Development Status :: 3 - Alpha',
 		'Intended Audience :: Developers',
@@ -64,6 +65,10 @@ setup(
 	keywords='single cell RNA-Seq data analysis',
 	packages=find_packages(),
 	install_requires=requires,
+	extras_require=dict(
+		fitsne=['fitsne'],
+		mkl=['mkl']
+	),
 	python_requires='~=3.5',
 	package_data={
 		'scCloud.annotate_cluster': ['human_immune_cell_markers.json', 'mouse_immune_cell_markers.json', 'mouse_brain_cell_markers.json', 'human_brain_cell_markers.json'],

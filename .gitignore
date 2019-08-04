@@ -1,8 +1,8 @@
 bigquery
 new-wdl
-scCloud/docs/api/*.rst
-scCloud/docs/_build
-scCloud/scCloud/backup
+docs/api/*.rst
+docs/_build
+scCloud/backup
 *~
 
 .DS_Store
