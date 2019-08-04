@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from . import estimate_background_probs, demultiplex
-from scCloud.tools import read_input
+from scCloud.io import read_input
+
 
 
 def down_sampling(data_gt, adt_gt, probs, n_threads = 1):
@@ -30,9 +31,10 @@ def down_sampling(data_gt, adt_gt, probs, n_threads = 1):
 	return fracs, accuracy
 
 
+
 def plot_down_sampling(rna_file, adt_file, out_file, probs = [i / 10.0 for i in range(9,0,-1)], n_threads = 1, dpi = 500, figsize = None):
-	data_gt = read_input(rna_file, mode = 'a')
-	adt_gt = read_input(adt_file, mode = 'a')
+	data_gt = read_input(rna_file)
+	adt_gt = read_input(adt_file)
 	fracs, accuracy = down_sampling(data_gt, adt_gt, probs, n_threads = n_threads)
 	plt.plot(fracs, accuracy, '.-')
 	ax = plt.gca()

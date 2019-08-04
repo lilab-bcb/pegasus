@@ -298,9 +298,6 @@ class MemData:
 
 		genomes = self.listKeys()
 		for genome in genomes:
-			if genome not in self.data:
-				
-			
 			array2d = self.data[genome]
 
 			if array2d.matrix.dtype == np.int32: # caution, change matrix from int to float32 permanently!

@@ -2,7 +2,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import time
-from . import read_input
+
+from scCloud.io import read_input
 
 
 
@@ -50,7 +51,7 @@ def convert_to_parquet(data, output_name, nthreads):
 
 def run_conversion(input_h5ad_file, output_name, nthreads):
 	start = time.time()
-	data = read_input(input_h5ad_file, mode = 'a')
+	data = read_input(input_h5ad_file, h5ad_mode = 'a')
 	end = time.time()
 	print("Time spent for loading the expression matrix is {:.2f}s.".format(end - start))
 	

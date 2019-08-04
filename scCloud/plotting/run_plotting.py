@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as pl
 
-from scCloud.tools import read_input
+from scCloud.io import read_input
 from .plot_utils import transform_basis
 from .plot_qc import plot_qc_violin
 from . import plot_library, iplot_library
@@ -20,7 +20,7 @@ pop_list = {
 
 
 def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
-	adata = read_input(input_file, mode = 'r')
+	adata = read_input(input_file, h5ad_mode = 'r')
 
 	if plot_type == 'qc_violin':
 		if kwargs['attr'] is None:
@@ -42,7 +42,7 @@ def make_static_plots(input_file, plot_type, output_file, dpi = 500, **kwargs):
 	adata.file.close()
 
 def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
-	adata = read_input(input_file, mode = 'r')
+	adata = read_input(input_file, h5ad_mode = 'r')
 	basis = transform_basis(plot_type)
 	if plot_type == 'diffmap' or plot_type == 'diffmap_pca':
 		df = pd.DataFrame(adata.obsm['X_{}'.format(plot_type)][:, 0:3], index = adata.obs.index, columns = [basis + i for i in ['1', '2', '3']])

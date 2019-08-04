@@ -6,7 +6,8 @@ import numba
 from numba import njit
 from scipy.sparse import csr_matrix
 
-from . import write_10x_h5_file
+from scCloud.io import write_output, Array2D, MemData
+
 
 
 def sample_hypergeom(count, total_reads, n_sample, random_state):
@@ -17,6 +18,8 @@ def sample_hypergeom(count, total_reads, n_sample, random_state):
 		total_reads -= count[i]
 		n_sample -= new_count[i]
 	return new_count
+
+
 
 @njit
 def generate_sparse_matrix(barcode_idx, feature_idx):
@@ -38,7 +41,9 @@ def generate_sparse_matrix(barcode_idx, feature_idx):
 
 	return row_ind, col_ind, data
 
-def down_sample(molecule_info_file, output_raw_file, total_reads, n_sample, random_state = 0):
+
+
+def down_sample(molecule_info_file, output_name, total_reads, n_sample, random_state = 0):
 	with tables.open_file(molecule_info_file) as h5_in:
 		barcode_idx = h5_in.get_node('/barcode_idx').read()
 		feature_idx = h5_in.get_node('/feature_idx').read()
@@ -54,17 +59,14 @@ def down_sample(molecule_info_file, output_raw_file, total_reads, n_sample, rand
 		gene_ids = h5_in.get_node('/features/id').read()
 		gene_names = h5_in.get_node('/features/name').read()
 
-		channel = {}
-
-		row_ind, col_ind, data = generate_sparse_matrix(barcode_idx, feature_idx)
-		channel["matrix"] = csr_matrix((data, (row_ind, col_ind)), shape = (barcodes.size, gene_ids.size))
-		channel["barcodes"] = barcodes
-		channel["genes"] = gene_ids
-		channel["gene_names"] = gene_names
-
 		genome = h5_in.get_node('/barcode_info/genomes').read()[0].decode()
 
-		results = {genome : channel}
-		write_10x_h5_file(output_raw_file, results)
-		print("Subsampled raw matrix is generated!")
+		row_ind, col_ind, data = generate_sparse_matrix(barcode_idx, feature_idx)
+		mat = csr_matrix((data, (row_ind, col_ind)), shape = (barcodes.size, gene_ids.size))
 
+		data = MemData()
+		data.addData(genome, Array2D({'barcodekey' : barcodes}, {'featurekey' : gene_ids, 'featurename' : gene_names}, mat))
+
+		write_output(data, output_name)
+
+		print("Subsampled raw matrix is generated!")

@@ -11,7 +11,9 @@ import xlsxwriter
 from natsort import natsorted
 from joblib import Parallel, delayed
 
-from . import read_input, non_de_attrs
+from . import non_de_attrs
+from scCloud.io import read_input
+
 
 
 def collect_contingency_table(data, X, labels='louvain_labels'):
@@ -399,12 +401,12 @@ def __markers(data, X, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=
 def run_de_analysis(input_file, output_excel_file, labels, n_jobs, alpha, run_fisher, run_mwu, run_roc, subset_string, temp_folder):
 	start = time.time()
 	if subset_string is None:
-		data = read_input(input_file, mode='r+')
+		data = read_input(input_file, h5ad_mode = 'r+')
 		X = data.X[:]
 		output_file = input_file
 	else:
 		attr, value = subset_string.split(':')
-		data = read_input(input_file, mode='a')
+		data = read_input(input_file)
 		data = data[data.obs[attr] == value].copy()
 		X = data.X
 		import os

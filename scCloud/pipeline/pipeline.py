@@ -1,7 +1,9 @@
 import numpy as np
 import anndata
 from scipy.sparse import csr_matrix, hstack
-from scCloud import tools, cite_seq
+from scCloud import io, tools, cite_seq
+
+
 
 def run_pipeline(input_file, output_name, **kwargs):
 	is_raw = not kwargs['processed']
@@ -10,17 +12,16 @@ def run_pipeline(input_file, output_name, **kwargs):
 		kwargs['seurat_compatible'] = False
 
 	# load input data
-	if not kwargs['cite_seq']:
-		adata = tools.read_input(input_file, genome = kwargs['genome'], mode = ('a' if (is_raw or kwargs['subcluster']) else 'r+'), select_singlets = kwargs['select_singlets'])
-	else:
-		data_dict = tools.read_input(input_file, genome = kwargs['genome'], return_a_dict = True, select_singlets = kwargs['select_singlets'])
-		assert len(data_dict) == 2
+	adata = io.read_input(input_file, genome = kwargs['genome'], concat_matrices = False if kwargs['cite_seq'] else True, h5ad_mode = ('a' if (is_raw or kwargs['subcluster']) else 'r+'), select_singlets = kwargs['select_singlets'])
+	if kwargs['cite_seq']:
+		data_dict = adata
+		assert len(data_dict.listKeys()) == 2
 		adata = cdata = None
-		for genome, data in data_dict.items():
-			if genome.startswith('CITE_Seq'):
-				cdata = data
+		for keyword in data_dict.listKeys():
+			if keyword.startswith('CITE_Seq'):
+				cdata = data_dict[keyword]
 			else:
-				adata = data
+				adata = data_dict[keyword]
 		assert adata is not None and cdata is not None
 	print("Inputs are loaded.")
 
@@ -29,8 +30,6 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 	# preprocessing
 	if is_raw:
-		# make gene names unique
-		tools.update_var_names(adata)
 		# filter out low quality cells/genes
 		tools.filter_data(adata, output_filt = kwargs['output_filt'], plot_filt = kwargs['plot_filt'], plot_filt_figsize = kwargs['plot_filt_figsize'], \
 			mito_prefix = kwargs['mito_prefix'], min_genes = kwargs['min_genes'], max_genes = kwargs['max_genes'], min_umis = kwargs['min_umis'], max_umis = kwargs['max_umis'], \
@@ -169,7 +168,7 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 
 	# write out results
-	tools.write_output(adata, output_name)
+	io.write_output(adata, output_name)
 
 	if kwargs['seurat_compatible']:
 		seurat_data = adata.copy()

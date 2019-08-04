@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 import time
 from scipy.sparse import issparse
-from . import read_input
+
+from scCloud.io import read_input
+
+
 
 def scp_write_coords(data, output_name):
 	cluster_labels = []
@@ -91,7 +94,7 @@ def scp_write_expression(data, output_name, is_sparse = True, round_to = 2):
 		write_dense_matrix(expr_file, data, round_to)
 
 def run_scp_output(input_h5ad_file, output_name, is_sparse, round_to):
-	adata = read_input(input_h5ad_file, mode = 'a')
+	adata = read_input(input_h5ad_file, h5ad_mode = 'a')
 	start = time.time()
 	scp_write_coords(adata, output_name)
 	scp_write_metadata(adata, output_name)

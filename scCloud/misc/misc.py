@@ -9,7 +9,8 @@ import scipy.stats as ss
 from scipy.stats import f_oneway
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from joblib import Parallel, delayed
-from scCloud.tools import read_input
+
+from scCloud.io import read_input
 
 
 
@@ -88,7 +89,7 @@ def search_de_genes(data, gene_list, test = 'fisher', thre = 1.5):
 	return df
 
 def show_attributes(input_file, show_attributes, show_gene_attributes, show_values_for_attributes):
-	data = read_input(input_file, mode = 'r')
+	data = read_input(input_file, h5ad_mode = 'r')
 	if show_attributes:
 		print("Available sample attributes in input dataset: {0}".format(', '.join(data.obs.columns.values)))
 	if show_gene_attributes:

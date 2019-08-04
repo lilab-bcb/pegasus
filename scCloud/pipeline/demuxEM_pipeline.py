@@ -1,15 +1,15 @@
 import os
 import numpy as np
 import pandas as pd
-from scCloud import tools, demuxEM
+from scCloud import io, tools, demuxEM
 
 
 
 def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	# load input data
-	adt = tools.read_input(input_adt_file)
+	adt = io.read_input(input_adt_file)
 	print("ADT file is loaded.")
-	data = tools.read_input(input_rna_file, genome = kwargs['genome'])
+	data = io.read_input(input_rna_file, genome = kwargs['genome'], concat_matrices = True)
 	print("RNA file is loaded.")
 
 	# Filter the RNA matrix
@@ -26,22 +26,23 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	print("Demultiplexing is done.")
 	
 	# annotate raw matrix with demuxEM results
-	genome_indexed_raw_data = tools.load_10x_h5_file(input_rna_file)
-	for raw_data in genome_indexed_raw_data.values():
-		barcodes = pd.Index([x.decode()[:-2] for x in raw_data['barcodes']])
+	genome_indexed_raw_data = io.read_input(input_rna_file, return_type = 'MemData', concat_matrices = False)
+	for keyword in genome_indexed_raw_data.listKeys():
+		array2d = genome_indexed_raw_data.getData(keyword)
+		barcodes = array2d.barcode_metadata.index
 		idx = barcodes.isin(data.obs_names)
 		selected = barcodes[idx]
 
 		demux_type = np.empty(barcodes.size, dtype = 'object')
 		demux_type[:] = ''
 		demux_type[idx] = data.obs.loc[selected, 'demux_type']
-		raw_data['demux_type'] = demux_type.astype('str')
+		array2d.barcode_metadata['demux_type'] = demux_type
 
 		assignment = np.empty(barcodes.size, dtype = 'object')
 		assignment[:] = ''
 		assignment[idx] = data.obs.loc[selected, 'assignment']
-		raw_data['assignment'] = assignment.astype('str')
-	print("Demultiplexing results are added into raw expression matrices.")
+		array2d.barcode_metadata['assignment'] = assignment
+	print("Demultiplexing results are added to raw expression matrices.")
 
 	# generate plots
 	if kwargs['gen_plots']:
@@ -62,8 +63,8 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 	print("Hashtag count information is written to {output_name}_ADTs.h5ad .".format(output_name = output_name))
 	data.write(output_name + "_demux.h5ad")
 	print("Demutiplexed RNA expression information is written to {output_name}_demux.h5ad .".format(output_name = output_name))
-	tools.write_10x_h5_file(output_name + '_demux_10x.h5', genome_indexed_raw_data)
-	print("Raw 10x-format hdf5 file with demultiplexing results is written to {output_name}_demux_10x.h5 .".format(output_name = output_name))
+	io.write_output(output_name + '_demux.scCloud.h5', genome_indexed_raw_data)
+	print("Raw scCloud-format hdf5 file with demultiplexing results is written to {output_name}_demux.scCloud.h5 .".format(output_name = output_name))
 
 	# output summary statistics
 	print("\nSummary statistics:")
