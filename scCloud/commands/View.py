@@ -1,6 +1,6 @@
 import os
 from .Base import Base
-from ..misc import show_attributes
+from scCloud.misc import show_attributes
 
 class View(Base):
     """

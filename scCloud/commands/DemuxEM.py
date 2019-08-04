@@ -1,5 +1,5 @@
 from .Base import Base
-from ..pipeline import run_demuxEM_pipeline
+from scCloud.pipeline import run_demuxEM_pipeline
 
 class DemuxEM(Base):
     """

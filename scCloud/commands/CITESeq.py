@@ -1,5 +1,5 @@
 from .Base import Base
-from ..cite_seq import merge_rna_and_adt_data
+from scCloud.cite_seq import merge_rna_and_adt_data
 
 class CITESeq(Base):
     """

@@ -1,5 +1,5 @@
 from .Base import Base
-from ..pipeline import run_pipeline
+from scCloud.pipeline import run_pipeline
 
 class SubClustering(Base):
     """

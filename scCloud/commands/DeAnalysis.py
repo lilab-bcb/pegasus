@@ -1,6 +1,6 @@
 import os
 from .Base import Base
-from ..tools import run_de_analysis
+from scCloud.tools import run_de_analysis
 
 class DeAnalysis(Base):
     """

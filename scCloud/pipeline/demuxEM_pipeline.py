@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from .. import tools, demuxEM
+from scCloud import tools, demuxEM
 
 
 
@@ -51,7 +51,7 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
 		demuxEM.plot_rna_hist(data, output_name + '.rna_demux.hist.pdf')
 		print("Diagnostic plots are generated.")
 
-	if kwargs['gen_gender_plot'] is not None:
+	if len(kwargs['gen_gender_plot']) > 0:
 		tools.log_norm(data, 1e5)
 		for gene_name in kwargs['gen_gender_plot']:
 			demuxEM.plot_violin(data, {'gene' : gene_name}, '{output_name}.{gene_name}.violin.pdf'.format(output_name = output_name, gene_name = gene_name), title = '{gene_name}: a gender-specific gene'.format(gene_name = gene_name))

@@ -1,5 +1,5 @@
 from .Base import Base
-from ..tools import down_sample
+from scCloud.tools import down_sample
 
 class DownSample(Base):
     """

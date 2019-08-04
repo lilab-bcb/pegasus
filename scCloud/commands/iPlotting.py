@@ -1,6 +1,6 @@
 import os
 from .Base import Base
-from ..plotting import make_interactive_plots
+from scCloud.plotting import make_interactive_plots
 
 class iPlotting(Base):
     """

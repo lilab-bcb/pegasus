@@ -1,14 +1,18 @@
 from docopt import docopt
 from docopt import DocoptExit
+from typing import List
 
 class Base:
 	"""Base class for the commands"""
 
-	def __init__(self, command_args):
+	def __init__(self, command_args: List[str]):
 		self.args = docopt(self.__doc__, argv = command_args)
 
-	def split_string(self, astring, sep = ','):
-		return astring.split(sep) if astring is not None else None
+	def split_string(self, astring: str, sep: str = ',') -> List[str]:
+		return astring.split(sep) if astring is not None else []
 
+	def convert_to_int(self, value: str) -> int:
+		return int(value) if value is not None else None
+	
 	def execute(self):
 		raise NotImplementedError

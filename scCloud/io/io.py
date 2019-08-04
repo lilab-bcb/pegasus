@@ -7,8 +7,9 @@ import os.path
 from scipy.io import mmread
 from scipy.sparse import csr_matrix
 import tables
+import gzip
 
-from typing import List
+from typing import List, Tuple
 from . import Array2D, MemData
 
 import anndata
@@ -198,7 +199,6 @@ def load_mtx_file(path: str, genome: str = None) -> 'MemData':
 	>>> io.load_10x_h5_file('example_10x.h5')
 	"""	
 
-	path = os.path.expanduser(os.path.expandvars(path))
 	if not os.path.isdir(path):
 		path = os.path.dirname(path)
 
@@ -257,7 +257,7 @@ def load_csv_file(input_csv: str, genome: str) -> 'MemData':
 	----------
 
 	input_csv : `str`
-		The CSV file containing the count matrix.
+		The CSV file, gzipped or not, containing the count matrix.
 	genome : `str`
 		The genome reference.
 
@@ -271,7 +271,6 @@ def load_csv_file(input_csv: str, genome: str) -> 'MemData':
 	>>> io.load_csv_file('example_ADT.csv')
 	"""
 
-	input_csv = os.path.expanduser(os.path.expandvars(input_csv))
 	path = os.path.dirname(input_csv)
 	base = os.path.basename(input_csv)
 
@@ -280,7 +279,7 @@ def load_csv_file(input_csv: str, genome: str) -> 'MemData':
 	barcodes = []
 	names = []
 	stacks = []
-	with open(input_csv) as fin:
+	with (gzip.open(input_csv, mode = 'rt') if input_csv.endswith('.gz') else open(input_csv)) as fin:
 		barcodes = next(fin).strip().split(',')[1:]
 		for line in fin:
 			fields = line.strip().split(',')
@@ -376,7 +375,57 @@ def load_scCloud_h5_file(input_h5: str, ngene: int = None, select_singlets: bool
 
 
 
-def read_input(input_file: str, return_type = 'AnnData', genome: str = None, concat_matrices: bool = False, h5ad_mode: str = 'r+', select_singlets: bool = False) -> 'MemData or AnnData or List[AnnData]':
+def infer_file_format(input_file: str) -> Tuple[str, str, str]:
+	""" Infer file format from input_file name
+
+	This function infer file format by inspecting the file name.
+
+	Parameters
+	----------
+
+	input_file : `str`
+		Input file name.
+
+	Returns
+	-------
+	`str`
+		File format, choosing from 'scCloud', '10x', 'h5ad', 'mtx', 'dge', and 'csv'.
+	`str`
+		The path covering all input files. Most time this is the same as input_file. But for HCA mtx and csv, this should be parent directory.
+	`str`
+		Type of the path, either 'file' or 'directory'.
+	"""
+
+	file_format = None
+	copy_path = input_file
+	copy_type = 'file'
+
+	if input_file.endswith('.scCloud.h5'):
+		file_format = 'scCloud'
+	elif input_file.endswith('.h5'):
+		file_format = '10x'
+	elif input_file.endswith('.h5ad'):
+		file_format = 'h5ad'
+	elif input_file.endswith('.mtx') or input_file.endswith('.mtx.gz') or os.path.splitext(input_file)[1] == '':
+		file_format = 'mtx'
+		if not os.path.isdir(input_file):
+			copy_path = os.path.dirname(input_file)
+		copy_type = 'directory'
+	elif input_file.endswith('dge.txt.gz'):
+		file_format = 'dge'
+	elif input_file.endswith('.csv') or input_file.endswith('.csv.gz'):
+		file_format = 'csv'
+		if os.path.basename(input_file) == 'expression.csv':
+			copy_type = os.path.dirname(input_file)
+			copy_type = 'directory'
+	else:
+		raise ValueError("Unrecognized file type for file {}!".format(input_file))
+
+	return file_format, copy_path, copy_type
+
+
+
+def read_input(input_file: str, return_type = 'AnnData', genome: str = None, concat_matrices: bool = False, h5ad_mode: str = 'a', ngene: int = None, select_singlets: bool = False) -> 'MemData or AnnData or List[AnnData]':
 	"""Load data into memory.
 
 	This function is used to load input data into memory. Inputs can be in 10x genomics v2 & v3 formats (hdf5 or mtx), HCA DCP mtx and csv formats, Drop-seq dge format, and CSV format.
@@ -392,8 +441,10 @@ def read_input(input_file: str, return_type = 'AnnData', genome: str = None, con
 		A string contains comma-separated genome names. scCloud will read all matrices matching the genome names. If genomes is None, all matrices will be considered.
 	concat_matrices : `boolean`, optional (default: False)
 		If input file contains multiple matrices, if concatenate them into one AnnData object or return a list of AnnData objects.
-	h5ad_mode : `str`, optional (default: `r+`)
+	h5ad_mode : `str`, optional (default: `a`)
 		If input is in h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 	select_singlets : `bool`, optional (default: False)
 		If only keep DemuxEM-predicted singlets when loading data.
 
@@ -411,22 +462,23 @@ def read_input(input_file: str, return_type = 'AnnData', genome: str = None, con
 
 	start = time.time()
 
-	if input_file.endswith('.scCloud.h5'):
-		data = load_scCloud_h5_file(input_file, select_singlets = select_singlets)
-	elif input_file.endswith('.h5'):
-		data = load_10x_h5_file(input_file)
-	elif input_file.endswith('.h5ad'):
+	input_file = os.path.expanduser(os.path.expandvars(input_file))
+	file_format, _, _ = infer_file_format(input_file)
+
+	if file_format == 'scCloud':
+		data = load_scCloud_h5_file(input_file, ngene = ngene, select_singlets = select_singlets)
+	elif file_format == '10x':
+		data = load_10x_h5_file(input_file, ngene = ngene)
+	elif file_format == 'h5ad':
 		data = anndata.read_h5ad(input_file, backed = (False if h5ad_mode == 'a' else h5ad_mode))
-	elif input_file.endswith('.mtx') or input_file.endswith('.mtx.gz') or os.path.isdir(input_file):
+	elif file_format == 'mtx':
 		data = load_mtx_file(input_file, genome)
-	elif input_file.endswith('dge.txt.gz'):
+	elif file_format == 'dge':
 		assert genome is not None
 		data = load_dge_file(input_file, genome)
-	elif input_file.endswith('.csv'):
-		assert genome is not None
-		data = load_csv_file(input_file, genome)
 	else:
-		raise ValueError("Unrecognized file type")
+		assert (file_format == 'csv') and (genome is not None)
+		data = load_csv_file(input_file, genome)
 
 	data.restrain_keywords(genome)
 

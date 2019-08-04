@@ -1,5 +1,5 @@
 from .Base import Base
-from ..check_sample_indexes import run_check_sample_indexes
+from scCloud.check_sample_indexes import run_check_sample_indexes
 
 class CheckSampleIndexes(Base):
     """

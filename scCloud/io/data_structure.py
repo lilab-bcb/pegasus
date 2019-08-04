@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix, hstack
+from scipy.sparse import csr_matrix, hstack, vstack
 import tables
 
 from typing import List
@@ -99,6 +99,20 @@ class Array2D:
 			self.barcode_metadata['Channel'] = channels
 
 
+	def update_barcode_metadata_info(self, sample_name: str, row: 'pd.Series', attributes: List[str]) -> None:
+		""" Update barcodekey, update channel and add attributes
+		"""
+		nsample = self.barcode_metadata.shape[0]
+		barcodes = np.char.add(sample_name + '-', self.barcode_metadata.index.values)
+		self.barcode_metadata.index = pd.Index(barcodes)
+		if 'Channel' in self.barcode_metadata:
+			self.barcode_metadata['Channel'] = np.char.add(sample_name + '-', self.barcode_metadata['Channel'].values)
+		else:
+			self.barcode_metadata['Channel'] = np.repeat(sample_name, nsample)
+		for attr in attributes:
+			self.barcode_metadata[attr] = np.repeat(row[attr], nsample)
+
+
 	def write_to_hdf5(self, keyword: str, hd5_out: 'File') -> None:
 		""" Write Array2D content into hdf5 file
 		"""
@@ -151,13 +165,22 @@ def polish_featurename(feature_names: List[str], feature_keys: List[str], genome
 
 
 
+def get_fillna_dict(df: 'pd.DataFrame') -> dict:
+	""" Generate a fillna dict for columns in a df
+	"""
+	fillna_dict = {}
+	for column in df:
+		if df[column].dtype.kind in {'O', 'S'}:
+			fillna_dict[column] = ''
+		else:
+			fillna_dict[column] = 0
+	return fillna_dict
+
+
+
 class MemData:
 	def __init__(self):
 		self.data = {} # data is a dictionary mapping keyword to Array2D
-
-
-	def addData(self, keyword: str, one_array: 'Array2D') -> None:
-		self.data[keyword] = one_array
 
 
 	def listKeys(self) -> List[str]:
@@ -167,6 +190,66 @@ class MemData:
 	def getData(self, keyword: str) -> 'Array2D':
 		assert keyword in self.data
 		return self.data[keyword]
+
+
+	def addData(self, keyword: str, one_array: 'Array2D') -> None:
+		self.data[keyword] = one_array
+
+
+	def update_barcode_metadata_info(self, sample_name: str, row: 'pd.Series', attributes: List[str]) -> None:
+		""" Update barcodekey, update channel and add attributes for each array2d array
+		"""
+		for array2d in self.data.values():
+			array2d.update_barcode_metadata_info(sample_name, row, attributes)
+
+
+	def addAggrData(self, data: 'MemData') -> None:
+		""" Add Aggr Data
+		"""
+		for keyword, array2d in data.data.items():
+			if keyword in self.data:
+				self.data[keyword].append(array2d)
+			else:
+				self.data[keyword] = [array2d]
+
+
+	def aggregate(self) -> None:
+		""" Merge aggregated count matrices 		
+		"""
+		import gc
+
+		for keyword in self.data:
+			array2d_list = self.data[keyword]
+			self.data[keyword] = None
+
+			if len(array2d_list) == 1:
+				self.data[keyword] = array2d_list[0]
+			else:
+				barcode_metadata_dfs = [array2d.barcode_metadata for array2d in array2d_list]
+				barcode_metadata = pd.concatenate(barcode_metadata_dfs, axis = 0, sort = False)
+				fillna_dict = get_fillna_dict(barcode_metadata)
+				barcode_metadata.fillna(value = fillna_dict, inplace = True)
+
+				feature_metadata = array2d_list[0].feature_metadata
+				for other in array2d_list[1:]:
+					feature_metadata = feature_metadata.merge(other, how = 'outer')
+				fillna_dict = get_fillna_dict(feature_metadata)
+				feature_metadata.fillna(value = fillna_dict, inplace = True)
+
+				matrix_list = []
+				f2idx = pd.Series(data = range(feature_metadata.shape[0]), index = feature_metadata.index)
+				for array2d in array2d_list:
+					if featuer_metadata.shape[0] > array2d.feature_metadata.shape[0]:
+						mat = csr_matrix((array2d.matrix.shape[0], f2idx.size), dtype = array2d.matrix.dtype)
+						mat[:, f2idx[feature_metadata.index].values] = array2d.matrix
+						array2d.matrix = mat
+						gc.collect()
+					matrix_list.append(array2d.matrix)
+					
+				newmat = vstack(matrix_list)
+				matrix_list = array2d_list = None
+				gc.collect()
+				self.data[keyword] = Array2D(barcode_metadata, feature_metadata, newmat)
 
 
 	def restrain_keywords(self, keywords: str) -> None:
