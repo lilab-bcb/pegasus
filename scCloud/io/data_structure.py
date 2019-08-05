@@ -20,10 +20,14 @@ class Array2D:
 		self.matrix = matrix # scipy csr matrix
 		self.metadata = metadata # other metadata, a dictionary
 
-		assert 'barcodekey' in self.barcode_metadata
-		self.barcode_metadata.set_index('barcodekey', inplace = True)
-		assert 'featurekey' in self.feature_metadata
-		self.feature_metadata.set_index('featurekey', inplace = True)
+		if 'barcodekey' in self.barcode_metadata:
+			self.barcode_metadata.set_index('barcodekey', inplace = True)
+		else:
+			assert self.barcode_metadata.index.name == 'barcodekey'
+		if 'featurekey' in self.feature_metadata:
+			self.feature_metadata.set_index('featurekey', inplace = True)
+		else:
+			assert self.feature_metadata.index.name == 'featurekey'
 
 		if self.barcode_metadata.shape[0] != self.matrix.shape[0]:
 			raise ValueError("Wrong number of cells : matrix has {} cells, barcodes file has {}".format(self.matrix.shape[0], self.barcode_metadata.shape[0]))
@@ -71,22 +75,22 @@ class Array2D:
 			selected = selected & (self.matrix.getnnz(axis = 1) >= ngene)
 		if select_singlets:
 			assert 'demux_type' in self.barcode_metadata
-			selected = selected & (self.barcode_metadata['demux_type'] == 'singlet'.encode()).values
+			selected = selected & (self.barcode_metadata['demux_type'] == 'singlet').values
 			self.barcode_metadata.drop(columns = 'demux_type', inplace = True)
 		
 		self.trim(selected)
 
 
 	def separate_channels(self, fn: str) -> None:
-		""" Separate channel information from barcodekeys, only used for 10x v2, v3 h5.
+		""" Separate channel information from barcodekeys, only used for 10x v2, v3 h5 and mtx.
 		"""
 
-		barcodes = self.barcode_metadata.index.values
+		barcodes = self.barcode_metadata.index.values.astype(str)
 		parts = np.array(np.char.rsplit(barcodes, sep = '-', maxsplit = 1).tolist())
 
 		channels = None
-		assert parts.shape[1] == 2
-		if np.char.not_equal(parts[:, 1], '1').sum() > 0:
+		assert fn == '' or parts.shape[1] == 2
+		if fn != '' and np.char.not_equal(parts[:, 1], '1').sum() > 0:
 			# if we have multiple channels
 			channels = np.char.add(fn + '-', parts[:, 1])
 			barcodes = np.array([x + '-' + y for x, y in zip(channels, parts[:, 0])])
@@ -95,7 +99,7 @@ class Array2D:
 
 		self.barcode_metadata.index = pd.Index(barcodes)
 		
-		if channels is not None:	
+		if channels is not None:
 			self.barcode_metadata['Channel'] = channels
 
 
@@ -141,6 +145,7 @@ class Array2D:
 				hd5_out.create_carray(outgb, col, obj = self.feature_metadata[col].values.astype('S')) # encode into binary strings
 			else:
 				hd5_out.create_carray(outgb, col, obj = self.feature_metadata[col].values)
+
 
 
 def polish_featurename(feature_names: List[str], feature_keys: List[str], genomes: List[str]) -> List[str]:

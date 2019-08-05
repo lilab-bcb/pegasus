@@ -51,7 +51,7 @@ def load_10x_h5_file_v2(h5_in: 'tables.File', fn: str, ngene: int = None) -> 'Me
 		names = h5_in.get_node("/" + genome + "/gene_names").read().astype(str)
 
 		array2d = Array2D({'barcodekey' : barcodes}, {'featurekey' : ids, 'featurename' : names}, mat)
-		array2d.filter(ngene)
+		array2d.filter(ngene = ngene)
 		array2d.separate_channels(fn)
 
 		data.addData(genome, array2d)
@@ -152,7 +152,7 @@ def determine_file_name(path: str, names: List[str], errmsg: str) -> str:
 	raise ValueError(errmsg)
 
 
-def load_one_mtx_file(path: str) -> 'Array2D':
+def load_one_mtx_file(path: str, ngene: int = None) -> 'Array2D':
 	"""Load one gene-count matrix in mtx format into an Array2D object
 	"""
 	mtx_file = determine_file_name(path, ['matrix.mtx.gz', 'matrix.mtx'], 'Expression matrix in mtx format is not found')
@@ -160,7 +160,7 @@ def load_one_mtx_file(path: str) -> 'Array2D':
 
 	barcode_file = determine_file_name(path, ['cells.tsv.gz', 'barcodes.tsv.gz', 'barcodes.tsv'], 'Barcode metadata information is not found')
 	feature_file = determine_file_name(path, ['genes.tsv.gz', 'features.tsv.gz', 'genes.tsv'], 'Feature metadata information is not found')
-	format_type = 'HCA DCP' if os.path.basename(barcode_file).startswith('cells') else ('10x v3' if feature_file.startswith('features') else '10x v2')
+	format_type = 'HCA DCP' if os.path.basename(barcode_file).startswith('cells') else ('10x v3' if os.path.basename(feature_file).startswith('features') else '10x v2')
 
 	if format_type == 'HCA DCP':
 		barcode_metadata = pd.read_csv(barcode_file, sep = '\t', header = 0)
@@ -175,10 +175,14 @@ def load_one_mtx_file(path: str) -> 'Array2D':
 		barcode_metadata = pd.read_csv(barcode_file, sep = '\t', header = None, names = ['barcodekey'])
 		feature_metadata = pd.read_csv(feature_file, sep = '\t', header = None, names = ['featurekey', 'featurename'])
 
-	return Array2D(barcode_metadata, feature_metadata, mat)
+	array2d = Array2D(barcode_metadata, feature_metadata, mat)
+	array2d.filter(ngene = ngene)
+	array2d.separate_channels('') # fn == '' refers to 10x mtx format
+
+	return array2d
 
 
-def load_mtx_file(path: str, genome: str = None) -> 'MemData':
+def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> 'MemData':
 	"""Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
 	
 	Parameters
@@ -187,7 +191,9 @@ def load_mtx_file(path: str, genome: str = None) -> 'MemData':
 	path : `str`
 		Path to mtx files. The directory impiled by path should either contain matrix, feature and barcode information, or folders containg these information.
 	genome : `str`, optional (default: None)
-		Genome name of the matrix. If None, genome will be inferred from path
+		Genome name of the matrix. If None, genome will be inferred from path.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
 	Returns
 	-------
@@ -206,52 +212,18 @@ def load_mtx_file(path: str, genome: str = None) -> 'MemData':
 	if os.path.exists(os.path.join(path, 'matrix.mtx.gz')) or os.path.exists(os.path.join(path, 'matrix.mtx')):
 		if genome is None:
 			genome = os.path.basename(path)
-		data.addData(genome, load_one_mtx_file(path))
+		data.addData(genome, load_one_mtx_file(path, ngene = ngene))
 	else:
 		for dir_entry in os.scandir(path):
 			if dir_entry.is_dir():
-				data.addData(dir_entry.name, load_one_mtx_file(dir_entry.path))
+				data.addData(dir_entry.name, load_one_mtx_file(dir_entry.path, ngene = ngene))
 
 	return data
 
 
 
-def load_dge_file(input_file: str, genome: str) -> 'MemData':
-	"""Load DGE-format matrix from *dge.txt.gz, this is the format for Drop-seq, Seqwell and Celsee.
-
-	Parameters
-	----------
-
-	input_file : `str`
-		The matrix in dropseq format.
-	genome : `str`
-		The genome reference.
-
-	Returns
-	-------
-
-	An MemData object containing a genome-Array2D pair.
-
-	Examples
-	--------
-	>>> io.load_dge_file('example.umi.dge.txt.gz', 'GRCh38')
-	"""
-
-	df = pd.read_csv(input_file, header = 0, index_col = 0, sep = '\t', compression = 'gzip')
-	mat = csr_matrix(df.values.T)
-	barcode_metadata = {'barcodekey': df.columns.values}
-	genes = df.index.values
-	feature_metadata = {'featurekey': genes, 'featurename': genes}
-
-	data = MemData()
-	data.addData(genome, Array2D(barcode_metadata, feature_metadata, mat))
-
-	return data
-
-
-
-def load_csv_file(input_csv: str, genome: str) -> 'MemData':
-	"""Load count matrix from a CSV file, including loading ADT matrix
+def load_csv_file(input_csv: str, genome: str, sep: str = ',', ngene: int = None) -> 'MemData':
+	"""Load count matrix from a CSV-style file, such as CSV file or DGE style tsv file.
 
 	Parameters
 	----------
@@ -260,6 +232,10 @@ def load_csv_file(input_csv: str, genome: str) -> 'MemData':
 		The CSV file, gzipped or not, containing the count matrix.
 	genome : `str`
 		The genome reference.
+	sep: `str`, optional (default: ',')
+		Separator between fields, either ',' or '\t'.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
 	Returns
 	-------
@@ -268,41 +244,99 @@ def load_csv_file(input_csv: str, genome: str) -> 'MemData':
 	
 	Examples
 	--------
-	>>> io.load_csv_file('example_ADT.csv')
+	>>> io.load_csv_file('example_ADT.csv', genome = 'GRCh38')
+	>>> io.load_csv_file('example.umi.dge.txt.gz', genome = 'GRCh38', sep = '\t')
 	"""
 
 	path = os.path.dirname(input_csv)
 	base = os.path.basename(input_csv)
+	is_hca_csv = base == 'expression.csv'
 
-	converter = float if base.startswith('expression') else int
+	if sep == '\t':
+		# DGE, columns are cells, which is around thousands and we can use pandas.read_csv
+		df = pd.read_csv(input_csv, header = 0, index_col = 0, sep = sep)
+		mat = csr_matrix(df.values.T)
+		barcode_metadata = {'barcodekey' : df.columns.values}
+		feature_metadata = {'featurekey' : df.index.values, 'featurename' : df.index.values}
+	else:
+		# For CSV files, wide columns prevent fast pd.read_csv loading
+		converter = float if base.startswith('expression') else int # If expression -> float otherwise int
 
-	barcodes = []
-	names = []
-	stacks = []
-	with (gzip.open(input_csv, mode = 'rt') if input_csv.endswith('.gz') else open(input_csv)) as fin:
-		barcodes = next(fin).strip().split(',')[1:]
-		for line in fin:
-			fields = line.strip().split(',')
-			names.append(fields[0])
-			stacks.append([converter(x) for x in fields[1:]])
+		barcodes = []
+		names = []
+		stacks = []
+		with (gzip.open(input_csv, mode = 'rt') if input_csv.endswith('.gz') else open(input_csv)) as fin:
+			barcodes = next(fin).strip().split(sep)[1:]
+			for line in fin:
+				fields = line.strip().split(sep)
+				names.append(fields[0])
+				stacks.append([converter(x) for x in fields[1:]])
 
-	mat = csr_matrix(np.stack(stacks, axis = 1))
-	barcode_metadata = {'barcodekey' : barcodes}
-	feature_metadata = {'featurekey' : names, 'featurename' : names}
+		mat = csr_matrix(np.stack(stacks, axis = 1 if not is_hca_csv else 0))
+		barcode_metadata = {'barcodekey' : barcodes}
+		feature_metadata = {'featurekey' : names, 'featurename' : names}
 
-	if base == 'expression.csv':
-		barcode_file = os.path.join(path, 'cells.csv')
-		if os.path.exists(barcode_file):
-			barcode_metadata = pd.read_csv(barcode_file, sep = ',', header = 0)
-			assert 'cellkey' in barcode_metadata
-			barcode_metadata.rename(columns = {'cellkey': 'barcodekey'}, inplace = True)
-		
-		feature_file = os.path.join(path, 'genes.csv')
-		if os.path.exists(feature_file):
-			feature_metadata = pd.read_csv(feature_file, sep = ',', header = 0)
+		if is_hca_csv:
+			barcode_file = os.path.join(path, 'cells.csv')
+			if os.path.exists(barcode_file):
+				barcode_metadata = pd.read_csv(barcode_file, sep = ',', header = 0)
+				assert 'cellkey' in barcode_metadata
+				barcode_metadata.rename(columns = {'cellkey': 'barcodekey'}, inplace = True)
+			
+			feature_file = os.path.join(path, 'genes.csv')
+			if os.path.exists(feature_file):
+				feature_metadata = pd.read_csv(feature_file, sep = ',', header = 0)
 
 	data = MemData()
-	data.addData(genome, Array2D(barcode_metadata, feature_metadata, mat))
+	array2d = Array2D(barcode_metadata, feature_metadata, mat)
+	array2d.filter(ngene = ngene)
+	data.addData(genome, array2d)
+
+	return data
+
+
+
+def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> 'MemData':
+	"""Load count matrix from a LOOM file. Currently only support HCA DCP Loom spec.
+
+	Parameters
+	----------
+
+	input_loom : `str`
+		The LOOM file, containing the count matrix.
+	genome : `str`
+		The genome reference.
+	ngene : `int`, optional (default: None)
+		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+
+	Returns
+	-------
+
+	An MemData object containing a genome-Array2D pair.
+	
+	Examples
+	--------
+	>>> io.load_loom_file('example.loom', genome = 'GRCh38', ngene = 200)
+	"""
+	import loompy
+	col_trans = {'CellID' : 'barcodekey'}
+	row_trans = {'Accession' : 'featurekey', 'Gene' : 'featurename'}
+
+	data = MemData()
+	with loompy.connect(input_loom) as ds:
+		mat = csr_matrix(ds.sparse().T)
+		barcode_metadata = {}
+		for keyword, values in ds.col_attrs.items():
+			keyword = col_trans.get(keyword, keyword)
+			barcode_metadata[keyword] = values
+		feature_metadata = {}
+		for keyword, values in ds.row_attrs.items():
+			keyword = row_trans.get(keyword, keyword)
+			feature_metadata[keyword] = values
+	
+	array2d = Array2D(barcode_metadata, feature_metadata, mat)
+	array2d.filter(ngene = ngene)
+	data.addData(genome, array2d)
 
 	return data
 
@@ -406,9 +440,11 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
 		file_format = '10x'
 	elif input_file.endswith('.h5ad'):
 		file_format = 'h5ad'
+	elif input_file.endswith('.loom'):
+		file_format = 'loom'
 	elif input_file.endswith('.mtx') or input_file.endswith('.mtx.gz') or os.path.splitext(input_file)[1] == '':
 		file_format = 'mtx'
-		if not os.path.isdir(input_file):
+		if os.path.splitext(input_file)[1] == '':
 			copy_path = os.path.dirname(input_file)
 		copy_type = 'directory'
 	elif input_file.endswith('dge.txt.gz'):
@@ -425,7 +461,7 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
 
 
 
-def read_input(input_file: str, return_type = 'AnnData', genome: str = None, concat_matrices: bool = False, h5ad_mode: str = 'a', ngene: int = None, select_singlets: bool = False) -> 'MemData or AnnData or List[AnnData]':
+def read_input(input_file: str, genome: str = None, return_type = 'AnnData', concat_matrices: bool = False, h5ad_mode: str = 'a', ngene: int = None, select_singlets: bool = False) -> 'MemData or AnnData or List[AnnData]':
 	"""Load data into memory.
 
 	This function is used to load input data into memory. Inputs can be in 10x genomics v2 & v3 formats (hdf5 or mtx), HCA DCP mtx and csv formats, Drop-seq dge format, and CSV format.
@@ -435,10 +471,10 @@ def read_input(input_file: str, return_type = 'AnnData', genome: str = None, con
 
 	input_file : `str`
 		Input file name.
-	return_type : `str`
-		Return object type, can be either 'MemData' or 'AnnData'.
 	genome : `str`, optional (default: None)
 		A string contains comma-separated genome names. scCloud will read all matrices matching the genome names. If genomes is None, all matrices will be considered.
+	return_type : `str`
+		Return object type, can be either 'MemData' or 'AnnData'.
 	concat_matrices : `boolean`, optional (default: False)
 		If input file contains multiple matrices, if concatenate them into one AnnData object or return a list of AnnData objects.
 	h5ad_mode : `str`, optional (default: `a`)
@@ -472,13 +508,13 @@ def read_input(input_file: str, return_type = 'AnnData', genome: str = None, con
 	elif file_format == 'h5ad':
 		data = anndata.read_h5ad(input_file, backed = (False if h5ad_mode == 'a' else h5ad_mode))
 	elif file_format == 'mtx':
-		data = load_mtx_file(input_file, genome)
-	elif file_format == 'dge':
+		data = load_mtx_file(input_file, genome, ngene = ngene)
+	elif file_format == 'loom':
 		assert genome is not None
-		data = load_dge_file(input_file, genome)
+		data = load_loom_file(input_file, genome, ngene = ngene)
 	else:
-		assert (file_format == 'csv') and (genome is not None)
-		data = load_csv_file(input_file, genome)
+		assert (file_format == 'dge' or file_format == 'csv') and (genome is not None)
+		data = load_csv_file(input_file, genome, sep = ('\t' if file_format == 'dge' else ','), ngene = ngene)
 
 	data.restrain_keywords(genome)
 

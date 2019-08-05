@@ -126,7 +126,7 @@ def aggregate_matrices(csv_file: str, what_to_return: str = 'AnnData', restricti
 			assert 'Reference' in row
 			genome = row['Reference']
 
-		data = read_input(input_file, return_type = 'MemData', genome = genome, ngene = ngene, select_singlets = select_singlets)
+		data = read_input(input_file, genome = genome, return_type = 'MemData', ngene = ngene, select_singlets = select_singlets)
 		data.update_barcode_metadata_info(sample_name, row, attributes)
 
 		aggrData.addAggrData(data)
