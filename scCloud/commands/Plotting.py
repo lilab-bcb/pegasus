@@ -2,6 +2,7 @@ import os
 from .Base import Base
 from scCloud.plotting import make_static_plots
 
+
 class Plotting(Base):
     """
 Generate cluster composition plots.
@@ -65,46 +66,69 @@ Examples:
   scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' Manton_BM.h5ad test.pdf
   scCloud plot qc_violin --qc-type gene --cluster-labels louvain_labels --attribute Channel --subplot-size 7,5 --qc-xtick-font 5 --qc-line-width 0.5 Manton_BM.h5ad test.pdf
     """
+
     def execute(self):
         kwargs = {
-            'cluster' : self.args['--cluster-labels'],
-            'attr' : self.args['--attribute'],
-            'restrictions' : self.args['--restriction'],
-            'apply_to_all' : not self.args['--apply-to-each-figure'],
-            'show_background' : self.args['--show-background'],
-            'basis' : self.args['--basis'],
-            'attrs' : self.split_string(self.args['--attributes']),
-            'group' : self.args['--group'],
-            'genes' : self.split_string(self.args['--genes']),
-            'gene' : self.args['--gene'],
-            'style' : self.args['--style'],
-            'stacked' : not self.args['--not-stacked'],
-            'logy' : self.args['--log-y'],
-            'nrows' : int(self.args['--nrows']) if self.args['--nrows'] is not None else None,
-            'ncols' : int(self.args['--ncols']) if self.args['--ncols'] is not None else None,
-            'subplot_size' : [float(x) for x in self.args['--subplot-size'].split(',')] if self.args['--subplot-size'] is not None else None,
-            'left' : float(self.args['--left']) if self.args['--left'] is not None else None,
-            'bottom' : float(self.args['--bottom']) if self.args['--bottom'] is not None else None,
-            'wspace' : float(self.args['--wspace']) if self.args['--wspace'] is not None else None,
-            'hspace' : float(self.args['--hspace']) if self.args['--hspace'] is not None else None,
-            'legend_fontsize' : float(self.args['--legend-fontsize']) if self.args['--legend-fontsize'] is not None else None,
-            'use_raw' : self.args['--use-raw'],
-            'showall' : not self.args['--do-not-show-all'],
-            'showzscore' : self.args['--show-zscore'],
-            'title' : self.args['--heatmap-title'],
-            'qc_type' : self.args['--qc-type'],
-            'qc_xtick_font' : int(self.args['--qc-xtick-font']),
-            'qc_xtick_rotation' : self.args['--qc-xtick-rotation'],
-            'qc_line_width' : float(self.args['--qc-line-width'])
+            "cluster": self.args["--cluster-labels"],
+            "attr": self.args["--attribute"],
+            "restrictions": self.args["--restriction"],
+            "apply_to_all": not self.args["--apply-to-each-figure"],
+            "show_background": self.args["--show-background"],
+            "basis": self.args["--basis"],
+            "attrs": self.split_string(self.args["--attributes"]),
+            "group": self.args["--group"],
+            "genes": self.split_string(self.args["--genes"]),
+            "gene": self.args["--gene"],
+            "style": self.args["--style"],
+            "stacked": not self.args["--not-stacked"],
+            "logy": self.args["--log-y"],
+            "nrows": int(self.args["--nrows"])
+            if self.args["--nrows"] is not None
+            else None,
+            "ncols": int(self.args["--ncols"])
+            if self.args["--ncols"] is not None
+            else None,
+            "subplot_size": [float(x) for x in self.args["--subplot-size"].split(",")]
+            if self.args["--subplot-size"] is not None
+            else None,
+            "left": float(self.args["--left"])
+            if self.args["--left"] is not None
+            else None,
+            "bottom": float(self.args["--bottom"])
+            if self.args["--bottom"] is not None
+            else None,
+            "wspace": float(self.args["--wspace"])
+            if self.args["--wspace"] is not None
+            else None,
+            "hspace": float(self.args["--hspace"])
+            if self.args["--hspace"] is not None
+            else None,
+            "legend_fontsize": float(self.args["--legend-fontsize"])
+            if self.args["--legend-fontsize"] is not None
+            else None,
+            "use_raw": self.args["--use-raw"],
+            "showall": not self.args["--do-not-show-all"],
+            "showzscore": self.args["--show-zscore"],
+            "title": self.args["--heatmap-title"],
+            "qc_type": self.args["--qc-type"],
+            "qc_xtick_font": int(self.args["--qc-xtick-font"]),
+            "qc_xtick_rotation": self.args["--qc-xtick-rotation"],
+            "qc_line_width": float(self.args["--qc-line-width"]),
         }
 
-        if self.args['--alpha'] is None:
-          kwargs['alpha'] = None
+        if self.args["--alpha"] is None:
+            kwargs["alpha"] = None
         else:
-          values = [float(x) for x in self.args['--alpha'].split(',')]
-          if len(values) == 1:
-            kwargs['alpha'] = values[0]
-          else:
-            kwargs['alpha'] = values
-        
-        make_static_plots(self.args['<input_h5ad_file>'], self.args['<plot_type>'], self.args['<output_file>'], dpi = int(self.args['--dpi']), **kwargs)
+            values = [float(x) for x in self.args["--alpha"].split(",")]
+            if len(values) == 1:
+                kwargs["alpha"] = values[0]
+            else:
+                kwargs["alpha"] = values
+
+        make_static_plots(
+            self.args["<input_h5ad_file>"],
+            self.args["<plot_type>"],
+            self.args["<output_file>"],
+            dpi=int(self.args["--dpi"]),
+            **kwargs
+        )

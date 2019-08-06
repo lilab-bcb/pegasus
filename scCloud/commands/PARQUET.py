@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.tools import run_conversion
 
+
 class PARQUET(Base):
     """
 Generate a PARQUET file for web-based visualization.
@@ -25,4 +26,8 @@ Examples:
     """
 
     def execute(self):
-        run_conversion(self.args['<input_h5ad_file>'], self.args['<output_name>'], nthreads = int(self.args['--threads']))
+        run_conversion(
+            self.args["<input_h5ad_file>"],
+            self.args["<output_name>"],
+            nthreads=int(self.args["--threads"]),
+        )

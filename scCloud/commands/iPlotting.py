@@ -2,6 +2,7 @@ import os
 from .Base import Base
 from scCloud.plotting import make_interactive_plots
 
+
 class iPlotting(Base):
     """
 Generate cluster composition plots.
@@ -27,12 +28,18 @@ Examples:
   scCloud iplot --attribute louvain_labels tsne Manton_BM.h5ad test.html
   scCloud iplot --attribute louvain_labels diffmap Manton_BM.h5ad test.html
     """
+
     def execute(self):
         kwargs = {
-            'attr' : self.args['--attribute'],
-            'isreal' : self.args['--is-real'],
-            'isgene' : self.args['--is-gene'],
-            'log10' : self.args['--log10']
+            "attr": self.args["--attribute"],
+            "isreal": self.args["--is-real"],
+            "isgene": self.args["--is-gene"],
+            "log10": self.args["--log10"],
         }
 
-        make_interactive_plots(self.args['<input_h5ad_file>'], self.args['<basis>'], self.args['<output_html_file>'], **kwargs)
+        make_interactive_plots(
+            self.args["<input_h5ad_file>"],
+            self.args["<basis>"],
+            self.args["<output_html_file>"],
+            **kwargs
+        )

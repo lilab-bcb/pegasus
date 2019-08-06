@@ -1,8 +1,9 @@
 from .Base import Base
 from scCloud.tools import aggregate_matrices
 
+
 class AggregateMatrix(Base):
-	"""
+    """
 Aggregate 10x matrices from each channel into one big matrix.
 
 Usage:
@@ -29,12 +30,13 @@ Examples:
   scCloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
 	"""
 
-	def execute(self):
-		aggregate_10x_matrices(self.args['<csv_file>'],
-      what_to_return = self.args['<output_name>'], 
-			restrictions = self.args['--restriction'], 
-			attributes = self.split_string(self.args['--attributes']), 
-			google_cloud = self.args['--google-cloud'],
-      select_singlets = self.args['--select-only-singlets'],
-      ngene = self.convert_to_int(self.args['--minimum-number-of-genes'])
-    )
+    def execute(self):
+        aggregate_10x_matrices(
+            self.args["<csv_file>"],
+            what_to_return=self.args["<output_name>"],
+            restrictions=self.args["--restriction"],
+            attributes=self.split_string(self.args["--attributes"]),
+            google_cloud=self.args["--google-cloud"],
+            select_singlets=self.args["--select-only-singlets"],
+            ngene=self.convert_to_int(self.args["--minimum-number-of-genes"]),
+        )

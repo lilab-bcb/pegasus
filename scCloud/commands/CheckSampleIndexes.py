@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.check_sample_indexes import run_check_sample_indexes
 
+
 class CheckSampleIndexes(Base):
     """
 Check for index collision between 10x' index sets and CITE-Seq/hashing indexes.
@@ -25,4 +26,8 @@ Examples:
     """
 
     def execute(self):
-        run_check_sample_indexes(self.args['<index_file>'], n_mis = int(self.args['--num-mismatch']), n_report = int(self.args['--num-report']))
+        run_check_sample_indexes(
+            self.args["<index_file>"],
+            n_mis=int(self.args["--num-mismatch"]),
+            n_report=int(self.args["--num-report"]),
+        )

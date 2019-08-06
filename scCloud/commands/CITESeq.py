@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.cite_seq import merge_rna_and_adt_data
 
+
 class CITESeq(Base):
     """
 Merge RNA and ADT matrices for CITE-Seq data.
@@ -28,4 +29,9 @@ Examples:
     """
 
     def execute(self):
-        merge_rna_and_adt_data(self.args['<input_raw_gene_bc_matrices_h5.h5>'], self.args['<input_adt_csv_file>'], self.args['--antibody-control-csv'], self.args['<output_name>'])
+        merge_rna_and_adt_data(
+            self.args["<input_raw_gene_bc_matrices_h5.h5>"],
+            self.args["<input_adt_csv_file>"],
+            self.args["--antibody-control-csv"],
+            self.args["<output_name>"],
+        )

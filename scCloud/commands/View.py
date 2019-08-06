@@ -2,6 +2,7 @@ import os
 from .Base import Base
 from scCloud.misc import show_attributes
 
+
 class View(Base):
     """
 Show sample and gene attributes contained in the h5ad file.
@@ -26,4 +27,9 @@ Examples:
     """
 
     def execute(self):
-        show_attributes(self.args['<input_h5ad_file>'], self.args['--show-attributes'], self.args['--show-gene-attributes'], self.args['--show-values-for-attributes'])
+        show_attributes(
+            self.args["<input_h5ad_file>"],
+            self.args["--show-attributes"],
+            self.args["--show-gene-attributes"],
+            self.args["--show-values-for-attributes"],
+        )

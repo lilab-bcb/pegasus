@@ -1,1 +1,7 @@
-from .misc import search_genes, search_de_genes, show_attributes, perform_oneway_anova, mwu_test
+from .misc import (
+    search_genes,
+    search_de_genes,
+    show_attributes,
+    perform_oneway_anova,
+    mwu_test,
+)

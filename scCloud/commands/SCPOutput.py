@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.tools import run_scp_output
 
+
 class SCPOutput(Base):
     """
 Generate outputs for single cell portal.
@@ -26,4 +27,9 @@ Examples:
     """
 
     def execute(self):
-        run_scp_output(self.args['<input_h5ad_file>'], self.args['<output_name>'], not self.args['--dense'], int(self.args['--round-to']))
+        run_scp_output(
+            self.args["<input_h5ad_file>"],
+            self.args["<output_name>"],
+            not self.args["--dense"],
+            int(self.args["--round-to"]),
+        )

@@ -10,39 +10,47 @@ from typing import List
 from scCloud.io import infer_file_format, read_input, write_output, MemData
 
 
-
 def find_digits(value):
-	pos = len(value) - 1
-	while pos >= 0 and value[pos].isdigit():
-		pos -= 1
-	pos += 1
-	assert pos < len(value)
-	return (value[:pos], int(value[pos:]))
+    pos = len(value) - 1
+    while pos >= 0 and value[pos].isdigit():
+        pos -= 1
+    pos += 1
+    assert pos < len(value)
+    return (value[:pos], int(value[pos:]))
+
 
 def parse_restriction_string(rstr):
-	pos = rstr.index(':')
-	name = rstr[: pos]
-	isin = True
-	if rstr[pos + 1] == '~':
-		isin = False
-		pos += 1
-	content = set()
-	for item in rstr[pos + 1:].split(','):
-		values = item.split('-')
-		if len(values) == 1:
-			content.add(values[0])
-		else:
-			prefix, fr = find_digits(values[0])
-			assert values[1].isdigit()
-			to = int(values[1]) + 1
-			for i in range(fr, to):
-				content.add(prefix + str(i))
-	return (name, isin, content)
+    pos = rstr.index(":")
+    name = rstr[:pos]
+    isin = True
+    if rstr[pos + 1] == "~":
+        isin = False
+        pos += 1
+    content = set()
+    for item in rstr[pos + 1 :].split(","):
+        values = item.split("-")
+        if len(values) == 1:
+            content.add(values[0])
+        else:
+            prefix, fr = find_digits(values[0])
+            assert values[1].isdigit()
+            to = int(values[1]) + 1
+            for i in range(fr, to):
+                content.add(prefix + str(i))
+    return (name, isin, content)
 
 
-
-def aggregate_matrices(csv_file: str, what_to_return: str = 'AnnData', restrictions: List[str] = [], attributes: List[str] = [], google_cloud: bool = False, select_singlets: bool = False, ngene: int = None, concat_matrices: bool = False) -> 'None or AnnData or MemData':
-	"""Aggregate channel-specific count matrices into one big count matrix.
+def aggregate_matrices(
+    csv_file: str,
+    what_to_return: str = "AnnData",
+    restrictions: List[str] = [],
+    attributes: List[str] = [],
+    google_cloud: bool = False,
+    select_singlets: bool = False,
+    ngene: int = None,
+    concat_matrices: bool = False,
+) -> "None or AnnData or MemData":
+    """Aggregate channel-specific count matrices into one big count matrix.
 
 	This function takes as input a csv_file, which contains at least 2 columns — Sample, sample name; Location, file that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5), and merges matrices from the same genome together. Depending on what_to_return, it can output the merged results into a scCloud-formatted HDF5 file or return as an AnnData or MemData object.
 	
@@ -76,74 +84,82 @@ def aggregate_matrices(csv_file: str, what_to_return: str = 'AnnData', restricti
 	>>> tools.aggregate_matrix('example.csv', 'example_10x.h5', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'])
 	"""
 
-	df = pd.read_csv(csv_file, header = 0, index_col = 'Sample')
-	df['Sample'] = df.index
+    df = pd.read_csv(csv_file, header=0, index_col="Sample")
+    df["Sample"] = df.index
 
-	# Select channels
-	rvec = [parse_restriction_string(x) for x in restrictions]
-		
-	idx = pd.Series([True] * df.shape[0], index=df.index, name='selected')
-	for name, isin, content in rvec:
-		assert name in df.columns
-		if isin:
-			idx = idx & df[name].isin(content)
-		else:
-			idx = idx & (~(df[name].isin(content)))
+    # Select channels
+    rvec = [parse_restriction_string(x) for x in restrictions]
 
-	df = df.loc[idx]
+    idx = pd.Series([True] * df.shape[0], index=df.index, name="selected")
+    for name, isin, content in rvec:
+        assert name in df.columns
+        if isin:
+            idx = idx & df[name].isin(content)
+        else:
+            idx = idx & (~(df[name].isin(content)))
 
-	if df.shape[0] == 0:
-		raise ValueError("No channels pass the restrictions!")
+    df = df.loc[idx]
 
-	# Load channels
-	tot = 0
-	aggrData = MemData()
-	dest_paths = []
-	for sample_name, row in df.iterrows():
-		input_file = os.path.expanduser(os.path.expandvars(row['Location'].rstrip(os.sep)))
-		file_format, copy_path, copy_type = infer_file_format(input_file)
-		if google_cloud:
-			base_name = os.path.basename(copy_path)
-			dest_path = sample_name + '_tmp_' + base_name
-			
-			if copy_type == 'directory':
-				check_call(['mkdir', '-p', dest_path])
-				call_args = ['gsutil', '-m', 'cp', '-r', copy_path, dest_path]
-			else:
-				call_args = ['gsutil', '-m', 'cp', copy_path, dest_path]
-			check_call(call_args)
-			dest_paths.append(dest_path)
+    if df.shape[0] == 0:
+        raise ValueError("No channels pass the restrictions!")
 
-			input_file = dest_path
-			if file_format == 'csv' and copy_type == 'directory':
-				input_file = os.path.join(dest_path, os.path.basename(input_file))
+    # Load channels
+    tot = 0
+    aggrData = MemData()
+    dest_paths = []
+    for sample_name, row in df.iterrows():
+        input_file = os.path.expanduser(
+            os.path.expandvars(row["Location"].rstrip(os.sep))
+        )
+        file_format, copy_path, copy_type = infer_file_format(input_file)
+        if google_cloud:
+            base_name = os.path.basename(copy_path)
+            dest_path = sample_name + "_tmp_" + base_name
 
-		genome = None
-		if file_format in ['dge', 'csv', 'mtx', 'loom']:
-			assert 'Reference' in row
-			genome = row['Reference']
+            if copy_type == "directory":
+                check_call(["mkdir", "-p", dest_path])
+                call_args = ["gsutil", "-m", "cp", "-r", copy_path, dest_path]
+            else:
+                call_args = ["gsutil", "-m", "cp", copy_path, dest_path]
+            check_call(call_args)
+            dest_paths.append(dest_path)
 
-		data = read_input(input_file, genome = genome, return_type = 'MemData', ngene = ngene, select_singlets = select_singlets)
-		data.update_barcode_metadata_info(sample_name, row, attributes)
+            input_file = dest_path
+            if file_format == "csv" and copy_type == "directory":
+                input_file = os.path.join(dest_path, os.path.basename(input_file))
 
-		aggrData.addAggrData(data)
+        genome = None
+        if file_format in ["dge", "csv", "mtx", "loom"]:
+            assert "Reference" in row
+            genome = row["Reference"]
 
-		tot += 1
-		print("Processed {}.".format(input_file))
+        data = read_input(
+            input_file,
+            genome=genome,
+            return_type="MemData",
+            ngene=ngene,
+            select_singlets=select_singlets,
+        )
+        data.update_barcode_metadata_info(sample_name, row, attributes)
 
-	# Delete temporary file
-	for dest_path in dest_paths:
-		check_call(['rm', '-rf', dest_path])
+        aggrData.addAggrData(data)
 
-	# Merge channels
-	aggrData.aggregate()
+        tot += 1
+        print("Processed {}.".format(input_file))
 
-	if what_to_return == 'AnnData':
-		aggrData = aggrData.convert_to_anndata(concat_matrices)
-	elif what_to_return != 'MemData':
-		write_output(aggrData, what_to_return)
-		aggrData = None
+    # Delete temporary file
+    for dest_path in dest_paths:
+        check_call(["rm", "-rf", dest_path])
 
-	print("Aggregated {tot} files.".format(tot = tot))
+    # Merge channels
+    aggrData.aggregate()
 
-	return aggrData
+    if what_to_return == "AnnData":
+        aggrData = aggrData.convert_to_anndata(concat_matrices)
+    elif what_to_return != "MemData":
+        write_output(aggrData, what_to_return)
+        aggrData = None
+
+    print("Aggregated {tot} files.".format(tot=tot))
+
+    return aggrData

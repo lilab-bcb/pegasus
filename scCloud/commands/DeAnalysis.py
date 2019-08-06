@@ -2,6 +2,7 @@ import os
 from .Base import Base
 from scCloud.tools import run_de_analysis
 
+
 class DeAnalysis(Base):
     """
 Perform DE analysis.
@@ -36,4 +37,15 @@ Examples:
     """
 
     def execute(self):
-        run_de_analysis(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], int(self.args['-p']), float(self.args['--alpha']), self.args['--fisher'], self.args['--mwu'], self.args['--roc'], self.args['--subset'], self.args['--temp-folder'])
+        run_de_analysis(
+            self.args["<input_h5ad_file>"],
+            self.args["<output_spreadsheet>"],
+            self.args["--labels"],
+            int(self.args["-p"]),
+            float(self.args["--alpha"]),
+            self.args["--fisher"],
+            self.args["--mwu"],
+            self.args["--roc"],
+            self.args["--subset"],
+            self.args["--temp-folder"],
+        )

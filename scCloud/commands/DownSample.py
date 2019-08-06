@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.tools import down_sample
 
+
 class DownSample(Base):
     """
 Downsample reads from a 10x molecule_info.h5 file.
@@ -25,5 +26,12 @@ Outputs:
 Examples:
   scCloud down_sample --random-state 0 molecule_info.h5 400000000 100000000 output_matrix
     """
+
     def execute(self):
-        down_sample(self.args['<molecule_info.h5>'], self.args['<raw_feature_output_matrix_name>'], int(self.args['<total_reads>']), int(self.args['<sampled_reads>']), random_state = int(self.args['--random-state']))
+        down_sample(
+            self.args["<molecule_info.h5>"],
+            self.args["<raw_feature_output_matrix_name>"],
+            int(self.args["<total_reads>"]),
+            int(self.args["<sampled_reads>"]),
+            random_state=int(self.args["--random-state"]),
+        )

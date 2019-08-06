@@ -45,24 +45,23 @@ from docopt import DocoptExit
 from . import __version__ as VERSION
 from . import commands
 
+
 def main():
-	args = docopt(__doc__, version = VERSION, options_first = True)
+    args = docopt(__doc__, version=VERSION, options_first=True)
 
-	command_name = args['<command>']
-	command_args = args['<args>']
-	command_args.insert(0, command_name)
+    command_name = args["<command>"]
+    command_args = args["<args>"]
+    command_args.insert(0, command_name)
 
-	try:
-		command_class = getattr(commands, command_name)
-	except AttributeError:
-		print('Unknown command {cmd}!'.format(cmd = command_name))
-		raise DocoptExit()
-	
-	command = command_class(command_args)
-	command.execute()   
+    try:
+        command_class = getattr(commands, command_name)
+    except AttributeError:
+        print("Unknown command {cmd}!".format(cmd=command_name))
+        raise DocoptExit()
 
-
+    command = command_class(command_args)
+    command.execute()
 
 
-if __name__ == '__main__':
-	main()
+if __name__ == "__main__":
+    main()

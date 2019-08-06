@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.tools import run_find_markers
 
+
 class FindMarkers(Base):
     """
 Find markers using gradient boosting.
@@ -30,5 +31,12 @@ Examples:
     """
 
     def execute(self):
-        run_find_markers(self.args['<input_h5ad_file>'], self.args['<output_spreadsheet>'], self.args['--labels'], n_jobs = int(self.args['-p']), \
-            min_gain = float(self.args['--min-gain']), random_state = int(self.args['--random-state']), remove_ribo = self.args['--remove-ribo'])
+        run_find_markers(
+            self.args["<input_h5ad_file>"],
+            self.args["<output_spreadsheet>"],
+            self.args["--labels"],
+            n_jobs=int(self.args["-p"]),
+            min_gain=float(self.args["--min-gain"]),
+            random_state=int(self.args["--random-state"]),
+            remove_ribo=self.args["--remove-ribo"],
+        )

@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.pipeline import run_demuxEM_pipeline
 
+
 class DemuxEM(Base):
     """
 Run the demuxEM pipeline for cell-hashing/nuclei-hashing data.
@@ -45,15 +46,20 @@ Examples:
 
     def execute(self):
         kwargs = {
-            'n_jobs' : int(self.args['--threads']),
-            'genome' : self.args['--genome'],
-            'alpha' : float(self.args['--alpha-on-samples']),
-            'min_num_genes' : int(self.args['--min-num-genes']),
-            'min_num_umis' : int(self.args['--min-num-umis']),
-            'min_signal' : float(self.args['--min-signal-hashtag']),
-            'random_state' : int(self.args['--random-state']),
-            'gen_plots' : self.args['--generate-diagnostic-plots'],
-            'gen_gender_plot' : self.split_string(self.args['--generate-gender-plot'])
+            "n_jobs": int(self.args["--threads"]),
+            "genome": self.args["--genome"],
+            "alpha": float(self.args["--alpha-on-samples"]),
+            "min_num_genes": int(self.args["--min-num-genes"]),
+            "min_num_umis": int(self.args["--min-num-umis"]),
+            "min_signal": float(self.args["--min-signal-hashtag"]),
+            "random_state": int(self.args["--random-state"]),
+            "gen_plots": self.args["--generate-diagnostic-plots"],
+            "gen_gender_plot": self.split_string(self.args["--generate-gender-plot"]),
         }
 
-        run_demuxEM_pipeline(self.args['<input_adt_csv_file>'], self.args['<input_raw_gene_bc_matrices_h5.h5>'], self.args['<output_name>'], **kwargs)
+        run_demuxEM_pipeline(
+            self.args["<input_adt_csv_file>"],
+            self.args["<input_raw_gene_bc_matrices_h5.h5>"],
+            self.args["<output_name>"],
+            **kwargs
+        )

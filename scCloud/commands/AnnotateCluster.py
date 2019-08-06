@@ -2,8 +2,9 @@ import os
 from .Base import Base
 from scCloud.annotate_cluster import run_annotate_cluster, annotate_anndata_object
 
+
 class AnnotateCluster(Base):
-	"""
+    """
 Annotate potential cell types for each cluster. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
 
 Usage:
@@ -32,8 +33,16 @@ Examples:
   scCloud annotate_cluster --annotation "anno:T cells;B cells;NK cells;Monocytes" manton_bm.h5ad
     """
 
-	def execute(self):
-		if self.args['<output_file>'] is not None:
-			run_annotate_cluster(self.args['<input_h5ad_file>'], self.args['<output_file>'], float(self.args['--minimum-report-score']), ignoreNA = self.args['--do-not-use-non-de-genes'], json_file = self.args['--json-file'])
-		else:
-			annotate_anndata_object(self.args['<input_h5ad_file>'], self.args['--annotation'])
+    def execute(self):
+        if self.args["<output_file>"] is not None:
+            run_annotate_cluster(
+                self.args["<input_h5ad_file>"],
+                self.args["<output_file>"],
+                float(self.args["--minimum-report-score"]),
+                ignoreNA=self.args["--do-not-use-non-de-genes"],
+                json_file=self.args["--json-file"],
+            )
+        else:
+            annotate_anndata_object(
+                self.args["<input_h5ad_file>"], self.args["--annotation"]
+            )

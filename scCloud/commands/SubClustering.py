@@ -1,6 +1,7 @@
 from .Base import Base
 from scCloud.pipeline import run_pipeline
 
+
 class SubClustering(Base):
     """
 Run scCloud to obtain subclusters.
@@ -119,104 +120,98 @@ Examples:
 
     def execute(self):
         kwargs = {
-            'processed' : True,
-            'subcluster' : True,
-            'cite_seq' : False,
-            'select_singlets' : False,
-            
-            'subset_selections' : self.args['--subset-selection'],
-
-            'n_jobs' : int(self.args['--threads']),
-            'genome' : None,
-            'batch_correction' : self.args['--correct-batch-effect'],
-            'output_loom' : self.args['--output-loom'],
-
-            'select_hvg' : not self.args['--no-select-hvg'],
-            'hvg_flavor' : self.args['--select-hvg-flavor'],
-            'hvg_ngenes' : int(self.args['--select-hvg-ngenes']) if self.args['--select-hvg-ngenes'] != 'None' else None,
-            'plot_hvg' : self.args['<output_name>'] if self.args['--plot-hvg'] else None,
-
-            'random_state' : int(self.args['--random-state']),
-            'temp_folder' : self.args['--temp-folder'],
-
-            'nPC' : int(self.args['--nPC']),
-
-            'nDC' : int(self.args['--nDC']),
-            'diffmap_alpha' : float(self.args['--diffmap-alpha']),
-            'diffmap_K' : int(self.args['--diffmap-K']),
-            'diffmap_full_speed' : self.args['--diffmap-full-speed'],
-            'diffmap_solver' : self.args['--diffmap-solver'],
-
-            'run_louvain' : self.args['--run-louvain'],
-            'louvain_resolution' : float(self.args['--louvain-resolution']),
-            'louvain_affinity' : self.args['--louvain-affinity'],
-            'louvain_class_label' : self.args['--louvain-class-label'],
-
-            'run_leiden' : self.args['--run-leiden'],
-            'leiden_resolution' : float(self.args['--leiden-resolution']),
-            'leiden_affinity' : self.args['--leiden-affinity'],
-            'leiden_niter' : int(self.args['--leiden-niter']),
-            'leiden_class_label' : self.args['--leiden-class-label'],
-
-            'run_approx_louvain' : self.args['--run-approximated-louvain'],
-            'approx_louvain_basis' : self.args['--approx-louvain-basis'],
-            'approx_louvain_nclusters' : int(self.args['--approx-louvain-nclusters']),
-            'approx_louvain_ninit' : int(self.args['--approx-louvain-ninit']),
-            'approx_louvain_resolution' : float(self.args['--approx-louvain-resolution']),
-            'approx_louvain_affinity' : self.args['--approx-louvain-affinity'],
-            'approx_louvain_class_label' : self.args['--approx-louvain-class-label'],
-
-            'run_approx_leiden' : self.args['--run-approximated-leiden'],
-            'approx_leiden_basis' : self.args['--approx-leiden-basis'],
-            'approx_leiden_nclusters' : int(self.args['--approx-leiden-nclusters']),
-            'approx_leiden_ninit' : int(self.args['--approx-leiden-ninit']),
-            'approx_leiden_resolution' : float(self.args['--approx-leiden-resolution']),
-            'approx_leiden_affinity' : self.args['--approx-leiden-affinity'],
-            'approx_leiden_class_label' : self.args['--approx-leiden-class-label'],
-
-            'run_tsne' : self.args['--run-tsne'],
-            'run_fitsne' : self.args['--run-fitsne'],
-            'tsne_perplexity' : float(self.args['--tsne-perplexity']),
-
-            'run_umap' : self.args['--run-umap'],
-            'umap_K' : int(self.args['--umap-K']),
-            'umap_min_dist' : float(self.args['--umap-min-dist']),
-            'umap_spread' : float(self.args['--umap-spread']),
-
-            'run_fle' : self.args['--run-fle'],
-            'fle_K' : int(self.args['--fle-K']),
-            'fle_target_change_per_node' : float(self.args['--fle-target-change-per-node']),
-            'fle_target_steps' : int(self.args['--fle-target-steps']),
-            'fle_3D' : self.args['--fle-3D'],
-
-            'net_ds_frac' : float(self.args['--net-down-sample-fraction']),
-            'net_ds_K' : int(self.args['--net-down-sample-K']),
-            'net_ds_alpha' : float(self.args['--net-down-sample-alpha']),
-
-            'net_l2' : float(self.args['--net-regressor-L2-penalty']),
-            'net_ds_full_speed' : self.args['--net-ds-full-speed'],
-
-            'run_net_tsne' : self.args['--run-net-tsne'],
-            'net_tsne_polish_learing_frac' : float(self.args['--net-tsne-polish-learning-frac']),
-            'net_tsne_polish_niter' : int(self.args['--net-tsne-polish-niter']),
-            'net_tsne_basis' : self.args['--net-tsne-out-basis'],
-
-            'run_net_fitsne' : self.args['--run-net-fitsne'],
-            'net_fitsne_polish_learing_frac' : float(self.args['--net-fitsne-polish-learning-frac']),
-            'net_fitsne_polish_niter' : int(self.args['--net-fitsne-polish-niter']),
-            'net_fitsne_basis' : self.args['--net-fitsne-out-basis'],
-
-            'run_net_umap' : self.args['--run-net-umap'],
-            'net_umap_polish_learing_rate' : float(self.args['--net-umap-polish-learning-rate']),
-            'net_umap_polish_nepochs' : int(self.args['--net-umap-polish-nepochs']),
-            'net_umap_basis' : self.args['--net-umap-out-basis'],
-            
-            'run_net_fle' : self.args['--run-net-fle'],
-            'net_fle_ds_full_speed' : self.args['--net-fle-ds-full-speed'],
-            'net_fle_polish_target_steps' : int(self.args['--net-fle-polish-target-steps']),
-            'net_fle_basis' : self.args['--net-fle-out-basis'],
-
-            'pseudotime' : self.split_string(self.args['--calculate-pseudotime'])
+            "processed": True,
+            "subcluster": True,
+            "cite_seq": False,
+            "select_singlets": False,
+            "subset_selections": self.args["--subset-selection"],
+            "n_jobs": int(self.args["--threads"]),
+            "genome": None,
+            "batch_correction": self.args["--correct-batch-effect"],
+            "output_loom": self.args["--output-loom"],
+            "select_hvg": not self.args["--no-select-hvg"],
+            "hvg_flavor": self.args["--select-hvg-flavor"],
+            "hvg_ngenes": int(self.args["--select-hvg-ngenes"])
+            if self.args["--select-hvg-ngenes"] != "None"
+            else None,
+            "plot_hvg": self.args["<output_name>"] if self.args["--plot-hvg"] else None,
+            "random_state": int(self.args["--random-state"]),
+            "temp_folder": self.args["--temp-folder"],
+            "nPC": int(self.args["--nPC"]),
+            "nDC": int(self.args["--nDC"]),
+            "diffmap_alpha": float(self.args["--diffmap-alpha"]),
+            "diffmap_K": int(self.args["--diffmap-K"]),
+            "diffmap_full_speed": self.args["--diffmap-full-speed"],
+            "diffmap_solver": self.args["--diffmap-solver"],
+            "run_louvain": self.args["--run-louvain"],
+            "louvain_resolution": float(self.args["--louvain-resolution"]),
+            "louvain_affinity": self.args["--louvain-affinity"],
+            "louvain_class_label": self.args["--louvain-class-label"],
+            "run_leiden": self.args["--run-leiden"],
+            "leiden_resolution": float(self.args["--leiden-resolution"]),
+            "leiden_affinity": self.args["--leiden-affinity"],
+            "leiden_niter": int(self.args["--leiden-niter"]),
+            "leiden_class_label": self.args["--leiden-class-label"],
+            "run_approx_louvain": self.args["--run-approximated-louvain"],
+            "approx_louvain_basis": self.args["--approx-louvain-basis"],
+            "approx_louvain_nclusters": int(self.args["--approx-louvain-nclusters"]),
+            "approx_louvain_ninit": int(self.args["--approx-louvain-ninit"]),
+            "approx_louvain_resolution": float(
+                self.args["--approx-louvain-resolution"]
+            ),
+            "approx_louvain_affinity": self.args["--approx-louvain-affinity"],
+            "approx_louvain_class_label": self.args["--approx-louvain-class-label"],
+            "run_approx_leiden": self.args["--run-approximated-leiden"],
+            "approx_leiden_basis": self.args["--approx-leiden-basis"],
+            "approx_leiden_nclusters": int(self.args["--approx-leiden-nclusters"]),
+            "approx_leiden_ninit": int(self.args["--approx-leiden-ninit"]),
+            "approx_leiden_resolution": float(self.args["--approx-leiden-resolution"]),
+            "approx_leiden_affinity": self.args["--approx-leiden-affinity"],
+            "approx_leiden_class_label": self.args["--approx-leiden-class-label"],
+            "run_tsne": self.args["--run-tsne"],
+            "run_fitsne": self.args["--run-fitsne"],
+            "tsne_perplexity": float(self.args["--tsne-perplexity"]),
+            "run_umap": self.args["--run-umap"],
+            "umap_K": int(self.args["--umap-K"]),
+            "umap_min_dist": float(self.args["--umap-min-dist"]),
+            "umap_spread": float(self.args["--umap-spread"]),
+            "run_fle": self.args["--run-fle"],
+            "fle_K": int(self.args["--fle-K"]),
+            "fle_target_change_per_node": float(
+                self.args["--fle-target-change-per-node"]
+            ),
+            "fle_target_steps": int(self.args["--fle-target-steps"]),
+            "fle_3D": self.args["--fle-3D"],
+            "net_ds_frac": float(self.args["--net-down-sample-fraction"]),
+            "net_ds_K": int(self.args["--net-down-sample-K"]),
+            "net_ds_alpha": float(self.args["--net-down-sample-alpha"]),
+            "net_l2": float(self.args["--net-regressor-L2-penalty"]),
+            "net_ds_full_speed": self.args["--net-ds-full-speed"],
+            "run_net_tsne": self.args["--run-net-tsne"],
+            "net_tsne_polish_learing_frac": float(
+                self.args["--net-tsne-polish-learning-frac"]
+            ),
+            "net_tsne_polish_niter": int(self.args["--net-tsne-polish-niter"]),
+            "net_tsne_basis": self.args["--net-tsne-out-basis"],
+            "run_net_fitsne": self.args["--run-net-fitsne"],
+            "net_fitsne_polish_learing_frac": float(
+                self.args["--net-fitsne-polish-learning-frac"]
+            ),
+            "net_fitsne_polish_niter": int(self.args["--net-fitsne-polish-niter"]),
+            "net_fitsne_basis": self.args["--net-fitsne-out-basis"],
+            "run_net_umap": self.args["--run-net-umap"],
+            "net_umap_polish_learing_rate": float(
+                self.args["--net-umap-polish-learning-rate"]
+            ),
+            "net_umap_polish_nepochs": int(self.args["--net-umap-polish-nepochs"]),
+            "net_umap_basis": self.args["--net-umap-out-basis"],
+            "run_net_fle": self.args["--run-net-fle"],
+            "net_fle_ds_full_speed": self.args["--net-fle-ds-full-speed"],
+            "net_fle_polish_target_steps": int(
+                self.args["--net-fle-polish-target-steps"]
+            ),
+            "net_fle_basis": self.args["--net-fle-out-basis"],
+            "pseudotime": self.split_string(self.args["--calculate-pseudotime"]),
         }
 
-        run_pipeline(self.args['<input_file>'], self.args['<output_name>'], **kwargs)
+        run_pipeline(self.args["<input_file>"], self.args["<output_name>"], **kwargs)
