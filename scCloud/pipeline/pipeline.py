@@ -137,7 +137,7 @@ def run_pipeline(input_file, output_name, **kwargs):
             )
         )
         # if kwargs['kBJSD']:
-        # 	print("kBJSD mean = {:.4f}".format(tools.calc_kBJSD(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], n_jobs = kwargs['n_jobs'])))
+        #     print("kBJSD mean = {:.4f}".format(tools.calc_kBJSD(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], n_jobs = kwargs['n_jobs'])))
 
     # clustering
     if kwargs["run_approx_louvain"]:

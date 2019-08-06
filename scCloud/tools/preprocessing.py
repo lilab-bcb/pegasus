@@ -12,15 +12,15 @@ from sklearn.utils.extmath import randomized_svd
 
 def qc_metrics(data, mito_prefix="MT-", percent_cells=0.0005):
     """
-	Sets n_genes, n_counts, percent_mito on adata.obs and n_cells, percent_cells, and robust on data.var
+    Sets n_genes, n_counts, percent_mito on adata.obs and n_cells, percent_cells, and robust on data.var
 
-	:param data:
-		Annotated data matrix
-	:param mito_prefix: str
-		String that mitochrondrial genes start with
-	:param percent_cells: float
-		Cutoff for a feature to be `robust`
-	"""
+    :param data:
+        Annotated data matrix
+    :param mito_prefix: str
+        String that mitochrondrial genes start with
+    :param percent_cells: float
+        Cutoff for a feature to be `robust`
+    """
     data.obs["n_genes"] = data.X.getnnz(axis=1)
     data.obs["n_counts"] = data.X.sum(axis=1).A1
     mito_prefixes = mito_prefix.split(",")
@@ -276,23 +276,23 @@ def run_pca(data, standardize=True, max_value=10, nPC=50, random_state=0):
 
 
 # def run_rpca(data, scale = False, max_value = 10.0, nPC = 50, random_state = 0):
-# 	""" smooth outliers, then no center/scale data """
-# 	start = time.time()
+#     """ smooth outliers, then no center/scale data """
+#     start = time.time()
 
-# 	# Smooth out outliers
-# 	means, variances = mean_variance_axis(data.X, axis = 0)
-# 	stds = np.sqrt(variances * (data.X.shape[0] / (data.X.shape[0] - 1))) # make it unbiased
-# 	assert (stds == 0.0).sum() == 0
+#     # Smooth out outliers
+#     means, variances = mean_variance_axis(data.X, axis = 0)
+#     stds = np.sqrt(variances * (data.X.shape[0] / (data.X.shape[0] - 1))) # make it unbiased
+#     assert (stds == 0.0).sum() == 0
 
-# 	data_new = (data.X.data - means[data.X.indices]) / stds[data.X.indices]
-# 	outliers = data_new > max_value
-# 	data.X.data[outliers] = max_value * stds[data.X.indices[outliers]] + means[data.X.indices[outliers]]
+#     data_new = (data.X.data - means[data.X.indices]) / stds[data.X.indices]
+#     outliers = data_new > max_value
+#     data.X.data[outliers] = max_value * stds[data.X.indices[outliers]] + means[data.X.indices[outliers]]
 
-# 	if scale:
-# 		data.X.data /= stds[data.X.indices]
+#     if scale:
+#         data.X.data /= stds[data.X.indices]
 
-# 	U, S, VT = randomized_svd(data.X, n_components = nPC, random_state = random_state)
-# 	data.obsm['X_rpca'] = U * S
+#     U, S, VT = randomized_svd(data.X, n_components = nPC, random_state = random_state)
+#     data.obsm['X_rpca'] = U * S
 
-# 	end = time.time()
-# 	print("RPCA is done. Time spent = {:.2f}s.".format(end - start))
+#     end = time.time()
+#     print("RPCA is done. Time spent = {:.2f}s.".format(end - start))

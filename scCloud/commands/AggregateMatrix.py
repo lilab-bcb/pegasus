@@ -28,7 +28,7 @@ Outputs:
        
 Examples:
   scCloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
-	"""
+    """
 
     def execute(self):
         aggregate_10x_matrices(

@@ -173,12 +173,12 @@ def calc_kBET(
     temp_folder=None,
 ):
     """
-	This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
+    This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
 
-	:return:
-		stat_mean: average chi-square statistic over all the data points.
-		pvalue_mean: average p-value over all the data points.
-	"""
+    :return:
+        stat_mean: average chi-square statistic over all the data points.
+        pvalue_mean: average p-value over all the data points.
+    """
     assert attr in data.obs
     if data.obs[attr].dtype.name != "category":
         data.obs[attr] = pd.Categorical(data.obs[attr])
@@ -231,8 +231,8 @@ def calc_kSIM(
     data, attr, rep_key="X_pca", K=25, min_rate=0.9, n_jobs=1, random_state=0
 ):
     """
-	This kSIM metric measures if attr are not diffused too much
-	"""
+    This kSIM metric measures if attr are not diffused too much
+    """
     assert attr in data.obs
     nsample = data.shape[0]
 
@@ -254,32 +254,32 @@ def calc_kSIM(
 
 
 # def calc_JSD(P, Q):
-# 	M = (P + Q) / 2
-# 	return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
+#     M = (P + Q) / 2
+#     return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
 
 
 # def calc_kBJSD_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist):
-# 	idx = np.append(knn_indices[pos], [pos])
-# 	empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
-# 	return calc_JSD(ideal_dist, empirical_dist)
+#     idx = np.append(knn_indices[pos], [pos])
+#     empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
+#     return calc_JSD(ideal_dist, empirical_dist)
 
 
 # def calc_kBJSD(data, attr, rep_key = 'X_pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
-# 	assert attr in data.obs
-# 	if data.obs[attr].dtype.name != 'category':
-# 		data.obs[attr] = pd.Categorical(data.obs[attr])
+#     assert attr in data.obs
+#     if data.obs[attr].dtype.name != 'category':
+#         data.obs[attr] = pd.Categorical(data.obs[attr])
 
-# 	from joblib import Parallel, delayed
+#     from joblib import Parallel, delayed
 
-# 	ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
-# 	nsample = data.shape[0]
-# 	nbatch = ideal_dist.size
+#     ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
+#     nsample = data.shape[0]
+#     nbatch = ideal_dist.size
 
-# 	attr_values = data.obs[attr].values.copy()
-# 	attr_values.categories = range(nbatch)
+#     attr_values = data.obs[attr].values.copy()
+#     attr_values.categories = range(nbatch)
 
-# 	indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
-# 	knn_indices = indices[:, 0 : K - 1]
-# 	kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
+#     indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
+#     knn_indices = indices[:, 0 : K - 1]
+#     kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
 
-# 	return kBJSD_arr.mean()
+#     return kBJSD_arr.mean()
