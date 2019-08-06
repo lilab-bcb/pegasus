@@ -9,15 +9,18 @@ import scCloud as sc
 class TestAggregate(unittest.TestCase):
 
     def test_aggregate_10x_matrices(self):
-        m1 = sc.tools.read_input('data/heart_1k_v3/filtered_gene_bc_matrices_h5.h5', genome='mm10',
-                                 mode='r')
-        m2 = sc.tools.read_input('data/heart_1k_v2/filtered_gene_bc_matrices_h5.h5', genome='mm10',
-                                 mode='r')
-        sc.tools.aggregate_10x_matrices('data/aggregate_test.csv', restrictions=[], attributes=['Version'],
-                                        output_file='test.h5',
-                                        google_cloud=False, select_singlets=False, ngene=None, is_dropseq=None)
+        m1 = sc.tools.read_input('scCloud-test-data/tests/data/heart_1k_v3/filtered_gene_bc_matrices_h5.h5',
+            genome='mm10',
+            mode='r')
+        m2 = sc.tools.read_input('scCloud-test-data/tests/data/heart_1k_v2/filtered_gene_bc_matrices_h5.h5',
+            genome='mm10',
+            mode='r')
+        sc.tools.aggregate_10x_matrices('scCloud-test-data/tests/data/aggregate_test.csv', restrictions=[],
+            attributes=['Version'],
+            output_file='aggregate_test.h5',
+            google_cloud=False, select_singlets=False, ngene=None, is_dropseq=None)
 
-        result = sc.tools.read_input('test.h5', genome='mm10', mode='r')
+        result = sc.tools.read_input('aggregate_test.h5', genome='mm10', mode='r')
         self.assertEqual(m1.shape[0] + m2.shape[0], result.shape[0], "Cell dimension is incorrect")
         self.assertEqual(m1.shape[1], result.shape[1], "Gene dimension is incorrect")
         self.assertTrue(result.obs.get('Version') is not None, 'Version not added')
@@ -30,16 +33,21 @@ class TestAggregate(unittest.TestCase):
         self.assertTrue(m2_result.obs.index.values[0].startswith('heart_1k_v2'), 'Prefix not added')
 
     def tearDown(self):
-        os.remove('test.h5')
+        os.remove('aggregate_test.h5')
 
     def test_multi_genome(self):
-        sc.tools.aggregate_10x_matrices('data/aggregate_multi_genome.csv', restrictions=[], attributes=None,
-                                        output_file='test.h5', google_cloud=False, select_singlets=False,
-                                        ngene=None, is_dropseq=None)
+        sc.tools.aggregate_10x_matrices('scCloud-test-data/tests/data/aggregate_multi_genome.csv', restrictions=[],
+            attributes=None,
+            output_file='aggregate_test.h5', google_cloud=False, select_singlets=False,
+            ngene=None, is_dropseq=None)
 
-        f = h5py.File('test.h5', 'r')
+        f = h5py.File('aggregate_test.h5', 'r')
         self.assertIsNotNone(f['GRCh38'], 'Genome not found')
         self.assertIsNotNone(f['mm10'], 'Genome not found')
         with self.assertRaises(KeyError):
             f['mm9']
         f.close()
+
+
+if __name__ == '__main__':
+    unittest.main()
