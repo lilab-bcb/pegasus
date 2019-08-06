@@ -144,8 +144,9 @@ class Array2D:
             ]
         else:
             self.barcode_metadata["Channel"] = np.repeat(sample_name, nsample)
-        for attr in attributes:
-            self.barcode_metadata[attr] = np.repeat(row[attr], nsample)
+        if attributes is not None:
+            for attr in attributes:
+                self.barcode_metadata[attr] = np.repeat(row[attr], nsample)
 
     def write_to_hdf5(self, keyword: str, hd5_out: "File") -> None:
         """ Write Array2D content into hdf5 file
@@ -258,7 +259,7 @@ class MemData:
                 self.data[keyword] = [array2d]
 
     def aggregate(self) -> None:
-        """ Merge aggregated count matrices         
+        """ Merge aggregated count matrices
         """
         import gc
 
@@ -333,7 +334,7 @@ class MemData:
         ----------
 
         concat_matrices : `bool`, optional (default: False)
-            If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects. 
+            If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects.
 
         Returns
         -------
