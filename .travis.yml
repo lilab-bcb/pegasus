@@ -23,5 +23,6 @@ before_install:
 
 script:
   #  - python -m unittest
-  - docker run -d -p 127.0.0.1:80:4567 sccloud/sccloudpy /bin/sh -c "cd /scCloudPy; python -m unittest;"
+  - docker run -d -p 127.0.0.1:80:4567 sccloud/sccloudpy /bin/sh -c "python -m unittest;"
+
 
