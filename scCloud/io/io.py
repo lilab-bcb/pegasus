@@ -634,7 +634,9 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
     if isinstance(data, MemData):
         data.write_h5_file(output_name + ".scCloud.h5")
     else:
-        data.write(output_name + ".h5ad")
+        if not output_name.endswith(".h5ad"):
+            output_name += ".h5ad"
+        data.write(output_name)
 
     end = time.time()
     print("Write output is finished. Time spent = {:.2f}s.".format(end - start))
