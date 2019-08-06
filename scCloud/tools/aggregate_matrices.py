@@ -52,37 +52,37 @@ def aggregate_matrices(
 ) -> "None or AnnData or MemData":
     """Aggregate channel-specific count matrices into one big count matrix.
 
-	This function takes as input a csv_file, which contains at least 2 columns — Sample, sample name; Location, file that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5), and merges matrices from the same genome together. Depending on what_to_return, it can output the merged results into a scCloud-formatted HDF5 file or return as an AnnData or MemData object.
-	
-	Parameters
-	----------
+    This function takes as input a csv_file, which contains at least 2 columns — Sample, sample name; Location, file that contains the count matrices (e.g. filtered_gene_bc_matrices_h5.h5), and merges matrices from the same genome together. Depending on what_to_return, it can output the merged results into a scCloud-formatted HDF5 file or return as an AnnData or MemData object.
+    
+    Parameters
+    ----------
 
-	csv_file : `str`
-		The CSV file containing information about each channel.
-	what_to_return : `str`, optional (default: 'AnnData')
-		If this value is equal to 'AnnData' or 'MemData', an AnnData or MemData object will be returned. Otherwise, results will be written into 'what_to_return.scCloud.h5' file and None is returned.
-	restrictions : `list[str]`, optional (default: [])
-		A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
-	attributes : `list[str]`, optional (default: [])
-		A list of attributes need to be incorporated into the output count matrix.
-	google_cloud : `bool`, optional (default: False) 
-		If the channel-specific count matrices are stored in a google bucket.
-	select_singlets : `bool`, optional (default: False)
-		If we have demultiplexed data, turning on this option will make scCloud only include barcodes that are predicted as singlets.
-	ngene : `int`, optional (default: None)
-		The minimum number of expressed genes to keep one barcode. 
-	concat_matrices : `bool`, optional (default: False)
-		If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects. 
+    csv_file : `str`
+        The CSV file containing information about each channel.
+    what_to_return : `str`, optional (default: 'AnnData')
+        If this value is equal to 'AnnData' or 'MemData', an AnnData or MemData object will be returned. Otherwise, results will be written into 'what_to_return.scCloud.h5' file and None is returned.
+    restrictions : `list[str]`, optional (default: [])
+        A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
+    attributes : `list[str]`, optional (default: [])
+        A list of attributes need to be incorporated into the output count matrix.
+    google_cloud : `bool`, optional (default: False) 
+        If the channel-specific count matrices are stored in a google bucket.
+    select_singlets : `bool`, optional (default: False)
+        If we have demultiplexed data, turning on this option will make scCloud only include barcodes that are predicted as singlets.
+    ngene : `int`, optional (default: None)
+        The minimum number of expressed genes to keep one barcode. 
+    concat_matrices : `bool`, optional (default: False)
+        If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects. 
 
-	Returns
-	-------
-	
-	None
+    Returns
+    -------
+    
+    None
 
-	Examples
-	--------
-	>>> tools.aggregate_matrix('example.csv', 'example_10x.h5', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'])
-	"""
+    Examples
+    --------
+    >>> tools.aggregate_matrix('example.csv', 'example_10x.h5', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'])
+    """
 
     df = pd.read_csv(csv_file, header=0, index_col="Sample")
     df["Sample"] = df.index

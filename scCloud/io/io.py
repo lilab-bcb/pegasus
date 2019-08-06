@@ -17,26 +17,26 @@ import anndata
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v2 format matrix from hdf5 file
-	
-	Parameters
-	----------
 
-	h5_in : tables.File 
-		An instance of tables.File class that is connected to a 10x v2 formatted hdf5 file.
-	fn : `str`
-		File name, can be used to indicate channel-specific name prefix.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    Parameters
+    ----------
 
-	Returns
-	-------
-	
-	An MemData object containing genome-Array2D pair per genome.
+    h5_in : tables.File
+        An instance of tables.File class that is connected to a 10x v2 formatted hdf5 file.
+    fn : `str`
+        File name, can be used to indicate channel-specific name prefix.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
-	Examples
-	--------
-	>>> io.load_10x_h5_file_v2(h5_in)
-	"""
+    Returns
+    -------
+
+    An MemData object containing genome-Array2D pair per genome.
+
+    Examples
+    --------
+    >>> io.load_10x_h5_file_v2(h5_in)
+    """
 
     data = MemData()
     for group in h5_in.list_nodes("/", "Group"):
@@ -69,26 +69,26 @@ def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
 
 def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v3 format matrix from hdf5 file
-	
-	Parameters
-	----------
 
-	h5_in : tables.File 
-		An instance of tables.File class that is connected to a 10x v3 formatted hdf5 file.
-	fn : `str`
-		File name, can be used to indicate channel-specific name prefix.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    Parameters
+    ----------
 
-	Returns
-	-------
-	
-	An MemData object containing genome-Array2D pair per genome.
+    h5_in : tables.File
+        An instance of tables.File class that is connected to a 10x v3 formatted hdf5 file.
+    fn : `str`
+        File name, can be used to indicate channel-specific name prefix.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
-	Examples
-	--------
-	>>> io.load_10x_h5_file_v3(h5_in)
-	"""
+    Returns
+    -------
+
+    An MemData object containing genome-Array2D pair per genome.
+
+    Examples
+    --------
+    >>> io.load_10x_h5_file_v3(h5_in)
+    """
 
     M, N = h5_in.get_node("/matrix/shape").read()
     bigmat = csr_matrix(
@@ -122,24 +122,24 @@ def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
 
 def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     """Load 10x format matrix (either v2 or v3) from hdf5 file
-	
-	Parameters
-	----------
 
-	input_h5 : `str`
-		The matrix in 10x v2 or v3 hdf5 format.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    Parameters
+    ----------
 
-	Returns
-	-------
-	
-	An MemData object containing genome-Array2D pair per genome.
+    input_h5 : `str`
+        The matrix in 10x v2 or v3 hdf5 format.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
-	Examples
-	--------
-	>>> io.load_10x_h5_file('example_10x.h5')
-	"""
+    Returns
+    -------
+
+    An MemData object containing genome-Array2D pair per genome.
+
+    Examples
+    --------
+    >>> io.load_10x_h5_file('example_10x.h5')
+    """
 
     fn = os.path.basename(input_h5)[:-3]
 
@@ -156,7 +156,7 @@ def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
 
 def determine_file_name(path: str, names: List[str], errmsg: str) -> str:
     """ Try several file name options and determine which one is correct.
-	"""
+    """
     for name in names:
         file_name = os.path.join(path, name)
         if os.path.exists(file_name):
@@ -166,7 +166,7 @@ def determine_file_name(path: str, names: List[str], errmsg: str) -> str:
 
 def load_one_mtx_file(path: str, ngene: int = None) -> "Array2D":
     """Load one gene-count matrix in mtx format into an Array2D object
-	"""
+    """
     mtx_file = determine_file_name(
         path,
         ["matrix.mtx.gz", "matrix.mtx"],
@@ -227,26 +227,26 @@ def load_one_mtx_file(path: str, ngene: int = None) -> "Array2D":
 
 def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData":
     """Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
-	
-	Parameters
-	----------
 
-	path : `str`
-		Path to mtx files. The directory impiled by path should either contain matrix, feature and barcode information, or folders containg these information.
-	genome : `str`, optional (default: None)
-		Genome name of the matrix. If None, genome will be inferred from path.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    Parameters
+    ----------
 
-	Returns
-	-------
-	
-	An MemData object containing a genome-Array2D pair.
+    path : `str`
+        Path to mtx files. The directory impiled by path should either contain matrix, feature and barcode information, or folders containg these information.
+    genome : `str`, optional (default: None)
+        Genome name of the matrix. If None, genome will be inferred from path.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
-	Examples
-	--------
-	>>> io.load_10x_h5_file('example_10x.h5')
-	"""
+    Returns
+    -------
+
+    An MemData object containing a genome-Array2D pair.
+
+    Examples
+    --------
+    >>> io.load_10x_h5_file('example_10x.h5')
+    """
 
     if not os.path.isdir(path):
         path = os.path.dirname(path)
@@ -273,28 +273,28 @@ def load_csv_file(
 ) -> "MemData":
     """Load count matrix from a CSV-style file, such as CSV file or DGE style tsv file.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	input_csv : `str`
-		The CSV file, gzipped or not, containing the count matrix.
-	genome : `str`
-		The genome reference.
-	sep: `str`, optional (default: ',')
-		Separator between fields, either ',' or '\t'.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    input_csv : `str`
+        The CSV file, gzipped or not, containing the count matrix.
+    genome : `str`
+        The genome reference.
+    sep: `str`, optional (default: ',')
+        Separator between fields, either ',' or '\t'.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
-	Returns
-	-------
+    Returns
+    -------
 
-	An MemData object containing a genome-Array2D pair.
-	
-	Examples
-	--------
-	>>> io.load_csv_file('example_ADT.csv', genome = 'GRCh38')
-	>>> io.load_csv_file('example.umi.dge.txt.gz', genome = 'GRCh38', sep = '\t')
-	"""
+    An MemData object containing a genome-Array2D pair.
+
+    Examples
+    --------
+    >>> io.load_csv_file('example_ADT.csv', genome = 'GRCh38')
+    >>> io.load_csv_file('example.umi.dge.txt.gz', genome = 'GRCh38', sep = '\t')
+    """
 
     path = os.path.dirname(input_csv)
     base = os.path.basename(input_csv)
@@ -355,25 +355,25 @@ def load_csv_file(
 def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData":
     """Load count matrix from a LOOM file. Currently only support HCA DCP Loom spec.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	input_loom : `str`
-		The LOOM file, containing the count matrix.
-	genome : `str`
-		The genome reference.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    input_loom : `str`
+        The LOOM file, containing the count matrix.
+    genome : `str`
+        The genome reference.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
 
-	Returns
-	-------
+    Returns
+    -------
 
-	An MemData object containing a genome-Array2D pair.
-	
-	Examples
-	--------
-	>>> io.load_loom_file('example.loom', genome = 'GRCh38', ngene = 200)
-	"""
+    An MemData object containing a genome-Array2D pair.
+
+    Examples
+    --------
+    >>> io.load_loom_file('example.loom', genome = 'GRCh38', ngene = 200)
+    """
     import loompy
 
     col_trans = {"CellID": "barcodekey"}
@@ -402,26 +402,26 @@ def load_scCloud_h5_file(
     input_h5: str, ngene: int = None, select_singlets: bool = False
 ) -> "MemData":
     """Load matrices from scCloud-format hdf5 file
-	
-	Parameters
-	----------
 
-	input_h5 : `str`
-		scCloud-format hdf5 file.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
-	select_singlets: `bool`, optional (default: False)
-		If only load singlets.
+    Parameters
+    ----------
 
-	Returns
-	-------
-	
-	An MemData object containing genome-Array2D pair per genome.
+    input_h5 : `str`
+        scCloud-format hdf5 file.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    select_singlets: `bool`, optional (default: False)
+        If only load singlets.
 
-	Examples
-	--------
-	>>> io.load_scCloud_h5_file('example.scCloud.h5')
-	"""
+    Returns
+    -------
+
+    An MemData object containing genome-Array2D pair per genome.
+
+    Examples
+    --------
+    >>> io.load_scCloud_h5_file('example.scCloud.h5')
+    """
 
     cite_seq_name = None
     selected_barcodes = None
@@ -475,23 +475,23 @@ def load_scCloud_h5_file(
 def infer_file_format(input_file: str) -> Tuple[str, str, str]:
     """ Infer file format from input_file name
 
-	This function infer file format by inspecting the file name.
+    This function infer file format by inspecting the file name.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	input_file : `str`
-		Input file name.
+    input_file : `str`
+        Input file name.
 
-	Returns
-	-------
-	`str`
-		File format, choosing from 'scCloud', '10x', 'h5ad', 'mtx', 'dge', and 'csv'.
-	`str`
-		The path covering all input files. Most time this is the same as input_file. But for HCA mtx and csv, this should be parent directory.
-	`str`
-		Type of the path, either 'file' or 'directory'.
-	"""
+    Returns
+    -------
+    `str`
+        File format, choosing from 'scCloud', '10x', 'h5ad', 'mtx', 'dge', and 'csv'.
+    `str`
+        The path covering all input files. Most time this is the same as input_file. But for HCA mtx and csv, this should be parent directory.
+    `str`
+        Type of the path, either 'file' or 'directory'.
+    """
 
     file_format = None
     copy_path = input_file
@@ -538,37 +538,37 @@ def read_input(
 ) -> "MemData or AnnData or List[AnnData]":
     """Load data into memory.
 
-	This function is used to load input data into memory. Inputs can be in 10x genomics v2 & v3 formats (hdf5 or mtx), HCA DCP mtx and csv formats, Drop-seq dge format, and CSV format.
+    This function is used to load input data into memory. Inputs can be in 10x genomics v2 & v3 formats (hdf5 or mtx), HCA DCP mtx and csv formats, Drop-seq dge format, and CSV format.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	input_file : `str`
-		Input file name.
-	genome : `str`, optional (default: None)
-		A string contains comma-separated genome names. scCloud will read all matrices matching the genome names. If genomes is None, all matrices will be considered.
-	return_type : `str`
-		Return object type, can be either 'MemData' or 'AnnData'.
-	concat_matrices : `boolean`, optional (default: False)
-		If input file contains multiple matrices, if concatenate them into one AnnData object or return a list of AnnData objects.
-	h5ad_mode : `str`, optional (default: `a`)
-		If input is in h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
-	ngene : `int`, optional (default: None)
-		Minimum number of genes to keep a barcode. Default is to keep all barcodes.
-	select_singlets : `bool`, optional (default: False)
-		If only keep DemuxEM-predicted singlets when loading data.
+    input_file : `str`
+        Input file name.
+    genome : `str`, optional (default: None)
+        A string contains comma-separated genome names. scCloud will read all matrices matching the genome names. If genomes is None, all matrices will be considered.
+    return_type : `str`
+        Return object type, can be either 'MemData' or 'AnnData'.
+    concat_matrices : `boolean`, optional (default: False)
+        If input file contains multiple matrices, if concatenate them into one AnnData object or return a list of AnnData objects.
+    h5ad_mode : `str`, optional (default: `a`)
+        If input is in h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
+    ngene : `int`, optional (default: None)
+        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+    select_singlets : `bool`, optional (default: False)
+        If only keep DemuxEM-predicted singlets when loading data.
 
-	Returns
-	-------
-	`MemData` object or `anndata` object or a list of `anndata` objects
-		An `MemData` object or `anndata` object or a list of `anndata` objects containing the count matrices.
+    Returns
+    -------
+    `MemData` object or `anndata` object or a list of `anndata` objects
+        An `MemData` object or `anndata` object or a list of `anndata` objects containing the count matrices.
 
-	Examples
-	--------
-	>>> adata = io.read_input('example_10x.h5', genomes = 'mm10')
-	>>> adata = io.read_input('example.h5ad', mode = 'r+')
-	>>> adata = io.read_input('example_ADT.csv')
-	"""
+    Examples
+    --------
+    >>> adata = io.read_input('example_10x.h5', genomes = 'mm10')
+    >>> adata = io.read_input('example.h5ad', mode = 'r+')
+    >>> adata = io.read_input('example_ADT.csv')
+    """
 
     start = time.time()
 
@@ -612,31 +612,33 @@ def read_input(
 def write_output(data: "MemData or AnnData", output_name: str) -> None:
     """ Write data back to disk.
 
-	This function is used to write data back to disk. 
+    This function is used to write data back to disk.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	data : `MemData` or `AnnData`
-		data to write back, can be either an MemData or AnnData object.
-	output_name : `str`
-		output file name. MemData ends with suffix '.scCloud.h5' and AnnData ends with suffix '.h5ad'
+    data : `MemData` or `AnnData`
+        data to write back, can be either an MemData or AnnData object.
+    output_name : `str`
+        output file name. MemData ends with suffix '.scCloud.h5' and AnnData ends with suffix '.h5ad'
 
-	Returns
-	-------
-	None
+    Returns
+    -------
+    None
 
-	Examples
-	--------
-	>>> io.write_output(adata, 'test')
-	"""
+    Examples
+    --------
+    >>> io.write_output(adata, 'test')
+    """
 
     start = time.time()
 
-    if isisntance(data, MemData):
+    if isinstance(data, MemData):
         data.write_h5_file(output_name + ".scCloud.h5")
     else:
-        data.write(output_name + ".h5ad")
+        if not output_name.endswith(".h5ad"):
+            output_name += ".h5ad"
+        data.write(output_name)
 
     end = time.time()
     print("Write output is finished. Time spent = {:.2f}s.".format(end - start))

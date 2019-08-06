@@ -16,27 +16,27 @@ from scCloud.io import read_input
 def search_genes(data, gene_list, measure="percentage"):
     """Extract and display gene expressions for each cluster from an `anndata` object.
 
-	This function helps to see marker expressions in clusters via the interactive python environment.
+    This function helps to see marker expressions in clusters via the interactive python environment.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	data : `anndata` object
-		An `anndata` object containing the expression matrix and differential expression results.
-	gene_list : `list[str]`
-		A list of gene symbols.
-	measure : `str`
-		Can be either `percentage` or `mean_log_expression`. `percentage` shows the percentage of cells expressed the genes and `mean_log_expression` shows the mean log expression.
+    data : `anndata` object
+        An `anndata` object containing the expression matrix and differential expression results.
+    gene_list : `list[str]`
+        A list of gene symbols.
+    measure : `str`
+        Can be either `percentage` or `mean_log_expression`. `percentage` shows the percentage of cells expressed the genes and `mean_log_expression` shows the mean log expression.
 
-	Returns
-	-------
-	`pandas.DataFrame`
-		A data frame containing marker expressions in each cluster.
+    Returns
+    -------
+    `pandas.DataFrame`
+        A data frame containing marker expressions in each cluster.
 
-	Examples
-	--------
-	>>> results = misc.search_genes(data, ['CD3E', 'CD4', 'CD8'], measure = 'percentage')
-	"""
+    Examples
+    --------
+    >>> results = misc.search_genes(data, ['CD3E', 'CD4', 'CD8'], measure = 'percentage')
+    """
 
     ncluster = sum(
         [1 for x in data.var.columns if x.startswith("mean_log_expression_")]
@@ -48,29 +48,29 @@ def search_genes(data, gene_list, measure="percentage"):
 def search_de_genes(data, gene_list, test="fisher", thre=1.5):
     """Extract and display differential expression analysis results of markers for each cluster from an `anndata` object.
 
-	This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
+    This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
 
-	Parameters
-	----------
+    Parameters
+    ----------
 
-	data : `anndata` object
-		An `anndata` object containing the expression matrix and differential expression results.
-	gene_list : `list[str]`
-		A list of gene symbols.
-	test : `str`, optional (default: `fisher`)
-		Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
-	thre : `float`, optional (default: `1.5`)
-		Fold change threshold to determine if the marker is a strong DE (`++` or `--`) or weak DE (`+` or `-`).
+    data : `anndata` object
+        An `anndata` object containing the expression matrix and differential expression results.
+    gene_list : `list[str]`
+        A list of gene symbols.
+    test : `str`, optional (default: `fisher`)
+        Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
+    thre : `float`, optional (default: `1.5`)
+        Fold change threshold to determine if the marker is a strong DE (`++` or `--`) or weak DE (`+` or `-`).
 
-	Returns
-	-------
-	`pandas.DataFrame`
-		A data frame containing marker differential expression results for each cluster.
+    Returns
+    -------
+    `pandas.DataFrame`
+        A data frame containing marker differential expression results for each cluster.
 
-	Examples
-	--------
-	>>> results = misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], test = 'fisher', thre = 2.0)
-	"""
+    Examples
+    --------
+    >>> results = misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], test = 'fisher', thre = 2.0)
+    """
 
     ngene = len(gene_list)
     ncluster = sum(

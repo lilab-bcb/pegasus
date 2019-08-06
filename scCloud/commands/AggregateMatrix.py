@@ -12,7 +12,7 @@ Usage:
 
 Arguments:
   csv_file          Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x v2/v3, DGE, mtx, csv or loom format. If matrix is in DGE, mtx or csv format, an addition Reference column is required.
-  output_name       The output file name. 
+  output_name       The output file name.
 
 Options:
   --restriction <restriction>...           Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value or name:~value,..,value, where ~ refers to not. You can specifiy multiple restrictions by setting this option multiple times.
@@ -25,13 +25,13 @@ Options:
 
 Outputs:
   output_name.scCloud.h5        A scCloud-formatted HDF5 file containing the count matrices and associated attributes.
-       
+
 Examples:
   scCloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
-	"""
+    """
 
     def execute(self):
-        aggregate_10x_matrices(
+        aggregate_matrices(
             self.args["<csv_file>"],
             what_to_return=self.args["<output_name>"],
             restrictions=self.args["--restriction"],

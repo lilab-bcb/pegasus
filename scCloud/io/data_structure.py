@@ -55,7 +55,7 @@ class Array2D:
 
     def list_metadata_keys(self, type: str = "barcode") -> List[str]:
         """ Return available keys in metadata, type = barcode or feature or None
-		"""
+        """
         if type == "barcode":
             return [
                 self.barcode_metadata.index.name
@@ -69,7 +69,7 @@ class Array2D:
 
     def get_metadata(self, name: str, type: str = "barcode") -> List[object]:
         """ Return values of column name in metadata type, type can be barcode, feature, or None
-		"""
+        """
         if type == "barcode":
             return (
                 self.barcode_metadata.index
@@ -87,13 +87,13 @@ class Array2D:
 
     def trim(self, selected: List[bool]) -> None:
         """ Only keep barcodes in selected
-		"""
+        """
         self.matrix = self.matrix[selected, :]
         self.barcode_metadata = self.barcode_metadata[selected]
 
     def filter(self, ngene: int = None, select_singlets: bool = False) -> None:
         """ Filter out low quality barcodes, only keep barcodes satisfying ngene >= ngene and selecting singlets if select_singlets is True
-		"""
+        """
         if (ngene is None) and (not select_singlets):
             return None
 
@@ -111,7 +111,7 @@ class Array2D:
 
     def separate_channels(self, fn: str) -> None:
         """ Separate channel information from barcodekeys, only used for 10x v2, v3 h5 and mtx.
-		"""
+        """
 
         barcodes = self.barcode_metadata.index.values.astype(str)
         parts = np.array(np.char.rsplit(barcodes, sep="-", maxsplit=1).tolist())
@@ -134,7 +134,7 @@ class Array2D:
         self, sample_name: str, row: "pd.Series", attributes: List[str]
     ) -> None:
         """ Update barcodekey, update channel and add attributes
-		"""
+        """
         nsample = self.barcode_metadata.shape[0]
         barcodes = [sample_name + "-" + x for x in self.barcode_metadata.index]
         self.barcode_metadata.index = pd.Index(barcodes, name="barcodekey")
@@ -144,12 +144,13 @@ class Array2D:
             ]
         else:
             self.barcode_metadata["Channel"] = np.repeat(sample_name, nsample)
-        for attr in attributes:
-            self.barcode_metadata[attr] = np.repeat(row[attr], nsample)
+        if attributes is not None:
+            for attr in attributes:
+                self.barcode_metadata[attr] = np.repeat(row[attr], nsample)
 
     def write_to_hdf5(self, keyword: str, hd5_out: "File") -> None:
         """ Write Array2D content into hdf5 file
-		"""
+        """
         out_group = hd5_out.create_group("/", keyword)
         # write matrix
         hd5_out.create_carray(out_group, "data", obj=self.matrix.data)
@@ -194,8 +195,8 @@ class Array2D:
 def polish_featurename(
     feature_names: List[str], feature_keys: List[str], genomes: List[str]
 ) -> List[str]:
-    """	Remove prefixing genome strings and deduplicate feature names
-	"""
+    """    Remove prefixing genome strings and deduplicate feature names
+    """
     import re
     from collections import Counter
 
@@ -216,7 +217,7 @@ def polish_featurename(
 
 def get_fillna_dict(df: "pd.DataFrame") -> dict:
     """ Generate a fillna dict for columns in a df
-	"""
+    """
     fillna_dict = {}
     for column in df:
         if df[column].dtype.kind in {"O", "S"}:
@@ -244,13 +245,13 @@ class MemData:
         self, sample_name: str, row: "pd.Series", attributes: List[str]
     ) -> None:
         """ Update barcodekey, update channel and add attributes for each array2d array
-		"""
+        """
         for array2d in self.data.values():
             array2d.update_barcode_metadata_info(sample_name, row, attributes)
 
     def addAggrData(self, data: "MemData") -> None:
         """ Add Aggr Data
-		"""
+        """
         for keyword, array2d in data.data.items():
             if keyword in self.data:
                 self.data[keyword].append(array2d)
@@ -258,8 +259,8 @@ class MemData:
                 self.data[keyword] = [array2d]
 
     def aggregate(self) -> None:
-        """ Merge aggregated count matrices 		
-		"""
+        """ Merge aggregated count matrices
+        """
         import gc
 
         for keyword in self.data:
@@ -329,26 +330,26 @@ class MemData:
     def convert_to_anndata(self, concat_matrices=False) -> "AnnData or List[AnnData]":
         """Convert an MemData object into SCANPY's AnnData object
 
-		Parameters
-		----------
+        Parameters
+        ----------
 
-		concat_matrices : `bool`, optional (default: False)
-			If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects. 
+        concat_matrices : `bool`, optional (default: False)
+            If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects.
 
-		Returns
-		-------
+        Returns
+        -------
 
-		`anndata` object or a dictionary of `anndata` objects
-			An `anndata` object or a list of `anndata` objects containing the count matrices.
+        `anndata` object or a dictionary of `anndata` objects
+            An `anndata` object or a list of `anndata` objects containing the count matrices.
 
-		Warning
-		-------
-		This procedure will convert all int matrix into float32 matrix in place!
+        Warning
+        -------
+        This procedure will convert all int matrix into float32 matrix in place!
 
-		Examples
-		--------
-		>>> adata = MemData.convert_to_anndata()
-		"""
+        Examples
+        --------
+        >>> adata = MemData.convert_to_anndata()
+        """
 
         Xs = []
         feature_dfs = []
@@ -409,21 +410,21 @@ class MemData:
     def write_h5_file(self, output_h5: str) -> None:
         """Write count matricies into a scCloud-format HDF5 file --- each matrix is stored in a group under root. For each matrix, the barcode metadata are stored under _barcodes subgroup and the feature metadata are stored under _features subgroup
 
-		Parameters
-		----------
+        Parameters
+        ----------
 
-		output_h5 : `str`
-			The output file name.
+        output_h5 : `str`
+            The output file name.
 
-		Returns
-		-------
+        Returns
+        -------
 
-		None
+        None
 
-		Examples
-		--------
-		>>> MemData.write_h5_file('example_10x.h5')
-		"""
+        Examples
+        --------
+        >>> MemData.write_h5_file('example_10x.h5')
+        """
 
         with tables.open_file(
             output_h5, mode="w", title=output_h5, filters=tables.Filters(complevel=1)
