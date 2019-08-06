@@ -17,11 +17,11 @@ import anndata
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v2 format matrix from hdf5 file
-    
+
     Parameters
     ----------
 
-    h5_in : tables.File 
+    h5_in : tables.File
         An instance of tables.File class that is connected to a 10x v2 formatted hdf5 file.
     fn : `str`
         File name, can be used to indicate channel-specific name prefix.
@@ -30,7 +30,7 @@ def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
 
     Returns
     -------
-    
+
     An MemData object containing genome-Array2D pair per genome.
 
     Examples
@@ -69,11 +69,11 @@ def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
 
 def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v3 format matrix from hdf5 file
-    
+
     Parameters
     ----------
 
-    h5_in : tables.File 
+    h5_in : tables.File
         An instance of tables.File class that is connected to a 10x v3 formatted hdf5 file.
     fn : `str`
         File name, can be used to indicate channel-specific name prefix.
@@ -82,7 +82,7 @@ def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
 
     Returns
     -------
-    
+
     An MemData object containing genome-Array2D pair per genome.
 
     Examples
@@ -122,7 +122,7 @@ def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
 
 def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     """Load 10x format matrix (either v2 or v3) from hdf5 file
-    
+
     Parameters
     ----------
 
@@ -133,7 +133,7 @@ def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
 
     Returns
     -------
-    
+
     An MemData object containing genome-Array2D pair per genome.
 
     Examples
@@ -227,7 +227,7 @@ def load_one_mtx_file(path: str, ngene: int = None) -> "Array2D":
 
 def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData":
     """Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
-    
+
     Parameters
     ----------
 
@@ -240,7 +240,7 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
 
     Returns
     -------
-    
+
     An MemData object containing a genome-Array2D pair.
 
     Examples
@@ -289,7 +289,7 @@ def load_csv_file(
     -------
 
     An MemData object containing a genome-Array2D pair.
-    
+
     Examples
     --------
     >>> io.load_csv_file('example_ADT.csv', genome = 'GRCh38')
@@ -369,7 +369,7 @@ def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData"
     -------
 
     An MemData object containing a genome-Array2D pair.
-    
+
     Examples
     --------
     >>> io.load_loom_file('example.loom', genome = 'GRCh38', ngene = 200)
@@ -402,7 +402,7 @@ def load_scCloud_h5_file(
     input_h5: str, ngene: int = None, select_singlets: bool = False
 ) -> "MemData":
     """Load matrices from scCloud-format hdf5 file
-    
+
     Parameters
     ----------
 
@@ -415,7 +415,7 @@ def load_scCloud_h5_file(
 
     Returns
     -------
-    
+
     An MemData object containing genome-Array2D pair per genome.
 
     Examples
@@ -610,7 +610,7 @@ def read_input(
 def write_output(data: "MemData or AnnData", output_name: str) -> None:
     """ Write data back to disk.
 
-    This function is used to write data back to disk. 
+    This function is used to write data back to disk.
 
     Parameters
     ----------
@@ -631,7 +631,7 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
 
     start = time.time()
 
-    if isisntance(data, MemData):
+    if isinstance(data, MemData):
         data.write_h5_file(output_name + ".scCloud.h5")
     else:
         data.write(output_name + ".h5ad")
