@@ -44,11 +44,11 @@ Options:
   --correct-batch-effect                           Correct for batch effects.
   --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+scCloud..+attrn', or 'attr=value11,scCloud..,value1n_1;value21,scCloud..,value2n_2;scCloud..;valuem1,scCloud..,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',scCloud..,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,scCloud..,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
 
-  --select-hvg-flavor <flavor>                     Highly variable gene selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
-  --select-hvg-ngenes <ngenes>                     Select top <ngenes> highly variable genes. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
+  --select-hvf-flavor <flavor>                     Highly variable feature selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
+  --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
   --benchmark-time                                 This option is used for benchmarking time, will calculate mean and variance even if they are calculated in batch correction.
-  --no-select-hvg                                  Do not select highly variable genes.
-  --plot-hvg                                       Plot highly variable gene selection.
+  --no-select-hvf                                  Do not select highly variable features.
+  --plot-hvf                                       Plot highly variable feature selection.
 
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
@@ -146,7 +146,7 @@ Outputs:
   output_name.filt.gene.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel.
   output_name.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel.
   output_name.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
-  output_name.hvg.pdf              Optional output. Only exists if '--plot-hvg' is set. This file contains a scatter plot describing the highly variable gene selection procedure.
+  output_name.hvf.pdf              Optional output. Only exists if '--plot-hvf' is set. This file contains a scatter plot describing the highly variable gene selection procedure.
   output_name.loom                 Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
   
 Examples:
@@ -182,13 +182,13 @@ Examples:
             "norm_count": float(self.args["--counts-per-cell-after"]),
             "batch_correction": self.args["--correct-batch-effect"],
             "group_attribute": self.args["--batch-group-by"],
-            "select_hvg": not self.args["--no-select-hvg"],
-            "hvg_flavor": self.args["--select-hvg-flavor"],
-            "hvg_ngenes": int(self.args["--select-hvg-ngenes"])
-            if self.args["--select-hvg-ngenes"] != "None"
+            "select_hvf": not self.args["--no-select-hvf"],
+            "hvf_flavor": self.args["--select-hvf-flavor"],
+            "hvf_ngenes": int(self.args["--select-hvf-ngenes"])
+            if self.args["--select-hvf-ngenes"] != "None"
             else None,
             "benchmark_time": self.args["--benchmark-time"],
-            "plot_hvg": self.args["<output_name>"] if self.args["--plot-hvg"] else None,
+            "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
             "nPC": int(self.args["--nPC"]),

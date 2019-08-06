@@ -71,7 +71,7 @@ def plot_qc_violin(
     plt.close()
 
 
-def plot_hvg(x, y, fitted, hvg_index, out_file, dpi=500, markersize=5, linewidth=2):
+def plot_hvf(x, y, fitted, hvg_index, out_file, dpi=500, markersize=5, linewidth=2):
     ax = plt.gca()
     ax.plot(x[hvg_index], y[hvg_index], "b.", markersize=markersize)
     ax.plot(x[~hvg_index], y[~hvg_index], "k.", markersize=markersize)

@@ -8,4 +8,4 @@ from .plot_library import (
     plot_heatmap,
 )
 from .iplot_library import scatter, scatter_real, scatter3d, scatter3d_real
-from .plot_qc import plot_qc_violin, plot_hvg
+from .plot_qc import plot_qc_violin, plot_hvf

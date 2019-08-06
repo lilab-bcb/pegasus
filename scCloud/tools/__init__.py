@@ -18,8 +18,8 @@ from .preprocessing import (
     log_norm,
     pca,
 )
-from .hvg_selection import (
-    select_highly_variable_genes,
+from .hvf_selection import (
+    highly_variable_features,
     collect_highly_variable_gene_matrix,
 )
 from .batch_correction import (

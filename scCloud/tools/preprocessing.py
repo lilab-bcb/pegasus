@@ -31,10 +31,10 @@ def qc_metrics(data: 'AnnData', mito_prefix: str ='MT-', min_genes: int = 500,
 
     data.obs['passed_qc'] = False
 
-    data.obs["n_genes"] = data.X.getnnz(axis=1)
-    data.obs["n_counts"] = data.X.sum(axis=1).A1
+    data.obs['n_genes'] = data.X.getnnz(axis=1)
+    data.obs['n_counts'] = data.X.sum(axis=1).A1
 
-    mito_prefixes = mito_prefix.split(",")
+    mito_prefixes = mito_prefix.split(',')
 
     def startswith(name):
         for prefix in mito_prefixes:
@@ -43,8 +43,8 @@ def qc_metrics(data: 'AnnData', mito_prefix: str ='MT-', min_genes: int = 500,
         return False
 
     mito_genes = data.var_names.map(startswith).values.nonzero()[0]
-    data.obs["percent_mito"] = data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(
-        data.obs["n_counts"].values, 1.0
+    data.obs['percent_mito'] = data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(
+        data.obs['n_counts'].values, 1.0
     )
 
     # Assign passed_qc
@@ -59,8 +59,7 @@ def qc_metrics(data: 'AnnData', mito_prefix: str ='MT-', min_genes: int = 500,
     var['n_cells'] = data.X.getnnz(axis=0)
     var['percent_cells'] = var['n_cells'] / data.shape[0]
     var['robust'] = var['percent_cells'] >= percent_cells
-    var['highly_variable_genes'] = var['robust']  # default all robust genes are "highly" variable
-    var['hvg_rank'] = -1  # default all ranks are -1
+    var['highly_variable_features'] = var['robust']  # default all robust genes are "highly" variable
 
 
 def get_filter_stats(data: 'AnnData') -> Tuple['pandas.DataFrame', 'pandas.DataFrame']:
@@ -71,60 +70,60 @@ def get_filter_stats(data: 'AnnData') -> Tuple['pandas.DataFrame', 'pandas.DataF
     """
 
     # cell stats
-    gb1 = data.obs.groupby("Channel")
+    gb1 = data.obs.groupby('Channel')
     df_before = gb1.median()
     df_before = df_before.assign(total=gb1.size())
     df_before.rename(
         columns={
-            "n_genes": "median_n_genes_before",
-            "n_counts": "median_n_umis_before",
-            "percent_mito": "median_percent_mito_before",
+            'n_genes': 'median_n_genes_before',
+            'n_counts': 'median_n_umis_before',
+            'percent_mito': 'median_percent_mito_before',
         },
         inplace=True,
     )
 
     data = data[data.obs['passed_qc']] # focusing only on filtered cells
 
-    gb2 = data.obs.groupby("Channel")
+    gb2 = data.obs.groupby('Channel')
     df_after = gb2.median()
     df_after = df_after.assign(kept=gb2.size())
     df_after.rename(
         columns={
-            "n_genes": "median_n_genes",
-            "n_counts": "median_n_umis",
-            "percent_mito": "median_percent_mito",
+            'n_genes': 'median_n_genes',
+            'n_counts': 'median_n_umis',
+            'percent_mito': 'median_percent_mito',
         },
         inplace=True,
     )
     df_cells = pd.concat((df_before, df_after), axis=1, sort=False)
     df_cells.fillna(0, inplace=True)
-    df_cells["kept"] = df_cells["kept"].astype(int)
-    df_cells["filt"] = df_cells["total"] - df_cells["kept"]
+    df_cells['kept'] = df_cells['kept'].astype(int)
+    df_cells['filt'] = df_cells['total'] - df_cells['kept']
     df_cells = df_cells[
         [
-            "kept",
-            "median_n_genes",
-            "median_n_umis",
-            "median_percent_mito",
-            "filt",
-            "total",
-            "median_n_genes_before",
-            "median_n_umis_before",
-            "median_percent_mito_before",
+            'kept',
+            'median_n_genes',
+            'median_n_umis',
+            'median_percent_mito',
+            'filt',
+            'total',
+            'median_n_genes_before',
+            'median_n_umis_before',
+            'median_percent_mito_before',
         ]
     ]
-    df_cells.sort_values("kept", inplace=True)
+    df_cells.sort_values('kept', inplace=True)
 
     # gene stats
-    idx = data.var["robust"] == False
+    idx = data.var['robust'] == False
     df_genes = pd.DataFrame(
         {
-            "n_cells": data.var.loc[idx, "n_cells"],
-            "percent_cells": data.var.loc[idx, "percent_cells"],
+            'n_cells': data.var.loc[idx, 'n_cells'],
+            'percent_cells': data.var.loc[idx, 'percent_cells'],
         }
     )
-    df_genes.index.name = "gene"
-    df_genes.sort_values("n_cells", ascending=False, inplace=True)
+    df_genes.index.name = 'gene'
+    df_genes.sort_values('n_cells', ascending=False, inplace=True)
 
     return df_cells, df_genes
 
@@ -149,33 +148,33 @@ def generate_filter_plots(data: 'AnnData', plot_filt: str, plot_filt_figsize: st
     """
 
     df_plot_before = data.obs[
-        ["Channel", "n_genes", "n_counts", "percent_mito"]
+        ['Channel', 'n_genes', 'n_counts', 'percent_mito']
     ].copy()
     df_plot_before.reset_index(drop=True, inplace=True)
-    df_plot_before["status"] = "original"
+    df_plot_before['status'] = 'original'
 
     data = data[data.obs['passed_qc']] # focusing only on filtered cells
 
     df_plot_after = data.obs[
-        ["Channel", "n_genes", "n_counts", "percent_mito"]
+        ['Channel', 'n_genes', 'n_counts', 'percent_mito']
     ].copy()
     df_plot_after.reset_index(drop=True, inplace=True)
-    df_plot_after["status"] = "filtered"
+    df_plot_after['status'] = 'filtered'
     df_plot = pd.concat((df_plot_before, df_plot_after), axis=0)
     
     from scCloud.plotting import plot_qc_violin
     figsize = None
     if plot_filt_figsize is not None:
-        width, height = plot_filt_figsize.split(",")
+        width, height = plot_filt_figsize.split(',')
         figsize = (int(width), int(height))
 
     plot_qc_violin(
         df_plot,
-        "count",
-        plot_filt + ".filt.UMI.pdf",
-        xattr="Channel",
-        hue="status",
-        xlabel="Channel",
+        'count',
+        plot_filt + '.filt.UMI.pdf',
+        xattr='Channel',
+        hue='status',
+        xlabel='Channel',
         split=True,
         linewidth=0,
         figsize=figsize,
@@ -183,11 +182,11 @@ def generate_filter_plots(data: 'AnnData', plot_filt: str, plot_filt_figsize: st
 
     plot_qc_violin(
         df_plot,
-        "gene",
-        plot_filt + ".filt.gene.pdf",
-        xattr="Channel",
-        hue="status",
-        xlabel="Channel",
+        'gene',
+        plot_filt + '.filt.gene.pdf',
+        xattr='Channel',
+        hue='status',
+        xlabel='Channel',
         split=True,
         linewidth=0,
         figsize=figsize,
@@ -195,11 +194,11 @@ def generate_filter_plots(data: 'AnnData', plot_filt: str, plot_filt_figsize: st
 
     plot_qc_violin(
         df_plot,
-        "mito",
-        plot_filt + ".filt.mito.pdf",
-        xattr="Channel",
-        hue="status",
-        xlabel="Channel",
+        'mito',
+        plot_filt + '.filt.mito.pdf',
+        xattr='Channel',
+        hue='status',
+        xlabel='Channel',
         split=True,
         linewidth=0,
         figsize=figsize,
@@ -213,7 +212,7 @@ def run_filter_data(
     output_filt: str = None,
     plot_filt: str = None,
     plot_filt_figsize: Tuple[int, int] = None,
-    mito_prefix: str = "MT-",
+    mito_prefix: str = 'MT-',
     min_genes: int = 500,
     max_genes: int = 6000,
     min_umis: int = 100,
@@ -230,10 +229,10 @@ def run_filter_data(
     qc_metrics(data, mito_prefix, min_genes, max_genes, min_umis, max_umis, percent_mito, percent_cells)
 
     if output_filt is not None:
-        writer = pd.ExcelWriter(output_filt + ".filt.xlsx", engine="xlsxwriter")
+        writer = pd.ExcelWriter(output_filt + '.filt.xlsx', engine='xlsxwriter')
         df_cells, df_genes = get_filter_stats(data)
-        df_cells.to_excel(writer, sheet_name="Cell filtration stats")
-        df_genes.to_excel(writer, sheet_name="Gene filtration stats")
+        df_cells.to_excel(writer, sheet_name='Cell filtration stats')
+        df_genes.to_excel(writer, sheet_name='Gene filtration stats')
         writer.save()
         print("Filtration results are written.")
 
@@ -254,7 +253,7 @@ def log_norm(data: 'AnnData', norm_count: float = 1e4) -> None:
     start = time.time()
 
     assert issparse(data.X)
-    mat = data.X[:, data.var["robust"].values]
+    mat = data.X[:, data.var['robust'].values]
     scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X = data.X.log1p()
@@ -282,10 +281,10 @@ def pca(data: 'AnnData', standardize: bool = True, max_value: float = 10, nPC: i
 
     pca = PCA(n_components=nPC, random_state=random_state)
     X_pca = pca.fit_transform(data.X)
-    data.obsm["X_pca"] = X_pca
-    data.varm["PCs"] = pca.components_.T
-    data.uns["pca"] = {}
-    data.uns["pca"]["variance"] = pca.explained_variance_
-    data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
+    data.obsm['X_pca'] = X_pca
+    data.varm['PCs'] = pca.components_.T
+    data.uns['pca'] = {}
+    data.uns['pca']['variance'] = pca.explained_variance_
+    data.uns['pca']['variance_ratio'] = pca.explained_variance_ratio_
     end = time.time()
     print("PCA is done. Time spent = {:.2f}s.".format(end - start))

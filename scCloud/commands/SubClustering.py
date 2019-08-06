@@ -21,10 +21,10 @@ Options:
   --correct-batch-effect                           Correct for batch effects for subclustering task.
   --output-loom                                    Output loom-formatted file.
 
-  --select-hvg-flavor <flavor>                     Highly variable gene selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
-  --select-hvg-ngenes <ngenes>                     Select top <ngenes> highly variable genes. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
-  --no-select-hvg                                  Do not select highly variable genes.
-  --plot-hvg                                       Plot highly variable gene selection.
+  --select-hvf-flavor <flavor>                     Highly variable feature selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
+  --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
+  --no-select-hvf                                  Do not select highly variable features.
+  --plot-hvf                                       Plot highly variable feature selection.
 
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
@@ -129,12 +129,12 @@ Examples:
             "genome": None,
             "batch_correction": self.args["--correct-batch-effect"],
             "output_loom": self.args["--output-loom"],
-            "select_hvg": not self.args["--no-select-hvg"],
-            "hvg_flavor": self.args["--select-hvg-flavor"],
-            "hvg_ngenes": int(self.args["--select-hvg-ngenes"])
-            if self.args["--select-hvg-ngenes"] != "None"
+            "select_hvf": not self.args["--no-select-hvf"],
+            "hvf_flavor": self.args["--select-hvf-flavor"],
+            "hvf_ngenes": int(self.args["--select-hvf-ngenes"])
+            if self.args["--select-hvf-ngenes"] != "None"
             else None,
-            "plot_hvg": self.args["<output_name>"] if self.args["--plot-hvg"] else None,
+            "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
             "nPC": int(self.args["--nPC"]),
