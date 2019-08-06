@@ -7,7 +7,7 @@ from subprocess import check_call
 
 from typing import List
 
-from scCloud.io import infer_file_format, read_input, write_output
+from scCloud.io import infer_file_format, read_input, write_output, MemData
 
 
 
@@ -81,10 +81,7 @@ def aggregate_matrices(csv_file: str, what_to_return: str = 'AnnData', restricti
 
 	# Select channels
 	rvec = [parse_restriction_string(x) for x in restrictions]
-	
-	if attributes is None:
-		attributes = []
-	
+		
 	idx = pd.Series([True] * df.shape[0], index=df.index, name='selected')
 	for name, isin, content in rvec:
 		assert name in df.columns
@@ -122,7 +119,7 @@ def aggregate_matrices(csv_file: str, what_to_return: str = 'AnnData', restricti
 				input_file = os.path.join(dest_path, os.path.basename(input_file))
 
 		genome = None
-		if file_format in ['dge', 'csv', 'mtx']:
+		if file_format in ['dge', 'csv', 'mtx', 'loom']:
 			assert 'Reference' in row
 			genome = row['Reference']
 

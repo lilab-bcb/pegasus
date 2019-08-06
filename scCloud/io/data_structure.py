@@ -92,12 +92,12 @@ class Array2D:
 		assert fn == '' or parts.shape[1] == 2
 		if fn != '' and np.char.not_equal(parts[:, 1], '1').sum() > 0:
 			# if we have multiple channels
-			channels = np.char.add(fn + '-', parts[:, 1])
+			channels = [fn + '-' + x for x in parts[:, 1]]
 			barcodes = np.array([x + '-' + y for x, y in zip(channels, parts[:, 0])])
 		else:
 			barcodes = parts[:, 0]
 
-		self.barcode_metadata.index = pd.Index(barcodes)
+		self.barcode_metadata.index = pd.Index(barcodes, name = 'barcodekey')
 		
 		if channels is not None:
 			self.barcode_metadata['Channel'] = channels
@@ -107,10 +107,10 @@ class Array2D:
 		""" Update barcodekey, update channel and add attributes
 		"""
 		nsample = self.barcode_metadata.shape[0]
-		barcodes = np.char.add(sample_name + '-', self.barcode_metadata.index.values)
-		self.barcode_metadata.index = pd.Index(barcodes)
+		barcodes = [sample_name + '-' + x for x in self.barcode_metadata.index]
+		self.barcode_metadata.index = pd.Index(barcodes, name = 'barcodekey')
 		if 'Channel' in self.barcode_metadata:
-			self.barcode_metadata['Channel'] = np.char.add(sample_name + '-', self.barcode_metadata['Channel'].values)
+			self.barcode_metadata['Channel'] = [sample_name + '-' + x for x in self.barcode_metadata['Channel']]
 		else:
 			self.barcode_metadata['Channel'] = np.repeat(sample_name, nsample)
 		for attr in attributes:
@@ -231,22 +231,23 @@ class MemData:
 				self.data[keyword] = array2d_list[0]
 			else:
 				barcode_metadata_dfs = [array2d.barcode_metadata for array2d in array2d_list]
-				barcode_metadata = pd.concatenate(barcode_metadata_dfs, axis = 0, sort = False)
+				barcode_metadata = pd.concat(barcode_metadata_dfs, axis = 0, sort = False)
 				fillna_dict = get_fillna_dict(barcode_metadata)
 				barcode_metadata.fillna(value = fillna_dict, inplace = True)
 
 				feature_metadata = array2d_list[0].feature_metadata
 				for other in array2d_list[1:]:
-					feature_metadata = feature_metadata.merge(other, how = 'outer')
+					keys = ['featurekey'] + feature_metadata.columns.intersection(other.feature_metadata.columns).values.tolist()
+					feature_metadata = feature_metadata.merge(other.feature_metadata, on = keys, how = 'outer', sort = True)
 				fillna_dict = get_fillna_dict(feature_metadata)
 				feature_metadata.fillna(value = fillna_dict, inplace = True)
 
 				matrix_list = []
 				f2idx = pd.Series(data = range(feature_metadata.shape[0]), index = feature_metadata.index)
 				for array2d in array2d_list:
-					if featuer_metadata.shape[0] > array2d.feature_metadata.shape[0]:
+					if feature_metadata.shape[0] > array2d.feature_metadata.shape[0]:
 						mat = csr_matrix((array2d.matrix.shape[0], f2idx.size), dtype = array2d.matrix.dtype)
-						mat[:, f2idx[feature_metadata.index].values] = array2d.matrix
+						mat[:, f2idx[array2d.feature_metadata.index].values] = array2d.matrix
 						array2d.matrix = mat
 						gc.collect()
 					matrix_list.append(array2d.matrix)
