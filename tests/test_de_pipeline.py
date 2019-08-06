@@ -8,8 +8,10 @@ from .test_util import assert_files_equal, assert_excel_equal, is_running_in_doc
 class TestDePipeline(unittest.TestCase):
 
     def tearDown(self):
-        os.remove('test_de.xlsx')
-        os.remove('test_de.h5ad')
+        if os.path.exists('test_de.xlsx'):
+            os.remove('test_de.xlsx')
+        if os.path.exists('test_de.h5ad'):
+            os.remove('test_de.h5ad')
 
     def test_de_analysis(self):
         # de_analysis modifies h5ad file
