@@ -530,7 +530,7 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
 def read_input(
     input_file: str,
     genome: str = None,
-    return_type="AnnData",
+    return_type: str = "AnnData",
     concat_matrices: bool = False,
     h5ad_mode: str = "a",
     ngene: int = None,
@@ -596,10 +596,12 @@ def read_input(
             input_file, genome, sep=("\t" if file_format == "dge" else ","), ngene=ngene
         )
 
-    data.restrain_keywords(genome)
-
-    if return_type == "AnnData":
-        data = data.convert_to_anndata(concat_matrices=concat_matrices)
+    if file_format != "h5ad":    
+        data.restrain_keywords(genome)
+        if return_type == "AnnData":
+            data = data.convert_to_anndata(concat_matrices=concat_matrices)
+    else:
+        assert return_type == "AnnData"
 
     end = time.time()
     print("Read input is finished. Time spent = {:.2f}s.".format(end - start))

@@ -11,11 +11,12 @@ non_de_attrs = [
 
 from .aggregate_matrices import aggregate_matrices
 from .preprocessing import (
-    filter_data,
-    log_norm,
-    run_pca,
-    filter_cells_cite_seq,
     qc_metrics,
+    get_filter_stats,
+    filter_data,
+    run_filter_data,
+    log_norm,
+    pca,
 )
 from .hvg_selection import (
     select_highly_variable_genes,

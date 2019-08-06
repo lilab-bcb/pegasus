@@ -28,6 +28,10 @@ def run_pipeline(input_file, output_name, **kwargs):
             else:
                 adata = data_dict[keyword]
         assert adata is not None and cdata is not None
+    else:
+        values = adata.X.getnnz(axis = 1)
+        if values.min() == 0: # 10x raw data 
+            adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
     print("Inputs are loaded.")
 
     if kwargs["seurat_compatible"]:
@@ -36,7 +40,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     # preprocessing
     if is_raw:
         # filter out low quality cells/genes
-        tools.filter_data(
+        tools.run_filter_data(
             adata,
             output_filt=kwargs["output_filt"],
             plot_filt=kwargs["plot_filt"],
@@ -48,7 +52,6 @@ def run_pipeline(input_file, output_name, **kwargs):
             max_umis=kwargs["max_umis"],
             percent_mito=kwargs["percent_mito"],
             percent_cells=kwargs["percent_cells"],
-            min_genes_on_raw=kwargs["min_genes_on_raw"],
         )
         if kwargs["seurat_compatible"]:
             raw_data = adata.copy()  # raw as count
@@ -79,7 +82,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         )  # select hvg matrix and convert to dense
         if kwargs["batch_correction"]:
             tools.correct_batch_effects(adata_c)
-        tools.run_pca(adata_c, nPC=kwargs["nPC"], random_state=kwargs["random_state"])
+        tools.pca(adata_c, nPC=kwargs["nPC"], random_state=kwargs["random_state"])
         adata.obsm["X_pca"] = adata_c.obsm["X_pca"]
     else:
         assert "X_pca" in adata.obsm.keys()
