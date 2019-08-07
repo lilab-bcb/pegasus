@@ -29,7 +29,7 @@ from .batch_correction import (
 )
 from .nearest_neighbors import (
     calculate_nearest_neighbors,
-    get_kNN,
+    neighbors,
     select_cells,
     calc_kBET,
     calc_kSIM,

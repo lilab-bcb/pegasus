@@ -5,27 +5,31 @@ import pandas as pd
 from scipy.sparse import issparse
 from scipy.stats import entropy, chi2
 from sklearn.neighbors import NearestNeighbors
+from joblib import effective_n_jobs
+from typing import List, Tuple
 
 
 def calculate_nearest_neighbors(
-    X,
-    num_threads,
-    method="hnsw",
-    K=100,
-    M=20,
-    efC=200,
-    efS=200,
-    random_state=0,
-    full_speed=False,
+    X: np.array,
+    num_threads: int,
+    method: str = 'hnsw',
+    K: int = 100,
+    M: int = 20,
+    efC: int = 200,
+    efS: int = 200,
+    random_state: int = 0,
+    full_speed: int = False,
 ):
-    """X is the sample by feature matrix"""
-
-    start_time = time.time()
+    """Calculate nearest neighbors
+    X is the sample by feature matrix
+    Return K -1 neighbors, the first one is the point itself and thus omitted.
+    TODO: Documentation
+    """
 
     nsample = X.shape[0]
 
     if nsample <= 1000:
-        method = "sklearn"
+        method = 'sklearn'
 
     if nsample < K:
         print(
@@ -67,20 +71,23 @@ def calculate_nearest_neighbors(
         knn.fit(X)
         distances, indices = knn.kneighbors()
 
-    end_time = time.time()
-    print(
-        "Nearest neighbor search is finished in {:.2f}s.".format(end_time - start_time)
-    )
-
     return indices, distances
 
 
-def get_kNN(data, rep_key, K, n_jobs=1, random_state=0, full_speed=False):
-    indices_key = "knn_indices"
-    distances_key = "knn_distances"
-    if rep_key != "X_pca":
-        indices_key = rep_key[2:] + "_" + indices_key
-        distances_key = rep_key[2:] + "_" + distances_key
+def neighbors(data: 'AnnData', K: int, rep: 'str' = 'pca', n_jobs: int = -1, random_state: int = 0, full_speed: bool = False) -> Tuple[List[int], List[float]]:
+    """
+    TODO: Documentation.
+    :params. n_jobs, -1 represents to use all cpus
+    :params. rep: representation, 'X_' + rep should be in data.obsm
+    :params. full_speed: True will result in non-reproducible results
+    Return: if cached, may return more neighbors
+    """
+
+    start = time.time()
+
+    rep_key = 'X_' + rep
+    indices_key = rep + '_knn_indices'
+    distances_key = rep + 'knn_distances'
 
     indices = distances = None
     need_calc = True
@@ -94,18 +101,29 @@ def get_kNN(data, rep_key, K, n_jobs=1, random_state=0, full_speed=False):
     if need_calc:
         indices, distances = calculate_nearest_neighbors(
             data.obsm[rep_key],
-            n_jobs,
+            effective_n_jobs(n_jobs),
             K=K,
             random_state=random_state,
             full_speed=full_speed,
         )
         data.uns[indices_key] = indices
         data.uns[distances_key] = distances
+    else:
+        print("Found cached kNN results, no calculation is required.")
+
+    end = time.time()
+    print(
+        "Nearest neighbor search is finished in {:.2f}s.".format(end - start)
+    )
 
     return indices, distances
 
 
 def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
+    """
+    TODO: documentation (not user API)
+    """
+
     start_time = time.time()
 
     nsample = distances.shape[0]
@@ -163,16 +181,17 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
 
 
 def calc_kBET(
-    data,
-    attr,
-    rep_key="X_pca",
-    K=25,
-    alpha=0.05,
-    n_jobs=1,
-    random_state=0,
-    temp_folder=None,
-):
+    data: 'AnnData',
+    attr: str,
+    rep: str = 'pca',
+    K: int = 25,
+    alpha: float = 0.05,
+    n_jobs: int = -1,
+    random_state: int = 0,
+    temp_folder: str = None,
+) -> Tuple[float, float, float]:
     """
+    TODO: Documentation
     This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
 
     :return:
@@ -180,10 +199,11 @@ def calc_kBET(
         pvalue_mean: average p-value over all the data points.
     """
     assert attr in data.obs
-    if data.obs[attr].dtype.name != "category":
+    if data.obs[attr].dtype.name != 'category':
         data.obs[attr] = pd.Categorical(data.obs[attr])
 
     from joblib import Parallel, delayed
+    
 
     ideal_dist = (
         data.obs[attr].value_counts(normalize=True, sort=False).values
@@ -194,16 +214,15 @@ def calc_kBET(
     attr_values = data.obs[attr].values.copy()
     attr_values.categories = range(nbatch)
 
-    indices, distances = get_kNN(
-        data, rep_key, K, n_jobs=n_jobs, random_state=random_state
+    indices, distances = neighbors(
+        data, K, rep = rep, n_jobs=n_jobs, random_state=random_state
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
     )  # add query as 1-nn
 
     # partition into chunks
-    if nsample < n_jobs:
-        n_jobs = nsample
+    n_jobs = min(effective_n_jobs(n_jobs), nsample)
     starts = np.zeros(n_jobs + 1, dtype=int)
     quotient = nsample // n_jobs
     remainder = nsample % n_jobs
@@ -228,16 +247,17 @@ def calc_kBET(
 
 
 def calc_kSIM(
-    data, attr, rep_key="X_pca", K=25, min_rate=0.9, n_jobs=1, random_state=0
-):
+    data: 'AnnData', attr: str, rep: str ='pca', K: int =25, min_rate: float = 0.9, n_jobs: int = -1, random_state: int = 0
+) -> Tuple[float, float]:
     """
+    TODO: Documentation.
     This kSIM metric measures if attr are not diffused too much
     """
     assert attr in data.obs
     nsample = data.shape[0]
 
-    indices, distances = get_kNN(
-        data, rep_key, K, n_jobs=n_jobs, random_state=random_state
+    indices, distances = neighbors(
+        data, K, rep, n_jobs=n_jobs, random_state=random_state
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
@@ -278,7 +298,7 @@ def calc_kSIM(
 #     attr_values = data.obs[attr].values.copy()
 #     attr_values.categories = range(nbatch)
 
-#     indices, distances = get_kNN(data, rep_key, K, n_jobs = n_jobs, random_state = random_state)
+#     indices, distances = neighbors(data, K, rep_key, n_jobs = n_jobs, random_state = random_state)
 #     knn_indices = indices[:, 0 : K - 1]
 #     kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
 

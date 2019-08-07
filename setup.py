@@ -44,8 +44,8 @@ setup(
     description='scRNA-Seq analysis tools that scale to millions of cells',
     long_description=long_description,
     url='https://github.com/klarman-cell-observatory/scCloudPy',
-    author='Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, Marcin Tabaka, Orr Ashenberg, et al.',
-    author_email='libo@broadinstitute.org, yyang43@mgh.harvard.edu, jgould@broadinstitute.org, sarkizova@broadinstitue.org, mtabaka@broadinstitute.org, orr@broadinstitute.org',
+    author='Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova',
+    author_email='sccloud@googlegroups.com, sccloud@broadinstitute.org',
     classifiers=[  # https://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -62,7 +62,7 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
-    keywords='single cell RNA-Seq data analysis',
+    keywords='single cell/nucleus genomics analysis',
     packages=find_packages(),
     install_requires=requires,
     extras_require=dict(
