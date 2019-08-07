@@ -388,7 +388,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         seurat_data.raw = raw_data
         seurat_data.uns['scale.data'] = adata.uns['anndata_highly_variable_features'].X
         seurat_data.uns['scale.data.rownames'] = adata.uns['anndata_highly_variable_features'].var_names.values
-        seurat_data.write(output_name + '.seurat.h5ad')
+        seurat_data.write(output_name + '.seurat.h5ad', compression = 'gzip')
 
     # write out results
     io.write_output(adata, output_name)

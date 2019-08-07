@@ -285,7 +285,7 @@ def select_features(data: 'AnnData', features: 'str' = None) -> str:
     return keyword
 
 
-def pca(data: 'AnnData', standardize: bool = True, max_value: float = 10, nPC: int = 50, random_state: int = 0, features: str = None) -> None:
+def pca(data: 'AnnData', standardize: bool = True, max_value: float = 10, nPC: int = 50, random_state: int = 0, features: str = 'highly_variable_features') -> None:
     """Calculate PCA
     TODO: documentation. Feature selection time is not included.
     """

@@ -173,7 +173,7 @@ def select_hvf_seurat_single(
     return hvf_rank
 
 
-def select_hvf_seurat_multi(X: 'csr_matrix', channels: List[str], cell2channel: List[str], n_top: int, n_jobs: int) -> List[int]:
+def select_hvf_seurat_multi(X: 'csr_matrix', channels: List[str], cell2channel: List[str], n_top: int, n_jobs: int, min_disp: float, max_disp: float, min_mean: float, max_mean: float) -> List[int]:
     Xs = []
     for channel in channels:
         Xs.append(X[np.isin(cell2channel, channel)])
@@ -183,13 +183,14 @@ def select_hvf_seurat_multi(X: 'csr_matrix', channels: List[str], cell2channel: 
 
     res_arr = np.array(
         Parallel(n_jobs=n_jobs)(
-            delayed(select_hvf_seurat_single)(Xs[i], n_top)
+            delayed(select_hvf_seurat_single)(Xs[i], n_top, min_disp, max_disp, min_mean, max_mean)
             for i in range(channels.size)
         )
     )
     selected = res_arr >= 0
     shared = selected.sum(axis=0)
     cands = (shared > 0).nonzero()[0]
+    import numpy.ma as ma
     median_rank = ma.median(ma.masked_array(res_arr, mask=~selected), axis=0).data
     cands = sorted(cands, key=lambda x: median_rank[x])
     cands = sorted(cands, key=lambda x: shared[x], reverse=True)
@@ -218,7 +219,7 @@ def select_hvf_seurat(
 
     hvf_rank = (
         select_hvf_seurat_multi(
-            X, data.uns['Channels'], data.obs['Channel'], n_top, n_jobs=n_jobs
+            X, data.uns['Channels'], data.obs['Channel'], n_top, n_jobs=n_jobs, min_disp = min_disp, max_disp = max_disp, min_mean = min_mean, max_mean = max_mean
         )
         if consider_batch
         else select_hvf_seurat_single(
@@ -259,23 +260,23 @@ def highly_variable_features(
 
     start = time.time()
 
-    if consider_batch and 'Channels' not in data.uns:
-        print(
-            "Warning: Batch correction parameters are not calculated. Switch to not considering batch for variable gene selection."
-        )
+    if 'Channels' not in data.uns:
+        data.uns['Channels'] = data.obs['Channel'].unique()
+
+    if data.uns['Channels'].size == 1:
         consider_batch = False
+        print("Warning: only contains one channel, no need to consider batch for selecting highly variable features.")
 
     if flavor == 'scCloud':
-        select_hvg_scCloud(
+        select_hvf_scCloud(
             data,
             consider_batch,
             n_top=n_top,
-            span=span,
-            benchmark_time=benchmark_time,
+            span=span
         )
     else:
         assert flavor == 'Seurat'
-        select_hvg_seurat(
+        select_hvf_seurat(
             data,
             consider_batch,
             n_top=n_top,

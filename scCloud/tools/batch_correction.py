@@ -93,14 +93,16 @@ def correct_batch(data: 'AnnData', features: 'str' = None) -> None:
     can_correct = estimate_adjustment_matrices(data)
     end = time.time()
     tot_seconds += end - start
+    print("Adjustment parameters are estimated.")
 
     # select dense matrix
     keyword = select_features(data, features)
+    print("Features are selected.")
     
     if can_correct:
         start = time.time()
         correct_batch_effects(data.uns[keyword])
         end = time.time()
         tot_seconds += end - start
+        print("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))
 
-    print("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))

@@ -641,7 +641,7 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
         for keyword in keys:
             if keyword.startswith('anndata_'):
                 adata.uns.pop(keyword)
-        data.write(output_name + ".h5ad")
+        data.write(output_name + ".h5ad", compression = 'gzip')
 
     end = time.time()
     print("Write output is finished. Time spent = {:.2f}s.".format(end - start))
