@@ -25,7 +25,7 @@ Outputs:
   
 Examples:
   scCloud merge_rna_adt example_raw_h5.h5 example_adt.csv example_merged
-  scCloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5 example_adt.csv example_merged.scCloud.h5
+  scCloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5 example_adt.csv example_merged
     """
 
     def execute(self):
