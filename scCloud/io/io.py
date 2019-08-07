@@ -634,14 +634,18 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
     start = time.time()
 
     if isinstance(data, MemData):
+        if not output_name.endswith(".scCloud.h5"):
+            output_name += ".scCloud.h5"
         data.write_h5_file(output_name + ".scCloud.h5")
     else:
+        if not output_name.endswith(".h5ad"):
+            output_name += ".h5ad"
         # Eliminate non-writable objects from uns
         keys = list(data.uns)
         for keyword in keys:
             if keyword.startswith('anndata_'):
                 data.uns.pop(keyword)
-        data.write(output_name + ".h5ad", compression = 'gzip')
+        data.write(output_name, compression = 'gzip')
 
     end = time.time()
     print("Write output is finished. Time spent = {:.2f}s.".format(end - start))
