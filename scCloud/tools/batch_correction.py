@@ -3,14 +3,15 @@ import numpy as np
 from scipy.sparse import issparse
 from collections import defaultdict
 
+from scCloud.tools import estimate_feature_statistics, select_features 
+
+
 
 def set_group_attribute(data: 'AnnData', attribute_string: str) -> None:
     """
     TODO: Documentation
     """
-    if attribute_string is None:
-        data.obs['Group'] = 'one_group'
-    elif attribute_string.find('=') >= 0:
+    if attribute_string.find('=') >= 0:
         attr, value_str = attribute_string.split('=')
         assert attr in data.obs.columns
         values = value_str.split(';')
@@ -28,109 +29,78 @@ def set_group_attribute(data: 'AnnData', attribute_string: str) -> None:
         data.obs['Group'] = data.obs[attribute_string]
 
 
-def estimate_adjustment_matrices(data: 'AnnData') -> None:
-    """
-    TODO: Documentation
+def estimate_adjustment_matrices(data: 'AnnData') -> bool:
+    """ Estimate adjustment matrices
     """
 
-    start = time.time()
+    if ('gmeans' not in data.varm) or ('gstds' not in data.varm):
+        estimate_feature_statistics(data, True)
 
-    channels = data.obs['Channel'].unique()
-    if channels.size <= 1:
+    if data.uns['Channels'].size == 1:
         print("Warning: data only contains 1 channel. Batch correction disabled!")
-        return None
+        return False
 
-    means = np.zeros((data.shape[1], channels.size))
-    partial_sum = np.zeros((data.shape[1], channels.size))
-    ncells = np.zeros(channels.size)
-    stds = np.zeros((data.shape[1], channels.size))
+    nchannel = data.uns['Channels'].size
 
-    group_dict = defaultdict(list)
-    assert issparse(data.X)
+    plus = np.zeros((data.shape[1], nchannel))
+    muls = np.zeros((data.shape[1], nchannel))
 
-    for i, channel in enumerate(channels):
-        idx = np.isin(data.obs['Channel'], channel)
-        mat = data.X[idx].astype(np.float64)
+    ncells = data.uns['ncells']
+    means = data.varm['means']
+    partial_sum = data.varm['partial_sum']
+    gmeans = data.varm['gmeans']
+    gstds = data.varm['gstds']
+    c2gid = data.uns['c2gid']
+    for i in range(data.uns['Channels'].size):
+        if ncells[i] > 1:
+            muls[:, i] = (partial_sum[:, i] / (ncells[i] - 1.0)) ** 0.5
+        outliers = muls[:, i] < 1e-6
+        normals = np.logical_not(outliers)
+        muls[outliers, i] = 1.0
+        muls[normals, i] = gstds[normals, c2gid[i]] / muls[normals, i]
+        plus[:, i] = gmeans[:, c2gid[i]] - muls[:, i] * means[:, i]
+    
+    data.varm['plus'] = plus
+    data.varm['muls'] = muls
 
-        ncells[i] = mat.shape[0]
-        if ncells[i] == 1:
-            means[:, i] = mat.toarray()[0]
-        else:
-            means[:, i] = mat.mean(axis=0).A1
-            m2 = mat.power(2).sum(axis=0).A1
-            partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
-
-        group = data.obs['Group'][idx.nonzero()[0][0]]
-        group_dict[group].append(i)
-
-    partial_sum[partial_sum < 1e-6] = 0.0
-
-    overall_means = np.dot(means, ncells) / data.shape[0]
-    batch_adjusted_vars = np.zeros(data.shape[1])
-    groups = data.obs['Group'].unique()
-    for group in groups:
-        gchannels = group_dict[group]
-        ncell = ncells[gchannels].sum()
-        gm = np.dot(means[:, gchannels], ncells[gchannels]) / ncell
-        gs = partial_sum[:, gchannels].sum(axis=1) / ncell
-
-        if groups.size > 1:
-            batch_adjusted_vars += ncell * ((gm - overall_means) ** 2)
-
-        for i in gchannels:
-            if ncells[i] > 1:
-                stds[:, i] = (partial_sum[:, i] / (ncells[i] - 1.0)) ** 0.5
-            outliers = stds[:, i] < 1e-6
-            normals = np.logical_not(outliers)
-            stds[outliers, i] = 1.0
-            stds[normals, i] = gs[normals] / stds[normals, i]
-            means[:, i] = gm - stds[:, i] * means[:, i]
-
-    data.uns['Channels'] = channels
-    data.uns['Groups'] = groups
-    data.varm['means'] = means
-    data.varm['stds'] = stds
-
-    data.var['mean'] = overall_means
-    data.var['var'] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
-        data.shape[0] - 1.0
-    )
-
-    end = time.time()
-    print(
-        "batch_correction.estimate_adjustment_matrices is done. Time spent = {:.2f}s.".format(
-            end - start
-        )
-    )
+    return True           
 
 
-def correct_batch_effects(data: 'AnnData') -> None:
+
+def correct_batch_effects(data_dense: 'AnnData') -> None:
+    """ Apply calculated plus and muls to correct batch effects for a dense matrix
     """
-    TODO: Documentation.
-    """
-
-    start = time.time()
-
-    if 'Channels' not in data.uns:
-        print(
-            "Warning: Batch correction parameters are not calculated. Batch correction skipped!"
-        )
-        return None
-
-    assert not issparse(data.X)
-    m = data.shape[1]
-    for i, channel in enumerate(data.uns['Channels']):
-        idx = np.isin(data.obs['Channel'], channel)
+    assert not issparse(data_dense.X)
+    m = data_dense.shape[1]
+    for i, channel in enumerate(data_dense.uns['Channels']):
+        idx = np.isin(data_dense.obs['Channel'], channel)
         if idx.sum() == 0:
             continue
-        data.X[idx] = data.X[idx] * np.reshape(
-            data.varm['stds'][:, i], newshape=(1, m)
-        ) + np.reshape(data.varm['means'][:, i], newshape=(1, m))
-    data.X[data.X < 0.0] = 0.0
+        data_dense.X[idx] = data_dense.X[idx] * np.reshape(data_dense.varm['muls'][:, i], newshape=(1, m)) + np.reshape(data_dense.varm['plus'][:, i], newshape=(1, m))
+    data_dense.X[data_dense.X < 0.0] = 0.0
 
+
+
+def correct_batch(data: 'AnnData', features: 'str' = None) -> None:
+    """
+    TODO: documentation
+    """
+    
+    tot_seconds = 0.0
+
+    # estimate adjustment parameters
+    start = time.time()
+    can_correct = estimate_adjustment_matrices(data)
     end = time.time()
-    print(
-        "batch_correction.correct_batch_effects done. Time spent = {:.2f}s".format(
-            end - start
-        )
-    )
+    tot_seconds += end - start
+
+    # select dense matrix
+    keyword = select_features(data, features)
+    
+    if can_correct:
+        start = time.time()
+        correct_batch_effects(data.uns[keyword])
+        end = time.time()
+        tot_seconds += end - start
+
+    print("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))

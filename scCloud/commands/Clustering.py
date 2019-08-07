@@ -46,7 +46,6 @@ Options:
 
   --select-hvf-flavor <flavor>                     Highly variable feature selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
   --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
-  --benchmark-time                                 This option is used for benchmarking time, will calculate mean and variance even if they are calculated in batch correction.
   --no-select-hvf                                  Do not select highly variable features.
   --plot-hvf                                       Plot highly variable feature selection.
 

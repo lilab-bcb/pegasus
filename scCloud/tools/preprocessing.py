@@ -262,29 +262,56 @@ def log_norm(data: 'AnnData', norm_count: float = 1e4) -> None:
     print("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
 
-def pca(data: 'AnnData', standardize: bool = True, max_value: float = 10, nPC: int = 50, random_state: int = 0) -> None:
+def select_features(data: 'AnnData', features: 'str' = None) -> str:
+    """ Select a subset of features to form a new AnnData object with dense matrix. Store the matrix in data.uns with 'anndata_' prefix. Any key with 'anndata_' should be removed before writing out the disk.
+    :param features: a keyword in data.var, which refers to a boolean array. None refers to all features
+
+    TODO: Documentation
+    """
+    keyword = 'anndata_' + str(features)
+
+    if keyword not in data.uns:    
+        if features is not None:
+            assert features in data.var
+            data_dense = data[:, data.var[features]].copy()
+        else:
+            data_dense = data.copy()
+        
+        if issparse(data_dense.X):
+            data_dense.X = data_dense.X.toarray()
+
+        data.uns[keyword] = data_dense
+
+    return keyword
+
+
+def pca(data: 'AnnData', standardize: bool = True, max_value: float = 10, nPC: int = 50, random_state: int = 0, features: str = None) -> None:
     """Calculate PCA
-    TODO: documentation.
+    TODO: documentation. Feature selection time is not included.
     """
 
+    keyword = select_features(data, features)
+    
     start = time.time()
-    if issparse(data.X):
-        data.X = data.X.toarray()
+
+    data_dense = data.uns[keyword]
 
     if standardize:
         scaler = StandardScaler(copy=False)
-        scaler.fit_transform(data.X)
+        scaler.fit_transform(data_dense.X)
 
     if max_value is not None:
-        data.X[data.X > max_value] = max_value
-        data.X[data.X < -max_value] = -max_value
+        data_dense.X[data_dense.X > max_value] = max_value
+        data_dense.X[data_dense.X < -max_value] = -max_value
 
     pca = PCA(n_components=nPC, random_state=random_state)
-    X_pca = pca.fit_transform(data.X)
+    X_pca = pca.fit_transform(data_dense.X)
+
     data.obsm['X_pca'] = X_pca
-    data.varm['PCs'] = pca.components_.T
+    data.uns['PCs'] = pca.components_.T # cannot be varm because numbers of features are not the same
     data.uns['pca'] = {}
     data.uns['pca']['variance'] = pca.explained_variance_
     data.uns['pca']['variance_ratio'] = pca.explained_variance_ratio_
+    
     end = time.time()
     print("PCA is done. Time spent = {:.2f}s.".format(end - start))

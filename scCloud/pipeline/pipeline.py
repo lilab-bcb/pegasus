@@ -57,10 +57,9 @@ def run_pipeline(input_file, output_name, **kwargs):
             raw_data = adata.copy()  # raw as count
         # normailize counts and then transform to log space
         tools.log_norm(adata, kwargs['norm_count'])
-        # estimate bias factors
+        # set group attribute
         if kwargs['batch_correction']:
             tools.set_group_attribute(adata, kwargs['group_attribute'])
-            tools.estimate_adjustment_matrices(adata)
     elif kwargs['subcluster']:
         adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
         is_raw = True  # get submat and then set is_raw to True
@@ -73,8 +72,7 @@ def run_pipeline(input_file, output_name, **kwargs):
                 kwargs['batch_correction'],
                 flavor=kwargs['hvf_flavor'],
                 n_top=kwargs['hvf_ngenes'],
-                n_jobs=kwargs['n_jobs'],
-                benchmark_time=kwargs.get('benchmark_time', False),
+                n_jobs=kwargs['n_jobs']
             )
             if kwargs['hvf_flavor'] == 'scCloud':
                 if kwargs['plot_hvg'] is not None:
@@ -88,13 +86,9 @@ def run_pipeline(input_file, output_name, **kwargs):
                         kwargs['plot_hvf'] + '.hvf.pdf'
                     )
 
-        adata_c = tools.collect_highly_variable_gene_matrix(
-            adata
-        )  # select hvg matrix and convert to dense
         if kwargs['batch_correction']:
-            tools.correct_batch_effects(adata_c)
-        tools.pca(adata_c, nPC=kwargs['nPC'], random_state=kwargs['random_state'])
-        adata.obsm['X_pca'] = adata_c.obsm['X_pca']
+            tools.correct_batch(adata, features = 'highly_variable_features')
+        tools.pca(adata, nPC=kwargs['nPC'], random_state=kwargs['random_state'], features = 'highly_variable_features')
     else:
         assert 'X_pca' in adata.obsm.keys()
 
@@ -333,7 +327,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     # calculate diffusion-based pseudotime from roots
-    if kwargs['pseudotime'] is not None:
+    if len(kwargs['pseudotime']) > 0:
         assert 'X_diffmap' in adata.obsm.keys()
         tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
 
@@ -366,9 +360,9 @@ def run_pipeline(input_file, output_name, **kwargs):
                 'robust': np.concatenate(
                     [adata.var['robust'].values, [False] * cdata.shape[1]]
                 ),
-                'highly_variable_genes': np.concatenate(
+                'highly_variable_features': np.concatenate(
                     [
-                        adata.var['highly_variable_genes'].values,
+                        adata.var['highly_variable_features'].values,
                         [False] * cdata.shape[1],
                     ]
                 ),
@@ -388,15 +382,16 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
         print('Antibody embedding is done.')
 
-    # write out results
-    io.write_output(adata, output_name)
 
     if kwargs['seurat_compatible']:
         seurat_data = adata.copy()
         seurat_data.raw = raw_data
-        seurat_data.uns['scale.data'] = adata_c.X
-        seurat_data.uns['scale.data.rownames'] = adata_c.var_names.values
+        seurat_data.uns['scale.data'] = adata.uns['anndata_highly_variable_features'].X
+        seurat_data.uns['scale.data.rownames'] = adata.uns['anndata_highly_variable_features'].var_names.values
         seurat_data.write(output_name + '.seurat.h5ad')
+
+    # write out results
+    io.write_output(adata, output_name)
 
     if kwargs['output_loom']:
         adata.write_loom(output_name + '.loom')

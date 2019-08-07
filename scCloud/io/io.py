@@ -636,9 +636,12 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
     if isinstance(data, MemData):
         data.write_h5_file(output_name + ".scCloud.h5")
     else:
-        if not output_name.endswith(".h5ad"):
-            output_name += ".h5ad"
-        data.write(output_name)
+        # Eliminate non-writable objects from uns
+        keys = list(adata.uns)
+        for keyword in keys:
+            if keyword.startswith('anndata_'):
+                adata.uns.pop(keyword)
+        data.write(output_name + ".h5ad")
 
     end = time.time()
     print("Write output is finished. Time spent = {:.2f}s.".format(end - start))

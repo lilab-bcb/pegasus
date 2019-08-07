@@ -16,16 +16,16 @@ from .preprocessing import (
     filter_data,
     run_filter_data,
     log_norm,
+    select_features,
     pca,
 )
 from .hvf_selection import (
+    estimate_feature_statistics,
     highly_variable_features,
-    collect_highly_variable_gene_matrix,
 )
 from .batch_correction import (
     set_group_attribute,
-    estimate_adjustment_matrices,
-    correct_batch_effects,
+    correct_batch
 )
 from .nearest_neighbors import (
     calculate_nearest_neighbors,

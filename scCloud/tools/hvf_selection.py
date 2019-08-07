@@ -1,6 +1,5 @@
 import time
 import numpy as np
-import numpy.ma as ma
 import pandas as pd
 
 from scipy.sparse import issparse
@@ -11,26 +10,37 @@ from typing import List
 
 
 
-def calc_ba_mean_and_var(data: 'AnnData') -> None:
-    """ Calculate batch adjusted mean and variance
+def estimate_feature_statistics(data: 'AnnData', consider_batch: bool) -> None:
+    """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
-
-    assert ('Channels' in data.uns) and ('Groups' in data.uns)
     assert issparse(data.X)
 
-    channels = data.uns['Channels']
-    group_dict = defaultdict(list)
+    if consider_batch:
+        if 'Channels' not in data.uns:
+            data.uns['Channels'] = data.obs['Channel'].unique()
 
-    means = np.zeros((data.shape[1], channels.size))
-    partial_sum = np.zeros((data.shape[1], channels.size))
-    ncells = np.zeros(channels.size)
+        if 'Group' not in data.obs:
+            data.obs['Group'] = 'one_group'
 
-    for i, channel in enumerate(channels):
-        idx = np.isin(data.obs['Channel'], channel)
-        mat = data.X[idx].astype(np.float64)
+        if 'Groups' not in data.uns:
+            data.uns['Groups'] = data.obs['Group'].unique()
 
-        ncells[i] = mat.shape[0]
-        if ncells[i] > 0:
+        channels = data.uns['Channels']
+        groups = data.uns['Groups']
+
+        ncells = np.zeros(channels.size)
+        means = np.zeros((data.shape[1], channels.size))
+        partial_sum = np.zeros((data.shape[1], channels.size))
+
+        group_dict = defaultdict(list)
+        for i, channel in enumerate(channels):
+            idx = np.isin(data.obs['Channel'], channel)
+            mat = data.X[idx].astype(np.float64)
+            ncells[i] = mat.shape[0]
+
+            if ncells[i] == 0:
+                continue
+
             if ncells[i] == 1:
                 means[:, i] = mat.toarray()[0]
             else:
@@ -41,51 +51,58 @@ def calc_ba_mean_and_var(data: 'AnnData') -> None:
             group = data.obs['Group'][idx.nonzero()[0][0]]
             group_dict[group].append(i)
 
-    partial_sum[partial_sum < 1e-6] = 0.0
+        partial_sum[partial_sum < 1e-6] = 0.0
+        
+        overall_means = np.dot(means, ncells) / data.shape[0]
+        batch_adjusted_vars = np.zeros(data.shape[1])
 
-    overall_means = np.dot(means, ncells) / data.shape[0]
-    batch_adjusted_vars = np.zeros(data.shape[1])
+        c2gid = np.zeros(channels.size, dtype = int)
+        gncells = np.zeros(groups.size)
+        gmeans = np.zeros((data.shape[1], groups.size))
+        gstds = np.zeros((data.shape[1], groups.size))
+    
+        for i, group in enumerate(groups):
+            gchannels = group_dict[group]
+            c2gid[gchannels] = i
+            gncells[i] = ncells[gchannels].sum()
+            gmeans[:, i] = np.dot(means[:, gchannels], ncells[gchannels]) / gncells[i]
+            gstds[:, i] = (partial_sum[:, gchannels].sum(axis=1) / gncells[i]) ** 0.5 # calculate std
+            if groups.size > 1:
+                batch_adjusted_vars += gncells[i] * ((gmeans[:, i] - overall_means) ** 2)
 
-    groups = data.uns['Groups']
-    for group in groups:
-        gchannels = group_dict[group]
-        ncell = ncells[gchannels].sum()
-        gm = np.dot(means[:, gchannels], ncells[gchannels]) / ncell
+        data.varm['means'] = means
+        data.varm['partial_sum'] = partial_sum
+        data.uns['ncells'] = ncells
 
-        if groups.size > 1:
-            batch_adjusted_vars += ncell * ((gm - overall_means) ** 2)
+        data.varm['gmeans'] = gmeans
+        data.varm['gstds'] = gstds
+        data.uns['gncells'] = gncells
+        data.uns['c2gid'] = c2gid
 
-    data.var['mean'] = overall_means
-    data.var['var'] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
-        data.shape[0] - 1.0
-    )
+        data.var['mean'] = overall_means
+        data.var['var'] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (data.shape[0] - 1.0)
+    else:
+        mean = data.X.mean(axis = 0).A1
+        m2 = data.X.power(2).sum(axis = 0).A1
+        var = (m2 - data.X.shape[0] * (mean ** 2)) / (data.X.shape[0] - 1)
+
+        data.var['mean'] = mean
+        data.var['var'] = var
 
 
-def select_hvf_scCloud(
-    data: 'AnnData', consider_batch: bool, n_top: int = 2000, span: float = 0.02, benchmark_time: bool = False
-) -> None:
+def select_hvf_scCloud(data: 'AnnData', consider_batch: bool, n_top: int = 2000, span: float = 0.02) -> None:
     """ Select highly variable features using the scCloud method
     """
     if 'robust' not in data.var:
         raise ValueError("Please run `qc_metrics` to identify robust genes")
+
+    estimate_feature_statistics(data, consider_batch)
+
     robust_idx = data.var['robust'].values
     hvf_index = np.zeros(robust_idx.sum(), dtype=bool)
 
-    if consider_batch:
-        if benchmark_time or ('mean' not in data.var) or ('var' not in data.var):
-            calc_ba_mean_and_var(data)
-        mean = data.var.loc[robust_idx, 'mean']
-        var = data.var.loc[robust_idx, 'var']
-    else:
-        X = data.X[:, robust_idx]
-        mean = X.mean(axis=0).A1
-        m2 = X.power(2).sum(axis=0).A1
-        var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
-
-        data.var['mean'] = 0.0
-        data.var['var'] = 0.0
-        data.var.loc[robust_idx, 'mean'] = mean
-        data.var.loc[robust_idx, 'var'] = var
+    mean = data.var.loc[robust_idx, 'mean']
+    var = data.var.loc[robust_idx, 'var']
 
     lobj = sl.loess(mean, var, span=span, degree=2)
     lobj.fit()
@@ -233,7 +250,6 @@ def highly_variable_features(
     min_mean: float = 0.0125,
     max_mean: float = 7,
     n_jobs: int = -1,
-    benchmark_time: bool =False,
 ) -> None:
     """
     TODO: Documentation.
@@ -274,10 +290,3 @@ def highly_variable_features(
     print(
         "{tot} highly variable features have been selected. Time spent = {time:.2f}s.".format(tot = data.var['highly_variable_features'].sum(), time = end - start)
     )
-
-
-def collect_highly_variable_gene_matrix(data):
-    data_c = data[:, data.var['highly_variable_genes']].copy()
-    data_c.X = data_c.X.toarray()
-
-    return data_c
