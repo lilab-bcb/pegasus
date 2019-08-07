@@ -596,7 +596,7 @@ def read_input(
             input_file, genome, sep=("\t" if file_format == "dge" else ","), ngene=ngene
         )
 
-    if file_format != "h5ad":    
+    if file_format != "h5ad":
         data.restrain_keywords(genome)
         if return_type == "AnnData":
             data = data.convert_to_anndata(concat_matrices=concat_matrices)
@@ -637,10 +637,10 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
         data.write_h5_file(output_name + ".scCloud.h5")
     else:
         # Eliminate non-writable objects from uns
-        keys = list(adata.uns)
+        keys = list(data.uns)
         for keyword in keys:
             if keyword.startswith('anndata_'):
-                adata.uns.pop(keyword)
+                data.uns.pop(keyword)
         data.write(output_name + ".h5ad", compression = 'gzip')
 
     end = time.time()
