@@ -46,7 +46,7 @@ class Array2D:
                     self.matrix.shape[0], self.barcode_metadata.shape[0]
                 )
             )
-        if self.feature_metadata.shape[0] != self.matrix.shape[1]:
+        if self.feature_metadata.shape[0] != (self.matrix.shape[1] if len(self.matrix.shape) == 2 else 1):
             raise ValueError(
                 "Wrong number of features : matrix has {} features, features file has {}".format(
                     self.matrix.shape[1], self.feature_metadata.shape[0]

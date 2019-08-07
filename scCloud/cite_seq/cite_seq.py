@@ -15,10 +15,10 @@ def merge_rna_and_adt_data(input_raw_h5, input_csv, antibody_control_csv, output
 
     array2d = data_citeseq.getData(keyword)
     if antibody_control_csv is None:
-        array2d.matrix = array2.matrix.log1p()
+        array2d.matrix = array2d.matrix.log1p()
     else:
         size = array2d.feature_metadata.shape[0]
-        idx = np.zeros(len(size), dtype=bool)
+        idx = np.zeros(size, dtype=bool)
         antibody_to_pos = pd.Series(
             data=range(size), index=array2d.feature_metadata.index
         )
