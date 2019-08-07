@@ -322,7 +322,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     # calculate diffusion-based pseudotime from roots
-    if kwargs["pseudotime"] is not None:
+    if len(kwargs["pseudotime"]) > 0:
         assert "X_diffmap" in adata.obsm.keys()
         tools.run_pseudotime_calculation(adata, kwargs["pseudotime"])
 
