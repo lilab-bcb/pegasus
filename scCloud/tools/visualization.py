@@ -261,7 +261,7 @@ def calc_force_directed_layout(
     fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep="\t").values
     check_call(["rm", "-f", input_graph_file])
     check_call(["rm", "-f", output_coord_file])
-    if init is not None:remov
+    if init is not None:
         os.remove("{file_name}.init.coords.txt".format(file_name=file_name))
 
     return fle_coords
@@ -331,10 +331,10 @@ def run_umap(
     start = time.time()
     assert "knn_indices" in data.uns
     knn_indices = np.insert(
-        data.uns["knn_indices"][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns["knn_indices"][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns["knn_distances"][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns["knn_distances"][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
         data.obsm[rep_key],
@@ -535,10 +535,10 @@ def run_net_umap(
         data.uns["ds_knn_indices"] = indices
         data.uns["ds_knn_distances"] = distances
     knn_indices = np.insert(
-        data.uns["ds_knn_indices"][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
+        data.uns["ds_knn_indices"][:, 0: n_neighbors - 1], 0, range(X.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns["ds_knn_distances"][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns["ds_knn_distances"][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
 
     X_umap = calc_umap(
@@ -570,10 +570,10 @@ def run_net_umap(
 
     assert "knn_indices" in data.uns
     knn_indices = np.insert(
-        data.uns["knn_indices"][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns["knn_indices"][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns["knn_distances"][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns["knn_distances"][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
 
     data.obsm["X_" + out_basis] = calc_umap(
