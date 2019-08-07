@@ -636,7 +636,7 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
     if isinstance(data, MemData):
         if not output_name.endswith(".scCloud.h5"):
             output_name += ".scCloud.h5"
-        data.write_h5_file(output_name + ".scCloud.h5")
+        data.write_h5_file(output_name)
     else:
         if not output_name.endswith(".h5ad"):
             output_name += ".h5ad"
