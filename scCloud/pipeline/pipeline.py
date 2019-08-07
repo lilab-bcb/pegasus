@@ -30,12 +30,12 @@ def run_pipeline(input_file, output_name, **kwargs):
         assert adata is not None and cdata is not None
     else:
         values = adata.X.getnnz(axis = 1)
-        if values.min() == 0: # 10x raw data 
+        if values.min() == 0: # 10x raw data
             adata._inplace_subset_obs(values >= kwargs['min_genes_on_raw'])
     print('Inputs are loaded.')
 
     if kwargs['seurat_compatible']:
-        assert is_raw and kwargs['select_hvf'] 
+        assert is_raw and kwargs['select_hvf']
 
     # preprocessing
     if is_raw:
@@ -75,7 +75,7 @@ def run_pipeline(input_file, output_name, **kwargs):
                 n_jobs=kwargs['n_jobs']
             )
             if kwargs['hvf_flavor'] == 'scCloud':
-                if kwargs['plot_hvg'] is not None:
+                if kwargs['plot_hvf'] is not None:
                     from scCloud.plotting import plot_hvf
                     robust_idx = adata.var['robust'].values
                     plot_hvf(
