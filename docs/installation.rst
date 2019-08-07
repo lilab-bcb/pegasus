@@ -31,6 +31,7 @@ For macOS, install by::
 
 	brew install cmake libxml2 curl
 
+------------------
 
 Install via PyPI
 ^^^^^^^^^^^^^^^^

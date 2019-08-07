@@ -58,7 +58,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         # normailize counts and then transform to log space
         tools.log_norm(adata, kwargs['norm_count'])
         # set group attribute
-        if kwargs['batch_correction']:
+        if kwargs['batch_correction'] and kwargs['group_attribute'] is not None:
             tools.set_group_attribute(adata, kwargs['group_attribute'])
     elif kwargs['subcluster']:
         adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
