@@ -17,7 +17,7 @@ class TestClusterPipeline(unittest.TestCase):
              'test_cluster', '--run-leiden',
              '--run-approximated-leiden', '--run-tsne', '--run-umap',
              '--run-net-tsne', '--run-net-fitsne', '--run-net-umap', '--run-fitsne', '--run-fle',
-             '--run-net-fle', '--plot-hvg', '--run-louvain', '--run-approximated-louvain'])
+             '--run-net-fle', '--plot-hvf', '--run-louvain', '--run-approximated-louvain'])
         cmd.execute()
 
         # TODO diff pdfs
