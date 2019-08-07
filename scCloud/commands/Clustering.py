@@ -20,7 +20,7 @@ Options:
 
   --genome <genome>                                A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
 
-  --select-singlets                                Only select DemuxEM-predicted singlets for analysis.  
+  --select-singlets                                Only select DemuxEM-predicted singlets for analysis.
   --cite-seq                                       Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
   --cite-seq-capping <percentile>                  For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
 
@@ -29,7 +29,7 @@ Options:
   --plot-filtration-figsize <figsize>              Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
   --output-seurat-compatible                       Output seurat-compatible h5ad file. Caution: File size might be large, do not turn this option on for large data sets.
   --output-loom                                    Output loom-formatted file.
-  
+
   --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
   --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: 100]
@@ -107,7 +107,7 @@ Options:
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. [default: 2.0]
   --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
-  --fle-3D                                         Calculate 3D force-directed layout. 
+  --fle-3D                                         Calculate 3D force-directed layout.
 
   --net-down-sample-fraction <frac>                Down sampling fraction for net-related visualization. [default: 0.1]
   --net-down-sample-K <K>                          Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
@@ -147,7 +147,7 @@ Outputs:
   output_name.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
   output_name.hvf.pdf              Optional output. Only exists if '--plot-hvf' is set. This file contains a scatter plot describing the highly variable gene selection procedure.
   output_name.loom                 Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
-  
+
 Examples:
   scCloud cluster -p 20 --correct-batch-effect --run-louvain --run-tsne manton_bm_10x.h5 manton_bm
     """
@@ -184,9 +184,7 @@ Examples:
             "select_hvf": not self.args["--no-select-hvf"],
             "hvf_flavor": self.args["--select-hvf-flavor"],
             "hvf_ngenes": int(self.args["--select-hvf-ngenes"])
-            if self.args["--select-hvf-ngenes"] != "None"
-            else None,
-            "benchmark_time": self.args["--benchmark-time"],
+            if self.args["--select-hvf-ngenes"] != "None" else None,
             "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
