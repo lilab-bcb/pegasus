@@ -19,14 +19,14 @@ def run_pipeline(input_file, output_name, **kwargs):
         select_singlets=kwargs['select_singlets'],
     )
     if kwargs['cite_seq']:
-        data_dict = adata
-        assert len(data_dict.listKeys()) == 2
+        data_list = adata
+        assert len(data_list) == 2
         adata = cdata = None
-        for keyword in data_dict.listKeys():
-            if keyword.startswith('CITE_Seq'):
-                cdata = data_dict[keyword]
+        for i in range(len(data_list)):
+            if data_list[i].uns["genome"].startswith("CITE_Seq"):
+                cdata = data_list[i]
             else:
-                adata = data_dict[keyword]
+                adata = data_list[i]
         assert adata is not None and cdata is not None
     else:
         values = adata.X.getnnz(axis = 1)
