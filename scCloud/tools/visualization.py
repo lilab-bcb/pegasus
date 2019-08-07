@@ -261,6 +261,8 @@ def calc_force_directed_layout(
     fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep="\t").values
     check_call(["rm", "-f", input_graph_file])
     check_call(["rm", "-f", output_coord_file])
+    if init is not None:remov
+        os.remove("{file_name}.init.coords.txt".format(file_name=file_name))
 
     return fle_coords
 
