@@ -7,7 +7,7 @@ import scCloud.commands
 class TestAnnotateClusterPipeline(unittest.TestCase):
 
     def tearDown(self):
-        os.remove('test_annotate.txt')
+        os.path.exists('test_annotate.txt') and os.remove('test_annotate.txt')
 
     def test_annotate(self):
         cmd = scCloud.commands.annotate_cluster(

@@ -98,6 +98,11 @@ def assert_adata_files_equal(test_case, path, test_path, obs_blacklist=None, var
 
 def assert_adata_equal(test_case, data1, data2, obs_blacklist=None, var_blacklist=None, uns_blacklist=None,
                        obsm_blacklist=None, varm_blacklist=None):
+    if data1.isbacked:
+        data1.X = data1.X[()]
+    if data2.isbacked:
+        data2.X = data2.X[()]
+
     if scipy.sparse.issparse(data1.X):
         data1.X = data1.X.toarray()
     if scipy.sparse.issparse(data2.X):

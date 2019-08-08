@@ -7,7 +7,7 @@ from .test_util import assert_excel_equal
 class TestFindMarkersPipeline(unittest.TestCase):
 
     def tearDown(self):
-        os.remove('test.markers.xlsx')
+        os.path.exists('test.markers.xlsx') and os.remove('test.markers.xlsx')
 
     def test_find_markers(self):
         command = scCloud.commands.find_markers(

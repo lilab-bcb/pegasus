@@ -6,10 +6,8 @@ from .test_util import assert_adata_files_equal
 
 class TestClusterPipeline(unittest.TestCase):
     def tearDown(self):
-        if os.path.exists('test_cluster.h5ad'):
-            os.remove('test_cluster.h5ad')
-        if os.path.exists('test_cluster.hvg.pdf'):
-            os.remove('test_cluster.hvg.pdf')
+        os.path.exists('test_cluster.h5ad') and os.remove('test_cluster.h5ad')
+        os.path.exists('test_cluster.hvg.pdf') and os.remove('test_cluster.hvg.pdf')
 
     def test_cluster(self):
         cmd = scCloud.commands.cluster(
