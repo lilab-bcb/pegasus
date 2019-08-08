@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 from scipy.stats import entropy, chi2
 from sklearn.neighbors import NearestNeighbors
 from joblib import effective_n_jobs
@@ -11,9 +11,9 @@ from typing import List, Tuple
 
 def calculate_nearest_neighbors(
     X: np.array,
-    num_threads: int,
-    method: str = 'hnsw',
     K: int = 100,
+    n_jobs: int = -1,
+    method: str = 'hnsw',
     M: int = 20,
     efC: int = 200,
     efS: int = 200,
@@ -39,22 +39,23 @@ def calculate_nearest_neighbors(
         )
         K = nsample
 
-    knn_index = None
-    if method == "hnsw":
+    n_jobs = effective_n_jobs(n_jobs)
+
+    if method == 'hnsw':
         import hnswlib
 
         assert not issparse(X)
         # Build hnsw index
-        knn_index = hnswlib.Index(space="l2", dim=X.shape[1])
+        knn_index = hnswlib.Index(space='l2', dim=X.shape[1])
         knn_index.init_index(
             max_elements=nsample, ef_construction=efC, M=M, random_seed=random_state
         )
-        knn_index.set_num_threads(num_threads if full_speed else 1)
+        knn_index.set_num_threads(n_jobs if full_speed else 1)
         knn_index.add_items(X)
 
         # KNN query
         knn_index.set_ef(efS)
-        knn_index.set_num_threads(num_threads)
+        knn_index.set_num_threads(n_jobs)
         indices, distances = knn_index.knn_query(X, k=K)
         # eliminate the first neighbor, which is the node itself
         for i in range(nsample):
@@ -64,9 +65,9 @@ def calculate_nearest_neighbors(
         indices = indices[:, 1:].astype(int)
         distances = np.sqrt(distances[:, 1:])
     else:
-        assert method == "sklearn"
+        assert method == 'sklearn'
         knn = NearestNeighbors(
-            n_neighbors=K - 1, n_jobs=num_threads
+            n_neighbors = K - 1, n_jobs = n_jobs
         )  # eliminate the first neighbor, which is the node itself
         knn.fit(X)
         distances, indices = knn.kneighbors()
@@ -74,31 +75,45 @@ def calculate_nearest_neighbors(
     return indices, distances
 
 
-def neighbors(data: 'AnnData', K: int, rep: 'str' = 'pca', n_jobs: int = -1, random_state: int = 0, full_speed: bool = False) -> Tuple[List[int], List[float]]:
-    """
-    TODO: Documentation.
-    :params. n_jobs, -1 represents to use all cpus
-    :params. rep: representation, 'X_' + rep should be in data.obsm
-    :params. full_speed: True will result in non-reproducible results
-    Return: if cached, may return more neighbors
-    """
+def get_neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int = -1, random_state: int = 0, full_speed: bool = False) -> Tuple[List[int], List[float]]:
+    """Find K nearest neighbors for each data point and return the indices and distances arrays.
 
-    start = time.time()
+    Parameters
+    ----------
+
+    data : `AnnData`
+        An AnnData object.
+    K : `int`, optional (default: 100)
+        Number of neighbors, including the data point itself.
+    rep : `str`, optional (default: 'pca')
+        Representation used to calculate kNN.
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to all available threads
+    random_state: `int`, optional (default: 0)
+        Random seed for random number generator.
+    full_speed: `bool`, optional (default: False)
+        If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+
+    Returns
+    -------
+
+    kNN indices and distances arrays.
+
+    Examples
+    --------
+    >>> indices, distances = tools.get_neighbors(adata)
+    """
 
     rep_key = 'X_' + rep
     indices_key = rep + '_knn_indices'
-    distances_key = rep + 'knn_distances'
+    distances_key = rep + '_knn_distances'
 
     indices = distances = None
-    need_calc = True
-    if indices_key in data.uns:
-        exist_K = data.uns[indices_key].shape[1] + 1
-        if K <= exist_K:
-            indices = data.uns[indices_key]
-            distances = data.uns[distances_key]
-            need_calc = False
-
-    if need_calc:
+    if (indices_key in data.uns) and (distances_key in data.uns) and (K <= data.uns[indices_key].shape[1] + 1):
+        indices = data.uns[indices_key]
+        distances = data.uns[distances_key]
+        print("Found cached kNN results, no calculation is required.")
+    else:
         indices, distances = calculate_nearest_neighbors(
             data.obsm[rep_key],
             effective_n_jobs(n_jobs),
@@ -108,15 +123,106 @@ def neighbors(data: 'AnnData', K: int, rep: 'str' = 'pca', n_jobs: int = -1, ran
         )
         data.uns[indices_key] = indices
         data.uns[distances_key] = distances
-    else:
-        print("Found cached kNN results, no calculation is required.")
-
-    end = time.time()
-    print(
-        "Nearest neighbor search is finished in {:.2f}s.".format(end - start)
-    )
 
     return indices, distances
+
+
+
+def get_symmetric_matrix(csr_mat: 'csr_matrix') -> 'csr_matrix':
+    tp_mat = csr_mat.transpose().tocsr()
+    sym_mat = csr_mat + tp_mat
+    sym_mat.sort_indices()
+
+    idx_mat = (csr_mat != 0).astype(int) + (tp_mat != 0).astype(int)
+    idx_mat.sort_indices()
+    idx = idx_mat.data == 2
+
+    sym_mat.data[idx] /= 2.0
+    return sym_mat
+
+
+# We should not modify distances array!
+def calculate_affinity_matrix(indices: List[int], distances: List[float]) -> 'csr_matrix':
+    start = time.time()
+
+    nsample = indices.shape[0]
+    K = indices.shape[1]
+    # calculate sigma, important to use median here!
+    sigmas = np.median(distances, axis=1)
+    sigmas_sq = np.square(sigmas)
+
+    # calculate local-scaled kernel
+    normed_dist = np.zeros((nsample, K), dtype=float)
+    for i in range(nsample):
+        numers = 2.0 * sigmas[i] * sigmas[indices[i, :]]
+        denoms = sigmas_sq[i] + sigmas_sq[indices[i, :]]
+        normed_dist[i, :] = np.sqrt(numers / denoms) * np.exp(
+            -np.square(distances[i, :]) / denoms
+        )
+
+    W = csr_matrix(
+        (normed_dist.ravel(), (np.repeat(range(nsample), K), indices.ravel())),
+        shape=(nsample, nsample),
+    )
+    W = get_symmetric_matrix(W)
+
+    # density normalization
+    z = W.sum(axis=1).A1
+    W = W.tocoo()
+    W.data /= z[W.row]
+    W.data /= z[W.col]
+    W = W.tocsr()
+    W.eliminate_zeros()
+
+    end = time.time()
+    print("Constructing affinity matrix is done. Time spent = {:.2f}s.".format(end - start))
+
+    return W
+
+
+
+def neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int = -1, random_state: int = 0, full_speed: bool = False) -> None:
+    """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
+
+    Parameters
+    ----------
+
+    data : `AnnData`
+        An AnnData object.
+    K : `int`, optional (default: 100)
+        Number of neighbors, including the data point itself.
+    rep : `str`, optional (default: 'pca')
+        Representation used to calculate kNN.
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to all available threads
+    random_state: `int`, optional (default: 0)
+        Random seed for random number generator.
+    full_speed: `bool`, optional (default: False)
+        If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+
+    Returns
+    -------
+
+    kNN indices and distances arrays.
+
+    Examples
+    --------
+    >>> tools.neighbors(adata)
+    """
+
+    # calculate kNN
+    start = time.time()
+    indices, distances = get_neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    end = time.time()
+    print("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
+
+    # calculate affinity matrix
+    start = time.time()
+    W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
+    data.uns['W_' + rep] = W
+    end = time.time()
+    print("Affinity matrix calculation is finished in {:.2f}s".format(end - start))
+
 
 
 def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
@@ -214,8 +320,8 @@ def calc_kBET(
     attr_values = data.obs[attr].values.copy()
     attr_values.categories = range(nbatch)
 
-    indices, distances = neighbors(
-        data, K, rep = rep, n_jobs=n_jobs, random_state=random_state
+    indices, distances = get_neighbors(
+        data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
@@ -247,7 +353,7 @@ def calc_kBET(
 
 
 def calc_kSIM(
-    data: 'AnnData', attr: str, rep: str ='pca', K: int =25, min_rate: float = 0.9, n_jobs: int = -1, random_state: int = 0
+    data: 'AnnData', attr: str, rep: str ='pca', K: int = 25, min_rate: float = 0.9, n_jobs: int = -1, random_state: int = 0
 ) -> Tuple[float, float]:
     """
     TODO: Documentation.
@@ -256,8 +362,8 @@ def calc_kSIM(
     assert attr in data.obs
     nsample = data.shape[0]
 
-    indices, distances = neighbors(
-        data, K, rep, n_jobs=n_jobs, random_state=random_state
+    indices, distances = get_neighbors(
+        data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
@@ -284,7 +390,7 @@ def calc_kSIM(
 #     return calc_JSD(ideal_dist, empirical_dist)
 
 
-# def calc_kBJSD(data, attr, rep_key = 'X_pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
+# def calc_kBJSD(data, attr, rep = 'pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
 #     assert attr in data.obs
 #     if data.obs[attr].dtype.name != 'category':
 #         data.obs[attr] = pd.Categorical(data.obs[attr])
@@ -298,7 +404,7 @@ def calc_kSIM(
 #     attr_values = data.obs[attr].values.copy()
 #     attr_values.categories = range(nbatch)
 
-#     indices, distances = neighbors(data, K, rep_key, n_jobs = n_jobs, random_state = random_state)
+#     indices, distances = get_neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state)
 #     knn_indices = indices[:, 0 : K - 1]
 #     kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
 

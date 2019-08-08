@@ -29,35 +29,34 @@ from .batch_correction import (
 )
 from .nearest_neighbors import (
     calculate_nearest_neighbors,
+    get_neighbors,
     neighbors,
     select_cells,
     calc_kBET,
     calc_kSIM,
 )
-from .diffusion_map import (
-    run_diffmap,
-    run_pseudotime_calculation,
-    calculate_affinity_matrix,
-    calculate_normalized_affinity,
-    reduce_diffmap_to_3d,
-)
 from .graph_operations import construct_graph
+from .diffusion_map import (
+    diffmap,
+    reduce_diffmap_to_3d,
+    calc_pseudotime
+)
 from .clustering import (
-    run_louvain,
-    run_leiden,
-    run_approximated_louvain,
-    run_approximated_leiden,
+    louvain,
+    leiden,
+    spectral_louvain,
+    spectral_leiden,
 )
 from .net_regressor import net_train_and_predict
 from .visualization import (
-    run_tsne,
-    run_fitsne,
-    run_umap,
-    run_force_directed_layout,
-    run_net_tsne,
-    run_net_fitsne,
-    run_net_umap,
-    run_net_fle,
+    tsne,
+    fitsne,
+    umap,
+    fle,
+    net_tsne,
+    net_fitsne,
+    net_umap,
+    net_fle,
 )
 from .de_analysis import (
     run_de_analysis,

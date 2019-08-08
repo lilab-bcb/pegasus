@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, effective_n_jobs
 from natsort import natsorted
 
 import ctypes
@@ -10,38 +10,33 @@ import ctypes.util
 import louvain
 import leidenalg
 from sklearn.cluster import KMeans
+from typing import List
 
-from . import calculate_affinity_matrix, calculate_normalized_affinity, construct_graph
+from scCloud.tools import construct_graph
 
 
-def run_louvain(
-    data,
-    affinity="W",
-    partition_type="RBC",
-    resolution=1.3,
-    random_state=0,
-    class_label="louvain_labels",
-):
+
+def louvain(
+    data: 'AnnData',
+    rep: str = 'pca',
+    resolution: int = 1.3,
+    random_state: int = 0,
+    class_label: str = 'louvain_labels',
+) -> None:
+    """
+    TODO: Documentation
+    """
+
     start = time.time()
 
-    W = None
-    if affinity == "W":
-        W = data.uns["W"]
-    elif affinity == "W_diffmap":
-        W = calculate_affinity_matrix(
-            data.uns["diffmap_knn_indices"], data.uns["diffmap_knn_distances"]
-        )
+    rep_key = 'W_' + rep
+    if rep_key not in data.uns:
+        raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
+    W = data.uns[rep_key]
 
     G = construct_graph(W)
-
-    assert partition_type == "RBC" or partition_type == "CPM"
-    partition_type = (
-        louvain.RBConfigurationVertexPartition
-        if partition_type == "RBC"
-        else louvain.CPMVertexPartition
-    )
-
-    partition = partition_type(G, resolution_parameter=resolution, weights="weight")
+    partition_type = louvain.RBConfigurationVertexPartition
+    partition = partition_type(G, resolution_parameter=resolution, weights='weight')
     optimiser = louvain.Optimiser()
     optimiser.set_rng_seed(random_state)
     diff = optimiser.optimise_partition(partition)
@@ -49,42 +44,37 @@ def run_louvain(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    
     end = time.time()
     print("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_leiden(
-    data,
-    affinity="W",
-    partition_type="RBC",
-    resolution=1.3,
-    n_iter=-1,
-    random_state=0,
-    class_label="leiden_labels",
-):
+def leiden(
+    data: 'AnnData',
+    rep: str = 'pca'
+    resolution: int = 1.3,
+    n_iter: int = -1,
+    random_state: int = 0,
+    class_label: str = 'leiden_labels',
+) -> None:
+    """
+    TODO: Documentation.
+    """
+
     start = time.time()
 
-    W = None
-    if affinity == "W":
-        W = data.uns["W"]
-    elif affinity == "W_diffmap":
-        W = calculate_affinity_matrix(
-            data.uns["diffmap_knn_indices"], data.uns["diffmap_knn_distances"]
-        )
+    rep_key = 'W_' + rep
+    if rep_key not in data.uns:
+        raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
+    W = data.uns[rep_key]
 
     G = construct_graph(W)
-
-    assert partition_type == "RBC" or partition_type == "CPM"
-    partition_type = (
-        leidenalg.RBConfigurationVertexPartition
-        if partition_type == "RBC"
-        else leidenalg.CPMVertexPartition
-    )
+    partition_type = leidenalg.RBConfigurationVertexPartition
     partition = leidenalg.find_partition(
         G,
         partition_type,
         seed=random_state,
-        weights="weight",
+        weights='weight',
         resolution_parameter=resolution,
         n_iterations=n_iter,
     )
@@ -92,6 +82,7 @@ def run_leiden(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    
     end = time.time()
     print("Leiden clustering is done. Time spent = {:.2f}s.".format(end - start))
 
@@ -101,21 +92,21 @@ def set_numpy_thread_to_one():
     library_obj = None
     previous_num = None
 
-    mkl_loc = ctypes.util.find_library("mkl_rt")
+    mkl_loc = ctypes.util.find_library('mkl_rt')
     if mkl_loc is not None:
         mkl_lib = ctypes.cdll.LoadLibrary(mkl_loc)
 
-        library_type = "mkl"
+        library_type = 'mkl'
         library_obj = mkl_lib
         previous_num = mkl_lib.mkl_get_max_threads()
 
         mkl_lib.mkl_set_num_threads(ctypes.byref(ctypes.c_int(1)))
     else:
-        openblas_loc = ctypes.util.find_library("openblas")
+        openblas_loc = ctypes.util.find_library('openblas')
         if openblas_loc is not None:
             openblas_lib = ctypes.cdll.LoadLibrary(openblas_loc)
 
-            library_type = "openblas"
+            library_type = 'openblas'
             library_obj = openblas_lib
             previous_num = openblas_lib.openblas_get_num_threads()
 
@@ -125,19 +116,19 @@ def set_numpy_thread_to_one():
             import glob
 
             files = glob.glob(
-                os.path.join(os.path.dirname(np.__file__), ".libs", "libopenblas*.so")
+                os.path.join(os.path.dirname(np.__file__), '.libs', 'libopenblas*.so')
             )
             if len(files) == 1:
                 path, openblas_loc = os.path.split(files[0])
                 part2 = (
-                    ":" + os.environ["LD_LIBRARY_PATH"]
-                    if "LD_LIBRARY_PATH" in os.environ
-                    else ""
+                    ':' + os.environ['LD_LIBRARY_PATH']
+                    if 'LD_LIBRARY_PATH' in os.environ
+                    else ''
                 )
-                os.environ["LD_LIBRARY_PATH"] = path + part2
+                os.environ['LD_LIBRARY_PATH'] = path + part2
                 openblas_lib = ctypes.cdll.LoadLibrary(openblas_loc)
 
-                library_type = "openblas"
+                library_type = 'openblas'
                 library_obj = openblas_lib
                 previous_num = openblas_lib.openblas_get_num_threads()
 
@@ -146,14 +137,14 @@ def set_numpy_thread_to_one():
     return library_type, library_obj, previous_num
 
 
-def recover_numpy_thread(library_type, library_obj, value):
-    if library_type == "mkl":
+def recover_numpy_thread(library_type: str, library_obj: object, value: int):
+    if library_type == 'mkl':
         library_obj.mkl_set_num_threads(ctypes.byref(ctypes.c_int(value)))
-    elif library_type == "openblas":
+    elif library_type == 'openblas':
         library_obj.openblas_set_num_threads(value)
 
 
-def run_one_instance_of_kmeans(n_clusters, X, seed):
+def run_one_instance_of_kmeans(n_clusters: int, X: 'np.array', seed: int) -> List[str]:
     library_type, library_obj, value = set_numpy_thread_to_one()
     km = KMeans(n_clusters=n_clusters, n_init=1, n_jobs=1, random_state=seed)
     km.fit(X)
@@ -162,11 +153,16 @@ def run_one_instance_of_kmeans(n_clusters, X, seed):
 
 
 def run_multiple_kmeans(
-    data, rep_key, n_jobs, n_clusters, n_init, random_state, temp_folder
-):
+    data: 'AnnData', rep: 'str', n_jobs: int, n_clusters: int, n_init: int, random_state: int, temp_folder: None
+) -> List[str]:
+    """ Spectral clustering in parallel
+    """
     start = time.time()
 
-    X = data.obsm[rep_key].astype("float64")
+    n_jobs = effective_n_jobs(n_jobs)
+
+    rep_key = 'X_' + rep
+    X = data.obsm[rep_key].astype('float64')
 
     np.random.seed(random_state)
     seeds = np.random.randint(np.iinfo(np.int32).max, size=n_init)
@@ -185,44 +181,41 @@ def run_multiple_kmeans(
     return labels
 
 
-def run_approximated_louvain(
-    data,
-    rep_key,
-    affinity="W",
-    partition_type="RBC",
-    resolution=1.3,
-    n_clusters=30,
-    n_init=20,
-    n_jobs=1,
-    random_state=0,
-    temp_folder=None,
-    class_label="approx_louvain_labels",
-):
+def spectral_louvain(
+    data: 'AnnData',
+    rep: str = 'pca',
+    resolution: float = 1.3,
+    rep_kmeans: str = 'diffmap',
+    n_clusters: str = 30,
+    n_init: int = 20,
+    n_jobs: int = -1,
+    random_state: int = 0,
+    temp_folder: str = None,
+    class_label: str = 'spectral_louvain_labels',
+) -> None:
+    """
+    TODO: Documentation.
+    rep_kmeans: representation to run kmeans, default is diffmap.
+    """
+
     start = time.time()
 
+    if 'X_' + rep_kmeans not in data.obsm.keys():
+        raise ValueError("Please run {} first!".foramt(rep_kmeans))
+    if 'W_' + rep not in data.uns:
+        raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
+
+
     labels = run_multiple_kmeans(
-        data, rep_key, n_jobs, n_clusters, n_init, random_state, temp_folder
+        data, rep_kmeans, n_jobs, n_clusters, n_init, random_state, temp_folder
     )
 
-    W = None
-    if affinity == "W":
-        W = data.uns["W"]
-    elif affinity == "W_diffmap":
-        W = calculate_affinity_matrix(
-            data.uns["diffmap_knn_indices"], data.uns["diffmap_knn_distances"]
-        )
+    W = data.uns['W_' + rep]
 
     G = construct_graph(W)
-
-    assert partition_type == "RBC" or partition_type == "CPM"
-    partition_type = (
-        louvain.RBConfigurationVertexPartition
-        if partition_type == "RBC"
-        else louvain.CPMVertexPartition
-    )
-
+    partition_type = louvain.RBConfigurationVertexPartition
     partition = partition_type(
-        G, resolution_parameter=resolution, weights="weight", initial_membership=labels
+        G, resolution_parameter=resolution, weights='weight', initial_membership=labels
     )
     partition_agg = partition.aggregate_partition()
 
@@ -234,52 +227,49 @@ def run_approximated_louvain(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+
     end = time.time()
     print(
-        "Approximated Louvain clustering is done. Time spent = {:.2f}s.".format(
+        "Spectral Louvain clustering is done. Time spent = {:.2f}s.".format(
             end - start
         )
     )
 
 
-def run_approximated_leiden(
-    data,
-    rep_key,
-    affinity="W",
-    partition_type="RBC",
-    resolution=1.3,
-    n_clusters=30,
-    n_init=20,
-    n_jobs=1,
-    random_state=0,
-    temp_folder=None,
-    class_label="approx_leiden_labels",
-):
+def spectral_leiden(
+    data: 'AnnData',
+    rep: str = 'pca',
+    resolution: float = 1.3,
+    rep_kmeans: str = 'diffmap',
+    n_clusters: str = 30,
+    n_init: int = 20,
+    n_jobs: int = -1,
+    random_state: int = 0,
+    temp_folder: str = None,
+    class_label: str = 'spectral_leiden_labels',
+) -> None:
+    """
+    TODO: Documentation.
+    """
+
     start = time.time()
 
+    if 'X_' + rep_kmeans not in data.obsm.keys():
+        raise ValueError("Please run {} first!".foramt(rep_kmeans))
+    if 'W_' + rep not in data.uns:
+        raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
+
+
     labels = run_multiple_kmeans(
-        data, rep_key, n_jobs, n_clusters, n_init, random_state, temp_folder
+        data, rep_kmeans, n_jobs, n_clusters, n_init, random_state, temp_folder
     )
 
-    W = None
-    if affinity == "W":
-        W = data.uns["W"]
-    elif affinity == "W_diffmap":
-        W = calculate_affinity_matrix(
-            data.uns["diffmap_knn_indices"], data.uns["diffmap_knn_distances"]
-        )
+    W = data.uns['W_' + rep]
 
     G = construct_graph(W)
-
-    assert partition_type == "RBC" or partition_type == "CPM"
-    partition_type = (
-        leidenalg.RBConfigurationVertexPartition
-        if partition_type == "RBC"
-        else leidenalg.CPMVertexPartition
-    )
-
+    partition_type = leidenalg.RBConfigurationVertexPartition
     partition = partition_type(
-        G, resolution_parameter=resolution, weights="weight", initial_membership=labels
+        G, resolution_parameter=resolution, weights='weight', initial_membership=labels
     )
     partition_agg = partition.aggregate_partition()
 
@@ -291,6 +281,7 @@ def run_approximated_leiden(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    
     end = time.time()
     print(
         "Approximated Leiden clustering is done. Time spent = {:.2f}s.".format(

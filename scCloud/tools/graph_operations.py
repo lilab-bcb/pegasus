@@ -1,11 +1,11 @@
 import time
 import numpy as np
-import igraph
 from scipy.sparse import issparse
+import igraph
 
 
-def construct_graph(W, directed=False, adjust_weights=True):
-    start_time = time.time()
+def construct_graph(W: 'csr_matrix', directed: bool = False, adjust_weights: bool = True) -> 'igraph':
+    start = time.time()
 
     assert issparse(W)
 
@@ -33,7 +33,7 @@ def construct_graph(W, directed=False, adjust_weights=True):
     G.add_edges(zip(s, t))
     G.es["weight"] = w
 
-    end_time = time.time()
-    print("Graph is constructed. Time spent = {:.2f}s.".format(end_time - start_time))
+    end = time.time()
+    print("Graph is constructed. Time spent = {:.2f}s.".format(end - start))
 
     return G

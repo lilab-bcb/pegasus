@@ -124,9 +124,7 @@ def run_pipeline(input_file, output_name, **kwargs):
             )
         )
 
-        adata.obsm['X_diffmap_pca'] = tools.reduce_diffmap_to_3d(
-            adata.obsm['X_diffmap'], random_state=kwargs['random_state']
-        )
+
     else:
         assert 'X_diffmap' in adata.obsm.keys()
 
@@ -328,7 +326,6 @@ def run_pipeline(input_file, output_name, **kwargs):
 
     # calculate diffusion-based pseudotime from roots
     if len(kwargs['pseudotime']) > 0:
-        assert 'X_diffmap' in adata.obsm.keys()
         tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
 
     # merge cite-seq data and run t-SNE
