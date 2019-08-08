@@ -555,17 +555,17 @@ def run_de_analysis(
     temp_folder,
 ):
     start = time.time()
-    data = read_input(input_file)
     if subset_string is None:
+        data = read_input(input_file, h5ad_mode="r+")
+        X = data.X[:]
         output_file = input_file
     else:
         attr, value = subset_string.split(":")
         data = read_input(input_file)
         data = data[data.obs[attr] == value].copy()
+        X = data.X
         import os
-
         output_file = os.path.splitext(output_excel_file)[0] + ".h5ad"
-    X = data.X
     end = time.time()
     print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
     __markers(
