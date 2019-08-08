@@ -263,7 +263,7 @@ def highly_variable_features(
     if 'Channels' not in data.uns:
         data.uns['Channels'] = data.obs['Channel'].unique()
 
-    if data.uns['Channels'].size == 1:
+    if data.uns['Channels'].size == 1 and consider_batch:
         consider_batch = False
         print("Warning: only contains one channel, no need to consider batch for selecting highly variable features.")
 
