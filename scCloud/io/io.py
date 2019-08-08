@@ -583,7 +583,7 @@ def read_input(
         data = load_10x_h5_file(input_file, ngene=ngene)
     elif file_format == "h5ad":
         data = anndata.read_h5ad(
-            input_file, backed=(False if h5ad_mode == "a" else h5ad_mode)
+            input_file, backed=(None if h5ad_mode == "a" else h5ad_mode)
         )
     elif file_format == "mtx":
         data = load_mtx_file(input_file, genome, ngene=ngene)
