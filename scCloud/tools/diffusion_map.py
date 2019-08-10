@@ -26,7 +26,7 @@ def calculate_normalized_affinity(W: 'csr_matrix') -> Tuple['csr_matrix', 'np.ar
 def calculate_diffusion_map(W: 'csr_matrix', n_dc: int, alpha: float, solver: str, random_state: int) -> Tuple['np.array', 'np.array']:
     assert issparse(W)
 
-    nc, labels = connected_components(W, directed=True, connection="strong")
+    nc, labels = connected_components(W, directed=True, connection='strong')
     print("Calculating connected components is done.")
 
     assert nc == 1
@@ -34,12 +34,12 @@ def calculate_diffusion_map(W: 'csr_matrix', n_dc: int, alpha: float, solver: st
     W_norm, diag, diag_half = calculate_normalized_affinity(W)
     print("Calculating normalized affinity matrix is done.")
 
-    if solver == "randomized":
+    if solver == 'randomized':
         U, S, VT = randomized_svd(W_norm, n_components=n_dc, random_state=random_state)
         signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
         Lambda = signs * S  # get eigenvalues
     else:
-        assert solver == "eigsh"
+        assert solver == 'eigsh'
         np.random.seed(random_state)
         v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
         Lambda, U = eigsh(W_norm, k=n_dc, v0=v0)

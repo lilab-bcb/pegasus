@@ -11,12 +11,15 @@ import pkg_resources
 from MulticoreTSNE import MulticoreTSNE as TSNE
 import umap
 
-from . import (
-    calculate_affinity_matrix,
-    calculate_nearest_neighbors,
-    select_cells,
-    construct_graph,
+from typing import List
+
+
+from scCloud.tools import (
+    neighbors,
     net_train_and_predict,
+    calculate_nearest_neighbors,
+    calculate_affinity_matrix,
+    construct_graph,
 )
 
 
@@ -396,25 +399,36 @@ def umap(
 
 
 def fle(
-    data,
-    file_name,
-    n_jobs,
-    K=50,
-    target_change_per_node=2.0,
-    target_steps=5000,
-    is3d=False,
-    memory=8,
-    random_state=0,
-    out_basis="fle",
-):
+    data: 'AnnData',
+    file_name: str,
+    n_jobs: int = -1,
+    K: int = 50,
+    full_speed: bool = False,
+    target_change_per_node: float = 2.0,
+    target_steps: int = 5000,
+    is3d: bool = False,
+    memory: int = 8,
+    random_state: int = 0,
+    out_basis: str = 'fle',
+) -> None:
+    """
+    TODO: Documentation.
+    """
     start = time.time()
-    realK = min(K - 1, data.uns["diffmap_knn_indices"].shape[1])  # K - 1: exclude self
-    W = calculate_affinity_matrix(
-        data.uns["diffmap_knn_indices"][:, 0:realK],
-        data.uns["diffmap_knn_distances"][:, 0:realK],
-    )
-    data.obsm["X_" + out_basis] = calc_force_directed_layout(
-        W,
+    n_jobs = effective_n_jobs(n_jobs)
+
+    rep = 'diffmap'
+    rep_key = 'X_' + rep
+    W_rep = 'W_' + rep
+
+    if rep_key not in data.obsm.keys():
+        raise ValueError("Please run diffmap first!")
+
+    if W_rep not in data.uns:
+        neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+
+    data.obsm['X_' + out_basis] = calc_force_directed_layout(
+        data.uns[W_rep],
         file_name,
         n_jobs,
         target_change_per_node,
@@ -423,29 +437,88 @@ def fle(
         memory,
         random_state,
     )
-    
+
     end = time.time()
     print(
         "Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start)
     )
 
 
-def run_net_tsne(
-    data,
-    rep_key,
-    selected,
-    n_jobs,
-    n_components=2,
-    perplexity=30,
-    early_exaggeration=12,
-    learning_rate=1000,
-    random_state=0,
-    net_alpha=0.1,
-    polish_learning_frac=0.33,
-    polish_n_iter=150,
-    out_basis="net_tsne",
-):
+
+def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
+    """
+    TODO: documentation (not user API)
+    """
+
+    start_time = time.time()
+
+    nsample = distances.shape[0]
+
+    if K > distances.shape[1]:
+        print(
+            "Warning: in select_cells, K = {} > the number of calculated nearest neighbors!\nSet K to {}".format(
+                K, distances.shape[1]
+            )
+        )
+        K = distances.shape[1]
+
+    probs = np.zeros(nsample)
+    if alpha == 0.0:
+        probs[:] = 1.0  # uniform
+    elif alpha == 1.0:
+        probs[:] = distances[:, K - 1]
+    else:
+        probs[:] = distances[:, K - 1] ** alpha
+    probs /= probs.sum()
+
+    np.random.seed(random_state)
+    selected = np.zeros(nsample, dtype=bool)
+    selected[
+        np.random.choice(nsample, size=int(nsample * frac), replace=False, p=probs)
+    ] = True
+
+    end_time = time.time()
+    print("select_cells finished. Time spent = {:.2}s.".format(end_time - start_time))
+
+    return selected
+
+
+
+def net_tsne(
+    data: 'AnnData',
+    rep: 'str' = 'pca',
+    n_jobs: int = -1,
+    n_components: int = 2,
+    perplexity: float = 30,
+    early_exaggeration: int = 12,
+    learning_rate: float = 1000,
+    random_state: int = 0,
+    select_frac: float = 0.1, 
+    select_K: int = 25,
+    select_alpha: float = 1.0,
+    net_alpha: float = 0.1,
+    polish_learning_frac: float = 0.33,
+    polish_n_iter: int = 150,
+    out_basis: str = 'net_tsne',
+) -> None:
+    """
+    TODO: Documentation.
+    """
     start = time.time()
+
+    rep_key = 'X_' + rep
+    distances_key = rep + '_knn_distances'
+
+    if rep_key not in data.obsm.keys():
+        raise ValueError("Please run {} first!".format(rep))
+
+    if distances_key not in data.uns:
+        raise ValueError("Please run neighbors first!")
+
+    n_jobs = effective_n_jobs(n_jobs)
+
+    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+
     X = data.obsm[rep_key][selected, :]
     X_tsne = calc_tsne(
         X,
@@ -457,8 +530,8 @@ def run_net_tsne(
         random_state,
     )
 
-    data.uns["X_" + out_basis + "_small"] = X_tsne
-    data.obs["ds_selected"] = selected
+    data.uns['X_' + out_basis + '_small'] = X_tsne
+    data.obs['ds_selected'] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_tsne
@@ -471,10 +544,10 @@ def run_net_tsne(
         verbose=True,
     )
 
-    data.obsm["X_" + out_basis + "_pred"] = Y_init
+    data.obsm['X_' + out_basis + '_pred'] = Y_init
 
     polish_learning_rate = polish_learning_frac * data.shape[0]
-    data.obsm["X_" + out_basis] = calc_tsne(
+    data.obsm['X_' + out_basis] = calc_tsne(
         data.obsm[rep_key],
         n_jobs,
         n_components,
@@ -486,26 +559,46 @@ def run_net_tsne(
         n_iter=polish_n_iter,
         n_iter_early_exag=0,
     )
+
     end = time.time()
     print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_net_fitsne(
-    data,
-    rep_key,
-    selected,
-    n_jobs,
-    n_components=2,
-    perplexity=30,
-    early_exaggeration=12,
-    learning_rate=1000,
-    random_state=0,
-    net_alpha=0.1,
-    polish_learning_frac=0.5,
-    polish_n_iter=150,
-    out_basis="net_fitsne",
-):
+def net_fitsne(
+    data: 'AnnData',
+    rep: 'str' = 'pca',
+    n_jobs: int = -1,
+    n_components: int = 2,
+    perplexity: float = 30,
+    early_exaggeration: int = 12,
+    learning_rate: float = 1000,
+    random_state: int = 0,
+    select_frac: float = 0.1, 
+    select_K: int = 25,
+    select_alpha: float = 1.0,
+    net_alpha: float = 0.1,
+    polish_learning_frac: float = 0.5,
+    polish_n_iter: int = 150,
+    out_basis: 'str' = 'net_fitsne',
+) -> None:
+    """
+    TODO: Documentation.
+    """
     start = time.time()
+
+    rep_key = 'X_' + rep
+    distances_key = rep + '_knn_distances'
+
+    if rep_key not in data.obsm.keys():
+        raise ValueError("Please run {} first!".format(rep))
+
+    if distances_key not in data.uns:
+        raise ValueError("Please run neighbors first!")
+
+    n_jobs = effective_n_jobs(n_jobs)
+
+    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+
     X = data.obsm[rep_key][selected, :]
     X_fitsne = calc_fitsne(
         X,
@@ -517,8 +610,8 @@ def run_net_fitsne(
         random_state,
     )
 
-    data.uns["X_" + out_basis + "_small"] = X_fitsne
-    data.obs["ds_selected"] = selected
+    data.uns['X_' + out_basis + '_small'] = X_fitsne
+    data.obs['ds_selected'] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_fitsne
@@ -531,10 +624,10 @@ def run_net_fitsne(
         verbose=True,
     )
 
-    data.obsm["X_" + out_basis + "_pred"] = Y_init
+    data.obsm['X_' + out_basis + '_pred'] = Y_init
 
     polish_learning_rate = polish_learning_frac * data.shape[0]
-    data.obsm["X_" + out_basis] = calc_fitsne(
+    data.obsm['X_' + out_basis] = calc_fitsne(
         data.obsm[rep_key],
         n_jobs,
         n_components,
@@ -547,44 +640,69 @@ def run_net_fitsne(
         stop_early_exag_iter=0,
         mom_switch_iter=0,
     )
+
     end = time.time()
     print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_net_umap(
-    data,
-    rep_key,
-    selected,
-    n_jobs,
-    n_components=2,
-    n_neighbors=15,
-    min_dist=0.1,
-    spread=1.0,
-    random_state=0,
-    ds_full_speed=False,
-    net_alpha=0.1,
-    polish_n_epochs=30,
-    polish_learning_rate=10.0,
-    out_basis="net_umap",
-):
+
+def net_umap(
+    data: 'AnnData',
+    rep: 'str' = 'pca',
+    n_jobs: int = -1,
+    n_components: int = 2,
+    n_neighbors: int = 15,
+    min_dist: float = 0.1,
+    spread: float = 1.0,
+    random_state: int = 0,
+    select_frac: float = 0.1, 
+    select_K: int = 25,
+    select_alpha: float = 1.0,
+    full_speed: bool = False,
+    net_alpha: float = 0.1,
+    polish_n_epochs: int = 30,
+    polish_learning_rate: float = 10.0,
+    out_basis: str = 'net_umap',
+) -> None:
+    """
+    TODO: Documentation.
+    """
     start = time.time()
+
+    rep_key = 'X_' + rep
+    indices_key = rep + '_knn_indices'
+    distances_key = rep + '_knn_distances'
+
+    if rep_key not in data.obsm.keys():
+        raise ValueError("Please run {} first!".format(rep))
+
+    if (indices_key not in data.uns) or (distances_key not in data.uns):
+        raise ValueError("Please run neighbors first!")
+
+    n_jobs = effective_n_jobs(n_jobs)
+
+    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+
     X = data.obsm[rep_key][selected, :]
 
-    if "ds_knn_indices" not in data.uns:
+    ds_indices_key = 'ds_' + rep + '_knn_indices'
+    ds_distances_key = 'ds_' + rep + '_knn_distances'
+    if (ds_indices_key not in data.uns) or (ds_distances_key not in data.uns):
         indices, distances = calculate_nearest_neighbors(
             X,
-            n_jobs,
-            K=n_neighbors,
-            random_state=random_state,
-            full_speed=ds_full_speed,
+            K = n_neighbors,
+            n_jobs = n_jobs,
+            random_state = random_state,
+            full_speed = full_speed,
         )
-        data.uns["ds_knn_indices"] = indices
-        data.uns["ds_knn_distances"] = distances
+        data.uns[ds_indices_key] = indices
+        data.uns[ds_distances_key] = distances
+
     knn_indices = np.insert(
-        data.uns["ds_knn_indices"][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
+        data.uns[ds_indices_key][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns["ds_knn_distances"][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[ds_distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
     X_umap = calc_umap(
@@ -598,8 +716,8 @@ def run_net_umap(
         knn_dists=knn_dists,
     )
 
-    data.uns["X_" + out_basis + "_small"] = X_umap
-    data.obs["ds_selected"] = selected
+    data.uns['X_' + out_basis + '_small'] = X_umap
+    data.obs['ds_selected'] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_umap
@@ -612,17 +730,16 @@ def run_net_umap(
         verbose=True,
     )
 
-    data.obsm["X_" + out_basis + "_pred"] = Y_init
+    data.obsm['X_' + out_basis + '_pred'] = Y_init
 
-    assert "knn_indices" in data.uns
     knn_indices = np.insert(
-        data.uns["knn_indices"][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns["knn_distances"][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
-    data.obsm["X_" + out_basis] = calc_umap(
+    data.obsm['X_' + out_basis] = calc_umap(
         data.obsm[rep_key],
         n_components,
         n_neighbors,
@@ -635,43 +752,66 @@ def run_net_umap(
         knn_indices=knn_indices,
         knn_dists=knn_dists,
     )
+
     end = time.time()
     print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-def run_net_fle(
-    data,
-    selected,
-    file_name,
-    n_jobs,
-    K=50,
-    target_change_per_node=2.0,
-    target_steps=10000,
-    is3d=False,
-    memory=8,
-    random_state=0,
-    ds_full_speed=False,
-    net_alpha=0.1,
-    polish_target_steps=1500,
-    out_basis="net_fle",
-):
+def net_fle(
+    data: 'AnnData',
+    file_name: str,
+    n_jobs: int = -1,
+    K: int = 50,
+    full_speed: bool = False,
+    target_change_per_node: float = 2.0,
+    target_steps: int = 5000,
+    is3d: bool = False,
+    memory: int = 8,
+    random_state: int = 0,
+    select_frac: float = 0.1, 
+    select_K: int = 25,
+    select_alpha: float = 1.0,
+    net_alpha: float = 0.1,
+    polish_target_steps: int = 1500,
+    out_basis: str = 'net_fle',
+) -> None:
+    """
+    TODO: Documentation.
+    """
     start = time.time()
-    X = data.obsm["X_diffmap"][selected, :]
+    n_jobs = effective_n_jobs(n_jobs)
 
-    if "diffmap_ds_knn_indices" in data.uns:
-        indices = data.uns["diffmap_ds_knn_indices"]
-        distances = data.uns["diffmap_ds_knn_distances"]
-    else:
+    rep = 'diffmap'
+    rep_key = 'X_' + rep
+    W_rep = 'W_' + rep
+
+    if rep_key not in data.obsm.keys():
+        raise ValueError("Please run diffmap first!")
+    if W_rep not in data.uns:
+        neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+
+    distances_key = rep + '_knn_distances'
+    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+
+    X = data.obsm[rep_key][selected, :]
+
+    ds_indices_key = 'ds_' + rep + '_knn_indices'
+    ds_distances_key = 'ds_' + rep + '_knn_distances'
+    if (ds_indices_key not in data.uns) or (ds_distances_key not in data.uns):
         indices, distances = calculate_nearest_neighbors(
-            X, n_jobs, K=K, random_state=random_state, full_speed=ds_full_speed
+            X, K = K, n_jobs = n_jobs, random_state=random_state, full_speed=full_speed
         )
-        data.uns["diffmap_ds_knn_indices"] = indices
-        data.uns["diffmap_ds_knn_distances"] = distances
+        data.uns[ds_indices_key] = indices
+        data.uns[ds_distances_key] = distances
+    else:
+        indices = data.uns[ds_indices_key]
+        distances = data.uns[ds_distances_key]
 
     W = calculate_affinity_matrix(indices, distances)
+
     X_fle = calc_force_directed_layout(
         W,
-        file_name + ".small",
+        file_name + '.small',
         n_jobs,
         target_change_per_node,
         target_steps,
@@ -680,7 +820,7 @@ def run_net_fle(
         random_state,
     )
 
-    data.uns["X_" + out_basis + "_small"] = X_fle
+    data.uns['X_' + out_basis + '_small'] = X_fle
     data.obs["ds_diffmap_selected"] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
@@ -688,21 +828,16 @@ def run_net_fle(
     Y_init[~selected, :] = net_train_and_predict(
         X,
         X_fle,
-        data.obsm["X_diffmap"][~selected, :],
+        data.obsm[rep_key][~selected, :],
         net_alpha,
         random_state,
         verbose=True,
     )
 
-    data.obsm["X_" + out_basis + "_pred"] = Y_init
+    data.obsm['X_' + out_basis + '_pred'] = Y_init
 
-    realK = min(K - 1, data.uns["diffmap_knn_indices"].shape[1])  # K - 1: exclude self
-    W = calculate_affinity_matrix(
-        data.uns["diffmap_knn_indices"][:, 0:realK],
-        data.uns["diffmap_knn_distances"][:, 0:realK],
-    )
     data.obsm["X_" + out_basis] = calc_force_directed_layout(
-        W,
+        data.uns[W_rep],
         file_name,
         n_jobs,
         target_change_per_node,
@@ -712,6 +847,6 @@ def run_net_fle(
         random_state,
         init=Y_init,
     )
-    end = time.time()
 
+    end = time.time()
     print("Net FLE is calculated. Time spent = {:.2f}s.".format(end - start))

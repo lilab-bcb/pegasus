@@ -225,44 +225,6 @@ def neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int = -
 
 
 
-def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
-    """
-    TODO: documentation (not user API)
-    """
-
-    start_time = time.time()
-
-    nsample = distances.shape[0]
-
-    if K > distances.shape[1]:
-        print(
-            "Warning: in select_cells, K = {} > the number of calculated nearest neighbors!\nSet K to {}".format(
-                K, distances.shape[1]
-            )
-        )
-        K = distances.shape[1]
-
-    probs = np.zeros(nsample)
-    if alpha == 0.0:
-        probs[:] = 1.0  # uniform
-    elif alpha == 1.0:
-        probs[:] = distances[:, K - 1]
-    else:
-        probs[:] = distances[:, K - 1] ** alpha
-    probs /= probs.sum()
-
-    np.random.seed(random_state)
-    selected = np.zeros(nsample, dtype=bool)
-    selected[
-        np.random.choice(nsample, size=int(nsample * frac), replace=False, p=probs)
-    ] = True
-
-    end_time = time.time()
-    print("select_cells finished. Time spent = {:.2}s.".format(end_time - start_time))
-
-    return selected
-
-
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
     dof = ideal_dist.size - 1
 
