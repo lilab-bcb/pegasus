@@ -31,7 +31,6 @@ from .nearest_neighbors import (
     calculate_nearest_neighbors,
     get_neighbors,
     neighbors,
-    select_cells,
     calc_kBET,
     calc_kSIM,
 )

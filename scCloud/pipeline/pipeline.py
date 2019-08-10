@@ -23,7 +23,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         assert len(data_list) == 2
         adata = cdata = None
         for i in range(len(data_list)):
-            if data_list[i].uns["genome"].startswith("CITE_Seq"):
+            if data_list[i].uns['genome'].startswith('CITE_Seq'):
                 cdata = data_list[i]
             else:
                 adata = data_list[i]
