@@ -91,11 +91,6 @@ def diffmap(
     print("diffmap finished. Time spent = {:.2f}s.".format(end - start))
 
 
-        adata.obsm['X_diffmap_pca'] = tools.reduce_diffmap_to_3d(
-            adata.obsm['X_diffmap'], random_state=kwargs['random_state']
-        )
-
-
 def reduce_diffmap_to_3d(data: 'AnnData', random_state: int = 0) -> None:
     """
     TODO: documentation.

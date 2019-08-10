@@ -31,6 +31,7 @@ from .nearest_neighbors import (
     calculate_nearest_neighbors,
     get_neighbors,
     neighbors,
+    calculate_affinity_matrix,
     calc_kBET,
     calc_kSIM,
 )

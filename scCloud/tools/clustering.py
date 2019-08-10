@@ -51,7 +51,7 @@ def louvain(
 
 def leiden(
     data: 'AnnData',
-    rep: str = 'pca'
+    rep: str = 'pca',
     resolution: int = 1.3,
     n_iter: int = -1,
     random_state: int = 0,
