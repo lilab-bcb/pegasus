@@ -54,15 +54,16 @@ Options:
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
   --nPC <number>                                   Number of principal components. [default: 50]
-  --knn-K <number>                                  Number of nearest neighbors for building kNN graph. [default: 100]
-  --knn-full-speed                                  For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+  --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
+  --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
   --kBET                                           Calculate kBET.
   --kBET-batch <batch>                             kBET batch keyword.
   --kBET-alpha <alpha>                             kBET rejection alpha. [default: 0.05]
   --kBET-K <K>                                     kBET K. [default: 25]
 
-  --nDC <number>                                   Number of diffusion components. [default: 50]
+  --diffmap                                        Calculate diffusion maps.
+  --diffmap-ndc <number>                           Number of diffusion components. [default: 50]
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
   --diffmap-solver <solver>                        Solver for eigen decomposition, either 'randomized' or 'eigsh'. [default: randomized]
   --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
@@ -183,7 +184,8 @@ Examples:
             'kBET_batch': self.args['--kBET-batch'],
             'kBET_alpha': float(self.args['--kBET-alpha']),
             'kBET_K': int(self.args['--kBET-K']),
-            'nDC': int(self.args['--nDC']),
+            'diffmap': self.args['--diffmap'],
+            'diffmap_ndc': int(self.args['--diffmap-ndc']),
             'diffmap_alpha': float(self.args['--diffmap-alpha']),
             'diffmap_solver': self.args['--diffmap-solver'],
             'pseudotime': self.split_string(self.args['--calculate-pseudotime']),

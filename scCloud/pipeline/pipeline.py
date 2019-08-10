@@ -18,7 +18,11 @@ def run_pipeline(input_file, output_name, **kwargs):
         h5ad_mode=('a' if (is_raw or kwargs['subcluster']) else 'r+'),
         select_singlets=kwargs['select_singlets'],
     )
-    if kwargs['cite_seq']:
+    if not kwargs['cite_seq']:
+        values = adata.X.getnnz(axis = 1)
+        if values.min() == 0: # 10x raw data
+            adata._inplace_subset_obs(values >= kwargs['min_genes_on_raw'])
+    else:
         data_list = adata
         assert len(data_list) == 2
         adata = cdata = None
@@ -28,16 +32,15 @@ def run_pipeline(input_file, output_name, **kwargs):
             else:
                 adata = data_list[i]
         assert adata is not None and cdata is not None
-    else:
-        values = adata.X.getnnz(axis = 1)
-        if values.min() == 0: # 10x raw data
-            adata._inplace_subset_obs(values >= kwargs['min_genes_on_raw'])
     print('Inputs are loaded.')
 
     if kwargs['seurat_compatible']:
         assert is_raw and kwargs['select_hvf']
 
-    # preprocessing
+    if kwargs['subcluster']:
+        adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
+        is_raw = True  # get submat and then set is_raw to True
+
     if is_raw:
         # filter out low quality cells/genes
         tools.run_filter_data(
@@ -53,19 +56,18 @@ def run_pipeline(input_file, output_name, **kwargs):
             percent_mito=kwargs['percent_mito'],
             percent_cells=kwargs['percent_cells'],
         )
+
         if kwargs['seurat_compatible']:
             raw_data = adata.copy()  # raw as count
+        
         # normailize counts and then transform to log space
         tools.log_norm(adata, kwargs['norm_count'])
+        
         # set group attribute
         if kwargs['batch_correction'] and kwargs['group_attribute'] is not None:
             tools.set_group_attribute(adata, kwargs['group_attribute'])
-    elif kwargs['subcluster']:
-        adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
-        is_raw = True  # get submat and then set is_raw to True
 
-    # dimension reduction --- select variable genes or not
-    if is_raw:
+        # select highly variable features
         if kwargs['select_hvf']:
             tools.highly_variable_features(
                 adata,
@@ -86,28 +88,31 @@ def run_pipeline(input_file, output_name, **kwargs):
                         kwargs['plot_hvf'] + '.hvf.pdf'
                     )
 
+        # batch correction
         if kwargs['batch_correction']:
             tools.correct_batch(adata, features = 'highly_variable_features')
-        tools.pca(adata, nPC=kwargs['nPC'], random_state=kwargs['random_state'], features = 'highly_variable_features')
-        tools.neighbors(adata, K = )
-    else:
-        assert 'X_pca' in adata.obsm.keys()
 
-    # diffusion map
-    if is_raw:
-        tools.run_diffmap(
-            adata,
-            'X_pca',
-            n_jobs=kwargs['n_jobs'],
-            n_components=kwargs['nDC'],
-            alpha=kwargs['diffmap_alpha'],
-            K=kwargs['diffmap_K'],
-            solver=kwargs['diffmap_solver'],
-            random_state=kwargs['random_state'],
-            full_speed=kwargs['diffmap_full_speed'],
-        )
-    else:
-        assert 'X_diffmap' in adata.obsm.keys()
+        # PCA
+        tools.pca(adata, nPC=kwargs['nPC'], random_state=kwargs['random_state'], features = 'highly_variable_features')
+        
+        # Find K neighbors
+        tools.neighbors(adata, K = kwargs['K'], rep = 'pca', n_jobs = kwargs['n_jobs'], random_state = kwargs['random_state'], full_speed = kwargs['full_speed'])
+
+        # calculate diffmap
+        if kwargs['fle'] or kwargs['net_tsne'] or kwargs['net_umap'] or kwargs['net_fle']:
+            if not kwargs['diffmap']:
+                print("Turn on --diffmap option!")
+            kwargs['diffmap'] = True
+
+        if kwargs['diffmap']:
+            tools.diffmap(
+                adata,
+                n_dc = kwargs['diffmap_ndc'],
+                rep = 'pca',
+                alpha = kwargs['diffmap_alpha'],
+                solver = kwargs['diffmap_solver'],
+                random_state = kwargs['random_state'],
+            )
 
     # calculate kBET
     if ('kBET' in kwargs) and kwargs['kBET']:
@@ -125,47 +130,47 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     # clustering
-    if kwargs['run_approx_louvain']:
-        tools.run_approximated_louvain(
+    if kwargs['spectral_louvain']:
+        tools.spectral_louvain(
             adata,
-            'X_' + kwargs['approx_louvain_basis'],
-            affinity=kwargs['approx_louvain_affinity'],
-            resolution=kwargs['approx_louvain_resolution'],
-            n_clusters=kwargs['approx_louvain_nclusters'],
-            n_init=kwargs['approx_louvain_ninit'],
+            rep='pca',
+            resolution=kwargs['spectral_louvain_resolution'],
+            rep_kmeans=kwargs['spectral_louvain_basis'],
+            n_clusters=kwargs['spectral_louvain_nclusters'],
+            n_init=kwargs['spectral_louvain_ninit'],
             n_jobs=kwargs['n_jobs'],
             random_state=kwargs['random_state'],
             temp_folder=kwargs['temp_folder'],
-            class_label='approx_louvain_labels',
+            class_label='spectral_louvain_labels',
         )
 
-    if kwargs['run_approx_leiden']:
-        tools.run_approximated_leiden(
+    if kwargs['spectral_leiden']:
+        tools.spectral_leiden(
             adata,
-            'X_' + kwargs['approx_leiden_basis'],
-            affinity=kwargs['approx_leiden_affinity'],
-            resolution=kwargs['approx_leiden_resolution'],
-            n_clusters=kwargs['approx_leiden_nclusters'],
-            n_init=kwargs['approx_leiden_ninit'],
+            rep='pca',
+            resolution=kwargs['spectral_leiden_resolution'],
+            rep_kmeans=kwargs['spectral_leiden_basis'],
+            n_clusters=kwargs['spectral_leiden_nclusters'],
+            n_init=kwargs['spectral_leiden_ninit'],
             n_jobs=kwargs['n_jobs'],
             random_state=kwargs['random_state'],
             temp_folder=kwargs['temp_folder'],
-            class_label='approx_leiden_labels',
+            class_label='spectral_leiden_labels',
         )
 
-    if kwargs['run_louvain']:
-        tools.run_louvain(
+    if kwargs['louvain']:
+        tools.louvain(
             adata,
-            affinity=kwargs['louvain_affinity'],
+            rep='pca',
             resolution=kwargs['louvain_resolution'],
             random_state=kwargs['random_state'],
             class_label=kwargs['louvain_class_label'],
         )
 
-    if kwargs['run_leiden']:
-        tools.run_leiden(
+    if kwargs['leiden']:
+        tools.leiden(
             adata,
-            affinity=kwargs['leiden_affinity'],
+            rep='pca',
             resolution=kwargs['leiden_resolution'],
             n_iter=kwargs['leiden_niter'],
             random_state=kwargs['random_state'],
