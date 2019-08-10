@@ -66,7 +66,8 @@ Options:
   --diffmap-ndc <number>                           Number of diffusion components. [default: 50]
   --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
   --diffmap-solver <solver>                        Solver for eigen decomposition, either 'randomized' or 'eigsh'. [default: randomized]
-  --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
+  --diffmap-to-3d                                  If map diffusion map into 3D space using PCA.
+  --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.  
 
   --louvain                                        Run louvain clustering algorithm.
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
@@ -104,6 +105,7 @@ Options:
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. [default: 2.0]
   --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
+  --fle-memory <memory>                            Memory size in GB for the Java FA2 component. [default: 8]
 
   --net-down-sample-fraction <frac>                Down sampling fraction for net-related visualization. [default: 0.1]
   --net-down-sample-K <K>                          Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
@@ -188,6 +190,7 @@ Examples:
             'diffmap_ndc': int(self.args['--diffmap-ndc']),
             'diffmap_alpha': float(self.args['--diffmap-alpha']),
             'diffmap_solver': self.args['--diffmap-solver'],
+            'diffmap_to_3d': self.args['--diffmap-to-3d'],
             'pseudotime': self.split_string(self.args['--calculate-pseudotime']),
             'louvain': self.args['--louvain'],
             'louvain_resolution': float(self.args['--louvain-resolution']),
@@ -223,6 +226,7 @@ Examples:
                 self.args['--fle-target-change-per-node']
             ),
             'fle_target_steps': int(self.args['--fle-target-steps']),
+            'fle_memory': int(self.args['--fle-memory']),
             'net_ds_frac': float(self.args['--net-down-sample-fraction']),
             'net_ds_K': int(self.args['--net-down-sample-K']),
             'net_ds_alpha': float(self.args['--net-down-sample-alpha']),

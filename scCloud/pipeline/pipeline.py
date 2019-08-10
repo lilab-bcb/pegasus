@@ -113,6 +113,8 @@ def run_pipeline(input_file, output_name, **kwargs):
                 solver = kwargs['diffmap_solver'],
                 random_state = kwargs['random_state'],
             )
+            if kwargs['diffmap_to_3d']:
+                tools.reduce_diffmap_to_3d(adata, random_state=kwargs['random_state'])
 
     # calculate kBET
     if ('kBET' in kwargs) and kwargs['kBET']:
@@ -178,139 +180,106 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     # visualization
-    if kwargs['run_net_tsne']:
-        selected = tools.select_cells(
-            adata.uns['knn_distances'],
-            kwargs['net_ds_frac'],
-            K=kwargs['net_ds_K'],
-            alpha=kwargs['net_ds_alpha'],
-            random_state=kwargs['random_state'],
-        )
-        tools.run_net_tsne(
+    if kwargs['net_tsne']:
+        tools.net_tsne(
             adata,
-            'X_pca',
-            selected,
+            rep='pca',
             n_jobs=kwargs['n_jobs'],
             perplexity=kwargs['tsne_perplexity'],
             random_state=kwargs['random_state'],
+            select_frac=kwargs['net_ds_frac'],
+            select_K=kwargs['net_ds_K'],
+            select_alpha=kwargs['net_ds_alpha'],
             net_alpha=kwargs['net_l2'],
             polish_learning_frac=kwargs['net_tsne_polish_learing_frac'],
             polish_n_iter=kwargs['net_tsne_polish_niter'],
             out_basis=kwargs['net_tsne_basis'],
         )
 
-    if kwargs['run_net_fitsne']:
-        selected = tools.select_cells(
-            adata.uns['knn_distances'],
-            kwargs['net_ds_frac'],
-            K=kwargs['net_ds_K'],
-            alpha=kwargs['net_ds_alpha'],
-            random_state=kwargs['random_state'],
-        )
-        tools.run_net_fitsne(
-            adata,
-            'X_pca',
-            selected,
-            n_jobs=kwargs['n_jobs'],
-            perplexity=kwargs['tsne_perplexity'],
-            random_state=kwargs['random_state'],
-            net_alpha=kwargs['net_l2'],
-            polish_learning_frac=kwargs['net_fitsne_polish_learing_frac'],
-            polish_n_iter=kwargs['net_fitsne_polish_niter'],
-            out_basis=kwargs['net_fitsne_basis'],
-        )
-
     if kwargs['run_net_umap']:
-        selected = tools.select_cells(
-            adata.uns['knn_distances'],
-            kwargs['net_ds_frac'],
-            K=kwargs['net_ds_K'],
-            alpha=kwargs['net_ds_alpha'],
-            random_state=kwargs['random_state'],
-        )
-        tools.run_net_umap(
+        tools.net_umap(
             adata,
-            'X_pca',
-            selected,
+            rep='pca',
             n_jobs=kwargs['n_jobs'],
             n_neighbors=kwargs['umap_K'],
             min_dist=kwargs['umap_min_dist'],
             spread=kwargs['umap_spread'],
             random_state=kwargs['random_state'],
+            select_frac=kwargs['net_ds_frac'],
+            select_K=kwargs['net_ds_K'],
+            select_alpha=kwargs['net_ds_alpha'],
+            full_speed=kwargs['full_speed'],
             net_alpha=kwargs['net_l2'],
-            ds_full_speed=kwargs['net_ds_full_speed'],
             polish_learning_rate=kwargs['net_umap_polish_learing_rate'],
             polish_n_epochs=kwargs['net_umap_polish_nepochs'],
             out_basis=kwargs['net_umap_basis'],
         )
 
-    if kwargs['run_net_fle']:
-        selected = tools.select_cells(
-            adata.uns['diffmap_knn_distances'],
-            kwargs['net_ds_frac'],
-            K=kwargs['net_ds_K'],
-            alpha=kwargs['net_ds_alpha'],
-            random_state=kwargs['random_state'],
-        )
-        tools.run_net_fle(
+    if kwargs['net_fle']:
+        tools.net_fle(
             adata,
-            selected,
             output_name,
             n_jobs=kwargs['n_jobs'],
             K=kwargs['fle_K'],
+            full_speed=kwargs['full_speed'],
             target_change_per_node=kwargs['fle_target_change_per_node'],
             target_steps=kwargs['fle_target_steps'],
-            is3d=kwargs['fle_3D'],
+            is3d=False,
+            memory=kwargs['fle_memory'],
             random_state=kwargs['random_state'],
-            ds_full_speed=kwargs['net_ds_full_speed'],
+            select_frac=kwargs['net_ds_frac'],
+            select_K=kwargs['net_ds_K'],
+            select_alpha=kwargs['net_ds_alpha'],
             net_alpha=kwargs['net_l2'],
             polish_target_steps=kwargs['net_fle_polish_target_steps'],
             out_basis=kwargs['net_fle_basis'],
         )
 
-    if kwargs['run_tsne']:
-        tools.run_tsne(
+    if kwargs['tsne']:
+        tools.tsne(
             adata,
-            'X_pca',
+            rep='pca',
             n_jobs=kwargs['n_jobs'],
             perplexity=kwargs['tsne_perplexity'],
             random_state=kwargs['random_state'],
         )
 
-    if kwargs['run_fitsne']:
-        tools.run_fitsne(
+    if kwargs['fitsne']:
+        tools.fitsne(
             adata,
-            'X_pca',
+            rep='pca',
             n_jobs=kwargs['n_jobs'],
             perplexity=kwargs['tsne_perplexity'],
             random_state=kwargs['random_state'],
         )
 
-    if kwargs['run_umap']:
-        tools.run_umap(
+    if kwargs['umap']:
+        tools.umap(
             adata,
-            'X_pca',
+            rep='pca',
             n_neighbors=kwargs['umap_K'],
             min_dist=kwargs['umap_min_dist'],
             spread=kwargs['umap_spread'],
             random_state=kwargs['random_state'],
         )
 
-    if kwargs['run_fle']:
-        tools.run_force_directed_layout(
+    if kwargs['fle']:
+        tools.fle(
             adata,
             output_name,
             n_jobs=kwargs['n_jobs'],
             K=kwargs['fle_K'],
+            full_speed=kwargs['full_speed'],
             target_change_per_node=kwargs['fle_target_change_per_node'],
             target_steps=kwargs['fle_target_steps'],
-            is3d=kwargs['fle_3D'],
+            is3d=False,
+            memory=kwargs['fle_memory'],
             random_state=kwargs['random_state'],
         )
 
     # calculate diffusion-based pseudotime from roots
     if len(kwargs['pseudotime']) > 0:
-        tools.run_pseudotime_calculation(adata, kwargs['pseudotime'])
+        tools.calc_pseudotime(adata, kwargs['pseudotime'])
 
     # merge cite-seq data and run t-SNE
     if kwargs['cite_seq']:
@@ -353,9 +322,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         adata = new_data
         print('ADT count matrix is attached.')
 
-        tools.run_fitsne(
+        tools.fitsne(
             adata,
-            'CITE-Seq',
+            rep='CITE-Seq',
             n_jobs=kwargs['n_jobs'],
             perplexity=kwargs['tsne_perplexity'],
             random_state=kwargs['random_state'],

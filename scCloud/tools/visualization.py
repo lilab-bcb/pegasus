@@ -270,21 +270,18 @@ def calc_force_directed_layout(
         init_coord_file = '{file_name}.init.coords.txt'.format(file_name=file_name)
         df.to_csv(init_coord_file, sep='\t', float_format='%.2f')
         command.extend(['--coords', init_coord_file])
+
     print(command)
     check_call(command)
-    print("Force-directed layout is generated.")
 
-<<<<<<< HEAD
     fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep='\t').values
+
     check_call(['rm', '-f', input_graph_file])
     check_call(['rm', '-f', output_coord_file])
-=======
-    fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep="\t").values
-    check_call(["rm", "-f", input_graph_file])
-    check_call(["rm", "-f", output_coord_file])
     if init is not None:
-        os.remove("{file_name}.init.coords.txt".format(file_name=file_name))
->>>>>>> origin/master
+        os.remove('{file_name}.init.coords.txt'.format(file_name=file_name))
+
+    print("Force-directed layout is generated.")
 
     return fle_coords
 
@@ -668,8 +665,8 @@ def net_umap(
     select_alpha: float = 1.0,
     full_speed: bool = False,
     net_alpha: float = 0.1,
-    polish_n_epochs: int = 30,
     polish_learning_rate: float = 10.0,
+    polish_n_epochs: int = 30,
     out_basis: str = 'net_umap',
 ) -> None:
     """
