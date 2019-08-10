@@ -583,7 +583,7 @@ def read_input(
         data = load_10x_h5_file(input_file, ngene=ngene)
     elif file_format == "h5ad":
         data = anndata.read_h5ad(
-            input_file, backed=(False if h5ad_mode == "a" else h5ad_mode)
+            input_file, backed=(None if h5ad_mode == "a" else h5ad_mode)
         )
     elif file_format == "mtx":
         data = load_mtx_file(input_file, genome, ngene=ngene)
@@ -596,7 +596,7 @@ def read_input(
             input_file, genome, sep=("\t" if file_format == "dge" else ","), ngene=ngene
         )
 
-    if file_format != "h5ad":    
+    if file_format != "h5ad":
         data.restrain_keywords(genome)
         if return_type == "AnnData":
             data = data.convert_to_anndata(concat_matrices=concat_matrices)
@@ -634,14 +634,28 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
     start = time.time()
 
     if isinstance(data, MemData):
-        data.write_h5_file(output_name + ".scCloud.h5")
+        if not output_name.endswith(".scCloud.h5"):
+            output_name += ".scCloud.h5"
+        data.write_h5_file(output_name)
     else:
+        if not output_name.endswith(".h5ad"):
+            output_name += ".h5ad"
         # Eliminate non-writable objects from uns
-        keys = list(adata.uns)
+        keys = list(data.uns)
         for keyword in keys:
             if keyword.startswith('anndata_'):
-                adata.uns.pop(keyword)
-        data.write(output_name + ".h5ad", compression = 'gzip')
+                data.uns.pop(keyword)
+        import pathlib
+        output_name = pathlib.Path(output_name)
+        if data.isbacked and output_name == data.filename:
+            import h5py
+            h5_file = data.file._file
+            # Fix old h5ad files in which obsm/varm were stored as compound datasets
+            if 'obsm' in h5_file.keys() and isinstance(h5_file['obsm'], h5py.Dataset):
+                del h5_file['obsm']
+            if 'varm' in h5_file.keys() and isinstance(h5_file['varm'], h5py.Dataset):
+                del h5_file['varm']
+        data.write(output_name, compression='gzip')
 
     end = time.time()
     print("Write output is finished. Time spent = {:.2f}s.".format(end - start))

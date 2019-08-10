@@ -30,12 +30,12 @@ def run_pipeline(input_file, output_name, **kwargs):
         assert adata is not None and cdata is not None
     else:
         values = adata.X.getnnz(axis = 1)
-        if values.min() == 0: # 10x raw data 
+        if values.min() == 0: # 10x raw data
             adata._inplace_subset_obs(values >= kwargs['min_genes_on_raw'])
     print('Inputs are loaded.')
 
     if kwargs['seurat_compatible']:
-        assert is_raw and kwargs['select_hvf'] 
+        assert is_raw and kwargs['select_hvf']
 
     # preprocessing
     if is_raw:
@@ -58,7 +58,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         # normailize counts and then transform to log space
         tools.log_norm(adata, kwargs['norm_count'])
         # set group attribute
-        if kwargs['batch_correction']:
+        if kwargs['batch_correction'] and kwargs['group_attribute'] is not None:
             tools.set_group_attribute(adata, kwargs['group_attribute'])
     elif kwargs['subcluster']:
         adata = tools.get_anndata_for_subclustering(adata, kwargs['subset_selections'])
@@ -75,7 +75,7 @@ def run_pipeline(input_file, output_name, **kwargs):
                 n_jobs=kwargs['n_jobs']
             )
             if kwargs['hvf_flavor'] == 'scCloud':
-                if kwargs['plot_hvg'] is not None:
+                if kwargs['plot_hvf'] is not None:
                     from scCloud.plotting import plot_hvf
                     robust_idx = adata.var['robust'].values
                     plot_hvf(
@@ -89,6 +89,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         if kwargs['batch_correction']:
             tools.correct_batch(adata, features = 'highly_variable_features')
         tools.pca(adata, nPC=kwargs['nPC'], random_state=kwargs['random_state'], features = 'highly_variable_features')
+        tools.neighbors(adata, K = )
     else:
         assert 'X_pca' in adata.obsm.keys()
 
@@ -105,26 +106,6 @@ def run_pipeline(input_file, output_name, **kwargs):
             random_state=kwargs['random_state'],
             full_speed=kwargs['diffmap_full_speed'],
         )
-
-        import time
-
-        start_time = time.time()
-        tools.get_kNN(
-            adata,
-            'X_diffmap',
-            kwargs['diffmap_K'],
-            n_jobs=kwargs['n_jobs'],
-            random_state=kwargs['random_state'],
-            full_speed=kwargs['diffmap_full_speed'],
-        )
-        end_time = time.time()
-        print(
-            'KNN for diffusion components is finished. Time spent = {:.2f}s.'.format(
-                end_time - start_time
-            )
-        )
-
-
     else:
         assert 'X_diffmap' in adata.obsm.keys()
 
@@ -142,8 +123,6 @@ def run_pipeline(input_file, output_name, **kwargs):
                 stat_mean, pvalue_mean, accept_rate
             )
         )
-        # if kwargs['kBJSD']:
-        #     print('kBJSD mean = {:.4f}'.format(tools.calc_kBJSD(adata, kwargs['kBET_batch'], K = kwargs['kBET_K'], n_jobs = kwargs['n_jobs'])))
 
     # clustering
     if kwargs['run_approx_louvain']:
@@ -385,7 +364,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         seurat_data.raw = raw_data
         seurat_data.uns['scale.data'] = adata.uns['anndata_highly_variable_features'].X
         seurat_data.uns['scale.data.rownames'] = adata.uns['anndata_highly_variable_features'].var_names.values
-        seurat_data.write(output_name + '.seurat.h5ad', compression = 'gzip')
+        io.write_output(seurat_data, output_name + '.seurat.h5ad')
 
     # write out results
     io.write_output(adata, output_name)

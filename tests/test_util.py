@@ -90,14 +90,19 @@ def assert_data_frames_equal(test_case, df1, df2, blacklist=None):
 
 def assert_adata_files_equal(test_case, path, test_path, obs_blacklist=None, var_blacklist=None, uns_blacklist=None,
                              obsm_blacklist=None, varm_blacklist=None):
-    test_data = sc.tools.read_input(test_path, mode='a')
-    data = sc.tools.read_input(path, mode='a')
+    test_data = sc.io.read_input(test_path)
+    data = sc.io.read_input(path)
     assert_adata_equal(test_case, data, test_data, obs_blacklist, var_blacklist, uns_blacklist, obsm_blacklist,
         varm_blacklist)
 
 
 def assert_adata_equal(test_case, data1, data2, obs_blacklist=None, var_blacklist=None, uns_blacklist=None,
                        obsm_blacklist=None, varm_blacklist=None):
+    if data1.isbacked:
+        data1.X = data1.X[()]
+    if data2.isbacked:
+        data2.X = data2.X[()]
+
     if scipy.sparse.issparse(data1.X):
         data1.X = data1.X.toarray()
     if scipy.sparse.issparse(data2.X):

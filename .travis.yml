@@ -2,7 +2,7 @@ sudo: required
 services:
   - docker
 #dist: xenial   # required for Python >= 3.7
-#language: python
+language: python
 notifications:
   email: false
 
@@ -23,6 +23,5 @@ before_install:
 
 script:
   #  - python -m unittest
-  - docker run -d -p 127.0.0.1:80:4567 sccloud/sccloudpy /bin/sh -c "python -m unittest;"
-
+  - docker run --rm sccloud/sccloudpy /bin/sh -c "python -m unittest;"
 

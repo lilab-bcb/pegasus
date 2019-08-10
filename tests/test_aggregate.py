@@ -8,6 +8,9 @@ import scCloud as sc
 
 class TestAggregate(unittest.TestCase):
 
+    def tearDown(self):
+        os.path.exists('aggregate_test.scCloud.h5') and os.remove('aggregate_test.scCloud.h5')
+
     def test_aggregate_10x_matrices(self):
         m1 = sc.io.read_input('tests/scCloud-test-data/input/heart_1k_v3/filtered_feature_bc_matrix.h5',
             genome='mm10')
@@ -30,9 +33,6 @@ class TestAggregate(unittest.TestCase):
         self.assertTrue(m1_result.obs.index.values[0].startswith('heart_1k_v3'), 'Prefix not added')
         self.assertTrue(m2_result.obs.index.values[0].startswith('heart_1k_v2'), 'Prefix not added')
 
-    def tearDown(self):
-        if os.path.exists('aggregate_test.scCloud.h5'):
-            os.remove('aggregate_test.scCloud.h5')
 
     def test_multi_genome(self):
         sc.tools.aggregate_matrices('tests/scCloud-test-data/input/aggregate_multi_genome.csv', restrictions=[],

@@ -88,13 +88,13 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
         print("Gender-specific gene expression violin plots are generated.")
 
     # output results
-    adt.write(output_name + "_ADTs.h5ad")
+    io.write_output(adt, output_name + "_ADTs.h5ad")
     print(
         "Hashtag count information is written to {output_name}_ADTs.h5ad .".format(
             output_name=output_name
         )
     )
-    data.write(output_name + "_demux.h5ad")
+    io.write_output(data, output_name + "_demux.h5ad")
     print(
         "Demutiplexed RNA expression information is written to {output_name}_demux.h5ad .".format(
             output_name=output_name

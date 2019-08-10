@@ -274,9 +274,17 @@ def calc_force_directed_layout(
     check_call(command)
     print("Force-directed layout is generated.")
 
+<<<<<<< HEAD
     fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep='\t').values
     check_call(['rm', '-f', input_graph_file])
     check_call(['rm', '-f', output_coord_file])
+=======
+    fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep="\t").values
+    check_call(["rm", "-f", input_graph_file])
+    check_call(["rm", "-f", output_coord_file])
+    if init is not None:
+        os.remove("{file_name}.init.coords.txt".format(file_name=file_name))
+>>>>>>> origin/master
 
     return fle_coords
 

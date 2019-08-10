@@ -20,10 +20,10 @@ RUN apt-get clean && \
 RUN pip install cython pybind11 numpy
 RUN pip install fitsne xlrd
 
-COPY . /scCloud/
-WORKDIR /scCloud/tests
+COPY . /scCloudPy/
+WORKDIR /scCloudPy/tests
 RUN git clone https://github.com/klarman-cell-observatory/scCloud-test-data.git
-WORKDIR /scCloud/
+WORKDIR /scCloudPy/
 RUN pip install -e .
 
 

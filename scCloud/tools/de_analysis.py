@@ -1,18 +1,17 @@
 import time
 import numpy as np
 import pandas as pd
-from scipy.sparse import issparse, csr_matrix, csc_matrix
+from scipy.sparse import csr_matrix, csc_matrix
 import scipy.stats as ss
 import fisher
 from statsmodels.stats.multitest import fdrcorrection as fdr
 import sklearn.metrics as sm
-import warnings
 import xlsxwriter
 from natsort import natsorted
 from joblib import Parallel, delayed
 
 from . import non_de_attrs
-from scCloud.io import read_input
+from scCloud.io import read_input, write_output
 
 
 def collect_contingency_table(data, X, labels="louvain_labels"):
@@ -565,9 +564,7 @@ def run_de_analysis(
         data = data[data.obs[attr] == value].copy()
         X = data.X
         import os
-
         output_file = os.path.splitext(output_excel_file)[0] + ".h5ad"
-
     end = time.time()
     print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))
     __markers(
@@ -580,7 +577,7 @@ def run_de_analysis(
         run_roc=run_roc,
         temp_folder=temp_folder,
     )
-    data.write(output_file)
+    write_output(data, output_file)
 
     print("Differential expression results are written back to h5ad file.")
 
