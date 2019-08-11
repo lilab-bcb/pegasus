@@ -200,13 +200,13 @@ Examples:
             'leiden_niter': int(self.args['--leiden-niter']),
             'leiden_class_label': self.args['--leiden-class-label'],
             'spectral_louvain': self.args['--spectral-louvain'],
-            'spetral_louvain_basis': self.args['--spetral-louvain-basis'],
-            'spetral_louvain_nclusters': int(self.args['--spetral-louvain-nclusters']),
-            'spetral_louvain_ninit': int(self.args['--spetral-louvain-ninit']),
-            'spetral_louvain_resolution': float(
-                self.args['--spetral-louvain-resolution']
+            'spectral_louvain_basis': self.args['--spectral-louvain-basis'],
+            'spectral_louvain_nclusters': int(self.args['--spectral-louvain-nclusters']),
+            'spectral_louvain_ninit': int(self.args['--spectral-louvain-ninit']),
+            'spectral_louvain_resolution': float(
+                self.args['--spectral-louvain-resolution']
             ),
-            'spetral_louvain_class_label': self.args['--spetral-louvain-class-label'],
+            'spectral_louvain_class_label': self.args['--spectral-louvain-class-label'],
             'spectral_leiden': self.args['--spectral-leiden'],
             'spectral_leiden_basis': self.args['--spectral-leiden-basis'],
             'spectral_leiden_nclusters': int(self.args['--spectral-leiden-nclusters']),
