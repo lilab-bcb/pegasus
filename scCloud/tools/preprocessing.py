@@ -245,7 +245,7 @@ def run_filter_data(
     print("filter_data is finished. Time spent = {:.2f}s.".format(end - start))
 
 
-def log_norm(data: 'AnnData', norm_count: float = 1e4) -> None:
+def log_norm(data: 'AnnData', norm_count: float = 1e5) -> None:
     """Normalization and then take log 
     TODO: Documentation
     """

@@ -116,8 +116,8 @@ def get_neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int
     else:
         indices, distances = calculate_nearest_neighbors(
             data.obsm[rep_key],
-            effective_n_jobs(n_jobs),
             K=K,
+            n_jobs=effective_n_jobs(n_jobs),
             random_state=random_state,
             full_speed=full_speed,
         )

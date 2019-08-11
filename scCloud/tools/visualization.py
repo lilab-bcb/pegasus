@@ -9,7 +9,7 @@ import os
 import pkg_resources
 
 from MulticoreTSNE import MulticoreTSNE as TSNE
-import umap
+import umap as umap_module
 
 from typing import List
 
@@ -114,7 +114,7 @@ def calc_umap(
     """
     TODO: Typing
     """    
-    umap_obj = umap.UMAP(
+    umap_obj = umap_module.UMAP(
         n_components=n_components,
         n_neighbors=n_neighbors,
         min_dist=min_dist,
@@ -129,6 +129,7 @@ def calc_umap(
     embedding = None
     if X.shape[0] < 4096 or knn_indices is None:
         embedding = umap_obj.fit_transform(X)
+        print("haha = {}".format(X.shape[0]))
     else:
         assert knn_dists is not None
         # preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
@@ -137,7 +138,7 @@ def calc_umap(
         X = check_array(X, dtype=np.float32, accept_sparse='csr')
         umap_obj._raw_data = X
         if umap_obj.a is None or umap_obj.b is None:
-            umap_obj._a, umap_obj._b = umap.umap_.find_ab_params(
+            umap_obj._a, umap_obj._b = umap_module.umap_.find_ab_params(
                 umap_obj.spread, umap_obj.min_dist
             )
         else:
@@ -171,7 +172,7 @@ def calc_umap(
             print("Construct fuzzy simplicial set")
 
         umap_obj._small_data = False
-        umap_obj.graph_ = umap.umap_.fuzzy_simplicial_set(
+        umap_obj.graph_ = umap_module.umap_.fuzzy_simplicial_set(
             X,
             umap_obj.n_neighbors,
             _random_state,
@@ -188,7 +189,7 @@ def calc_umap(
         _n_epochs = umap_obj.n_epochs if umap_obj.n_epochs is not None else 0
         if umap_obj.verbose:
             print("Construct embedding")
-        embedding = umap.umap_.simplicial_set_embedding(
+        embedding = umap_module.umap_.simplicial_set_embedding(
             X,
             umap_obj.graph_,
             umap_obj.n_components,
