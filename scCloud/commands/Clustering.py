@@ -231,7 +231,7 @@ Examples:
             'net_ds_K': int(self.args['--net-down-sample-K']),
             'net_ds_alpha': float(self.args['--net-down-sample-alpha']),
             'net_l2': float(self.args['--net-regressor-L2-penalty']),
-            'net_tsne': self.args['--run-net-tsne'],
+            'net_tsne': self.args['--net-tsne'],
             'net_tsne_polish_learing_frac': float(
                 self.args['--net-tsne-polish-learning-frac']
             ),
