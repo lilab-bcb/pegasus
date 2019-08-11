@@ -297,8 +297,14 @@ def pca(data: 'AnnData', standardize: bool = True, max_value: float = 10, nPC: i
     data_dense = data.uns[keyword]
 
     if standardize:
-        scaler = StandardScaler(copy=False)
-        scaler.fit_transform(data_dense.X)
+        # scaler = StandardScaler(copy=False)
+        # scaler.fit_transform(data_dense.X)
+        X = data_dense.X 
+        m1 = X.mean(axis = 0)
+        psum = np.multiply(X, X).sum(axis = 0)
+        std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
+        X -= m1
+        X /= std
 
     if max_value is not None:
         data_dense.X[data_dense.X > max_value] = max_value
