@@ -25,7 +25,7 @@ def calculate_normalized_affinity(
 
 
 def calculate_diffusion_map(
-    W: "csr_matrix", n_dc: int, alpha: float, solver: str, random_state: int
+    W: "csr_matrix", n_components: int, alpha: float, solver: str, random_state: int
 ) -> Tuple["np.array", "np.array"]:
     assert issparse(W)
 
@@ -38,14 +38,14 @@ def calculate_diffusion_map(
     print("Calculating normalized affinity matrix is done.")
 
     if solver == "randomized":
-        U, S, VT = randomized_svd(W_norm, n_components=n_dc, random_state=random_state)
+        U, S, VT = randomized_svd(W_norm, n_components=n_components, random_state=random_state)
         signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
         Lambda = signs * S  # get eigenvalues
     else:
         assert solver == "eigsh"
         np.random.seed(random_state)
         v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
-        Lambda, U = eigsh(W_norm, k=n_dc, v0=v0)
+        Lambda, U = eigsh(W_norm, k=n_components, v0=v0)
         Lambda = Lambda[::-1]
         U = U[:, ::-1]
 
@@ -82,7 +82,7 @@ def diffmap(
 
     W = data.uns[rep_key]
     Phi_pt, Lambda = calculate_diffusion_map(
-        W, n_dc=n_components, alpha=alpha, solver=solver, random_state=random_state
+        W, n_components=n_components, alpha=alpha, solver=solver, random_state=random_state
     )
 
     data.obsm["X_diffmap"] = Phi_pt

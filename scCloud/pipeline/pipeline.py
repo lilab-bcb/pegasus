@@ -96,9 +96,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         # PCA
         tools.pca(
             adata,
-            nPC=kwargs["nPC"],
-            random_state=kwargs["random_state"],
+            n_components=kwargs["nPC"],
             features="highly_variable_features",
+            random_state=kwargs["random_state"],
         )
 
         # Find K neighbors
@@ -125,7 +125,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         if kwargs["diffmap"]:
             tools.diffmap(
                 adata,
-                n_dc=kwargs["diffmap_ndc"],
+                n_components=kwargs["diffmap_ndc"],
                 rep="pca",
                 alpha=kwargs["diffmap_alpha"],
                 solver=kwargs["diffmap_solver"],

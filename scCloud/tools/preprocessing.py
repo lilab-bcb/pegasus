@@ -310,11 +310,11 @@ def select_features(data: "AnnData", features: str = None) -> str:
 
 def pca(
     data: "AnnData",
+    n_components: int = 50,
+    features: str = "highly_variable_features",
     standardize: bool = True,
     max_value: float = 10,
-    nPC: int = 50,
     random_state: int = 0,
-    features: str = "highly_variable_features",
 ) -> None:
     """Calculate PCA
     TODO: documentation. Feature selection time is not included.
@@ -339,7 +339,7 @@ def pca(
         X[X > max_value] = max_value
         X[X < -max_value] = -max_value
 
-    pca = PCA(n_components=nPC, random_state=random_state)
+    pca = PCA(n_components=n_components, random_state=random_state)
     X_pca = pca.fit_transform(X)
 
     data.obsm["X_pca"] = X_pca
