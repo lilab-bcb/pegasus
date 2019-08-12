@@ -485,7 +485,7 @@ def write_results_to_excel(output_file, df, alpha=0.05):
     print("Excel spreadsheet is written.")
 
 
-def markers(data, labels, n_jobs, run_fisher, run_mwu, run_roc):
+def de_analysis(data, labels, n_jobs=1, run_fisher=True, run_mwu=True, run_roc=True):
     __markers(
         data,
         data.X,

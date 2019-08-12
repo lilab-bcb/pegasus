@@ -45,6 +45,7 @@ from .visualization import (
 )
 from .de_analysis import (
     run_de_analysis,
+    de_analysis,
     write_results_to_excel,
     collect_stat_and_t_test,
     fisher_test,
