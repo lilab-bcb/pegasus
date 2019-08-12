@@ -564,6 +564,7 @@ def run_de_analysis(
         data = data[data.obs[attr] == value].copy()
         X = data.X
         import os
+
         output_file = os.path.splitext(output_excel_file)[0] + ".h5ad"
     end = time.time()
     print("{0} is loaded. Time spent = {1:.2f}s.".format(input_file, end - start))

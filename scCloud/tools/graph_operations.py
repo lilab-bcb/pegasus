@@ -4,7 +4,9 @@ from scipy.sparse import issparse
 import igraph
 
 
-def construct_graph(W: 'csr_matrix', directed: bool = False, adjust_weights: bool = True) -> 'igraph':
+def construct_graph(
+    W: "csr_matrix", directed: bool = False, adjust_weights: bool = True
+) -> "igraph":
     start = time.time()
 
     assert issparse(W)

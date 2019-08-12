@@ -19,14 +19,8 @@ from .preprocessing import (
     select_features,
     pca,
 )
-from .hvf_selection import (
-    estimate_feature_statistics,
-    highly_variable_features,
-)
-from .batch_correction import (
-    set_group_attribute,
-    correct_batch
-)
+from .hvf_selection import estimate_feature_statistics, highly_variable_features
+from .batch_correction import set_group_attribute, correct_batch
 from .nearest_neighbors import (
     calculate_nearest_neighbors,
     get_neighbors,
@@ -36,17 +30,8 @@ from .nearest_neighbors import (
     calc_kSIM,
 )
 from .graph_operations import construct_graph
-from .diffusion_map import (
-    diffmap,
-    reduce_diffmap_to_3d,
-    calc_pseudotime
-)
-from .clustering import (
-    louvain,
-    leiden,
-    spectral_louvain,
-    spectral_leiden,
-)
+from .diffusion_map import diffmap, reduce_diffmap_to_3d, calc_pseudotime
+from .clustering import louvain, leiden, spectral_louvain, spectral_leiden
 from .net_regressor import net_train_and_predict
 from .visualization import (
     tsne,

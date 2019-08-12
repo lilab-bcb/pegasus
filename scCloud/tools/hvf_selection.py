@@ -9,24 +9,23 @@ import skmisc.loess as sl
 from typing import List
 
 
-
-def estimate_feature_statistics(data: 'AnnData', consider_batch: bool) -> None:
+def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
     assert issparse(data.X)
 
     if consider_batch:
-        if 'Channels' not in data.uns:
-            data.uns['Channels'] = data.obs['Channel'].unique()
+        if "Channels" not in data.uns:
+            data.uns["Channels"] = data.obs["Channel"].unique()
 
-        if 'Group' not in data.obs:
-            data.obs['Group'] = 'one_group'
+        if "Group" not in data.obs:
+            data.obs["Group"] = "one_group"
 
-        if 'Groups' not in data.uns:
-            data.uns['Groups'] = data.obs['Group'].unique()
+        if "Groups" not in data.uns:
+            data.uns["Groups"] = data.obs["Group"].unique()
 
-        channels = data.uns['Channels']
-        groups = data.uns['Groups']
+        channels = data.uns["Channels"]
+        groups = data.uns["Groups"]
 
         ncells = np.zeros(channels.size)
         means = np.zeros((data.shape[1], channels.size))
@@ -34,7 +33,7 @@ def estimate_feature_statistics(data: 'AnnData', consider_batch: bool) -> None:
 
         group_dict = defaultdict(list)
         for i, channel in enumerate(channels):
-            idx = np.isin(data.obs['Channel'], channel)
+            idx = np.isin(data.obs["Channel"], channel)
             mat = data.X[idx].astype(np.float64)
             ncells[i] = mat.shape[0]
 
@@ -48,61 +47,69 @@ def estimate_feature_statistics(data: 'AnnData', consider_batch: bool) -> None:
                 m2 = mat.power(2).sum(axis=0).A1
                 partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
 
-            group = data.obs['Group'][idx.nonzero()[0][0]]
+            group = data.obs["Group"][idx.nonzero()[0][0]]
             group_dict[group].append(i)
 
         partial_sum[partial_sum < 1e-6] = 0.0
-        
+
         overall_means = np.dot(means, ncells) / data.shape[0]
         batch_adjusted_vars = np.zeros(data.shape[1])
 
-        c2gid = np.zeros(channels.size, dtype = int)
+        c2gid = np.zeros(channels.size, dtype=int)
         gncells = np.zeros(groups.size)
         gmeans = np.zeros((data.shape[1], groups.size))
         gstds = np.zeros((data.shape[1], groups.size))
-    
+
         for i, group in enumerate(groups):
             gchannels = group_dict[group]
             c2gid[gchannels] = i
             gncells[i] = ncells[gchannels].sum()
             gmeans[:, i] = np.dot(means[:, gchannels], ncells[gchannels]) / gncells[i]
-            gstds[:, i] = (partial_sum[:, gchannels].sum(axis=1) / gncells[i]) ** 0.5 # calculate std
+            gstds[:, i] = (
+                partial_sum[:, gchannels].sum(axis=1) / gncells[i]
+            ) ** 0.5  # calculate std
             if groups.size > 1:
-                batch_adjusted_vars += gncells[i] * ((gmeans[:, i] - overall_means) ** 2)
+                batch_adjusted_vars += gncells[i] * (
+                    (gmeans[:, i] - overall_means) ** 2
+                )
 
-        data.varm['means'] = means
-        data.varm['partial_sum'] = partial_sum
-        data.uns['ncells'] = ncells
+        data.varm["means"] = means
+        data.varm["partial_sum"] = partial_sum
+        data.uns["ncells"] = ncells
 
-        data.varm['gmeans'] = gmeans
-        data.varm['gstds'] = gstds
-        data.uns['gncells'] = gncells
-        data.uns['c2gid'] = c2gid
+        data.varm["gmeans"] = gmeans
+        data.varm["gstds"] = gstds
+        data.uns["gncells"] = gncells
+        data.uns["c2gid"] = c2gid
 
-        data.var['mean'] = overall_means
-        data.var['var'] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (data.shape[0] - 1.0)
+        data.var["mean"] = overall_means
+        data.var["var"] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
+            data.shape[0] - 1.0
+        )
     else:
-        mean = data.X.mean(axis = 0).A1
-        m2 = data.X.power(2).sum(axis = 0).A1
+        mean = data.X.mean(axis=0).A1
+        m2 = data.X.power(2).sum(axis=0).A1
         var = (m2 - data.X.shape[0] * (mean ** 2)) / (data.X.shape[0] - 1)
 
-        data.var['mean'] = mean
-        data.var['var'] = var
+        data.var["mean"] = mean
+        data.var["var"] = var
 
 
-def select_hvf_scCloud(data: 'AnnData', consider_batch: bool, n_top: int = 2000, span: float = 0.02) -> None:
+def select_hvf_scCloud(
+    data: "AnnData", consider_batch: bool, n_top: int = 2000, span: float = 0.02
+) -> None:
     """ Select highly variable features using the scCloud method
     """
-    if 'robust' not in data.var:
+    if "robust" not in data.var:
         raise ValueError("Please run `qc_metrics` to identify robust genes")
 
     estimate_feature_statistics(data, consider_batch)
 
-    robust_idx = data.var['robust'].values
+    robust_idx = data.var["robust"].values
     hvf_index = np.zeros(robust_idx.sum(), dtype=bool)
 
-    mean = data.var.loc[robust_idx, 'mean']
-    var = data.var.loc[robust_idx, 'var']
+    mean = data.var.loc[robust_idx, "mean"]
+    var = data.var.loc[robust_idx, "var"]
 
     lobj = sl.loess(mean, var, span=span, degree=2)
     lobj.fit()
@@ -119,17 +126,23 @@ def select_hvf_scCloud(data: 'AnnData', consider_batch: bool, n_top: int = 2000,
 
     hvf_index[np.argsort(hvf_rank)[:n_top]] = True
 
-    data.var['hvf_loess'] = 0.0
-    data.var.loc[robust_idx, 'hvf_loess'] = lobj.outputs.fitted_values
+    data.var["hvf_loess"] = 0.0
+    data.var.loc[robust_idx, "hvf_loess"] = lobj.outputs.fitted_values
 
-    data.var['hvf_rank'] = -1
-    data.var.loc[robust_idx, 'hvf_rank'] = hvf_rank
-    data.var['highly_variable_features'] = False
-    data.var.loc[robust_idx, 'highly_variable_features'] = hvf_index
+    data.var["hvf_rank"] = -1
+    data.var.loc[robust_idx, "hvf_rank"] = hvf_rank
+    data.var["highly_variable_features"] = False
+    data.var.loc[robust_idx, "highly_variable_features"] = hvf_index
 
 
 def select_hvf_seurat_single(
-    X: 'csr_matrix', n_top: int, min_disp: float, max_disp: float, min_mean: float, max_mean: float) -> List[int] :
+    X: "csr_matrix",
+    n_top: int,
+    min_disp: float,
+    max_disp: float,
+    min_mean: float,
+    max_mean: float,
+) -> List[int]:
     """ HVF selection for one channel using Seurat method
     """
     X = X.copy().expm1()
@@ -144,13 +157,13 @@ def select_hvf_seurat_single(
     mean = np.log1p(mean)
     dispersion = np.log(dispersion)
 
-    df = pd.DataFrame({'log_dispersion': dispersion, 'bin': pd.cut(mean, bins=20)})
-    log_disp_groups = df.groupby('bin')['log_dispersion']
+    df = pd.DataFrame({"log_dispersion": dispersion, "bin": pd.cut(mean, bins=20)})
+    log_disp_groups = df.groupby("bin")["log_dispersion"]
     log_disp_mean = log_disp_groups.mean()
     log_disp_std = log_disp_groups.std(ddof=1)
     log_disp_zscore = (
-        df['log_dispersion'].values - log_disp_mean.loc[df['bin']].values
-    ) / log_disp_std.loc[df['bin']].values
+        df["log_dispersion"].values - log_disp_mean.loc[df["bin"]].values
+    ) / log_disp_std.loc[df["bin"]].values
     log_disp_zscore[np.isnan(log_disp_zscore)] = 0.0
 
     hvf_rank = np.full(X.shape[1], -1, dtype=int)
@@ -173,17 +186,30 @@ def select_hvf_seurat_single(
     return hvf_rank
 
 
-def select_hvf_seurat_multi(X: 'csr_matrix', channels: List[str], cell2channel: List[str], n_top: int, n_jobs: int, min_disp: float, max_disp: float, min_mean: float, max_mean: float) -> List[int]:
+def select_hvf_seurat_multi(
+    X: "csr_matrix",
+    channels: List[str],
+    cell2channel: List[str],
+    n_top: int,
+    n_jobs: int,
+    min_disp: float,
+    max_disp: float,
+    min_mean: float,
+    max_mean: float,
+) -> List[int]:
     Xs = []
     for channel in channels:
         Xs.append(X[np.isin(cell2channel, channel)])
 
     from joblib import effective_n_jobs
+
     n_jobs = effective_n_jobs(n_jobs)
 
     res_arr = np.array(
         Parallel(n_jobs=n_jobs)(
-            delayed(select_hvf_seurat_single)(Xs[i], n_top, min_disp, max_disp, min_mean, max_mean)
+            delayed(select_hvf_seurat_single)(
+                Xs[i], n_top, min_disp, max_disp, min_mean, max_mean
+            )
             for i in range(channels.size)
         )
     )
@@ -191,6 +217,7 @@ def select_hvf_seurat_multi(X: 'csr_matrix', channels: List[str], cell2channel: 
     shared = selected.sum(axis=0)
     cands = (shared > 0).nonzero()[0]
     import numpy.ma as ma
+
     median_rank = ma.median(ma.masked_array(res_arr, mask=~selected), axis=0).data
     cands = sorted(cands, key=lambda x: median_rank[x])
     cands = sorted(cands, key=lambda x: shared[x], reverse=True)
@@ -202,7 +229,7 @@ def select_hvf_seurat_multi(X: 'csr_matrix', channels: List[str], cell2channel: 
 
 
 def select_hvf_seurat(
-    data: 'AnnData',
+    data: "AnnData",
     consider_batch: bool,
     n_top: int,
     min_disp: float,
@@ -214,12 +241,20 @@ def select_hvf_seurat(
     """ Select highly variable features using Seurat method.
     """
 
-    robust_idx = data.var['robust'].values
+    robust_idx = data.var["robust"].values
     X = data.X[:, robust_idx]
 
     hvf_rank = (
         select_hvf_seurat_multi(
-            X, data.uns['Channels'], data.obs['Channel'], n_top, n_jobs=n_jobs, min_disp = min_disp, max_disp = max_disp, min_mean = min_mean, max_mean = max_mean
+            X,
+            data.uns["Channels"],
+            data.obs["Channel"],
+            n_top,
+            n_jobs=n_jobs,
+            min_disp=min_disp,
+            max_disp=max_disp,
+            min_mean=min_mean,
+            max_mean=max_mean,
         )
         if consider_batch
         else select_hvf_seurat_single(
@@ -234,14 +269,14 @@ def select_hvf_seurat(
 
     hvf_index = hvf_rank >= 0
 
-    data.var['hvf_rank'] = -1
-    data.var.loc[robust_idx, 'hvf_rank'] = hvf_rank
-    data.var['highly_variable_features'] = False
-    data.var.loc[robust_idx, 'highly_variable_features'] = hvf_index
+    data.var["hvf_rank"] = -1
+    data.var.loc[robust_idx, "hvf_rank"] = hvf_rank
+    data.var["highly_variable_features"] = False
+    data.var.loc[robust_idx, "highly_variable_features"] = hvf_index
 
 
 def highly_variable_features(
-    data: 'AnnData',
+    data: "AnnData",
     consider_batch: bool,
     flavor: str = "scCloud",
     n_top: int = 2000,
@@ -260,22 +295,19 @@ def highly_variable_features(
 
     start = time.time()
 
-    if 'Channels' not in data.uns:
-        data.uns['Channels'] = data.obs['Channel'].unique()
+    if "Channels" not in data.uns:
+        data.uns["Channels"] = data.obs["Channel"].unique()
 
-    if data.uns['Channels'].size == 1 and consider_batch:
+    if data.uns["Channels"].size == 1 and consider_batch:
         consider_batch = False
-        print("Warning: only contains one channel, no need to consider batch for selecting highly variable features.")
-
-    if flavor == 'scCloud':
-        select_hvf_scCloud(
-            data,
-            consider_batch,
-            n_top=n_top,
-            span=span
+        print(
+            "Warning: only contains one channel, no need to consider batch for selecting highly variable features."
         )
+
+    if flavor == "scCloud":
+        select_hvf_scCloud(data, consider_batch, n_top=n_top, span=span)
     else:
-        assert flavor == 'Seurat'
+        assert flavor == "Seurat"
         select_hvf_seurat(
             data,
             consider_batch,
@@ -289,5 +321,7 @@ def highly_variable_features(
 
     end = time.time()
     print(
-        "{tot} highly variable features have been selected. Time spent = {time:.2f}s.".format(tot = data.var['highly_variable_features'].sum(), time = end - start)
+        "{tot} highly variable features have been selected. Time spent = {time:.2f}s.".format(
+            tot=data.var["highly_variable_features"].sum(), time=end - start
+        )
     )

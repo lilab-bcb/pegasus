@@ -13,7 +13,7 @@ def calculate_nearest_neighbors(
     X: np.array,
     K: int = 100,
     n_jobs: int = -1,
-    method: str = 'hnsw',
+    method: str = "hnsw",
     M: int = 20,
     efC: int = 200,
     efS: int = 200,
@@ -29,7 +29,7 @@ def calculate_nearest_neighbors(
     nsample = X.shape[0]
 
     if nsample <= 1000:
-        method = 'sklearn'
+        method = "sklearn"
 
     if nsample < K:
         print(
@@ -41,12 +41,12 @@ def calculate_nearest_neighbors(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    if method == 'hnsw':
+    if method == "hnsw":
         import hnswlib
 
         assert not issparse(X)
         # Build hnsw index
-        knn_index = hnswlib.Index(space='l2', dim=X.shape[1])
+        knn_index = hnswlib.Index(space="l2", dim=X.shape[1])
         knn_index.init_index(
             max_elements=nsample, ef_construction=efC, M=M, random_seed=random_state
         )
@@ -65,9 +65,9 @@ def calculate_nearest_neighbors(
         indices = indices[:, 1:].astype(int)
         distances = np.sqrt(distances[:, 1:])
     else:
-        assert method == 'sklearn'
+        assert method == "sklearn"
         knn = NearestNeighbors(
-            n_neighbors = K - 1, n_jobs = n_jobs
+            n_neighbors=K - 1, n_jobs=n_jobs
         )  # eliminate the first neighbor, which is the node itself
         knn.fit(X)
         distances, indices = knn.kneighbors()
@@ -75,7 +75,14 @@ def calculate_nearest_neighbors(
     return indices, distances
 
 
-def get_neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int = -1, random_state: int = 0, full_speed: bool = False) -> Tuple[List[int], List[float]]:
+def get_neighbors(
+    data: "AnnData",
+    K: int = 100,
+    rep: str = "pca",
+    n_jobs: int = -1,
+    random_state: int = 0,
+    full_speed: bool = False,
+) -> Tuple[List[int], List[float]]:
     """Find K nearest neighbors for each data point and return the indices and distances arrays.
 
     Parameters
@@ -104,12 +111,16 @@ def get_neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int
     >>> indices, distances = tools.get_neighbors(adata)
     """
 
-    rep_key = 'X_' + rep
-    indices_key = rep + '_knn_indices'
-    distances_key = rep + '_knn_distances'
+    rep_key = "X_" + rep
+    indices_key = rep + "_knn_indices"
+    distances_key = rep + "_knn_distances"
 
     indices = distances = None
-    if (indices_key in data.uns) and (distances_key in data.uns) and (K <= data.uns[indices_key].shape[1] + 1):
+    if (
+        (indices_key in data.uns)
+        and (distances_key in data.uns)
+        and (K <= data.uns[indices_key].shape[1] + 1)
+    ):
         indices = data.uns[indices_key]
         distances = data.uns[distances_key]
         print("Found cached kNN results, no calculation is required.")
@@ -127,8 +138,7 @@ def get_neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int
     return indices, distances
 
 
-
-def get_symmetric_matrix(csr_mat: 'csr_matrix') -> 'csr_matrix':
+def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
     tp_mat = csr_mat.transpose().tocsr()
     sym_mat = csr_mat + tp_mat
     sym_mat.sort_indices()
@@ -142,7 +152,9 @@ def get_symmetric_matrix(csr_mat: 'csr_matrix') -> 'csr_matrix':
 
 
 # We should not modify distances array!
-def calculate_affinity_matrix(indices: List[int], distances: List[float]) -> 'csr_matrix':
+def calculate_affinity_matrix(
+    indices: List[int], distances: List[float]
+) -> "csr_matrix":
     start = time.time()
 
     nsample = indices.shape[0]
@@ -175,13 +187,23 @@ def calculate_affinity_matrix(indices: List[int], distances: List[float]) -> 'cs
     W.eliminate_zeros()
 
     end = time.time()
-    print("Constructing affinity matrix is done. Time spent = {:.2f}s.".format(end - start))
+    print(
+        "Constructing affinity matrix is done. Time spent = {:.2f}s.".format(
+            end - start
+        )
+    )
 
     return W
 
 
-
-def neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int = -1, random_state: int = 0, full_speed: bool = False) -> None:
+def neighbors(
+    data: "AnnData",
+    K: int = 100,
+    rep: "str" = "pca",
+    n_jobs: int = -1,
+    random_state: int = 0,
+    full_speed: bool = False,
+) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
     Parameters
@@ -212,17 +234,23 @@ def neighbors(data: 'AnnData', K: int = 100, rep: 'str' = 'pca', n_jobs: int = -
 
     # calculate kNN
     start = time.time()
-    indices, distances = get_neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    indices, distances = get_neighbors(
+        data,
+        K=K,
+        rep=rep,
+        n_jobs=n_jobs,
+        random_state=random_state,
+        full_speed=full_speed,
+    )
     end = time.time()
     print("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
 
     # calculate affinity matrix
     start = time.time()
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
-    data.uns['W_' + rep] = W
+    data.uns["W_" + rep] = W
     end = time.time()
     print("Affinity matrix calculation is finished in {:.2f}s".format(end - start))
-
 
 
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
@@ -249,9 +277,9 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
 
 
 def calc_kBET(
-    data: 'AnnData',
+    data: "AnnData",
     attr: str,
-    rep: str = 'pca',
+    rep: str = "pca",
     K: int = 25,
     alpha: float = 0.05,
     n_jobs: int = -1,
@@ -267,11 +295,10 @@ def calc_kBET(
         pvalue_mean: average p-value over all the data points.
     """
     assert attr in data.obs
-    if data.obs[attr].dtype.name != 'category':
+    if data.obs[attr].dtype.name != "category":
         data.obs[attr] = pd.Categorical(data.obs[attr])
 
     from joblib import Parallel, delayed
-    
 
     ideal_dist = (
         data.obs[attr].value_counts(normalize=True, sort=False).values
@@ -283,7 +310,7 @@ def calc_kBET(
     attr_values.categories = range(nbatch)
 
     indices, distances = get_neighbors(
-        data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
@@ -315,7 +342,13 @@ def calc_kBET(
 
 
 def calc_kSIM(
-    data: 'AnnData', attr: str, rep: str ='pca', K: int = 25, min_rate: float = 0.9, n_jobs: int = -1, random_state: int = 0
+    data: "AnnData",
+    attr: str,
+    rep: str = "pca",
+    K: int = 25,
+    min_rate: float = 0.9,
+    n_jobs: int = -1,
+    random_state: int = 0,
 ) -> Tuple[float, float]:
     """
     TODO: Documentation.
@@ -325,7 +358,7 @@ def calc_kSIM(
     nsample = data.shape[0]
 
     indices, distances = get_neighbors(
-        data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1

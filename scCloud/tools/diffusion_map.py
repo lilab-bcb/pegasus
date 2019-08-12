@@ -11,8 +11,9 @@ from sklearn.utils.extmath import randomized_svd
 from typing import List, Tuple
 
 
-
-def calculate_normalized_affinity(W: 'csr_matrix') -> Tuple['csr_matrix', 'np.array', 'np.array']:
+def calculate_normalized_affinity(
+    W: "csr_matrix"
+) -> Tuple["csr_matrix", "np.array", "np.array"]:
     diag = W.sum(axis=1).A1
     diag_half = np.sqrt(diag)
     W_norm = W.tocoo(copy=True)
@@ -23,10 +24,12 @@ def calculate_normalized_affinity(W: 'csr_matrix') -> Tuple['csr_matrix', 'np.ar
     return W_norm, diag, diag_half
 
 
-def calculate_diffusion_map(W: 'csr_matrix', n_dc: int, alpha: float, solver: str, random_state: int) -> Tuple['np.array', 'np.array']:
+def calculate_diffusion_map(
+    W: "csr_matrix", n_dc: int, alpha: float, solver: str, random_state: int
+) -> Tuple["np.array", "np.array"]:
     assert issparse(W)
 
-    nc, labels = connected_components(W, directed=True, connection='strong')
+    nc, labels = connected_components(W, directed=True, connection="strong")
     print("Calculating connected components is done.")
 
     assert nc == 1
@@ -34,12 +37,12 @@ def calculate_diffusion_map(W: 'csr_matrix', n_dc: int, alpha: float, solver: st
     W_norm, diag, diag_half = calculate_normalized_affinity(W)
     print("Calculating normalized affinity matrix is done.")
 
-    if solver == 'randomized':
+    if solver == "randomized":
         U, S, VT = randomized_svd(W_norm, n_components=n_dc, random_state=random_state)
         signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
         Lambda = signs * S  # get eigenvalues
     else:
-        assert solver == 'eigsh'
+        assert solver == "eigsh"
         np.random.seed(random_state)
         v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
         Lambda, U = eigsh(W_norm, k=n_dc, v0=v0)
@@ -60,12 +63,12 @@ def calculate_diffusion_map(W: 'csr_matrix', n_dc: int, alpha: float, solver: st
 
 
 def diffmap(
-    data: 'AnnData',
+    data: "AnnData",
     n_dc: int = 50,
-    rep: str = 'pca',
+    rep: str = "pca",
     alpha: float = 0.5,
-    solver: str = 'randomized',
-    random_state: int = 0
+    solver: str = "randomized",
+    random_state: int = 0,
 ) -> None:
     """ 
     TODO: documentation.
@@ -73,7 +76,7 @@ def diffmap(
 
     start = time.time()
 
-    rep_key = 'W_' + rep
+    rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Affinity matrix does not exist. Please run neighbors first!")
 
@@ -82,8 +85,8 @@ def diffmap(
         W, n_dc=n_components, alpha=alpha, solver=solver, random_state=random_state
     )
 
-    data.obsm['X_diffmap'] = Phi_pt
-    data.uns['diffmap_evals'] = Lambda
+    data.obsm["X_diffmap"] = Phi_pt
+    data.uns["diffmap_evals"] = Lambda
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 
@@ -91,40 +94,40 @@ def diffmap(
     print("diffmap finished. Time spent = {:.2f}s.".format(end - start))
 
 
-def reduce_diffmap_to_3d(data: 'AnnData', random_state: int = 0) -> None:
+def reduce_diffmap_to_3d(data: "AnnData", random_state: int = 0) -> None:
     """
     TODO: documentation.
     """
     start = time.time()
 
-    if 'X_diffmap' not in data.obsm.keys():
+    if "X_diffmap" not in data.obsm.keys():
         raise ValueError("Please run diffmap first!")
 
     pca = PCA(n_components=3, random_state=random_state)
-    data.obsm['X_diffmap_pca'] = pca.fit_transform(data.obsm['X_diffmap'])
+    data.obsm["X_diffmap_pca"] = pca.fit_transform(data.obsm["X_diffmap"])
 
     end = time.time()
     print("Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start))
 
 
-def calc_pseudotime(data: 'AnnData', roots: List[str]) -> None:
+def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
     """
     TODO: documentation.
     """
     start = time.time()
 
-    if 'X_diffmap' not in data.obsm.keys():
+    if "X_diffmap" not in data.obsm.keys():
         raise ValueError("Please run diffmap first!")
 
-    data.uns['roots'] = roots
-    mask = np.isin(data.obs_names, data.uns['roots'])
+    data.uns["roots"] = roots
+    mask = np.isin(data.obs_names, data.uns["roots"])
     distances = np.mean(
-        euclidean_distances(data.obsm['X_diffmap'][mask, :], data.obsm['X_diffmap']),
+        euclidean_distances(data.obsm["X_diffmap"][mask, :], data.obsm["X_diffmap"]),
         axis=0,
     )
     dmin = distances.min()
     dmax = distances.max()
-    data.obs['pseudotime'] = (distances - dmin) / (dmax - dmin)
+    data.obs["pseudotime"] = (distances - dmin) / (dmax - dmin)
 
     end = time.time()
     print(

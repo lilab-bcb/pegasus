@@ -31,13 +31,13 @@ def calc_tsne(
     early_exaggeration,
     learning_rate,
     random_state,
-    init='random',
+    init="random",
     n_iter=1000,
     n_iter_early_exag=250,
 ):
     """
     TODO: Typing
-    """    
+    """
     tsne = TSNE(
         n_jobs=n_jobs,
         n_components=n_components,
@@ -70,20 +70,20 @@ def calc_fitsne(
 ):
     """
     TODO: Typing
-    """    
+    """
     # FItSNE will change X content
 
     # Check if fftw3 is installed.
     import ctypes.util
 
-    fftw3_loc = ctypes.util.find_library('fftw3')
+    fftw3_loc = ctypes.util.find_library("fftw3")
     if fftw3_loc is None:
         raise Exception("Please install 'fftw3' first to use the FIt-SNE feature!")
 
     from fitsne import FItSNE
 
     return FItSNE(
-        X.astype('float64'),
+        X.astype("float64"),
         nthreads=nthreads,
         no_dims=no_dims,
         perplexity=perplexity,
@@ -105,7 +105,7 @@ def calc_umap(
     min_dist,
     spread,
     random_state,
-    init='spectral',
+    init="spectral",
     n_epochs=None,
     learning_rate=1.0,
     knn_indices=None,
@@ -113,7 +113,7 @@ def calc_umap(
 ):
     """
     TODO: Typing
-    """    
+    """
     umap_obj = umap_module.UMAP(
         n_components=n_components,
         n_neighbors=n_neighbors,
@@ -135,7 +135,7 @@ def calc_umap(
         # preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
         from sklearn.utils import check_random_state, check_array
 
-        X = check_array(X, dtype=np.float32, accept_sparse='csr')
+        X = check_array(X, dtype=np.float32, accept_sparse="csr")
         umap_obj._raw_data = X
         if umap_obj.a is None or umap_obj.b is None:
             umap_obj._a, umap_obj._b = umap_module.umap_.find_ab_params(
@@ -223,64 +223,64 @@ def calc_force_directed_layout(
     """
     TODO: Typing
     """
-    input_graph_file = '{file_name}.net'.format(file_name=file_name)
+    input_graph_file = "{file_name}.net".format(file_name=file_name)
     G = construct_graph(W)
     G.write(input_graph_file)
-    print(input_graph_file + ' is written.')
+    print(input_graph_file + " is written.")
 
-    output_coord_file = '{file_name}.coords.txt'.format(file_name=file_name)
+    output_coord_file = "{file_name}.coords.txt".format(file_name=file_name)
 
     classpath = (
-        pkg_resources.resource_filename('scCloud', 'ext/forceatlas2.jar')
-        + ':'
-        + pkg_resources.resource_filename('scCloud', 'ext/gephi-toolkit-0.9.2-all.jar')
+        pkg_resources.resource_filename("scCloud", "ext/forceatlas2.jar")
+        + ":"
+        + pkg_resources.resource_filename("scCloud", "ext/gephi-toolkit-0.9.2-all.jar")
     )
     command = [
-        'java',
-        '-Djava.awt.headless=true',
-        '-Xmx{memory}g'.format(memory=memory),
-        '-cp',
+        "java",
+        "-Djava.awt.headless=true",
+        "-Xmx{memory}g".format(memory=memory),
+        "-cp",
         classpath,
-        'kco.forceatlas2.Main',
-        '--input',
+        "kco.forceatlas2.Main",
+        "--input",
         input_graph_file,
-        '--output',
-        file_name + '.coords',
-        '--nthreads',
+        "--output",
+        file_name + ".coords",
+        "--nthreads",
         str(n_jobs),
-        '--seed',
+        "--seed",
         str(random_state),
-        '--targetChangePerNode',
+        "--targetChangePerNode",
         str(target_change_per_node),
-        '--targetSteps',
+        "--targetSteps",
         str(target_steps),
     ]
     if not is3d:
-        command.append('--2d')
+        command.append("--2d")
 
     if init is not None:
         if not is3d:
             df = pd.DataFrame(
-                data=init, columns=['x', 'y'], index=range(1, init.shape[0] + 1)
+                data=init, columns=["x", "y"], index=range(1, init.shape[0] + 1)
             )
         else:
             df = pd.DataFrame(
-                data=init, columns=['x', 'y', 'z'], index=range(1, init.shape[0] + 1)
+                data=init, columns=["x", "y", "z"], index=range(1, init.shape[0] + 1)
             )
-        df.index.name = 'id'
-        init_coord_file = '{file_name}.init.coords.txt'.format(file_name=file_name)
-        df.to_csv(init_coord_file, sep='\t', float_format='%.2f')
-        command.extend(['--coords', init_coord_file])
+        df.index.name = "id"
+        init_coord_file = "{file_name}.init.coords.txt".format(file_name=file_name)
+        df.to_csv(init_coord_file, sep="\t", float_format="%.2f")
+        command.extend(["--coords", init_coord_file])
 
     print(command)
     check_call(command)
 
-    fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep='\t').values
+    fle_coords = pd.read_csv(output_coord_file, header=0, index_col=0, sep="\t").values
 
-    check_call(['rm', '-f', input_graph_file])
-    check_call(['rm', '-f', output_coord_file])
+    check_call(["rm", "-f", input_graph_file])
+    check_call(["rm", "-f", output_coord_file])
     if init is not None:
-        os.remove('{file_name}.init.coords.txt'.format(file_name=file_name))
+        os.remove("{file_name}.init.coords.txt".format(file_name=file_name))
 
     print("Force-directed layout is generated.")
 
@@ -288,28 +288,28 @@ def calc_force_directed_layout(
 
 
 def tsne(
-    data: 'AnnData',
-    rep: 'str' = 'pca',
+    data: "AnnData",
+    rep: "str" = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
     early_exaggeration: int = 12,
     learning_rate: float = 1000,
     random_state: int = 0,
-    out_basis: str = 'tsne',
+    out_basis: str = "tsne",
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
 
-    rep_key = 'X_' + rep
+    rep_key = "X_" + rep
     if rep_key not in data.obsm.keys():
         raise ValueError("Cannot find {0} matrix. Please run {0} first!".format(rep))
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    data.obsm['X_' + out_basis] = calc_tsne(
+    data.obsm["X_" + out_basis] = calc_tsne(
         data.obsm[rep_key],
         n_jobs,
         n_components,
@@ -324,28 +324,28 @@ def tsne(
 
 
 def fitsne(
-    data: 'AnnData',
-    rep: 'str' = 'pca',
+    data: "AnnData",
+    rep: "str" = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
     early_exaggeration: int = 12,
     learning_rate: float = 1000,
     random_state: int = 0,
-    out_basis: str = 'fitsne',
+    out_basis: str = "fitsne",
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
 
-    rep_key = 'X_' + rep
+    rep_key = "X_" + rep
     if rep_key not in data.obsm.keys():
         raise ValueError("Cannot find {0} matrix. Please run {0} first!".format(rep))
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    data.obsm['X_' + out_basis] = calc_fitsne(
+    data.obsm["X_" + out_basis] = calc_fitsne(
         data.obsm[rep_key],
         n_jobs,
         n_components,
@@ -360,25 +360,29 @@ def fitsne(
 
 
 def umap(
-    data: 'AnnData',
-    rep: 'str' = 'pca',
+    data: "AnnData",
+    rep: "str" = "pca",
     n_components: int = 2,
     n_neighbors: int = 15,
     min_dist: float = 0.5,
     spread: float = 1.0,
     random_state: int = 0,
-    out_basis: str = 'umap',
+    out_basis: str = "umap",
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
 
-    rep_key = 'X_' + rep
-    indices_key = rep + '_knn_indices'
-    distances_key = rep + '_knn_distances'
+    rep_key = "X_" + rep
+    indices_key = rep + "_knn_indices"
+    distances_key = rep + "_knn_distances"
 
-    if (indices_key not in data.uns) or (distances_key not in data.uns) or (n_neighbors > data.uns[indices_key].shape[1] + 1):
+    if (
+        (indices_key not in data.uns)
+        or (distances_key not in data.uns)
+        or (n_neighbors > data.uns[indices_key].shape[1] + 1)
+    ):
         raise ValueError("Please run neighbors first!")
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run {} first!".format(rep))
@@ -389,7 +393,7 @@ def umap(
     knn_dists = np.insert(
         data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
-    data.obsm['X_' + out_basis] = calc_umap(
+    data.obsm["X_" + out_basis] = calc_umap(
         data.obsm[rep_key],
         n_components,
         n_neighbors,
@@ -405,7 +409,7 @@ def umap(
 
 
 def fle(
-    data: 'AnnData',
+    data: "AnnData",
     file_name: str,
     n_jobs: int = -1,
     K: int = 50,
@@ -415,7 +419,7 @@ def fle(
     is3d: bool = False,
     memory: int = 8,
     random_state: int = 0,
-    out_basis: str = 'fle',
+    out_basis: str = "fle",
 ) -> None:
     """
     TODO: Documentation.
@@ -423,17 +427,24 @@ def fle(
     start = time.time()
     n_jobs = effective_n_jobs(n_jobs)
 
-    rep = 'diffmap'
-    rep_key = 'X_' + rep
-    W_rep = 'W_' + rep
+    rep = "diffmap"
+    rep_key = "X_" + rep
+    W_rep = "W_" + rep
 
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run diffmap first!")
 
     if W_rep not in data.uns:
-        neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+        neighbors(
+            data,
+            K=K,
+            rep=rep,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            full_speed=full_speed,
+        )
 
-    data.obsm['X_' + out_basis] = calc_force_directed_layout(
+    data.obsm["X_" + out_basis] = calc_force_directed_layout(
         data.uns[W_rep],
         file_name,
         n_jobs,
@@ -448,7 +459,6 @@ def fle(
     print(
         "Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start)
     )
-
 
 
 def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
@@ -489,31 +499,30 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     return selected
 
 
-
 def net_tsne(
-    data: 'AnnData',
-    rep: 'str' = 'pca',
+    data: "AnnData",
+    rep: "str" = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
     early_exaggeration: int = 12,
     learning_rate: float = 1000,
     random_state: int = 0,
-    select_frac: float = 0.1, 
+    select_frac: float = 0.1,
     select_K: int = 25,
     select_alpha: float = 1.0,
     net_alpha: float = 0.1,
     polish_learning_frac: float = 0.33,
     polish_n_iter: int = 150,
-    out_basis: str = 'net_tsne',
+    out_basis: str = "net_tsne",
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
 
-    rep_key = 'X_' + rep
-    distances_key = rep + '_knn_distances'
+    rep_key = "X_" + rep
+    distances_key = rep + "_knn_distances"
 
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run {} first!".format(rep))
@@ -523,7 +532,13 @@ def net_tsne(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+    selected = select_cell(
+        data.uns[distances_key],
+        select_frac,
+        K=select_K,
+        alpha=select_alpha,
+        random_state=random_state,
+    )
 
     X = data.obsm[rep_key][selected, :]
     X_tsne = calc_tsne(
@@ -536,8 +551,8 @@ def net_tsne(
         random_state,
     )
 
-    data.uns['X_' + out_basis + '_small'] = X_tsne
-    data.obs['ds_selected'] = selected
+    data.uns["X_" + out_basis + "_small"] = X_tsne
+    data.obs["ds_selected"] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_tsne
@@ -550,10 +565,10 @@ def net_tsne(
         verbose=True,
     )
 
-    data.obsm['X_' + out_basis + '_pred'] = Y_init
+    data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     polish_learning_rate = polish_learning_frac * data.shape[0]
-    data.obsm['X_' + out_basis] = calc_tsne(
+    data.obsm["X_" + out_basis] = calc_tsne(
         data.obsm[rep_key],
         n_jobs,
         n_components,
@@ -571,29 +586,29 @@ def net_tsne(
 
 
 def net_fitsne(
-    data: 'AnnData',
-    rep: 'str' = 'pca',
+    data: "AnnData",
+    rep: "str" = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
     early_exaggeration: int = 12,
     learning_rate: float = 1000,
     random_state: int = 0,
-    select_frac: float = 0.1, 
+    select_frac: float = 0.1,
     select_K: int = 25,
     select_alpha: float = 1.0,
     net_alpha: float = 0.1,
     polish_learning_frac: float = 0.5,
     polish_n_iter: int = 150,
-    out_basis: 'str' = 'net_fitsne',
+    out_basis: "str" = "net_fitsne",
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
 
-    rep_key = 'X_' + rep
-    distances_key = rep + '_knn_distances'
+    rep_key = "X_" + rep
+    distances_key = rep + "_knn_distances"
 
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run {} first!".format(rep))
@@ -603,7 +618,13 @@ def net_fitsne(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+    selected = select_cell(
+        data.uns[distances_key],
+        select_frac,
+        K=select_K,
+        alpha=select_alpha,
+        random_state=random_state,
+    )
 
     X = data.obsm[rep_key][selected, :]
     X_fitsne = calc_fitsne(
@@ -616,8 +637,8 @@ def net_fitsne(
         random_state,
     )
 
-    data.uns['X_' + out_basis + '_small'] = X_fitsne
-    data.obs['ds_selected'] = selected
+    data.uns["X_" + out_basis + "_small"] = X_fitsne
+    data.obs["ds_selected"] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_fitsne
@@ -630,10 +651,10 @@ def net_fitsne(
         verbose=True,
     )
 
-    data.obsm['X_' + out_basis + '_pred'] = Y_init
+    data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     polish_learning_rate = polish_learning_frac * data.shape[0]
-    data.obsm['X_' + out_basis] = calc_fitsne(
+    data.obsm["X_" + out_basis] = calc_fitsne(
         data.obsm[rep_key],
         n_jobs,
         n_components,
@@ -651,33 +672,32 @@ def net_fitsne(
     print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
-
 def net_umap(
-    data: 'AnnData',
-    rep: 'str' = 'pca',
+    data: "AnnData",
+    rep: "str" = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     n_neighbors: int = 15,
     min_dist: float = 0.1,
     spread: float = 1.0,
     random_state: int = 0,
-    select_frac: float = 0.1, 
+    select_frac: float = 0.1,
     select_K: int = 25,
     select_alpha: float = 1.0,
     full_speed: bool = False,
     net_alpha: float = 0.1,
     polish_learning_rate: float = 10.0,
     polish_n_epochs: int = 30,
-    out_basis: str = 'net_umap',
+    out_basis: str = "net_umap",
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
 
-    rep_key = 'X_' + rep
-    indices_key = rep + '_knn_indices'
-    distances_key = rep + '_knn_distances'
+    rep_key = "X_" + rep
+    indices_key = rep + "_knn_indices"
+    distances_key = rep + "_knn_distances"
 
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run {} first!".format(rep))
@@ -687,19 +707,25 @@ def net_umap(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+    selected = select_cell(
+        data.uns[distances_key],
+        select_frac,
+        K=select_K,
+        alpha=select_alpha,
+        random_state=random_state,
+    )
 
     X = data.obsm[rep_key][selected, :]
 
-    ds_indices_key = 'ds_' + rep + '_knn_indices'
-    ds_distances_key = 'ds_' + rep + '_knn_distances'
+    ds_indices_key = "ds_" + rep + "_knn_indices"
+    ds_distances_key = "ds_" + rep + "_knn_distances"
     if (ds_indices_key not in data.uns) or (ds_distances_key not in data.uns):
         indices, distances = calculate_nearest_neighbors(
             X,
-            K = n_neighbors,
-            n_jobs = n_jobs,
-            random_state = random_state,
-            full_speed = full_speed,
+            K=n_neighbors,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            full_speed=full_speed,
         )
         data.uns[ds_indices_key] = indices
         data.uns[ds_distances_key] = distances
@@ -722,8 +748,8 @@ def net_umap(
         knn_dists=knn_dists,
     )
 
-    data.uns['X_' + out_basis + '_small'] = X_umap
-    data.obs['ds_selected'] = selected
+    data.uns["X_" + out_basis + "_small"] = X_umap
+    data.obs["ds_selected"] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_umap
@@ -736,7 +762,7 @@ def net_umap(
         verbose=True,
     )
 
-    data.obsm['X_' + out_basis + '_pred'] = Y_init
+    data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     knn_indices = np.insert(
         data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
@@ -745,7 +771,7 @@ def net_umap(
         data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
-    data.obsm['X_' + out_basis] = calc_umap(
+    data.obsm["X_" + out_basis] = calc_umap(
         data.obsm[rep_key],
         n_components,
         n_neighbors,
@@ -764,7 +790,7 @@ def net_umap(
 
 
 def net_fle(
-    data: 'AnnData',
+    data: "AnnData",
     file_name: str,
     n_jobs: int = -1,
     K: int = 50,
@@ -774,12 +800,12 @@ def net_fle(
     is3d: bool = False,
     memory: int = 8,
     random_state: int = 0,
-    select_frac: float = 0.1, 
+    select_frac: float = 0.1,
     select_K: int = 25,
     select_alpha: float = 1.0,
     net_alpha: float = 0.1,
     polish_target_steps: int = 1500,
-    out_basis: str = 'net_fle',
+    out_basis: str = "net_fle",
 ) -> None:
     """
     TODO: Documentation.
@@ -787,25 +813,38 @@ def net_fle(
     start = time.time()
     n_jobs = effective_n_jobs(n_jobs)
 
-    rep = 'diffmap'
-    rep_key = 'X_' + rep
-    W_rep = 'W_' + rep
+    rep = "diffmap"
+    rep_key = "X_" + rep
+    W_rep = "W_" + rep
 
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run diffmap first!")
     if W_rep not in data.uns:
-        neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+        neighbors(
+            data,
+            K=K,
+            rep=rep,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            full_speed=full_speed,
+        )
 
-    distances_key = rep + '_knn_distances'
-    selected = select_cell(data.uns[distances_key], select_frac, K = select_K, alpha = select_alpha, random_state = random_state)
+    distances_key = rep + "_knn_distances"
+    selected = select_cell(
+        data.uns[distances_key],
+        select_frac,
+        K=select_K,
+        alpha=select_alpha,
+        random_state=random_state,
+    )
 
     X = data.obsm[rep_key][selected, :]
 
-    ds_indices_key = 'ds_' + rep + '_knn_indices'
-    ds_distances_key = 'ds_' + rep + '_knn_distances'
+    ds_indices_key = "ds_" + rep + "_knn_indices"
+    ds_distances_key = "ds_" + rep + "_knn_distances"
     if (ds_indices_key not in data.uns) or (ds_distances_key not in data.uns):
         indices, distances = calculate_nearest_neighbors(
-            X, K = K, n_jobs = n_jobs, random_state=random_state, full_speed=full_speed
+            X, K=K, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed
         )
         data.uns[ds_indices_key] = indices
         data.uns[ds_distances_key] = distances
@@ -817,7 +856,7 @@ def net_fle(
 
     X_fle = calc_force_directed_layout(
         W,
-        file_name + '.small',
+        file_name + ".small",
         n_jobs,
         target_change_per_node,
         target_steps,
@@ -826,7 +865,7 @@ def net_fle(
         random_state,
     )
 
-    data.uns['X_' + out_basis + '_small'] = X_fle
+    data.uns["X_" + out_basis + "_small"] = X_fle
     data.obs["ds_diffmap_selected"] = selected
 
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
@@ -840,7 +879,7 @@ def net_fle(
         verbose=True,
     )
 
-    data.obsm['X_' + out_basis + '_pred'] = Y_init
+    data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     data.obsm["X_" + out_basis] = calc_force_directed_layout(
         data.uns[W_rep],

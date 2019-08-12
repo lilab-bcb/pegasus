@@ -145,109 +145,114 @@ Examples:
 
     def execute(self):
         kwargs = {
-            'n_jobs': int(self.args['--threads']),
-            'processed': self.args['--processed'],
-            'genome': self.args['--genome'],
-            'subcluster': False,
-            'min_genes_on_raw': int(self.args['--min-genes-on-raw']),
-            'select_singlets': self.args['--select-singlets'],
-            'cite_seq': self.args['--cite-seq'],
-            'cite_seq_capping': float(self.args['--cite-seq-capping']),
-            'output_filt': self.args['<output_name>']
-            if self.args['--output-filtration-results']
+            "n_jobs": int(self.args["--threads"]),
+            "processed": self.args["--processed"],
+            "genome": self.args["--genome"],
+            "subcluster": False,
+            "min_genes_on_raw": int(self.args["--min-genes-on-raw"]),
+            "select_singlets": self.args["--select-singlets"],
+            "cite_seq": self.args["--cite-seq"],
+            "cite_seq_capping": float(self.args["--cite-seq-capping"]),
+            "output_filt": self.args["<output_name>"]
+            if self.args["--output-filtration-results"]
             else None,
-            'plot_filt': self.args['<output_name>']
-            if self.args['--plot-filtration-results']
+            "plot_filt": self.args["<output_name>"]
+            if self.args["--plot-filtration-results"]
             else None,
-            'plot_filt_figsize': self.args['--plot-filtration-figsize'],
-            'seurat_compatible': self.args['--output-seurat-compatible'],
-            'output_loom': self.args['--output-loom'],
-            'min_genes': int(self.args['--min-genes']),
-            'max_genes': int(self.args['--max-genes']),
-            'min_umis': int(self.args['--min-umis']),
-            'max_umis': int(self.args['--max-umis']),
-            'mito_prefix': self.args['--mito-prefix'],
-            'percent_mito': float(self.args['--percent-mito']),
-            'percent_cells': float(self.args['--gene-percent-cells']),
-            'norm_count': float(self.args['--counts-per-cell-after']),
-            'select_hvf': not self.args['--no-select-hvf'],
-            'hvf_flavor': self.args['--select-hvf-flavor'],
-            'hvf_ngenes': int(self.args['--select-hvf-ngenes'])
-            if self.args['--select-hvf-ngenes'] != 'None' else None,
-            'plot_hvf': self.args['<output_name>'] if self.args['--plot-hvf'] else None,
-            'batch_correction': self.args['--correct-batch-effect'],
-            'group_attribute': self.args['--batch-group-by'],
-            'random_state': int(self.args['--random-state']),
-            'temp_folder': self.args['--temp-folder'],
-            'nPC': int(self.args['--nPC']),
-            'K': int(self.args['--knn-K']),
-            'full_speed': self.args['--knn-full-speed'],
-            'kBET': self.args['--kBET'],
-            'kBET_batch': self.args['--kBET-batch'],
-            'kBET_alpha': float(self.args['--kBET-alpha']),
-            'kBET_K': int(self.args['--kBET-K']),
-            'diffmap': self.args['--diffmap'],
-            'diffmap_ndc': int(self.args['--diffmap-ndc']),
-            'diffmap_alpha': float(self.args['--diffmap-alpha']),
-            'diffmap_solver': self.args['--diffmap-solver'],
-            'diffmap_to_3d': self.args['--diffmap-to-3d'],
-            'pseudotime': self.split_string(self.args['--calculate-pseudotime']),
-            'louvain': self.args['--louvain'],
-            'louvain_resolution': float(self.args['--louvain-resolution']),
-            'louvain_class_label': self.args['--louvain-class-label'],
-            'leiden': self.args['--leiden'],
-            'leiden_resolution': float(self.args['--leiden-resolution']),
-            'leiden_niter': int(self.args['--leiden-niter']),
-            'leiden_class_label': self.args['--leiden-class-label'],
-            'spectral_louvain': self.args['--spectral-louvain'],
-            'spectral_louvain_basis': self.args['--spectral-louvain-basis'],
-            'spectral_louvain_nclusters': int(self.args['--spectral-louvain-nclusters']),
-            'spectral_louvain_ninit': int(self.args['--spectral-louvain-ninit']),
-            'spectral_louvain_resolution': float(
-                self.args['--spectral-louvain-resolution']
+            "plot_filt_figsize": self.args["--plot-filtration-figsize"],
+            "seurat_compatible": self.args["--output-seurat-compatible"],
+            "output_loom": self.args["--output-loom"],
+            "min_genes": int(self.args["--min-genes"]),
+            "max_genes": int(self.args["--max-genes"]),
+            "min_umis": int(self.args["--min-umis"]),
+            "max_umis": int(self.args["--max-umis"]),
+            "mito_prefix": self.args["--mito-prefix"],
+            "percent_mito": float(self.args["--percent-mito"]),
+            "percent_cells": float(self.args["--gene-percent-cells"]),
+            "norm_count": float(self.args["--counts-per-cell-after"]),
+            "select_hvf": not self.args["--no-select-hvf"],
+            "hvf_flavor": self.args["--select-hvf-flavor"],
+            "hvf_ngenes": int(self.args["--select-hvf-ngenes"])
+            if self.args["--select-hvf-ngenes"] != "None"
+            else None,
+            "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
+            "batch_correction": self.args["--correct-batch-effect"],
+            "group_attribute": self.args["--batch-group-by"],
+            "random_state": int(self.args["--random-state"]),
+            "temp_folder": self.args["--temp-folder"],
+            "nPC": int(self.args["--nPC"]),
+            "K": int(self.args["--knn-K"]),
+            "full_speed": self.args["--knn-full-speed"],
+            "kBET": self.args["--kBET"],
+            "kBET_batch": self.args["--kBET-batch"],
+            "kBET_alpha": float(self.args["--kBET-alpha"]),
+            "kBET_K": int(self.args["--kBET-K"]),
+            "diffmap": self.args["--diffmap"],
+            "diffmap_ndc": int(self.args["--diffmap-ndc"]),
+            "diffmap_alpha": float(self.args["--diffmap-alpha"]),
+            "diffmap_solver": self.args["--diffmap-solver"],
+            "diffmap_to_3d": self.args["--diffmap-to-3d"],
+            "pseudotime": self.split_string(self.args["--calculate-pseudotime"]),
+            "louvain": self.args["--louvain"],
+            "louvain_resolution": float(self.args["--louvain-resolution"]),
+            "louvain_class_label": self.args["--louvain-class-label"],
+            "leiden": self.args["--leiden"],
+            "leiden_resolution": float(self.args["--leiden-resolution"]),
+            "leiden_niter": int(self.args["--leiden-niter"]),
+            "leiden_class_label": self.args["--leiden-class-label"],
+            "spectral_louvain": self.args["--spectral-louvain"],
+            "spectral_louvain_basis": self.args["--spectral-louvain-basis"],
+            "spectral_louvain_nclusters": int(
+                self.args["--spectral-louvain-nclusters"]
             ),
-            'spectral_louvain_class_label': self.args['--spectral-louvain-class-label'],
-            'spectral_leiden': self.args['--spectral-leiden'],
-            'spectral_leiden_basis': self.args['--spectral-leiden-basis'],
-            'spectral_leiden_nclusters': int(self.args['--spectral-leiden-nclusters']),
-            'spectral_leiden_ninit': int(self.args['--spectral-leiden-ninit']),
-            'spectral_leiden_resolution': float(self.args['--spectral-leiden-resolution']),
-            'spectral_leiden_class_label': self.args['--spectral-leiden-class-label'],
-            'tsne': self.args['--run-tsne'],
-            'fitsne': self.args['--run-fitsne'],
-            'tsne_perplexity': float(self.args['--tsne-perplexity']),
-            'umap': self.args['--run-umap'],
-            'umap_K': int(self.args['--umap-K']),
-            'umap_min_dist': float(self.args['--umap-min-dist']),
-            'umap_spread': float(self.args['--umap-spread']),
-            'fle': self.args['--run-fle'],
-            'fle_K': int(self.args['--fle-K']),
-            'fle_target_change_per_node': float(
-                self.args['--fle-target-change-per-node']
+            "spectral_louvain_ninit": int(self.args["--spectral-louvain-ninit"]),
+            "spectral_louvain_resolution": float(
+                self.args["--spectral-louvain-resolution"]
             ),
-            'fle_target_steps': int(self.args['--fle-target-steps']),
-            'fle_memory': int(self.args['--fle-memory']),
-            'net_ds_frac': float(self.args['--net-down-sample-fraction']),
-            'net_ds_K': int(self.args['--net-down-sample-K']),
-            'net_ds_alpha': float(self.args['--net-down-sample-alpha']),
-            'net_l2': float(self.args['--net-regressor-L2-penalty']),
-            'net_tsne': self.args['--net-tsne'],
-            'net_tsne_polish_learing_frac': float(
-                self.args['--net-tsne-polish-learning-frac']
+            "spectral_louvain_class_label": self.args["--spectral-louvain-class-label"],
+            "spectral_leiden": self.args["--spectral-leiden"],
+            "spectral_leiden_basis": self.args["--spectral-leiden-basis"],
+            "spectral_leiden_nclusters": int(self.args["--spectral-leiden-nclusters"]),
+            "spectral_leiden_ninit": int(self.args["--spectral-leiden-ninit"]),
+            "spectral_leiden_resolution": float(
+                self.args["--spectral-leiden-resolution"]
             ),
-            'net_tsne_polish_niter': int(self.args['--net-tsne-polish-niter']),
-            'net_tsne_basis': self.args['--net-tsne-out-basis'],
-            'net_umap': self.args['--net-umap'],
-            'net_umap_polish_learing_rate': float(
-                self.args['--net-umap-polish-learning-rate']
+            "spectral_leiden_class_label": self.args["--spectral-leiden-class-label"],
+            "tsne": self.args["--run-tsne"],
+            "fitsne": self.args["--run-fitsne"],
+            "tsne_perplexity": float(self.args["--tsne-perplexity"]),
+            "umap": self.args["--run-umap"],
+            "umap_K": int(self.args["--umap-K"]),
+            "umap_min_dist": float(self.args["--umap-min-dist"]),
+            "umap_spread": float(self.args["--umap-spread"]),
+            "fle": self.args["--run-fle"],
+            "fle_K": int(self.args["--fle-K"]),
+            "fle_target_change_per_node": float(
+                self.args["--fle-target-change-per-node"]
             ),
-            'net_umap_polish_nepochs': int(self.args['--net-umap-polish-nepochs']),
-            'net_umap_basis': self.args['--net-umap-out-basis'],
-            'net_fle': self.args['--net-fle'],
-            'net_fle_polish_target_steps': int(
-                self.args['--net-fle-polish-target-steps']
+            "fle_target_steps": int(self.args["--fle-target-steps"]),
+            "fle_memory": int(self.args["--fle-memory"]),
+            "net_ds_frac": float(self.args["--net-down-sample-fraction"]),
+            "net_ds_K": int(self.args["--net-down-sample-K"]),
+            "net_ds_alpha": float(self.args["--net-down-sample-alpha"]),
+            "net_l2": float(self.args["--net-regressor-L2-penalty"]),
+            "net_tsne": self.args["--net-tsne"],
+            "net_tsne_polish_learing_frac": float(
+                self.args["--net-tsne-polish-learning-frac"]
             ),
-            'net_fle_basis': self.args['--net-fle-out-basis'],
+            "net_tsne_polish_niter": int(self.args["--net-tsne-polish-niter"]),
+            "net_tsne_basis": self.args["--net-tsne-out-basis"],
+            "net_umap": self.args["--net-umap"],
+            "net_umap_polish_learing_rate": float(
+                self.args["--net-umap-polish-learning-rate"]
+            ),
+            "net_umap_polish_nepochs": int(self.args["--net-umap-polish-nepochs"]),
+            "net_umap_basis": self.args["--net-umap-out-basis"],
+            "net_fle": self.args["--net-fle"],
+            "net_fle_polish_target_steps": int(
+                self.args["--net-fle-polish-target-steps"]
+            ),
+            "net_fle_basis": self.args["--net-fle-out-basis"],
         }
 
-        run_pipeline(self.args['<input_file>'], self.args['<output_name>'], **kwargs)
+        run_pipeline(self.args["<input_file>"], self.args["<output_name>"], **kwargs)
