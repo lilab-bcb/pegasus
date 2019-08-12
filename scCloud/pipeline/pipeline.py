@@ -196,7 +196,7 @@ def run_pipeline(input_file, output_name, **kwargs):
             out_basis=kwargs['net_tsne_basis'],
         )
 
-    if kwargs['run_net_umap']:
+    if kwargs['net_umap']:
         tools.net_umap(
             adata,
             rep='pca',
