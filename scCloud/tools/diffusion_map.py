@@ -64,13 +64,13 @@ def calculate_diffusion_map(
 
 def diffmap(
     data: "AnnData",
-    n_dc: int = 50,
+    n_components: int = 50,
     rep: str = "pca",
     alpha: float = 0.5,
     solver: str = "randomized",
     random_state: int = 0,
 ) -> None:
-    """ 
+    """
     TODO: documentation.
     """
 
