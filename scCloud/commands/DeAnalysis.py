@@ -25,9 +25,9 @@ Options:
   --mwu                            Calculate Mann-Whitney U test.
   --temp-folder <temp_folder>      Joblib temporary folder for memmapping numpy arrays.
   --alpha <alpha>                  Control false discovery rate at <alpha>. [default: 0.05]
-  --ndigits <ndigits>              Round non p-values and q-values to <ndigits> after decimal point in the excel.                           
+  --ndigits <ndigits>              Round non p-values and q-values to <ndigits> after decimal point in the excel. [default: 3]                          
 
-  --verbose                        Show more detailed intermediate outputs.  
+  --quiet                          Do not show detailed intermediate outputs.  
   -h, --help                       Print out help information.
 
 Outputs:
@@ -50,7 +50,7 @@ Examples:
             fisher = self.args["--fisher"],
             mwu = self.args["--mwu"],
             temp_folder = self.args["--temp-folder"],
-            verbose = self.args["--verbose"],
+            verbose = not self.args["--quiet"],
             alpha = float(self.args["--alpha"]),
             ndigits = int(self.args["--ndigits"]),
         )

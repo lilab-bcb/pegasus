@@ -698,9 +698,11 @@ def write_results_to_excel(results: Dict[str, Dict[str, pd.DataFrame]], output_f
     from natsort import natsorted
 
 
-    def format_short_output_cols(df: pd.DataFrame, ndigits: int = 3) -> pd.DataFrame:
+    def format_short_output_cols(df_orig: pd.DataFrame, ndigits: int = 3) -> pd.DataFrame:
         """ Round related float columns to ndigits decimal points.
         """
+        df = pd.DataFrame(df_orig)
+
         cols = []
         for name in df.columns:
             if (not name.endswith('pval')) and (not name.endswith('qval')):
@@ -709,29 +711,29 @@ def write_results_to_excel(results: Dict[str, Dict[str, pd.DataFrame]], output_f
         df.loc[:, cols] = df.loc[:, cols].round(ndigits)
         return df
 
-    def add_worksheet(workbook: 'workbook', df: pd.DataFrame, sheet_name: str) -> None:
+    def add_worksheet(workbook: 'workbook', df_orig: pd.DataFrame, sheet_name: str) -> None:
         """ Add one worksheet with content as df
         """
-        df = format_short_output_cols(df)
+        df = format_short_output_cols(df_orig)
         df.reset_index(inplace = True)
         worksheet = workbook.add_worksheet(name = sheet_name)
 
-        if df.shape[0] > 0:
-            worksheet.add_table(
-                0,
-                0,
-                df.index.size,
-                df.columns.size - 1,
-                {
-                    "data": df.to_numpy(),
-                    "style": "Table Style Light 1",
-                    "first_column": True,
-                    "header_row": True,
-                    "columns": [{"header": x} for x in df.columns.values],
-                },
-            )
-        else:
-            worksheet.write_row(0, 0, df.columns.values)
+        worksheet.add_table(
+            0,
+            0,
+            df.index.size,
+            df.columns.size - 1,
+            {
+                "data": df.to_numpy(),
+                "style": "Table Style Light 1",
+                "first_column": True,
+                "header_row": True,
+                "columns": [{"header": x} for x in df.columns.values],
+            },
+        )
+        # if df.shape[0] > 0:
+        # else:
+        #     worksheet.write_row(0, 0, df.columns.values)
 
 
     workbook = xlsxwriter.Workbook(output_file, {"nan_inf_to_errors": True})
@@ -770,7 +772,7 @@ def run_de_analysis(
 
     data = read_input(input_file, h5ad_mode="r+")
 
-    de_analysis(data, cluster, result_key = result_key, n_jobs = n_jobs, auc = auc, t = t, fisher = fisher, mwu = muw, temp_folder = temp_folder, verbose = verbose)
+    de_analysis(data, cluster, result_key = result_key, n_jobs = n_jobs, auc = auc, t = t, fisher = fisher, mwu = mwu, temp_folder = temp_folder, verbose = verbose)
 
     write_output(data, input_file)
     print("Differential expression results are written back to h5ad file.")

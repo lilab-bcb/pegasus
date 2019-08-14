@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-
 import numpy as np
 import pandas as pd
 import os
+import time
 from subprocess import check_call
 
 from typing import List
@@ -141,7 +140,6 @@ def aggregate_matrices(
             select_singlets=select_singlets,
         )
         data.update_barcode_metadata_info(sample_name, row, attributes)
-
         aggrData.addAggrData(data)
 
         tot += 1
@@ -152,7 +150,10 @@ def aggregate_matrices(
         check_call(["rm", "-rf", dest_path])
 
     # Merge channels
+    t1 = time.time()
     aggrData.aggregate()
+    t2 = time.time()
+    print("Data aggregation is finished in {:.2f}s.".format(t2 - t1))
 
     if what_to_return == "AnnData":
         aggrData = aggrData.convert_to_anndata(concat_matrices)
