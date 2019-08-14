@@ -760,7 +760,7 @@ def run_de_analysis(
     temp_folder: str = None,
     verbose: bool = True,
     alpha: float = 0.05,
-    ndigits: int = 3,    
+    ndigits: int = 3   
 ) -> None :
     """ For command line only
     """
@@ -770,7 +770,7 @@ def run_de_analysis(
 
     data = read_input(input_file, h5ad_mode="r+")
 
-    de_analysis(data, cluster, result_key = result_key, n_jobs = n_jobs, auc = auc, t = t, fisher = fisher, mwu = muw, temp_folder = temp_folder, verbose = verbose)
+    de_analysis(data, cluster, result_key = result_key, n_jobs = n_jobs, auc = auc, t = t, fisher = fisher, mwu = mwu, temp_folder = temp_folder, verbose = verbose)
 
     write_output(data, input_file)
     print("Differential expression results are written back to h5ad file.")
