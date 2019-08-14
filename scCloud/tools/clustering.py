@@ -7,7 +7,7 @@ from natsort import natsorted
 import ctypes
 import ctypes.util
 
-import louvain as lvn
+import louvain as louvain_module
 import leidenalg
 from sklearn.cluster import KMeans
 from typing import List
@@ -34,9 +34,9 @@ def louvain(
     W = data.uns[rep_key]
 
     G = construct_graph(W)
-    partition_type = lvn.RBConfigurationVertexPartition
+    partition_type = louvain_module.RBConfigurationVertexPartition
     partition = partition_type(G, resolution_parameter=resolution, weights="weight")
-    optimiser = lvn.Optimiser()
+    optimiser = louvain_module.Optimiser()
     optimiser.set_rng_seed(random_state)
     diff = optimiser.optimise_partition(partition)
 
@@ -217,13 +217,13 @@ def spectral_louvain(
     W = data.uns["W_" + rep]
 
     G = construct_graph(W)
-    partition_type = lvn.RBConfigurationVertexPartition
+    partition_type = louvain_module.RBConfigurationVertexPartition
     partition = partition_type(
         G, resolution_parameter=resolution, weights="weight", initial_membership=labels
     )
     partition_agg = partition.aggregate_partition()
 
-    optimiser = lvn.Optimiser()
+    optimiser = louvain_module.Optimiser()
     optimiser.set_rng_seed(random_state)
     diff = optimiser.optimise_partition(partition_agg)
     partition.from_coarse_partition(partition_agg)
