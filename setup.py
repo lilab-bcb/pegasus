@@ -13,7 +13,7 @@ requires = [
     "Cython",
     "scipy>=1.3",
     "seaborn",
-    "scikit-learn>=0.19.1",
+    "scikit-learn>=0.21.3",
     "statsmodels",
     "natsort",
     "anndata",
