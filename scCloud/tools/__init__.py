@@ -1,15 +1,4 @@
-non_de_attrs = [
-    "gene_ids",
-    "n_cells",
-    "percent_cells",
-    "robust",
-    "highly_variable_genes",
-    "hvg_rank",
-    "ba_mean",
-    "ba_var",
-]  # attributes kept before DE analysis
-
-from .aggregate_matrices import aggregate_matrices
+from .data_aggregation import aggregate_matrices
 from .preprocessing import (
     qc_metrics,
     get_filter_stats,
@@ -43,14 +32,10 @@ from .visualization import (
     net_umap,
     net_fle,
 )
-from .de_analysis import (
-    run_de_analysis,
+from .diff_expr import (
     de_analysis,
-    write_results_to_excel,
-    collect_stat_and_t_test,
-    fisher_test,
-    mwu_test,
-    calc_roc_stats,
+    markers,
+    run_de_analysis,
 )
 from .gradient_boosting import find_markers, run_find_markers
 from .convert_to_parquet import convert_to_parquet, run_conversion

@@ -497,10 +497,10 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
     copy_path = input_file
     copy_type = "file"
 
-    if input_file.endswith(".scCloud.h5"):
-        file_format = "scCloud"
-    elif input_file.endswith(".h5"):
+    if input_file.endswith(".h5"):
         file_format = "10x"
+    elif input_file.endswith(".h5sc"):
+        file_format = "scCloud"
     elif input_file.endswith(".h5ad"):
         file_format = "h5ad"
     elif input_file.endswith(".loom"):

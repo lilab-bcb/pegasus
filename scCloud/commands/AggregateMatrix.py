@@ -24,7 +24,7 @@ Options:
   -h, --help                               Print out help information.
 
 Outputs:
-  output_name.scCloud.h5        A scCloud-formatted HDF5 file containing the count matrices and associated attributes.
+  output_name.h5sc        A scCloud-formatted HDF5 file containing the count matrices and associated attributes.
 
 Examples:
   scCloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb

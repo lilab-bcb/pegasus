@@ -13,7 +13,7 @@ class MaxStdScaler(BaseEstimator, TransformerMixin):
 
     def fit(self, X):
         X = check_array(X, copy=self.copy, estimator=self, dtype=np.float64)
-        self.scaler = np.max(np.std(X, axis=0)) / self.factor
+        self.scaler = np.max(np.std(X, axis=0, ddof=1)) / self.factor
         return self
 
     def transform(self, X):

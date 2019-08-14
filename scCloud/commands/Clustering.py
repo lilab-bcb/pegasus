@@ -11,7 +11,7 @@ Usage:
   scCloud cluster -h
 
 Arguments:
-  input_file       Input file in 10x format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
+  input_file       Input HDF5 file in 10x or scCloud format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
   output_name      Output file name. All outputs will use it as the prefix.
 
 Options:
@@ -92,16 +92,16 @@ Options:
   --spectral-leiden-resolution <resolution>        Resolution parameter for leiden. [default: 1.3]
   --spectral-leiden-class-label <label>            Spectral-leiden label name in AnnData. [default: spectral_leiden_labels]
 
-  --run-tsne                                       Run multi-core t-SNE for visualization.
-  --run-fitsne                                     Run FIt-SNE for visualization.
+  --tsne                                           Run multi-core t-SNE for visualization.
+  --fitsne                                         Run FIt-SNE for visualization.
   --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter, used by both tSNE, FItSNE and net-tSNE. [default: 30]
 
-  --run-umap                                       Run umap for visualization.
+  --umap                                           Run umap for visualization.
   --umap-K <K>                                     K neighbors for umap. [default: 15]
   --umap-min-dist <number>                         Umap parameter. [default: 0.5]
   --umap-spread <spread>                           Umap parameter. [default: 1.0]
 
-  --run-fle                                        Run force-directed layout embedding.
+  --fle                                            Run force-directed layout embedding.
   --fle-K <K>                                      K neighbors for building graph for FLE. [default: 50]
   --fle-target-change-per-node <change>            Target change per node to stop forceAtlas2. [default: 2.0]
   --fle-target-steps <steps>                       Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
@@ -218,14 +218,14 @@ Examples:
                 self.args["--spectral-leiden-resolution"]
             ),
             "spectral_leiden_class_label": self.args["--spectral-leiden-class-label"],
-            "tsne": self.args["--run-tsne"],
-            "fitsne": self.args["--run-fitsne"],
+            "tsne": self.args["--tsne"],
+            "fitsne": self.args["--fitsne"],
             "tsne_perplexity": float(self.args["--tsne-perplexity"]),
-            "umap": self.args["--run-umap"],
+            "umap": self.args["--umap"],
             "umap_K": int(self.args["--umap-K"]),
             "umap_min_dist": float(self.args["--umap-min-dist"]),
             "umap_spread": float(self.args["--umap-spread"]),
-            "fle": self.args["--run-fle"],
+            "fle": self.args["--fle"],
             "fle_K": int(self.args["--fle-K"]),
             "fle_target_change_per_node": float(
                 self.args["--fle-target-change-per-node"]

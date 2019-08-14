@@ -8,7 +8,7 @@ class DeAnalysis(Base):
 Perform DE analysis.
 
 Usage:
-  scCloud de_analysis [--labels <attr> --subset <attr:value> -p <threads> --alpha <alpha> --fisher --mwu --roc --temp-folder <temp_folder>] <input_h5ad_file> <output_spreadsheet>
+  scCloud de_analysis [options] <input_h5ad_file> <output_spreadsheet>
   scCloud de_analysis -h
 
 Arguments:
@@ -16,24 +16,26 @@ Arguments:
   output_spreadsheet     Output spreadsheet with DE results.
 
 Options:
+  -p <threads>                     Use <threads> threads. [default: 1]
   --labels <attr>                  <attr> used as cluster labels. [default: louvain_labels]
-  --subset <attr:value>            Perform DE analysis only on a subset of cells with attr == value. 
-  --alpha <alpha>                  Control false discovery rate at <alpha>. [default: 0.05]
+  --result-key <key>               Store DE results into AnnData varm with key = <key>. [default: de_res]
+  --auc                            Calculate area under ROC (AUROC) and area under Precision-Recall (AUPR).
+  --t                              Calculate Welch's t-test.
   --fisher                         Calculate Fisher's exact test.
   --mwu                            Calculate Mann-Whitney U test.
-  --roc                            Calculate area under cuver in ROC curve.
   --temp-folder <temp_folder>      Joblib temporary folder for memmapping numpy arrays.
-  -p <threads>                     Use <threads> threads. [default: 1]
-  
+  --alpha <alpha>                  Control false discovery rate at <alpha>. [default: 0.05]
+  --ndigits <ndigits>              Round non p-values and q-values to <ndigits> after decimal point in the excel.                           
+
+  --verbose                        Show more detailed intermediate outputs.  
   -h, --help                       Print out help information.
 
 Outputs:
-  input_h5ad_file        DE results would be written back to the 'var' fields, provided --subset option is not set.
+  input_h5ad_file        DE results would be written back to the 'varm' field with name set by --result-key <key>.
   output_spreadsheet     An excel spreadsheet containing DE results. Each cluster has two tabs in the spreadsheet. One is for up-regulated genes and the other is for down-regulated genes.
-  output_h5ad_file       Only present if --subset option is set. The file name is output_spreadsheet - [.xlsx] + [.h5ad]
 
 Examples:
-  scCloud de_analysis --labels louvain_labels -p 26 --fisher --mwu --roc manton_bm.h5ad manton_bm_de.xlsx
+  scCloud de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu manton_bm.h5ad manton_bm_de.xlsx
     """
 
     def execute(self):
@@ -41,11 +43,14 @@ Examples:
             self.args["<input_h5ad_file>"],
             self.args["<output_spreadsheet>"],
             self.args["--labels"],
-            int(self.args["-p"]),
-            float(self.args["--alpha"]),
-            self.args["--fisher"],
-            self.args["--mwu"],
-            self.args["--roc"],
-            self.args["--subset"],
-            self.args["--temp-folder"],
+            result_key = self.args["--result-key"],
+            n_jobs = int(self.args["-p"]),
+            auc = self.args["--auc"],
+            t = self.args["--t"],
+            fisher = self.args["--fisher"],
+            mwu = self.args["--mwu"],
+            temp_folder = self.args["--temp-folder"],
+            verbose = self.args["--verbose"],
+            alpha = float(self.args["--alpha"]),
+            ndigits = int(self.args["--ndigits"]),
         )
