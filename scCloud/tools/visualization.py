@@ -339,7 +339,7 @@ def fitsne(
     """
     start = time.time()
 
-    rep_key = "X_" + rep
+    rep_key = "X_" + rep if rep != "CITE-Seq" else rep
     if rep_key not in data.obsm.keys():
         raise ValueError("Cannot find {0} matrix. Please run {0} first!".format(rep))
 

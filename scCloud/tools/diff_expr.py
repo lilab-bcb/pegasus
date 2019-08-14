@@ -762,7 +762,7 @@ def run_de_analysis(
     temp_folder: str = None,
     verbose: bool = True,
     alpha: float = 0.05,
-    ndigits: int = 3,    
+    ndigits: int = 3   
 ) -> None :
     """ For command line only
     """

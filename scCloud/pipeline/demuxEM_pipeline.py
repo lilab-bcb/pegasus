@@ -102,7 +102,7 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
     )
     io.write_output(genome_indexed_raw_data, output_name + "_demux")
     print(
-        "Raw scCloud-format hdf5 file with demultiplexing results is written to {output_name}_demux.scCloud.h5 .".format(
+        "Raw scCloud-format hdf5 file with demultiplexing results is written to {output_name}_demux.h5sc .".format(
             output_name=output_name
         )
     )
