@@ -3,5 +3,4 @@ from .misc import (
     search_de_genes,
     show_attributes,
     perform_oneway_anova,
-    mwu_test,
 )

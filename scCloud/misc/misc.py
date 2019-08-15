@@ -1,19 +1,11 @@
-#!/usr/bin/env python
-
-import time
 import numpy as np
 import pandas as pd
-from natsort import natsorted
-from scipy.sparse import csc_matrix
-import scipy.stats as ss
-from scipy.stats import f_oneway
-from statsmodels.stats.multitest import fdrcorrection as fdr
-from joblib import Parallel, delayed
+from typing import List
 
 from scCloud.io import read_input
 
 
-def search_genes(data, gene_list, measure="percentage"):
+def search_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", measure: str = "percentage") -> pd.DataFrame:
     """Extract and display gene expressions for each cluster from an `anndata` object.
 
     This function helps to see marker expressions in clusters via the interactive python environment.
@@ -25,8 +17,10 @@ def search_genes(data, gene_list, measure="percentage"):
         An `anndata` object containing the expression matrix and differential expression results.
     gene_list : `list[str]`
         A list of gene symbols.
+    rec_key : `str`
+        varm keyword that stores DE results.
     measure : `str`
-        Can be either `percentage` or `mean_log_expression`. `percentage` shows the percentage of cells expressed the genes and `mean_log_expression` shows the mean log expression.
+        Can be either `percentage` or `mean_logExpr`. `percentage` shows the percentage of cells expressed the genes and `mean_logExpr` shows the mean log expression.
 
     Returns
     -------
@@ -38,14 +32,12 @@ def search_genes(data, gene_list, measure="percentage"):
     >>> results = misc.search_genes(data, ['CD3E', 'CD4', 'CD8'], measure = 'percentage')
     """
 
-    ncluster = sum(
-        [1 for x in data.var.columns if x.startswith("mean_log_expression_")]
-    )
-    columns = ["{}_{}".format(measure, x + 1) for x in range(ncluster)]
-    return data.var.reindex(index=gene_list, columns=columns)
+    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(measure + ':')]
+    df = pd.DataFrame(data = data.varm[rec_key][columns], index = data.var_names)
+    return df.reindex(index = gene_list)
 
 
-def search_de_genes(data, gene_list, test="fisher", thre=1.5):
+def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", test: str = "fisher", thre: float = 1.5) -> pd.DataFrame:
     """Extract and display differential expression analysis results of markers for each cluster from an `anndata` object.
 
     This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
@@ -57,6 +49,8 @@ def search_de_genes(data, gene_list, test="fisher", thre=1.5):
         An `anndata` object containing the expression matrix and differential expression results.
     gene_list : `list[str]`
         A list of gene symbols.
+    rec_key : `str`
+        varm keyword that stores DE results.
     test : `str`, optional (default: `fisher`)
         Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
     thre : `float`, optional (default: `1.5`)
@@ -72,38 +66,35 @@ def search_de_genes(data, gene_list, test="fisher", thre=1.5):
     >>> results = misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], test = 'fisher', thre = 2.0)
     """
 
-    ngene = len(gene_list)
-    ncluster = sum(
-        [1 for x in data.var.columns if x.startswith("mean_log_expression_")]
-    )
-    results = np.zeros((ngene, ncluster), dtype=np.dtype("U4"))
-    columns = [str(x + 1) for x in range(ncluster)]
-    df_de = data.var.reindex(
-        index=gene_list, columns=[test + "_qval_" + x for x in columns]
-    )
-    if test == "fisher":
-        df_fc = data.var.reindex(
-            index=gene_list, columns=["percentage_fold_change_" + x for x in columns]
-        )
-    else:
-        df_fc = np.exp(
-            data.var.reindex(
-                index=gene_list, columns=["log_fold_change_" + x for x in columns]
-            )
-        )
+    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(test + '_qval:')]
+    df_de = pd.DataFrame(data.varm[rec_key][columns], index = data.var_names)
+    df_de = df_de.reindex(index = gene_list)
+
+    columns = [x for x in data.varm[rec_key].dtype.names if (x.startswith("percentage_fold_change:") if test == "fisher" else x.startswith("log_fold_change:"))]    
+    df_fc = pd.DataFrame(data.varm[rec_key][columns], index = data.var_names)
+    df_fc = df_fc.reindex(index = gene_list)
+    if test != "fisher":
+        df_fc = np.exp(df_fc)
+
+    results = np.zeros((len(gene_list), len(columns)), dtype=np.dtype("U4"))
     results[:] = "?"
     results[np.isnan(df_de)] = "NaN"
     results[(df_de <= 0.05).values & (df_fc > 1.0).values] = "+"
     results[(df_de <= 0.05).values & (df_fc >= thre).values] = "++"
     results[(df_de <= 0.05).values & (df_fc < 1.0).values] = "-"
     results[(df_de <= 0.05).values & (df_fc <= 1.0 / thre).values] = "--"
-    df = pd.DataFrame(results, index=gene_list, columns=columns)
+
+    clusts = [x.rpartition(':')[2] for x in columns]
+    df = pd.DataFrame(data=results, index=gene_list, columns=clusts)
     return df
 
 
 def show_attributes(
-    input_file, show_attributes, show_gene_attributes, show_values_for_attributes
-):
+    input_file: str, show_attributes: bool, show_gene_attributes: bool, show_values_for_attributes: str
+) -> None:
+    """ Show data attributes. For command line use.
+    """
+
     data = read_input(input_file, h5ad_mode="r")
     if show_attributes:
         print(
@@ -127,6 +118,9 @@ def show_attributes(
 
 
 def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha=0.05):
+    from scipy.stats import f_oneway
+    from statsmodels.stats.multitest import fdrcorrection as fdr
+
     selected = np.ones(data.shape[0], dtype=bool)
     for rest_str in restriction_vec:
         attr, value_str = rest_str.split(":")
@@ -165,77 +159,3 @@ def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha=0.05
     results = raw_results[raw_results["qval"] <= fdr_alpha]
     results = results.sort_values("qval")
     return results, raw_results
-
-
-# labels, cluster labels for each sample; conds, conditions; cond_order, condition orders
-def calc_mwu(
-    clust_label, labels, conds, cond_order, gene_names, data, indices, indptr, shape
-):
-    csc_mat = csc_matrix((data, indices, indptr), shape=shape)
-    ngene = shape[1]
-    log_fc = np.zeros(ngene)
-    U_stats = np.zeros(ngene)
-    pvals = np.zeros(ngene)
-
-    idx = labels == clust_label
-    exprs = np.zeros(idx.sum())
-
-    idx_x = conds[idx] == cond_order[0]
-    idx_y = conds[idx] == cond_order[1]
-
-    local_mat = csc_mat[idx, :]
-
-    for j in range(ngene):
-        vec = local_mat[:, j]
-        if vec.size > 0:
-            exprs[vec.indices] = vec.data
-            log_fc[j] = np.mean(exprs[idx_x]) - np.mean(exprs[idx_y])
-            U_stats[j], pvals[j] = ss.mannwhitneyu(
-                exprs[idx_x], exprs[idx_y], alternative="two-sided"
-            )
-        else:
-            log_fc[j] = 0.0
-            U_stats[j] = 0.0
-            pvals[j] = 1.0
-        exprs[:] = 0.0
-
-    passed, qvals = fdr(pvals)
-
-    df = pd.DataFrame(
-        {"log_fc": log_fc, "mwu_U": U_stats, "mwu_pval": pvals, "mwu_qval": qvals},
-        index=gene_names,
-    )
-
-    print("Cluster {0} is processed.".format(clust_label))
-
-    return df
-
-
-def mwu_test(data, attr_label, attr_cond, cond_order=None, n_jobs=1, temp_folder=None):
-    start = time.time()
-
-    csc_mat = data.X.tocsc()
-
-    if cond_order is None:
-        cond_order = data.obs[attr_cond].cat.categories.values
-
-    results = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
-        delayed(calc_mwu)(
-            clust_label,
-            data.obs[attr_label].values,
-            data.obs[attr_cond].values,
-            cond_order,
-            data.var_names.values,
-            csc_mat.data,
-            csc_mat.indices,
-            csc_mat.indptr,
-            csc_mat.shape,
-        )
-        for clust_label in data.obs[attr_label].cat.categories
-    )
-    result_dict = {x: y for x, y in zip(data.obs[attr_label].cat.categories, results)}
-
-    end = time.time()
-    print("Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start))
-
-    return result_dict

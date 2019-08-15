@@ -9,13 +9,6 @@ from collections import defaultdict
 from typing import List, Tuple, Dict
 
 
-
-
-
-
-
-
-
 def calc_basic_stat(
     clust_id: str,
     data: List[float],
@@ -147,7 +140,7 @@ def calc_auc(
     gene_names: List[str],
     verbose: bool,
 ) -> pd.DataFrame:
-    """ Calculate AUROC and AUPR for one cluster
+    """ Calculate AUROC for one cluster
     """
     import sklearn.metrics as sm
 
@@ -155,7 +148,7 @@ def calc_auc(
     mask = cluster_labels == clust_id
 
     auroc = np.zeros(shape[1], dtype = np.float32)
-    aupr = np.zeros(shape[1], dtype = np.float32)
+    # aupr = np.zeros(shape[1], dtype = np.float32)
 
     if cond_labels is None:
         exprs = np.zeros(shape[0])
@@ -181,13 +174,13 @@ def calc_auc(
             fpr, tpr, thresholds = sm.roc_curve(y_true, exprs)
             auroc[i] = sm.auc(fpr, tpr)
 
-            precision, recall, thresholds = sm.precision_recall_curve(y_true, exprs)
-            aupr[i] = sm.auc(recall, precision)
+            # precision, recall, thresholds = sm.precision_recall_curve(y_true, exprs)
+            # aupr[i] = sm.auc(recall, precision)
 
     df = pd.DataFrame(
         {
             "auroc:{0}".format(clust_id): auroc,
-            "aupr:{0}".format(clust_id): aupr,
+            # "aupr:{0}".format(clust_id): aupr,
         },
         index=gene_names,
     )
@@ -201,7 +194,7 @@ def calc_auc(
 def calculate_auc_values(
     Xc: csc_matrix, cluster_labels: List[str], cond_labels: List[str], gene_names: List[str], n_jobs: int, temp_folder: str, verbose: bool
 ) -> List[pd.DataFrame]:
-    """ Collect basic statistics, triggering calc_basic_stat in parallel
+    """ Calculate AUROC values, triggering calc_auc in parallel
     """
     start = time.time()
 
@@ -222,7 +215,7 @@ def calculate_auc_values(
 
     end = time.time()
     if verbose:
-        print("AUROC and AUPR values are calculated. Time spent = {:.2f}s.".format(end - start))
+        print("AUROC values are calculated. Time spent = {:.2f}s.".format(end - start))
 
     return result_list
 
@@ -535,7 +528,7 @@ def mwu_test(
     return result_list
 
 
-def organize_results(results: List[List[pd.DataFrame]], sort_by: List[str] = ['aupr', 'WAD_score']) -> pd.DataFrame:
+def organize_results(results: List[List[pd.DataFrame]]) -> pd.DataFrame:
     """ Concatenate resulting dataframes into one big dataframe
     """
     m = len(results)
@@ -644,12 +637,12 @@ def get_sort_key(sort_by: List[str], col_names: List[str], direction: str):
     """ direction is either up or down; if down, do not use aupr
     """
     for key in sort_by:
-        if (key in col_names) and not (direction == 'down' and key == 'aupr'):
+        if key in col_names:
             return key
     raise ValueError("No valid key!")
 
 
-def markers(data: 'AnnData', head: int = None, de_key: str = 'de_res', sort_by: str = 'aupr,auroc,WAD_score', alpha: float = 0.05) -> Dict[str, Dict[str, pd.DataFrame]]:
+def markers(data: 'AnnData', head: int = None, de_key: str = 'de_res', sort_by: str = 'auroc,WAD_score', alpha: float = 0.05) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     TODO: Documentation.
     head: list only top head genes for each cluster. head == None, show any DE genes.
