@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 import xlsxwriter
+from joblib import effective_n_jobs
+
+from typing import List, Dict
 
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
@@ -14,8 +17,18 @@ from scCloud.io import read_input
 
 
 def find_markers(
-    data, label_attr, n_jobs=1, min_gain=1.0, random_state=0, remove_ribo=False
-):
+    data: 'AnnData', 
+    label_attr: str, 
+    n_jobs: int = -1, 
+    min_gain: float = 1.0,
+    random_state: int = 0, 
+    remove_ribo: bool = False
+) -> Dict[str, Dict[str, List[str]]]:
+    """
+    TODO: Documentation.
+    """
+    n_jobs = effective_n_jobs(n_jobs)
+
     if remove_ribo:
         data = data[
             :,
@@ -79,14 +92,18 @@ def find_markers(
 
 
 def run_find_markers(
-    input_h5ad_file,
-    output_file,
-    label_attr="louvain_labels",
-    n_jobs=1,
-    min_gain=1.0,
-    random_state=0,
-    remove_ribo=False,
-):
+    input_h5ad_file: str,
+    output_file: str,
+    label_attr: str,
+    n_jobs: int = -1,
+    min_gain: float = 1.0,
+    random_state: int = 0,
+    remove_ribo: bool = False,
+) -> None:
+    """
+    For command line use.
+    """
+
     data = read_input(input_h5ad_file)
     markers = find_markers(
         data,
