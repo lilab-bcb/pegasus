@@ -281,7 +281,7 @@ def run_annotate_cluster(
     start = time.time()
     data = read_input(input_file, h5ad_mode="r")
     with open(output_file, "w") as fout:
-        annotate_cluster.infer_cell_types(data, marker_file, de_test, de_alpha = de_alpha, de_key = de_key, threshold = threshold, ignore_nonde = ignore_nonde, fout = fout)
+        infer_cell_types(data, marker_file, de_test, de_alpha = de_alpha, de_key = de_key, threshold = threshold, ignore_nonde = ignore_nonde, fout = fout)
     data.file.close()
     end = time.time()
     print("Time spent for annotating clusters is {:.2f}s.".format(end - start))

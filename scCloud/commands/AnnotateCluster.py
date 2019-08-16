@@ -8,7 +8,7 @@ class AnnotateCluster(Base):
 Annotate potential cell types for each cluster. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
 
 Usage:
-  scCloud annotate_cluster [--marker-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+  scCloud annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
   scCloud annotate_cluster --annotation <annotation_string> <input_h5ad_file>
   scCloud annotate_cluster -h
 
