@@ -15,11 +15,12 @@ Arguments:
   output_spreadsheet     Output spreadsheet with LightGBM detected markers.
 
 Options:
+  -p <threads>                 Use <threads> threads. [default: 1]
   --labels <attr>              <attr> used as cluster labels. [default: louvain_labels]
+  --de-key <key>               Key for storing DE results in obsm. [default: de_res]
   --remove-ribo                Remove ribosomal genes with either RPL or RPS as prefixes.
   --min-gain <gain>            Only report genes with a feature importance score (in gain) of at least <gain>. [default: 1.0]
   --random-state <seed>        Random state for initializing LightGBM and KMeans. [default: 0]
-  -p <threads>                 Use <threads> threads. [default: 1]
 
   -h, --help                   Print out help information.
 
@@ -35,6 +36,7 @@ Examples:
             self.args["<input_h5ad_file>"],
             self.args["<output_spreadsheet>"],
             self.args["--labels"],
+            de_key=self.args["--de-key"],
             n_jobs=int(self.args["-p"]),
             min_gain=float(self.args["--min-gain"]),
             random_state=int(self.args["--random-state"]),

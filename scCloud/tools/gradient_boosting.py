@@ -2,7 +2,6 @@ import time
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-import xlsxwriter
 from joblib import effective_n_jobs
 
 from typing import List, Dict
@@ -18,7 +17,8 @@ from scCloud.io import read_input
 
 def find_markers(
     data: 'AnnData', 
-    label_attr: str, 
+    label_attr: str,
+    de_key: str = 'de_res', 
     n_jobs: int = -1, 
     min_gain: float = 1.0,
     random_state: int = 0, 
@@ -27,8 +27,10 @@ def find_markers(
     """
     TODO: Documentation.
     """
+    start = time.time()
+    
     n_jobs = effective_n_jobs(n_jobs)
-
+    
     if remove_ribo:
         data = data[
             :,
@@ -52,7 +54,7 @@ def find_markers(
     # end = time.time()
     # print("XGBoost used {:.2f}s to train.".format(end - start))
 
-    start = time.time()
+    start_lgb = time.time()
     lgb = LGBMClassifier(n_jobs=n_jobs, metric="multi_error", importance_type="gain")
     lgb.fit(
         X_train,
@@ -60,26 +62,28 @@ def find_markers(
         eval_set=[(X_train, y_train), (X_test, y_test)],
         early_stopping_rounds=1,
     )
-    end = time.time()
-    print("LightGBM used {:.2f}s to train.".format(end - start))
+    end_lgb = time.time()
+    print("LightGBM used {:.2f}s to train.".format(end_lgb - start_lgb))
 
     ntot = (lgb.feature_importances_ >= min_gain).sum()
     ords = np.argsort(lgb.feature_importances_)[::-1][:ntot]
 
-    ncat = data.obs[label_attr].cat.categories.size
-    log_exprs = ["mean_log_expression_{}".format(i + 1) for i in range(ncat)]
+    log_exprs = [x for x in data.varm[de_key].dtype.names if x.startswith("mean_logExpr:")]
+    labels = [x.rpartition(":")[2] for x in log_exprs]
+
     titles = [("down", "down_gain"), ("weak", "weak_gain"), ("strong", "strong_gain")]
     markers = defaultdict(lambda: defaultdict(list))
 
     kmeans = KMeans(n_clusters=3, random_state=random_state)
     for gene_id in ords:
         gene_symbol = data.var_names[gene_id]
-        mydat = data.var.loc[gene_symbol, log_exprs].values.reshape(-1, 1)
+        mydat = [[x] for x in data.varm[de_key][log_exprs][gene_id]]
         kmeans.fit(mydat)
         kmeans_label_mode = pd.Series(kmeans.labels_).mode()[0]
         for i, kmeans_label in enumerate(np.argsort(kmeans.cluster_centers_[:, 0])):
             if kmeans_label != kmeans_label_mode:
-                for clust_label in (kmeans.labels_ == kmeans_label).nonzero()[0]:
+                for pos in (kmeans.labels_ == kmeans_label).nonzero()[0]:
+                    clust_label = labels[pos]
                     markers[clust_label][titles[i][0]].append(gene_symbol)
                     markers[clust_label][titles[i][1]].append(
                         "{:.2f}".format(lgb.feature_importances_[gene_id])
@@ -95,6 +99,7 @@ def run_find_markers(
     input_h5ad_file: str,
     output_file: str,
     label_attr: str,
+    de_key: str = 'de_res',
     n_jobs: int = -1,
     min_gain: float = 1.0,
     random_state: int = 0,
@@ -103,33 +108,37 @@ def run_find_markers(
     """
     For command line use.
     """
+    import xlsxwriter
+    from natsort import natsorted 
 
     data = read_input(input_h5ad_file)
     markers = find_markers(
         data,
         label_attr,
+        de_key = de_key,
         n_jobs=n_jobs,
         min_gain=min_gain,
         random_state=random_state,
         remove_ribo=remove_ribo,
     )
 
-    nclust = len(markers)
     keywords = [("strong", "strong_gain"), ("weak", "weak_gain"), ("down", "down_gain")]
 
     writer = pd.ExcelWriter(output_file, engine="xlsxwriter")
 
-    for i in range(nclust):
+    for clust_id in natsorted(markers.keys()):
+        clust_markers = markers[clust_id]
+
         sizes = []
         for keyword in keywords:
-            sizes.append(len(markers[i][keyword[0]]))
+            sizes.append(len(clust_markers[keyword[0]]))
 
         arr = np.zeros((max(sizes), 8), dtype=object)
         arr[:] = ""
 
-        for j in range(3):
-            arr[0 : sizes[j], j * 3] = markers[i][keywords[j][0]]
-            arr[0 : sizes[j], j * 3 + 1] = markers[i][keywords[j][1]]
+        for i in range(3):
+            arr[0 : sizes[i], i * 3] = clust_markers[keywords[i][0]]
+            arr[0 : sizes[i], i * 3 + 1] = clust_markers[keywords[i][1]]
 
         df = pd.DataFrame(
             data=arr,
@@ -144,6 +153,6 @@ def run_find_markers(
                 "gain",
             ],
         )
-        df.to_excel(writer, sheet_name="{}".format(i + 1), index=False)
+        df.to_excel(writer, sheet_name=clust_id, index=False)
 
     writer.save()
