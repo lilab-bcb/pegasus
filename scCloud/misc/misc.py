@@ -37,7 +37,7 @@ def search_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res",
     return df.reindex(index = gene_list)
 
 
-def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", test: str = "fisher", thre: float = 1.5) -> pd.DataFrame:
+def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", de_test: str = "fisher", de_alpha: float = 0.05, thre: float = 1.5) -> pd.DataFrame:
     """Extract and display differential expression analysis results of markers for each cluster from an `anndata` object.
 
     This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
@@ -51,8 +51,10 @@ def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_re
         A list of gene symbols.
     rec_key : `str`
         varm keyword that stores DE results.
-    test : `str`, optional (default: `fisher`)
+    de_test : `str`, optional (default: `fisher`)
         Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
+    de_alpha : `float`, optional (default: 0.05)
+        False discovery rate.
     thre : `float`, optional (default: `1.5`)
         Fold change threshold to determine if the marker is a strong DE (`++` or `--`) or weak DE (`+` or `-`).
 
@@ -79,10 +81,10 @@ def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_re
     results = np.zeros((len(gene_list), len(columns)), dtype=np.dtype("U4"))
     results[:] = "?"
     results[np.isnan(df_de)] = "NaN"
-    results[(df_de <= 0.05).values & (df_fc > 1.0).values] = "+"
-    results[(df_de <= 0.05).values & (df_fc >= thre).values] = "++"
-    results[(df_de <= 0.05).values & (df_fc < 1.0).values] = "-"
-    results[(df_de <= 0.05).values & (df_fc <= 1.0 / thre).values] = "--"
+    results[(df_de <= de_alpha).values & (df_fc > 1.0).values] = "+"
+    results[(df_de <= de_alpha).values & (df_fc >= thre).values] = "++"
+    results[(df_de <= de_alpha).values & (df_fc < 1.0).values] = "-"
+    results[(df_de <= de_alpha).values & (df_fc <= 1.0 / thre).values] = "--"
 
     clusts = [x.rpartition(':')[2] for x in columns]
     df = pd.DataFrame(data=results, index=gene_list, columns=clusts)

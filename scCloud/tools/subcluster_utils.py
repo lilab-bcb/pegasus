@@ -1,11 +1,13 @@
 import numpy as np
 import anndata
 
+from typing import List
+
+
 
 def parse_subset_selections(subset_selections):
     subsets_dict = {}
     for subset_str in subset_selections:
-        print(subset_str)
         attr, value_str = subset_str.split(":")
         if attr in subsets_dict:
             subsets_dict[attr].extend(value_str.split(","))
@@ -14,11 +16,11 @@ def parse_subset_selections(subset_selections):
     return subsets_dict
 
 
-def get_anndata_for_subclustering(data, subset_selections):
-    obs_index = np.full_like(data.obs[data.obs.columns.values[0]], True)
+def get_anndata_for_subclustering(data: 'AnnData', subset_selections: List[str]):
+    obs_index = np.full(data.shape[0], True)
     subsets_dict = parse_subset_selections(subset_selections)
     for key, value in subsets_dict.items():
-        print(key, "corresponds to", subsets_dict[key])
+        print(key, "corresponds to", value)
         obs_index = obs_index & np.isin(data.obs[key], value)
     data = data[obs_index, :]
 
@@ -41,19 +43,18 @@ def get_anndata_for_subclustering(data, subset_selections):
     newdata.var["robust"] = (
         newdata.var["robust"].values & (newdata.var["n_cells"] > 0).values
     )
-    newdata.var["highly_variable_genes"] = newdata.var[
+    newdata.var["highly_variable_features"] = newdata.var[
         "robust"
     ]  # default all robust genes are "highly" variable
-    newdata.var["hvg_rank"] = -1  # default all ranks are -1
 
     if "Channels" in data.uns:
         newdata.uns["Channels"] = data.uns["Channels"]
     if "Groups" in data.uns:
         newdata.uns["Groups"] = data.uns["Groups"]
-    if "means" in data.varm.keys():
-        newdata.varm["means"] = data.varm["means"]
-    if "stds" in data.varm.keys():
-        newdata.varm["stds"] = data.varm["stds"]
+    if "plus" in data.varm.keys():
+        newdata.varm["means"] = data.varm["plus"]
+    if "muls" in data.varm.keys():
+        newdata.varm["muls"] = data.varm["muls"]
 
     print("{0} cells are selected.".format(newdata.shape[0]))
 

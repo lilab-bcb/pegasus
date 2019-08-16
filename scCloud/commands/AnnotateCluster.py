@@ -8,7 +8,7 @@ class AnnotateCluster(Base):
 Annotate potential cell types for each cluster. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
 
 Usage:
-  scCloud annotate_cluster [--json-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+  scCloud annotate_cluster [--marker-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
   scCloud annotate_cluster --annotation <annotation_string> <input_h5ad_file>
   scCloud annotate_cluster -h
 
@@ -17,11 +17,14 @@ Arguments:
   output_file            Output annotation file.
 
 Options:
-  --json-file <file>                      JSON file for markers. Could also be human_immune/mouse_immune/mouse_brain/human_brain, which triggers scCloud to markers included in the package. [default: human_immune]
+  --marker-file <file>                    JSON file for markers. Could also be human_immune/mouse_immune/mouse_brain/human_brain, which triggers scCloud to markers included in the package. [default: human_immune]
+  --de-test <test>                        DE test to use to infer cell types. [default: t]
+  --de-alpha <alpha>                      False discovery rate to control family-wise error rate. [default: 0.05]
+  --de-key <key>                          Keyword where the DE results store in varm. [default: de_res]
   --minimum-report-score <score>          Minimum cell type score to report a potential cell type. [default: 0.5]
   --do-not-use-non-de-genes               Do not count non DE genes as down-regulated.
 
-  --annotation <annotation_string>        Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: 'anno_attr:anno_1;anno_2;scCloud..;anno_n'. 'anno_attr' is the annotation attribute in the h5ad object and anno_i is the annotation for cluster i.
+  --annotation <annotation_string>        Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: 'anno_name:clust_name:anno_1;anno_2;scCloud..;anno_n'. 'anno_name' is the annotation attribute in the h5ad object, 'clust_name' is the attribute with cluster ids, and anno_i is the annotation for cluster i.
 
   -h, --help                              Print out help information.
 
@@ -38,9 +41,12 @@ Examples:
             run_annotate_cluster(
                 self.args["<input_h5ad_file>"],
                 self.args["<output_file>"],
-                float(self.args["--minimum-report-score"]),
-                ignoreNA=self.args["--do-not-use-non-de-genes"],
-                json_file=self.args["--json-file"],
+                self.args["--marker-file"],
+                de_test = self.args["--de-test"],
+                de_alpha = float(self.args["--de-alpha"]),
+                de_key = self.args["--de-key"],
+                threshold = float(self.args["--minimum-report-score"]),
+                ignore_nonde = self.args["--do-not-use-non-de-genes"],
             )
         else:
             annotate_anndata_object(
