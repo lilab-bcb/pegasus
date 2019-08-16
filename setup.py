@@ -31,6 +31,7 @@ requires = [
     "pyarrow",
     "umap-learn>=0.3.9",
     "lightgbm==2.2.1",
+    "python-igraph",
     "MulticoreTSNE-modified",
     "hnswlib-modified",
     "fisher-modified",
