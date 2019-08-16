@@ -206,7 +206,7 @@ def spectral_louvain(
     start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
-        raise ValueError("Please run {} first!".foramt(rep_kmeans))
+        raise ValueError("Please run {} first!".format(rep_kmeans))
     if "W_" + rep not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
@@ -257,7 +257,7 @@ def spectral_leiden(
     start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
-        raise ValueError("Please run {} first!".foramt(rep_kmeans))
+        raise ValueError("Please run {} first!".format(rep_kmeans))
     if "W_" + rep not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
