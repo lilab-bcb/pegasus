@@ -44,30 +44,31 @@ def run_pipeline(input_file, output_name, **kwargs):
 
 
     if is_raw:
-        # filter out low quality cells/genes
-        tools.run_filter_data(
-            adata,
-            output_filt=kwargs["output_filt"],
-            plot_filt=kwargs["plot_filt"],
-            plot_filt_figsize=kwargs["plot_filt_figsize"],
-            mito_prefix=kwargs["mito_prefix"],
-            min_genes=kwargs["min_genes"],
-            max_genes=kwargs["max_genes"],
-            min_umis=kwargs["min_umis"],
-            max_umis=kwargs["max_umis"],
-            percent_mito=kwargs["percent_mito"],
-            percent_cells=kwargs["percent_cells"],
-        )
+        if not kwargs["subcluster"]:
+            # filter out low quality cells/genes
+            tools.run_filter_data(
+                adata,
+                output_filt=kwargs["output_filt"],
+                plot_filt=kwargs["plot_filt"],
+                plot_filt_figsize=kwargs["plot_filt_figsize"],
+                mito_prefix=kwargs["mito_prefix"],
+                min_genes=kwargs["min_genes"],
+                max_genes=kwargs["max_genes"],
+                min_umis=kwargs["min_umis"],
+                max_umis=kwargs["max_umis"],
+                percent_mito=kwargs["percent_mito"],
+                percent_cells=kwargs["percent_cells"],
+            )
 
-        if kwargs["seurat_compatible"]:
-            raw_data = adata.copy()  # raw as count
+            if kwargs["seurat_compatible"]:
+                raw_data = adata.copy()  # raw as count
 
-        # normailize counts and then transform to log space
-        tools.log_norm(adata, kwargs["norm_count"])
+            # normailize counts and then transform to log space
+            tools.log_norm(adata, kwargs["norm_count"])
 
-        # set group attribute
-        if kwargs["batch_correction"] and kwargs["group_attribute"] is not None:
-            tools.set_group_attribute(adata, kwargs["group_attribute"])
+            # set group attribute
+            if kwargs["batch_correction"] and kwargs["group_attribute"] is not None:
+                tools.set_group_attribute(adata, kwargs["group_attribute"])
 
         # select highly variable features
         if kwargs["select_hvf"]:
