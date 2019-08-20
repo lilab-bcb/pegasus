@@ -19,10 +19,11 @@ def run_pipeline(input_file, output_name, **kwargs):
         select_singlets=kwargs["select_singlets"],
     )
 
-    if (not kwargs["cite_seq"]) and is_raw:
-        values = adata.X.getnnz(axis=1)
-        if values.min() == 0:  # 10x raw data
-            adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
+    if not kwargs["cite_seq"]:
+        if is_raw:
+            values = adata.X.getnnz(axis=1)
+            if values.min() == 0:  # 10x raw data
+                adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
     else:
         data_list = adata
         assert len(data_list) == 2
