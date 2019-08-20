@@ -2,8 +2,9 @@ import time
 import numpy as np
 from scipy.sparse import issparse
 import igraph
+import logging
 
-from typing import List
+logger = logging.getLogger('sccloud')
 
 def construct_graph(
     W: "csr_matrix", directed: bool = False, adjust_weights: bool = True
@@ -37,6 +38,6 @@ def construct_graph(
     G.es["weight"] = w
 
     end = time.time()
-    print("Graph is constructed. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Graph is constructed. Time spent = {:.2f}s.".format(end - start))
 
     return G

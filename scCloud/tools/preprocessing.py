@@ -1,16 +1,15 @@
 import time
 import numpy as np
 import pandas as pd
-import xlsxwriter
 
 from scipy.sparse import issparse
-from sklearn.preprocessing import StandardScaler
+
 from sklearn.decomposition import PCA
-from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.utils.extmath import randomized_svd
 
-from typing import List, Tuple
+from typing import Tuple
+import logging
 
+logger = logging.getLogger('sccloud')
 
 def qc_metrics(
     data: "AnnData",
@@ -151,7 +150,7 @@ def filter_data(data: "AnnData") -> None:
     assert "passed_qc" in data.obs
     data._inplace_subset_obs(data.obs["passed_qc"].values)
     data._inplace_subset_var((data.var["n_cells"] > 0).values)
-    print(
+    logger.info(
         "After filteration, {nc} cells and {ng} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(
             nc=data.shape[0], ng=data.shape[1], nrb=data.var["robust"].sum()
         )
@@ -218,7 +217,7 @@ def generate_filter_plots(
         figsize=figsize,
     )
 
-    print("Filtration plots are generated.")
+    logger.info("Filtration plots are generated.")
 
 
 def run_filter_data(
@@ -257,7 +256,7 @@ def run_filter_data(
         df_cells.to_excel(writer, sheet_name="Cell filtration stats")
         df_genes.to_excel(writer, sheet_name="Gene filtration stats")
         writer.save()
-        print("Filtration results are written.")
+        logger.info("Filtration results are written.")
 
     if plot_filt is not None:
         generate_filter_plots(data, plot_filt, plot_filt_figsize)
@@ -265,11 +264,11 @@ def run_filter_data(
     filter_data(data)
 
     end = time.time()
-    print("filter_data is finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info("filter_data is finished. Time spent = {:.2f}s.".format(end - start))
 
 
 def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
-    """Normalization and then take log 
+    """Normalization and then take log
     TODO: Documentation
     """
 
@@ -282,7 +281,7 @@ def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
     data.X = data.X.log1p()
 
     end = time.time()
-    print("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
 
 def select_features(data: "AnnData", features: str = None) -> str:
@@ -351,4 +350,4 @@ def pca(
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
 
     end = time.time()
-    print("PCA is done. Time spent = {:.2f}s.".format(end - start))
+    logger.info("PCA is done. Time spent = {:.2f}s.".format(end - start))

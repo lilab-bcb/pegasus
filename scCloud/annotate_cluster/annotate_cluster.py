@@ -5,7 +5,9 @@ from sys import stdout
 from natsort import natsorted
 
 from typing import List, Dict
+import logging
 
+logger = logging.getLogger('sccloud')
 
 class CellType:
     def __init__(self, name: str, ignore_nonde: bool = False):
@@ -151,12 +153,12 @@ class Annotator:
 
 
 def infer_cell_types(
-    data: 'AnnData', 
+    data: 'AnnData',
     marker_file: str,
     de_test: str,
     de_alpha: float = 0.05,
     de_key: str = 'de_res',
-    threshold: float = 0.5, 
+    threshold: float = 0.5,
     ignore_nonde: bool = False,
     fout: 'output stream' = stdout,
 ) -> None:
@@ -172,7 +174,7 @@ def infer_cell_types(
     de_test: `str`,
         scCloud determines cell types using DE test results. This argument indicates which DE test result to use, can be either 't', 'fisher' or 'mwu'.
     de_alpha: `float`, optional (default: 0.05)
-        False discovery rate for controling family-wide error.       
+        False discovery rate for controling family-wide error.
     de_key : `str`, optional (default: de_res)
         The keyword in varm that stores DE results.
     threshold : `float`, optional (defaut: 0.5)
@@ -181,7 +183,7 @@ def infer_cell_types(
         Do not consider non DE genes as weak negative markers.
     fout: `output stream`, optional (default: stdout)
         Where to write results. If default, write to stdout.
-    
+
     Returns
     -------
 
@@ -190,7 +192,7 @@ def infer_cell_types(
     Examples
     --------
     >>> annotate_cluster.annotate_clusters()
-    """    
+    """
     import pkg_resources
     if marker_file == "human_immune":
         marker_file = pkg_resources.resource_filename(
@@ -264,13 +266,13 @@ def annotate(data: 'AnnData', name: str, based_on: str, anno_dict: Dict[str, str
 
 
 def run_annotate_cluster(
-    input_file: str, 
+    input_file: str,
     output_file: str,
     marker_file: str,
     de_test: str,
     de_alpha: float = 0.05,
     de_key: str = 'de_res',
-    threshold: float = 0.5, 
+    threshold: float = 0.5,
     ignore_nonde: bool = False,
 ) -> None:
     """ For command line use.
@@ -284,11 +286,11 @@ def run_annotate_cluster(
         infer_cell_types(data, marker_file, de_test, de_alpha = de_alpha, de_key = de_key, threshold = threshold, ignore_nonde = ignore_nonde, fout = fout)
     data.file.close()
     end = time.time()
-    print("Time spent for annotating clusters is {:.2f}s.".format(end - start))
+    logger.info("Time spent for annotating clusters is {:.2f}s.".format(end - start))
 
 
 def annotate_anndata_object(input_file: str, annotation: str) -> None:
-    """ For command line use. 
+    """ For command line use.
         annotation:  anno_name:clust_name:cell_type1;...cell_typen
     """
     from scCloud.io import read_input, write_output

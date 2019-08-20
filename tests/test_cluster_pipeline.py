@@ -14,21 +14,8 @@ class TestClusterPipeline(unittest.TestCase):
             [
                 "cluster",
                 os.path.join("tests", "scCloud-test-data", "input", "3k_pbmc"),
-                "test_cluster",
-                "--run-leiden",
-                "--run-approximated-leiden",
-                "--run-tsne",
-                "--run-umap",
-                "--run-net-tsne",
-                "--run-net-fitsne",
-                "--run-net-umap",
-                "--run-fitsne",
-                "--run-fle",
-                "--run-net-fle",
-                "--plot-hvf",
-                "--run-louvain",
-                "--run-approximated-louvain",
-            ]
+                "test_cluster", "--leiden", "--spectral-leiden", "--fle", "--tsne", "--fitsne", "--umap", "--net-tsne",
+                "--net-umap", "--net-fle", "--louvain", "--spectral-louvain", "--plot-hvf"]
         )
         cmd.execute()
 

@@ -23,7 +23,7 @@ class TestDePipeline(unittest.TestCase):
                 "test_de.xlsx",
                 "--fisher",
                 "--mwu",
-                "--roc",
+                "--auc",
                 "--labels",
                 "leiden_labels",
             ]

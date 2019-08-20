@@ -13,7 +13,9 @@ from typing import List, Tuple
 from . import Array2D, MemData
 
 import anndata
+import logging
 
+logger = logging.getLogger('sccloud')
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v2 format matrix from hdf5 file
@@ -223,7 +225,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         barcode_metadata = pd.read_csv(
             barcode_file, sep="\t", header=None, names=["barcodekey"]
         )
-        
+
         if format_type == "10x v3":
             feature_metadata = pd.read_csv(
                 feature_file,
@@ -634,7 +636,7 @@ def read_input(
         assert return_type == "AnnData"
 
     end = time.time()
-    print("Read input is finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Read input is finished. Time spent = {:.2f}s.".format(end - start))
 
     return data
 
@@ -676,7 +678,7 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
         for keyword in keys:
             if keyword.startswith("fmat_"):
                 data.uns.pop(keyword)
-        
+
         import pathlib
         output_name = pathlib.Path(output_name)
         if data.isbacked and output_name == data.filename:
@@ -691,4 +693,4 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
         data.write(output_name, compression="gzip")
 
     end = time.time()
-    print("Write output is finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Write output is finished. Time spent = {:.2f}s.".format(end - start))

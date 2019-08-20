@@ -1,6 +1,8 @@
 from docopt import docopt
-from docopt import DocoptExit
 from typing import List
+import logging
+
+logger = logging.getLogger('sccloud')
 
 
 class Base:
@@ -8,6 +10,9 @@ class Base:
 
     def __init__(self, command_args: List[str]):
         self.args = docopt(self.__doc__, argv=command_args)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(logging.StreamHandler())
+
 
     def split_string(self, astring: str, sep: str = ",") -> List[str]:
         return astring.split(sep) if astring is not None else []

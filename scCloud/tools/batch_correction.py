@@ -1,7 +1,8 @@
 import time
 import numpy as np
 from scipy.sparse import issparse
-from collections import defaultdict
+import logging
+logger = logging.getLogger('sccloud')
 
 from scCloud.tools import estimate_feature_statistics, select_features
 
@@ -36,7 +37,7 @@ def estimate_adjustment_matrices(data: "AnnData") -> bool:
         estimate_feature_statistics(data, True)
 
     if data.uns["Channels"].size == 1:
-        print("Warning: data only contains 1 channel. Batch correction disabled!")
+        logger.warning("Warning: data only contains 1 channel. Batch correction disabled!")
         return False
 
     nchannel = data.uns["Channels"].size
@@ -92,15 +93,15 @@ def correct_batch(data: "AnnData", features: "str" = None) -> None:
     can_correct = estimate_adjustment_matrices(data)
     end = time.time()
     tot_seconds += end - start
-    print("Adjustment parameters are estimated.")
+    logger.info("Adjustment parameters are estimated.")
 
     # select dense matrix
     keyword = select_features(data, features)
-    print("Features are selected.")
+    logger.info("Features are selected.")
 
     if can_correct:
         start = time.time()
         correct_batch_effects(data.uns[keyword])
         end = time.time()
         tot_seconds += end - start
-        print("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))
+        logger.info("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))

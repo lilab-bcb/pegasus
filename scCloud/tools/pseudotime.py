@@ -1,12 +1,13 @@
 import time
 import numpy as np
-import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 import igraph
-from collections import deque 
+from collections import deque
 
 from typing import List
+import logging
 
+logger = logging.getLogger('sccloud')
 
 
 def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
@@ -32,7 +33,7 @@ def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
     data.obs["pseudotime"] = (distances - dmin) / (dmax - dmin)
 
     end = time.time()
-    print(
+    logger.info(
         "calc_pseudotime finished. Time spent = {:.2f}s".format(end - start)
     )
 
@@ -66,7 +67,7 @@ def infer_path(data, cluster, clust_id, path_name, k: int = 10):
     root_id = int(np.isin(data.obs_names, data.uns['roots'][0]).nonzero()[0][0])
     indices = data.uns['diffmap_knn_indices']
     distances = data.uns['diffmap_knn_distances']
-    G = construct_knn_graph(indices, distances)    
+    G = construct_knn_graph(indices, distances)
     parents = bfs_on_mst(G, root_id)
     inpath = np.zeros(data.shape[0], dtype = bool)
     idx = np.isin(data.obs[cluster], clust_id)
