@@ -204,7 +204,6 @@ Examples:
             "net_umap_polish_nepochs": int(self.args["--net-umap-polish-nepochs"]),
             "net_umap_basis": self.args["--net-umap-out-basis"],
             "net_fle": self.args["--net-fle"],
-            "net_fle_ds_full_speed": self.args["--net-fle-ds-full-speed"],
             "net_fle_polish_target_steps": int(
                 self.args["--net-fle-polish-target-steps"]
             ),
