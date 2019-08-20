@@ -18,7 +18,8 @@ def run_pipeline(input_file, output_name, **kwargs):
         h5ad_mode=("a" if (is_raw or kwargs["subcluster"]) else "r+"),
         select_singlets=kwargs["select_singlets"],
     )
-    if not kwargs["cite_seq"]:
+
+    if (not kwargs["cite_seq"]) and is_raw:
         values = adata.X.getnnz(axis=1)
         if values.min() == 0:  # 10x raw data
             adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
@@ -40,6 +41,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["subcluster"]:
         adata = tools.get_anndata_for_subclustering(adata, kwargs["subset_selections"])
         is_raw = True  # get submat and then set is_raw to True
+
 
     if is_raw:
         # filter out low quality cells/genes
