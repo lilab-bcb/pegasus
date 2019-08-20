@@ -189,7 +189,9 @@ def infer_cell_types(
 
     Examples
     --------
-    >>> annotate_cluster.annotate_clusters()
+
+    >>> annotate_cluster.infer_cell_types(adata, 'human_immune', 'fisher')
+
     """    
     import pkg_resources
     if marker_file == "human_immune":
@@ -258,7 +260,7 @@ def annotate(data: 'AnnData', name: str, based_on: str, anno_dict: Dict[str, str
 
     Examples
     --------
-    >>> annotate_cluster.add_annotation(data, 'anno', 'spectral_louvain_labels', {'1': 'T cell', '2': 'B cell'})
+    >>> annotate_cluster.annotate(data, 'anno', 'spectral_louvain_labels', {'1': 'T cell', '2': 'B cell'})
     """
     data.obs[name] = [anno_dict[x] for x in data.obs[based_on]]
 
