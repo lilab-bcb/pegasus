@@ -37,6 +37,7 @@ requires = [
     "fisher-modified",
     "louvain-github",
     "leidenalg",
+    "forceatlas2-python",
 ]
 
 setup(
@@ -77,7 +78,6 @@ setup(
             "human_brain_cell_markers.json",
         ],
         "scCloud.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
-        "scCloud": ["ext/forceatlas2.jar", "ext/gephi-toolkit-0.9.2-all.jar"],
     },
     entry_points={"console_scripts": ["scCloud=scCloud.__main__:main"]},
 )
