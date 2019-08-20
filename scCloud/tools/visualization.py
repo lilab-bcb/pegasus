@@ -1,19 +1,13 @@
 import time
 import numpy as np
-import pandas as pd
 import scipy
-from subprocess import check_call
 from joblib import effective_n_jobs
-
-import os
-import pkg_resources
-
 from MulticoreTSNE import MulticoreTSNE as TSNE
 import umap as umap_module
 import forceatlas2 as fa2
+import logging
 
-from typing import List
-
+logger = logging.getLogger('sccloud')
 
 from scCloud.tools import (
     neighbors,
@@ -52,7 +46,7 @@ def calc_tsne(
         n_iter_early_exag=n_iter_early_exag,
     )
     X_tsne = tsne.fit_transform(X)
-    print("Final error = {}".format(tsne.kl_divergence_))
+    logger.info("Final error = {}".format(tsne.kl_divergence_))
     return X_tsne
 
 
@@ -130,7 +124,7 @@ def calc_umap(
     embedding = None
     if X.shape[0] < 4096 or knn_indices is None:
         embedding = umap_obj.fit_transform(X)
-        print("haha = {}".format(X.shape[0]))
+        logger.info("using umap kNN graph {}".format(X.shape[0]))
     else:
         assert knn_dists is not None
         # preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
@@ -158,7 +152,7 @@ def calc_umap(
         umap_obj._validate_parameters()
 
         if umap_obj.verbose:
-            print(str(umap_obj))
+            logger.info(str(umap_obj))
 
         if scipy.sparse.isspmatrix_csr(X):
             if not X.has_sorted_indices:
@@ -170,7 +164,7 @@ def calc_umap(
         _random_state = check_random_state(umap_obj.random_state)
 
         if umap_obj.verbose:
-            print("Construct fuzzy simplicial set")
+            logger.info("Construct fuzzy simplicial set")
 
         umap_obj._small_data = False
         umap_obj.graph_ = umap_module.umap_.fuzzy_simplicial_set(
@@ -189,7 +183,7 @@ def calc_umap(
 
         _n_epochs = umap_obj.n_epochs if umap_obj.n_epochs is not None else 0
         if umap_obj.verbose:
-            print("Construct embedding")
+            logger.info("Construct embedding")
         embedding = umap_module.umap_.simplicial_set_embedding(
             X,
             umap_obj.graph_,
@@ -225,8 +219,8 @@ def calc_force_directed_layout(
     TODO: Typing
     """
     G = construct_graph(W)
-    return fa2.forceatlas2(file_name, graph = G, n_jobs = n_jobs, target_change_per_node = target_change_per_node, \
-        target_steps = target_steps, is3d = is3d, memory = memory, random_state = random_state, init = init)
+    return fa2.forceatlas2(file_name, graph=G, n_jobs=n_jobs, target_change_per_node=target_change_per_node, \
+        target_steps=target_steps, is3d=is3d, memory=memory, random_state=random_state, init=init)
 
 
 def tsne(
@@ -262,7 +256,7 @@ def tsne(
     )
 
     end = time.time()
-    print("t-SNE is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("t-SNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 def fitsne(
@@ -298,7 +292,7 @@ def fitsne(
     )
 
     end = time.time()
-    print("FIt-SNE is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("FIt-SNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 def umap(
@@ -330,10 +324,10 @@ def umap(
         raise ValueError("Please run {} first!".format(rep))
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
         data.obsm[rep_key],
@@ -347,7 +341,7 @@ def umap(
     )
 
     end = time.time()
-    print("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 def fle(
@@ -398,7 +392,7 @@ def fle(
     )
 
     end = time.time()
-    print(
+    logger.info(
         "Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start)
     )
 
@@ -413,7 +407,7 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     nsample = distances.shape[0]
 
     if K > distances.shape[1]:
-        print(
+        logger.info(
             "Warning: in select_cells, K = {} > the number of calculated nearest neighbors!\nSet K to {}".format(
                 K, distances.shape[1]
             )
@@ -436,7 +430,7 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     ] = True
 
     end_time = time.time()
-    print("select_cells finished. Time spent = {:.2}s.".format(end_time - start_time))
+    logger.info("select_cells finished. Time spent = {:.2}s.".format(end_time - start_time))
 
     return selected
 
@@ -474,7 +468,7 @@ def net_tsne(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    selected = select_cell(
+    selected = select_cells(
         data.uns[distances_key],
         select_frac,
         K=select_K,
@@ -524,7 +518,7 @@ def net_tsne(
     )
 
     end = time.time()
-    print("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 def net_fitsne(
@@ -560,7 +554,7 @@ def net_fitsne(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    selected = select_cell(
+    selected = select_cells(
         data.uns[distances_key],
         select_frac,
         K=select_K,
@@ -611,7 +605,7 @@ def net_fitsne(
     )
 
     end = time.time()
-    print("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 def net_umap(
@@ -649,7 +643,7 @@ def net_umap(
 
     n_jobs = effective_n_jobs(n_jobs)
 
-    selected = select_cell(
+    selected = select_cells(
         data.uns[distances_key],
         select_frac,
         K=select_K,
@@ -673,10 +667,10 @@ def net_umap(
         data.uns[ds_distances_key] = distances
 
     knn_indices = np.insert(
-        data.uns[ds_indices_key][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
+        data.uns[ds_indices_key][:, 0: n_neighbors - 1], 0, range(X.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[ds_distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[ds_distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
 
     X_umap = calc_umap(
@@ -707,10 +701,10 @@ def net_umap(
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
 
     data.obsm["X_" + out_basis] = calc_umap(
@@ -728,7 +722,7 @@ def net_umap(
     )
 
     end = time.time()
-    print("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 def net_fle(
@@ -772,7 +766,7 @@ def net_fle(
         )
 
     distances_key = rep + "_knn_distances"
-    selected = select_cell(
+    selected = select_cells(
         data.uns[distances_key],
         select_frac,
         K=select_K,
@@ -836,4 +830,4 @@ def net_fle(
     )
 
     end = time.time()
-    print("Net FLE is calculated. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Net FLE is calculated. Time spent = {:.2f}s.".format(end - start))

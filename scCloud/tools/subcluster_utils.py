@@ -2,7 +2,9 @@ import numpy as np
 import anndata
 
 from typing import List
+import logging
 
+logger = logging.getLogger('sccloud')
 
 
 def parse_subset_selections(subset_selections):
@@ -20,7 +22,7 @@ def get_anndata_for_subclustering(data: 'AnnData', subset_selections: List[str])
     obs_index = np.full(data.shape[0], True)
     subsets_dict = parse_subset_selections(subset_selections)
     for key, value in subsets_dict.items():
-        print(key, "corresponds to", value)
+        logger.info(key, "corresponds to", value)
         obs_index = obs_index & np.isin(data.obs[key], value)
     data = data[obs_index, :]
 
@@ -56,6 +58,6 @@ def get_anndata_for_subclustering(data: 'AnnData', subset_selections: List[str])
     if "muls" in data.varm.keys():
         newdata.varm["muls"] = data.varm["muls"]
 
-    print("{0} cells are selected.".format(newdata.shape[0]))
+    logger.info("{0} cells are selected.".format(newdata.shape[0]))
 
     return newdata

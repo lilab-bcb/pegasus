@@ -4,7 +4,9 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 from sklearn.neural_network import MLPRegressor
+import logging
 
+logger = logging.getLogger('sccloud')
 
 class MaxStdScaler(BaseEstimator, TransformerMixin):
     def __init__(self, copy=True, factor=1.0):
@@ -49,7 +51,7 @@ def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose
         random_state=random_state,
     )
     regressor.fit(X_train, y_train)
-    print(regressor.loss_)
+    logger.info(regressor.loss_)
 
     y_pred = scaler_y.inverse_transform(
         regressor.predict(scaler_x.transform(X_pred)), copy=False
@@ -58,7 +60,7 @@ def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose
     end_time = time.time()
 
     if verbose:
-        print(
+        logger.info(
             "Deep regressor traning and predicting finished. Time spent = {:.2f}s.".format(
                 end_time - start_time
             )

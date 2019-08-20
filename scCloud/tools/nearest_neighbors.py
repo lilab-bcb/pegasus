@@ -7,6 +7,9 @@ from scipy.stats import entropy, chi2
 from sklearn.neighbors import NearestNeighbors
 from joblib import effective_n_jobs
 from typing import List, Tuple
+import logging
+
+logger = logging.getLogger('sccloud')
 
 
 def calculate_nearest_neighbors(
@@ -32,7 +35,7 @@ def calculate_nearest_neighbors(
         method = "sklearn"
 
     if nsample < K:
-        print(
+        logger.warning(
             "Warning: in calculate_nearest_neighbors, number of samples = {} < K = {}!\n Set K to {}.".format(
                 nsample, K, nsample
             )
@@ -123,7 +126,7 @@ def get_neighbors(
     ):
         indices = data.uns[indices_key]
         distances = data.uns[distances_key]
-        print("Found cached kNN results, no calculation is required.")
+        logger.info("Found cached kNN results, no calculation is required.")
     else:
         indices, distances = calculate_nearest_neighbors(
             data.obsm[rep_key],
@@ -187,7 +190,7 @@ def calculate_affinity_matrix(
     W.eliminate_zeros()
 
     end = time.time()
-    print(
+    logger.info(
         "Constructing affinity matrix is done. Time spent = {:.2f}s.".format(
             end - start
         )
@@ -243,14 +246,14 @@ def neighbors(
         full_speed=full_speed,
     )
     end = time.time()
-    print("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
+    logger.info("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
 
     # calculate affinity matrix
     start = time.time()
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W
     end = time.time()
-    print("Affinity matrix calculation is finished in {:.2f}s".format(end - start))
+    logger.info("Affinity matrix calculation is finished in {:.2f}s".format(end - start))
 
 
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):

@@ -1,14 +1,14 @@
 import time
 import numpy as np
-import pandas as pd
-
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
-from typing import List, Tuple
+from typing import Tuple
+import logging
 
+logger = logging.getLogger('sccloud')
 
 def calculate_normalized_affinity(
     W: "csr_matrix"
@@ -29,12 +29,12 @@ def calculate_diffusion_map(
     assert issparse(W)
 
     nc, labels = connected_components(W, directed=True, connection="strong")
-    print("Calculating connected components is done.")
+    logger.info("Calculating connected components is done.")
 
     assert nc == 1
 
     W_norm, diag, diag_half = calculate_normalized_affinity(W)
-    print("Calculating normalized affinity matrix is done.")
+    logger.info("Calculating normalized affinity matrix is done.")
 
     if solver == "randomized":
         U, S, VT = randomized_svd(W_norm, n_components=n_components, random_state=random_state)
@@ -90,7 +90,7 @@ def diffmap(
     # data.obsm['X_dmnorm'] = U_df
 
     end = time.time()
-    print("diffmap finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info("diffmap finished. Time spent = {:.2f}s.".format(end - start))
 
 
 def reduce_diffmap_to_3d(data: "AnnData", random_state: int = 0) -> None:
@@ -106,4 +106,4 @@ def reduce_diffmap_to_3d(data: "AnnData", random_state: int = 0) -> None:
     data.obsm["X_diffmap_pca"] = pca.fit_transform(data.obsm["X_diffmap"])
 
     end = time.time()
-    print("Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start))

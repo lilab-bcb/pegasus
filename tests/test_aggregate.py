@@ -3,25 +3,25 @@ import unittest
 
 import h5py
 
-import scCloud as sc
+import scCloud as scc
 
 
 class TestAggregate(unittest.TestCase):
     def tearDown(self):
-        os.path.exists("aggregate_test.scCloud.h5") and os.remove(
-            "aggregate_test.scCloud.h5"
+        os.path.exists("aggregate_test.h5sc") and os.remove(
+            "aggregate_test.h5sc"
         )
 
     def test_aggregate_10x_matrices(self):
-        m1 = sc.io.read_input(
+        m1 = scc.read_input(
             "tests/scCloud-test-data/input/heart_1k_v3/filtered_feature_bc_matrix.h5",
             genome="mm10",
         )
-        m2 = sc.io.read_input(
+        m2 = scc.read_input(
             "tests/scCloud-test-data/input/heart_1k_v2/filtered_gene_bc_matrices_h5.h5",
             genome="mm10",
         )
-        sc.tools.aggregate_matrices(
+        scc.aggregate_matrices(
             "tests/scCloud-test-data/input/aggregate_test.csv",
             restrictions=[],
             attributes=["Version"],
@@ -31,7 +31,7 @@ class TestAggregate(unittest.TestCase):
             ngene=None,
         )
 
-        result = sc.io.read_input("aggregate_test.scCloud.h5", genome="mm10")
+        result = scc.read_input("aggregate_test.h5sc", genome="mm10")
         self.assertEqual(
             m1.shape[0] + m2.shape[0], result.shape[0], "Cell dimension is incorrect"
         )
@@ -50,7 +50,7 @@ class TestAggregate(unittest.TestCase):
         )
 
     def test_multi_genome(self):
-        sc.tools.aggregate_matrices(
+        scc.aggregate_matrices(
             "tests/scCloud-test-data/input/aggregate_multi_genome.csv",
             restrictions=[],
             attributes=None,
@@ -60,7 +60,7 @@ class TestAggregate(unittest.TestCase):
             ngene=None,
         )
 
-        f = h5py.File("aggregate_test.scCloud.h5", "r")
+        f = h5py.File("aggregate_test.h5sc", "r")
         self.assertIsNotNone(f["GRCh38"], "Genome not found")
         self.assertIsNotNone(f["mm10"], "Genome not found")
         with self.assertRaises(KeyError):

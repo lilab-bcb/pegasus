@@ -13,7 +13,9 @@ from sklearn.cluster import KMeans
 from typing import List
 
 from scCloud.tools import construct_graph
+import logging
 
+logger = logging.getLogger('sccloud')
 
 def louvain(
     data: "AnnData",
@@ -45,7 +47,7 @@ def louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.time()
-    print("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
 
 
 def leiden(
@@ -83,7 +85,7 @@ def leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.time()
-    print("Leiden clustering is done. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Leiden clustering is done. Time spent = {:.2f}s.".format(end - start))
 
 
 def set_numpy_thread_to_one():
@@ -181,7 +183,7 @@ def run_multiple_kmeans(
     labels = [transfer_dict[x] for x in labels]
 
     end = time.time()
-    print("run_multiple_kmeans finished in {:.2f}s.".format(end - start))
+    logger.info("run_multiple_kmeans finished in {:.2f}s.".format(end - start))
 
     return labels
 
@@ -233,7 +235,7 @@ def spectral_louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.time()
-    print(
+    logger.info(
         "Spectral Louvain clustering is done. Time spent = {:.2f}s.".format(end - start)
     )
 
@@ -284,7 +286,7 @@ def spectral_leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.time()
-    print(
+    logger.info(
         "Approximated Leiden clustering is done. Time spent = {:.2f}s.".format(
             end - start
         )

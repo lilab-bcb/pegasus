@@ -7,7 +7,8 @@ from statsmodels.stats.multitest import fdrcorrection as fdr
 from collections import defaultdict
 
 from typing import List, Tuple, Dict
-
+import logging
+logger = logging.getLogger('sccloud')
 
 def calc_basic_stat(
     clust_id: str,
@@ -47,9 +48,9 @@ def calc_basic_stat(
         cond1 = cond_labels.categories[0]
         cond_labs = cond_labels[mask]
         mask2 = cond_labs == cond1
-        
+
         mat_cond1 = mat_clust[mask2]
-        mat_cond2 = mat_clust[~mask2]           
+        mat_cond2 = mat_clust[~mask2]
         n1 = mat_cond1.shape[0]
         n2 = mat_cond2.shape[0]
 
@@ -88,7 +89,7 @@ def calc_basic_stat(
     )
 
     if verbose:
-        print("calc_basic_stat finished for cluster {0}.".format(clust_id))
+        logger.info("calc_basic_stat finished for cluster {0}.".format(clust_id))
 
     return df
 
@@ -124,7 +125,7 @@ def collect_basic_statistics(
 
     end = time.time()
     if verbose:
-        print("Collecting basic statistics is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info("Collecting basic statistics is done. Time spent = {:.2f}s.".format(end - start))
 
     return result_list
 
@@ -186,7 +187,7 @@ def calc_auc(
     )
 
     if verbose:
-        print("calc_auc finished for cluster {0}.".format(clust_id))
+        logger.info("calc_auc finished for cluster {0}.".format(clust_id))
 
     return df
 
@@ -215,7 +216,7 @@ def calculate_auc_values(
 
     end = time.time()
     if verbose:
-        print("AUROC values are calculated. Time spent = {:.2f}s.".format(end - start))
+        logger.info("AUROC values are calculated. Time spent = {:.2f}s.".format(end - start))
 
     return result_list
 
@@ -260,9 +261,9 @@ def calc_t(
         cond1 = cond_labels.categories[0]
         cond_labs = cond_labels[mask]
         mask2 = cond_labs == cond1
-        
+
         mat_cond1 = mat_clust[mask2]
-        mat_cond2 = mat_clust[~mask2]           
+        mat_cond2 = mat_clust[~mask2]
         n1 = mat_cond1.shape[0]
         n2 = mat_cond2.shape[0]
 
@@ -286,7 +287,7 @@ def calc_t(
                 (s1sqr[idx] / n1) ** 2 / (n1 - 1) + (s2sqr[idx] / n2) ** 2 / (n2 - 1)
             )
             pvals[idx] = ss.t.sf(np.fabs(tscore), v) * 2.0  # two-sided
-    
+
     passed, qvals = fdr(pvals)
 
     df = pd.DataFrame(
@@ -298,7 +299,7 @@ def calc_t(
     )
 
     if verbose:
-        print("calc_t finished for cluster {0}.".format(clust_id))
+        logger.info("calc_t finished for cluster {0}.".format(clust_id))
 
     return df
 
@@ -334,7 +335,7 @@ def t_test(
 
     end = time.time()
     if verbose:
-        print("Welch's t-test is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info("Welch's t-test is done. Time spent = {:.2f}s.".format(end - start))
 
     return result_list
 
@@ -372,9 +373,9 @@ def calc_fisher(
         cond1 = cond_labels.categories[0]
         cond_labs = cond_labels[mask]
         mask2 = cond_labs == cond1
-        
+
         mat_cond1 = mat_clust[mask2]
-        mat_cond2 = mat_clust[~mask2]           
+        mat_cond2 = mat_clust[~mask2]
         n1 = mat_cond1.shape[0]
         n2 = mat_cond2.shape[0]
 
@@ -395,7 +396,7 @@ def calc_fisher(
     )
 
     if verbose:
-        print("calc_fisher finished for cluster {0}.".format(clust_id))
+        logger.info("calc_fisher finished for cluster {0}.".format(clust_id))
 
     return df
 
@@ -429,7 +430,7 @@ def fisher_test(
 
     end = time.time()
     if verbose:
-        print("Fisher's exact test is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info("Fisher's exact test is done. Time spent = {:.2f}s.".format(end - start))
 
     return result_list
 
@@ -494,7 +495,7 @@ def calc_mwu(
     )
 
     if verbose:
-        print("calc_mwu finished for cluster {0}.".format(clust_id))
+        logger.info("calc_mwu finished for cluster {0}.".format(clust_id))
 
     return df
 
@@ -523,7 +524,7 @@ def mwu_test(
 
     end = time.time()
     if verbose:
-        print("Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info("Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start))
 
     return result_list
 
@@ -543,9 +544,9 @@ def organize_results(results: List[List[pd.DataFrame]]) -> pd.DataFrame:
     return df
 
 
-def de_analysis(data: 'AnnData', cluster: str, condition: str = None, 
-    subset: str = None, result_key: str = 'de_res', n_jobs: int = -1, auc: bool = True, 
-    t: bool = True, fisher: bool = False, mwu: bool = False, 
+def de_analysis(data: 'AnnData', cluster: str, condition: str = None,
+    subset: str = None, result_key: str = 'de_res', n_jobs: int = -1, auc: bool = True,
+    t: bool = True, fisher: bool = False, mwu: bool = False,
     temp_folder: str = None, verbose: bool = True) -> None:
     """
     TODO Documentation.
@@ -590,13 +591,13 @@ def de_analysis(data: 'AnnData', cluster: str, condition: str = None,
 
     results = []
     results.append(collect_basic_statistics(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
-    
+
     Xc = None
     if auc or mwu:
         t1 = time.time()
         Xc = X.tocsc()
         if verbose:
-            print("Converting X to csc_matrix is done. Time spent = {:.2f}s.".format(time.time() - t1))
+            logger.info("Converting X to csc_matrix is done. Time spent = {:.2f}s.".format(time.time() - t1))
 
     if auc:
         results.append(calculate_auc_values(Xc, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
@@ -605,16 +606,16 @@ def de_analysis(data: 'AnnData', cluster: str, condition: str = None,
         results.append(t_test(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
 
     if fisher:
-        results.append(fisher_test(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose)) 
+        results.append(fisher_test(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
 
     if mwu:
-        results.append(mwu_test(Xc, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))               
+        results.append(mwu_test(Xc, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
 
     df = organize_results(results)
     data.varm[result_key] = df.to_records(index = False)
 
     end = time.time()
-    print("Differential expression analysis is finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Differential expression analysis is finished. Time spent = {:.2f}s.".format(end - start))
 
 
 def get_valid_gene_index(n: int, df: pd.DataFrame, alpha: float) -> List[bool]:
@@ -654,7 +655,7 @@ def markers(data: 'AnnData', head: int = None, de_key: str = 'de_res', sort_by: 
         raise ValueError("Please run de_analysis first!")
 
     sort_by = sort_by.split(',')
-    
+
     clust2cols = defaultdict(list)
     rec_array = data.varm[de_key]
     for name in rec_array.dtype.names:
@@ -739,7 +740,7 @@ def write_results_to_excel(results: Dict[str, Dict[str, pd.DataFrame]], output_f
     workbook.close()
 
     end = time.time()
-    print("Excel spreadsheet is written. Time spent = {:.2f}s.".format(end - start))
+    logger.info("Excel spreadsheet is written. Time spent = {:.2f}s.".format(end - start))
 
 
 def run_de_analysis(
@@ -755,7 +756,7 @@ def run_de_analysis(
     temp_folder: str = None,
     verbose: bool = True,
     alpha: float = 0.05,
-    ndigits: int = 3   
+    ndigits: int = 3
 ) -> None :
     """ For command line only
     """
@@ -768,11 +769,11 @@ def run_de_analysis(
     de_analysis(data, cluster, result_key = result_key, n_jobs = n_jobs, auc = auc, t = t, fisher = fisher, mwu = mwu, temp_folder = temp_folder, verbose = verbose)
 
     write_output(data, input_file)
-    print("Differential expression results are written back to h5ad file.")
+    logger.info("Differential expression results are written back to h5ad file.")
 
     results = markers(data, de_key = result_key, alpha = alpha)
 
     write_results_to_excel(results, output_excel_file, ndigits = ndigits)
 
     end = time.time()
-    print("run_de_analysis is finished in {:.2f}s.".format(end - start))
+    logger.info("run_de_analysis is finished in {:.2f}s.".format(end - start))

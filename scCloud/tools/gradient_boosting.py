@@ -14,23 +14,26 @@ from lightgbm import LGBMClassifier
 
 from scCloud.io import read_input
 
+import logging
+
+logger = logging.getLogger('sccloud')
 
 def find_markers(
-    data: 'AnnData', 
+    data: 'AnnData',
     label_attr: str,
-    de_key: str = 'de_res', 
-    n_jobs: int = -1, 
+    de_key: str = 'de_res',
+    n_jobs: int = -1,
     min_gain: float = 1.0,
-    random_state: int = 0, 
+    random_state: int = 0,
     remove_ribo: bool = False
 ) -> Dict[str, Dict[str, List[str]]]:
     """
     TODO: Documentation.
     """
     start = time.time()
-    
+
     n_jobs = effective_n_jobs(n_jobs)
-    
+
     if remove_ribo:
         data = data[
             :,
@@ -63,7 +66,7 @@ def find_markers(
         early_stopping_rounds=1,
     )
     end_lgb = time.time()
-    print("LightGBM used {:.2f}s to train.".format(end_lgb - start_lgb))
+    logger.info("LightGBM used {:.2f}s to train.".format(end_lgb - start_lgb))
 
     ntot = (lgb.feature_importances_ >= min_gain).sum()
     ords = np.argsort(lgb.feature_importances_)[::-1][:ntot]
@@ -90,7 +93,7 @@ def find_markers(
                     )
 
     end = time.time()
-    print("find_markers took {:.2f}s to finish.".format(end - start))
+    logger.info("find_markers took {:.2f}s to finish.".format(end - start))
 
     return markers
 
@@ -109,7 +112,7 @@ def run_find_markers(
     For command line use.
     """
     import xlsxwriter
-    from natsort import natsorted 
+    from natsort import natsorted
 
     data = read_input(input_h5ad_file)
     markers = find_markers(

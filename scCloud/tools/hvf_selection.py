@@ -7,7 +7,9 @@ from collections import defaultdict
 from joblib import Parallel, delayed
 import skmisc.loess as sl
 from typing import List
+import logging
 
+logger = logging.getLogger('sccloud')
 
 def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
@@ -300,7 +302,7 @@ def highly_variable_features(
 
     if data.uns["Channels"].size == 1 and consider_batch:
         consider_batch = False
-        print(
+        logger.warning(
             "Warning: only contains one channel, no need to consider batch for selecting highly variable features."
         )
 
@@ -320,7 +322,7 @@ def highly_variable_features(
         )
 
     end = time.time()
-    print(
+    logger.info(
         "{tot} highly variable features have been selected. Time spent = {time:.2f}s.".format(
             tot=data.var["highly_variable_features"].sum(), time=end - start
         )
