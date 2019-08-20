@@ -154,23 +154,30 @@ def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     return data
 
 
-def determine_file_name(path: str, names: List[str], errmsg: str) -> str:
+def determine_file_name(path: str, names: List[str], errmsg: str, fname: str = None, exts: List[str] = None) -> str:
     """ Try several file name options and determine which one is correct.
     """
     for name in names:
         file_name = os.path.join(path, name)
-        if os.path.exists(file_name):
+        if os.path.isfile(file_name):
             return file_name
+    if fname is not None:
+        for ext in exts:
+            file_name = fname + ext
+            if os.path.isfile(file_name):
+                return file_name
     raise ValueError(errmsg)
 
 
-def load_one_mtx_file(path: str, ngene: int = None) -> "Array2D":
+def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array2D":
     """Load one gene-count matrix in mtx format into an Array2D object
     """
     mtx_file = determine_file_name(
         path,
         ["matrix.mtx.gz", "matrix.mtx"],
         "Expression matrix in mtx format is not found",
+        fname = fname,
+        exts = [".mtx"],
     )
     mat = csr_matrix(mmread(mtx_file).T)
 
@@ -178,21 +185,33 @@ def load_one_mtx_file(path: str, ngene: int = None) -> "Array2D":
         path,
         ["cells.tsv.gz", "barcodes.tsv.gz", "barcodes.tsv"],
         "Barcode metadata information is not found",
+        fname = fname,
+        exts = ["_barcode.tsv", ".cells.tsv"],
     )
+
     feature_file = determine_file_name(
         path,
         ["genes.tsv.gz", "features.tsv.gz", "genes.tsv"],
         "Feature metadata information is not found",
+        fname = fname,
+        exts = ["_gene.tsv", ".genes.tsv"],
     )
-    format_type = (
-        "HCA DCP"
-        if os.path.basename(barcode_file).startswith("cells")
-        else (
-            "10x v3"
-            if os.path.basename(feature_file).startswith("features")
-            else "10x v2"
-        )
-    )
+
+    barcode_base = os.path.basename(barcode_file)
+    feature_base = os.path.basename(feature_file)
+
+    if barcode_base == "cells.tsv.gz" and feature_base == "genes.tsv.gz":
+        format_type = "HCA DCP"
+    elif barcode_base == "barcodes.tsv.gz" and feature_base == "features.tsv.gz":
+        format_type = "10x v3"
+    elif barcode_base == "barcodes.tsv" and feature_base == "genes.tsv":
+        format_type = "10x v2"
+    elif barcode_base.endswith("_barcode.tsv") and feature_base.endswith("_gene.tsv"):
+        format_type = "scumi"
+    elif barcode_base.endswith(".cells.tsv") and feature_base.endswith(".genes.tsv"):
+        format_type = "dropEst"
+    else:
+        assert False
 
     if format_type == "HCA DCP":
         barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=0)
@@ -200,27 +219,37 @@ def load_one_mtx_file(path: str, ngene: int = None) -> "Array2D":
         barcode_metadata.rename(columns={"cellkey": "barcodekey"}, inplace=True)
 
         feature_metadata = pd.read_csv(feature_file, sep="\t", header=0)
-    elif format_type == "10x v3":
-        barcode_metadata = pd.read_csv(
-            barcode_file, sep="\t", header=None, names=["barcodekey"]
-        )
-        feature_metadata = pd.read_csv(
-            feature_file,
-            sep="\t",
-            header=None,
-            names=["featurekey", "featurename", "featuretype"],
-        )
     else:
         barcode_metadata = pd.read_csv(
             barcode_file, sep="\t", header=None, names=["barcodekey"]
         )
-        feature_metadata = pd.read_csv(
-            feature_file, sep="\t", header=None, names=["featurekey", "featurename"]
-        )
+        
+        if format_type == "10x v3":
+            feature_metadata = pd.read_csv(
+                feature_file,
+                sep="\t",
+                header=None,
+                names=["featurekey", "featurename", "featuretype"],
+            )
+        elif format_type == "10x v2":
+            feature_metadata = pd.read_csv(
+                feature_file, sep="\t", header=None, names=["featurekey", "featurename"]
+            )
+        elif format_type == "scumi":
+            values = pd.read_csv(feature_file, sep="\t", header=None).iloc[:, 0].values.astype(str)
+            arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
+            feature_metadata = pd.DataFrame(data = {"featurekey" : arr[:, 0], "featurename" : arr[:, 1]})
+        else:
+            assert format_type == "dropEst"
+            feature_metadata = pd.read_csv(
+                feature_file, sep="\t", header=None, names=["featurekey"]
+            )
+            feature_metadata["featurename"] = feature_metadata["featurekey"]
 
     array2d = Array2D(barcode_metadata, feature_metadata, mat)
     array2d.filter(ngene=ngene)
-    array2d.separate_channels("")  # fn == '' refers to 10x mtx format
+    if format_type == "10x v3" or format_type == "10x v2":
+        array2d.separate_channels("")  # fn == '' refers to 10x mtx format
 
     return array2d
 
@@ -248,16 +277,17 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
     >>> io.load_10x_h5_file('example_10x.h5')
     """
 
+    orig_file = None
     if not os.path.isdir(path):
+        orig_file = path
         path = os.path.dirname(path)
 
     data = MemData()
-    if os.path.exists(os.path.join(path, "matrix.mtx.gz")) or os.path.exists(
-        os.path.join(path, "matrix.mtx")
-    ):
+    if os.path.isfile(os.path.join(path, "matrix.mtx.gz")) or os.path.isfile(
+        os.path.join(path, "matrix.mtx")) or (orig_file is not None and os.path.isfile(orig_file)):
         if genome is None:
             genome = os.path.basename(path)
-        data.addData(genome, load_one_mtx_file(path, ngene=ngene))
+        data.addData(genome, load_one_mtx_file(path, ngene=ngene, fname= None if orig_file is None else os.path.splitext(orig_file)[0]))
     else:
         for dir_entry in os.scandir(path):
             if dir_entry.is_dir():
@@ -511,7 +541,7 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
         or os.path.splitext(input_file)[1] == ""
     ):
         file_format = "mtx"
-        if os.path.splitext(input_file)[1] == "":
+        if os.path.splitext(input_file)[1] != "":
             copy_path = os.path.dirname(input_file)
         copy_type = "directory"
     elif input_file.endswith("dge.txt.gz"):
