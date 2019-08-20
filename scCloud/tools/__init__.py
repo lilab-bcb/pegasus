@@ -19,7 +19,8 @@ from .nearest_neighbors import (
     calc_kSIM,
 )
 from .graph_operations import construct_graph
-from .diffusion_map import diffmap, reduce_diffmap_to_3d, calc_pseudotime
+from .diffusion_map import diffmap, reduce_diffmap_to_3d
+from .pseudotime import calc_pseudotime, infer_path
 from .clustering import louvain, leiden, spectral_louvain, spectral_leiden
 from .net_regressor import net_train_and_predict
 from .visualization import (

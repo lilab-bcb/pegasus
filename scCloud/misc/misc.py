@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Tuple
 
 from scCloud.io import read_input
 
@@ -119,7 +119,34 @@ def show_attributes(
             )
 
 
-def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha=0.05):
+def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: List[str], group_str: str, fdr_alpha: float = 0.05, res_key: str = None) -> pd.DataFrame:
+    """Perform one way ANOVA on a subset of cells (restricted by restriction_vec) grouped by group_str and control FDR at fdr_alpha.
+    Parameters
+    ----------
+
+    data : `anndata` object
+        An `anndata` object containing the expression matrix.
+    glist : `list[str]`
+        A list of gene symbols.
+    restriction_vec : `list[str]`
+        A vector of restrictions for selecting cells. Each restriction takes the format of attr:value,value,value
+    group_str : `str`
+        How to group selected cells for ANOVA analysis. If group_str is for pseudotime, it has two formats. 1) 'pseudotime:time:n', which divides cells by equal pseudotime invertal; 2) 'pseudotime:size:n' divides cells by equal number of cells. 
+    fdr_alpha : `float`, optional (default: 0.05)
+        False discovery rate.
+    res_key : `str`, optional (default: None)
+        Store results into data using res_key, the grouping information is stored in obs and the results is stored in uns.
+
+    Returns
+    -------
+    `pandas.DataFrame`
+        Results for genes that pass FDR control.
+
+    Examples
+    --------
+    >>> results = misc.perform_oneway_anova(data, ['CD3E', 'CD4', 'CD8'], [], 'pseudotime:size:10')
+    """
+
     from scipy.stats import f_oneway
     from statsmodels.stats.multitest import fdrcorrection as fdr
 
@@ -128,24 +155,77 @@ def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha=0.05
         attr, value_str = rest_str.split(":")
         values = value_str.split(",")
         selected = selected & np.isin(data.obs[attr], values)
+    
     gene_list = np.array(glist)
     gene_list = gene_list[np.isin(gene_list, data.var_names)]
+    ngene = gene_list.size
+
     newdat = data[selected, :][:, gene_list].copy()
     newdat.X = newdat.X.toarray()
-    group_attr, tmp_str = group_str.split(":")
-    groups_str = tmp_str.split(";")
-    ngr = len(groups_str)
+
+    group_values = group_str.split(":")
     group_names = []
-    group_idx = np.zeros((ngr, newdat.shape[0]), dtype=bool)
-    for i, gstr in enumerate(groups_str):
-        name, values = gstr.split("~")
-        group_names.extend([name + "_mean", name + "_percent"])
-        group_idx[i] = np.isin(newdat.obs[group_attr], values.split(","))
+    col_names = []
+
+    ngr = 0
+    group_idx = None
+
+    if group_values[0] == "pseudotime":
+        assert len(group_values) == 3
+        div_by = group_values[1]
+        ngr = int(group_values[2])
+
+        group_idx = np.zeros((ngr, newdat.shape[0]), dtype=bool)
+        pseudotimes = newdat.obs["pseudotime"].values
+
+        min_t = pseudotimes.min()
+        max_t = pseudotimes.max()
+
+        if div_by == "time":
+            interval = (max_t - min_t) / ngr
+            left = min_t - 1e-5
+            for i in range(ngr):
+                right = min_t + interval * (i + 1)
+                name = "({:.2f}, {:.2f}]".format(left if left >= 0 else 0.0, right)
+                group_names.append(name)
+                group_idx[i] = (pseudotimes > left) & (pseudotimes <= right)
+                left = right
+        else:
+            assert div_by == "size"
+            ords = np.argsort(pseudotimes)
+            quotient = ords.size // ngr
+            residule = ords.size % ngr
+
+            fr = 0
+            for i in range(ngr):
+                to = fr + quotient + (i < residule)
+                name = "[{:.2f}, {:.2f}]".format(pseudotimes[ords[fr]], pseudotimes[ords[to - 1]])
+                group_names.append(name)
+                group_idx[i][ords[fr:to]] = True
+                fr = to
+
+    else:
+        assert len(group_values) == 2
+        group_attr = group_values[0]
+        tmp_str = group_values[1]
+        groups_str = tmp_str.split(";")
+
+        ngr = len(groups_str)
+        group_idx = np.zeros((ngr, newdat.shape[0]), dtype=bool)
+        
+        for i, gstr in enumerate(groups_str):
+            name, values = gstr.split("~")
+            group_names.append(name)
+            group_idx[i] = np.isin(newdat.obs[group_attr], values.split(","))
+
+    for i in range(ngr):
+        print("Group {} has {} cells.".format(group_names[i], group_idx[i].sum()))
+
     np.warnings.filterwarnings("ignore")
-    stats = np.zeros((len(gene_list), 3 + ngr * 2))
-    for i in range(len(gene_list)):
+    stats = np.zeros((ngene, 3 + ngr * 2))
+    for i in range(ngene):
         arr_list = []
-        for j in range(group_idx.shape[0]):
+        for j in range(ngr):
             arr = newdat.X[group_idx[j], i]
             stats[i, 3 + j * 2] = arr.mean()
             stats[i, 3 + j * 2 + 1] = (arr > 0).sum() * 100.0 / arr.size
@@ -155,9 +235,21 @@ def perform_oneway_anova(data, glist, restriction_vec, group_str, fdr_alpha=0.05
             stats[i, 0] = 0.0
             stats[i, 1] = 1.0
     passed, stats[:, 2] = fdr(stats[:, 1])
+
     cols = ["fstat", "pval", "qval"]
-    cols.extend(group_names)
+    for i in range(ngr):
+        cols.extend([group_names[i] + "_mean", group_names[i] + "_percent"])
     raw_results = pd.DataFrame(stats, columns=cols, index=gene_list)
+
     results = raw_results[raw_results["qval"] <= fdr_alpha]
     results = results.sort_values("qval")
-    return results, raw_results
+
+    if res_key is not None:
+        data.uns[res_key] = raw_results
+        data.obs[res_key] = "background"
+        for i in range(ngr):
+            idx = np.zeros(data.shape[0], dtype = bool)
+            idx[selected] = group_idx[i]
+            data.obs.loc[idx, res_key] = group_names[i]
+
+    return results

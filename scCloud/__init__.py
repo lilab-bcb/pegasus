@@ -11,7 +11,7 @@ set_group_attribute, correct_batch, neighbors, calc_kBET, calc_kSIM,
 diffmap, reduce_diffmap_to_3d, calc_pseudotime, 
 louvain, leiden, spectral_louvain, spectral_leiden, 
 tsne, fitsne, umap, fle, net_tsne, net_fitsne, net_umap, net_fle,
-de_analysis, markers, write_results_to_excel, find_markers,)
+de_analysis, markers, write_results_to_excel, find_markers, infer_path)
 from .annotate_cluster import infer_cell_types, annotate
 from .demuxEM import estimate_background_probs, demultiplex
 from .misc import search_genes, search_de_genes

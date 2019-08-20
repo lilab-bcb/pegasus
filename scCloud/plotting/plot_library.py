@@ -8,8 +8,70 @@ from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
 from matplotlib import rcParams
 from pandas.api.types import is_numeric_dtype
+from collections import namedtuple
+
+from typing import List
 
 from .plot_utils import get_palettes, transform_basis
+
+
+Restriction = namedtuple('negation', 'values')
+
+class RestrictionParser:
+    def __init__(self, restrictions: List[str]):
+        self.restrs = {}
+        for restr_str in restrictions:
+            attr, value_str = restr_str.split(":")
+            negation = False
+            if value_str[0] == '~':
+                negation = True
+                value_str = value_str[1:]
+            self.restr[attr] = Restriction(negation = negation, values = value_str.split(","))
+
+    def contains(self, attr: str) -> bool:
+        return attr in self.restrs
+
+    def get_attrs(self) -> List[str]:
+        return self.restrs.keys()
+
+    def get_satisfied(self, data: 'AnnData') -> List[bool]:
+        selected = np.ones(data.shape[0], dtype=bool)
+        for attr, restr in self.restrs.items():
+            labels = data.obs[attr].astype(str)
+            if restr.negation:
+                selected = selected & (~np.isin(labels, restr.values))
+            else:
+                selected = selected & np.isin(labels, restr.values)
+        return selected
+        
+    def get_unsatisfied(self, data: 'AnnData', apply_to_all: bool) -> List[bool]:
+        unsel = np.zeros(data.shape[0], dtype=bool)
+        if apply_to_all:
+            for attr, restr in self.restrs.items():
+                labels = data.obs[attr].astype(str)
+                if restr.negation:
+                    unsel = unsel | np.isin(labels, restr.values)
+                else:
+                    unsel = unsel | (~np.isin(labels, restr.values))
+        return unsel
+
+    def get_satisfied_per_attr(self, labels: List[str], attr: str) -> List[bool]:
+        one_restr = self.restrs[attr]
+        if one_restr.negation:
+            return ~np.isin(labels, rest_vec)
+        else:
+            return np.isin(labels, rest_vec)
+
+    def get_unsatisfied_per_attr(self, labels: List[str], attr: str) -> List[bool]:
+        one_restr = self.restrs[attr]
+        if one_restr.negation:
+            return np.isin(labels, rest_vec)
+        else:
+            return ~np.isin(labels, rest_vec)
+
+
+
+
 
 
 def get_nrows_and_ncols(num_figs, nrows, ncols):
@@ -88,14 +150,6 @@ def get_legend_ncol(label_size):
     return 1 if label_size <= 14 else (2 if label_size <= 30 else 3)
 
 
-def parse_restrictions(restrictions):
-    rest_dict = {}
-    for rest_str in restrictions:
-        attr, value_str = rest_str.split(":")
-        rest_dict[attr] = value_str.split(",")
-    return rest_dict
-
-
 def as_category(labels):
     if isinstance(labels, pd.Series):
         labels = labels.values
@@ -168,11 +222,8 @@ def plot_composition(
     kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
     fig, ax = get_subplot_layouts(**kwargs)
 
-    rest_dict = parse_restrictions(restrictions)
-    selected = np.ones(data.shape[0], dtype=bool)
-    for key, value in rest_dict.items():
-        labels = data.obs[key].astype(str)
-        selected = selected & np.isin(labels, value)
+    restr_obj = RestrictionParser(restrictions)
+    selected = restr_obj.get_satisfied(data)
 
     df = pd.crosstab(data.obs.loc[selected, cluster], data.obs.loc[selected, attr])
     df = df.reindex(
@@ -258,8 +309,6 @@ def plot_scatter(
     )
     basis = transform_basis(basis)
 
-    rest_dict = parse_restrictions(restrictions)
-
     nattrs = len(attrs)
     nrows, ncols = get_nrows_and_ncols(nattrs, nrows, ncols)
     marker_size = get_marker_size(df.shape[0])
@@ -270,13 +319,9 @@ def plot_scatter(
     if legend_fontsize is None:
         legend_fontsize = rcParams["legend.fontsize"]
 
-    unsel = np.zeros(data.shape[0], dtype=bool)
-    if apply_to_all:
-        for key, value in rest_dict.items():
-            labels = data.obs[key].astype(str)
-            unsel = unsel | ~np.isin(labels, value)
-    nunsel = sum(unsel)
-
+    restr_obj = RestrictionParser(restrictions)
+    unsel = restr_obj.get_unsatisfied(data, apply_to_all)
+    
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[i, j]
@@ -290,7 +335,7 @@ def plot_scatter(
 
                 if is_numeric_dtype(data.obs[attr]):
                     values = data.obs[attr].values
-                    assert apply_to_all or (attr not in rest_dict)
+                    assert apply_to_all or (not restr_obj.contains(attr))
                     values[unsel] = 0.0
 
                     img = ax.scatter(
@@ -312,26 +357,18 @@ def plot_scatter(
 
                 else:
                     labels = data.obs[attr].astype(str)
-                    if (not apply_to_all) and (attr in rest_dict):
-                        rest_vec = rest_dict[attr]
-                        idx = ~np.isin(labels, rest_vec)
-                        labels[idx] = ""
-                        labels = as_category(labels)
-                        label_size = labels.categories.size
-                        palettes = get_palettes(
-                            label_size,
-                            with_background=True,
-                            show_background=show_background,
-                        )
+                    if (not apply_to_all) and restr_obj.contains(attr):
+                        idx = restr_obj.get_unsatisfied_per_attr(labels, attr)
                     else:
-                        labels[unsel] = ""
-                        labels = as_category(labels)
-                        label_size = labels.categories.size
-                        palettes = get_palettes(
-                            label_size,
-                            with_background=nunsel > 0,
-                            show_background=show_background,
-                        )
+                        idx = unsel
+                    labels[idx] = ""
+                    labels = as_category(labels)
+                    label_size = labels.categories.size
+                    palettes = get_palettes(
+                        label_size,
+                        with_background=idx.sum() > 0,
+                        show_background=show_background,
+                    )
 
                     for k, cat in enumerate(labels.categories):
                         idx = np.isin(labels, cat)
@@ -403,15 +440,17 @@ def plot_scatter_groups(
     assert group in data.obs
     groups = as_category(data.obs[group])
     df_g = pd.DataFrame()
+    
     if showall:
         df_g["All"] = np.ones(data.shape[0], dtype=bool)
     if len(restrictions) == 0:
         for cat in groups.categories:
             df_g[cat] = np.isin(groups, cat)
     else:
-        rest_dict = parse_restrictions(restrictions)
-        for key, value in rest_dict.items():
-            df_g[key] = np.isin(groups, value)
+        restr_obj = RestrictionParser(restrictions)
+        for key in restr_obj.get_attrs():
+            df_g[key] = restr_ojb.get_satisfied_per_attr(groups, key)
+
     nrows, ncols = get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
 
     kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)

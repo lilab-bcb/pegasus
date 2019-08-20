@@ -3,6 +3,7 @@ import numpy as np
 from scipy.sparse import issparse
 import igraph
 
+from typing import List
 
 def construct_graph(
     W: "csr_matrix", directed: bool = False, adjust_weights: bool = True

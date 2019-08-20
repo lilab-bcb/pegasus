@@ -6,7 +6,6 @@ from scipy.sparse import issparse
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
 from sklearn.decomposition import PCA
-from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.extmath import randomized_svd
 from typing import List, Tuple
 
@@ -108,28 +107,3 @@ def reduce_diffmap_to_3d(data: "AnnData", random_state: int = 0) -> None:
 
     end = time.time()
     print("Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start))
-
-
-def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
-    """
-    TODO: documentation.
-    """
-    start = time.time()
-
-    if "X_diffmap" not in data.obsm.keys():
-        raise ValueError("Please run diffmap first!")
-
-    data.uns["roots"] = roots
-    mask = np.isin(data.obs_names, data.uns["roots"])
-    distances = np.mean(
-        euclidean_distances(data.obsm["X_diffmap"][mask, :], data.obsm["X_diffmap"]),
-        axis=0,
-    )
-    dmin = distances.min()
-    dmax = distances.max()
-    data.obs["pseudotime"] = (distances - dmin) / (dmax - dmin)
-
-    end = time.time()
-    print(
-        "run_pseudotime_calculation finished. Time spent = {:.2f}s".format(end - start)
-    )
