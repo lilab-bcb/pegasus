@@ -118,10 +118,9 @@ def get_neighbors(
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    indices = distances = None
     if (
         (indices_key in data.uns)
-        and (distances_key in data.uns)
+        and (distances_key in data.uns) and data.uns[indices_key].shape[0] == data.shape[0]
         and (K <= data.uns[indices_key].shape[1] + 1)
     ):
         indices = data.uns[indices_key]
