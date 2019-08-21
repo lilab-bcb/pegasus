@@ -331,6 +331,7 @@ def pca(
         m1 = X.mean(axis=0)
         psum = np.multiply(X, X).sum(axis=0)
         std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
+        std[std == 0] = 1
         X -= m1
         X /= std
 
