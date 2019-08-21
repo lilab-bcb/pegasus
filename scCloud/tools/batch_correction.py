@@ -66,22 +66,29 @@ def estimate_adjustment_matrices(data: "AnnData") -> bool:
     return True
 
 
-def correct_batch_effects(data_dense: "AnnData") -> None:
+def correct_batch_effects(data: "AnnData", keyword: str, features: str = None) -> None:
     """ Apply calculated plus and muls to correct batch effects for a dense matrix
     """
-    assert not issparse(data_dense.X)
-    m = data_dense.shape[1]
-    for i, channel in enumerate(data_dense.uns["Channels"]):
-        idx = np.isin(data_dense.obs["Channel"], channel)
+    X = data.uns[keyword]
+    m = X.shape[1]
+    if features is not None:
+        selected = data.var[features].values
+        plus = data.varm["plus"][selected, :]
+        muls = data.varm["muls"][selected, :]
+    else:
+        selected = np.ones(data.shape[1], dtype = bool)
+        plus = data.varm["plus"]
+        muls = data.varm["muls"]
+
+    for i, channel in enumerate(data.uns["Channels"]):
+        idx = np.isin(data.obs["Channel"], channel)
         if idx.sum() == 0:
             continue
-        data_dense.X[idx] = data_dense.X[idx] * np.reshape(
-            data_dense.varm["muls"][:, i], newshape=(1, m)
-        ) + np.reshape(data_dense.varm["plus"][:, i], newshape=(1, m))
-    data_dense.X[data_dense.X < 0.0] = 0.0
+        X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(plus[:, i], newshape=(1, m))
+    X[X < 0.0] = 0.0
 
 
-def correct_batch(data: "AnnData", features: "str" = None) -> None:
+def correct_batch(data: "AnnData", features: str = None) -> None:
     """
     TODO: documentation
     """
@@ -101,7 +108,7 @@ def correct_batch(data: "AnnData", features: "str" = None) -> None:
 
     if can_correct:
         start = time.time()
-        correct_batch_effects(data.uns[keyword])
+        correct_batch_effects(data, keyword, features)
         end = time.time()
         tot_seconds += end - start
         logger.info("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))
