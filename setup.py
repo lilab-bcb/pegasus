@@ -38,6 +38,7 @@ requires = [
     "louvain-github",
     "leidenalg",
     "forceatlas2-python",
+    "scplot"
 ]
 
 setup(
