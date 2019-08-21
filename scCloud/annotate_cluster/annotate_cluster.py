@@ -4,7 +4,7 @@ import json
 from sys import stdout
 from natsort import natsorted
 
-from typing import List, Dict
+from typing import List, Dict, Union
 import logging
 
 logger = logging.getLogger('sccloud')
@@ -98,9 +98,12 @@ class CellType:
 
 
 class Annotator:
-    def __init__(self, marker_file: str, genes: List[str]) -> None:
-        with open(marker_file) as fin:
-            self.object = json.load(fin)
+    def __init__(self, marker_file: Union[str, Dict], genes: List[str]) -> None:
+        if type(marker_file) != dict:
+            with open(marker_file) as fin:
+                self.object = json.load(fin)
+        else:
+            self.object = marker_file
         self.recalibrate(self.object, genes)
 
     def recalibrate(self, obj: 'json object', genes: List[str]) -> None:
@@ -154,7 +157,7 @@ class Annotator:
 
 def infer_cell_types(
     data: 'AnnData',
-    marker_file: str,
+    markers: Union[str, Dict],
     de_test: str,
     de_alpha: float = 0.05,
     de_key: str = 'de_res',
@@ -169,8 +172,8 @@ def infer_cell_types(
 
     data : `AnnData`
         AnnData object.
-    marker_file : `str`
-        A JSON file containing legacy markers. If you want to use scCloud markers, type 'human_immune' for human immune cells, 'mouse_immune' for mouse immune cells, 'human_brain' for human brain cells, and 'mouse_brain' for mouse brain cells.
+    markers : `str`
+        A JSON file containing legacy markers or a python dictionary describing the markers. If you want to use predefined scCloud markers, use 'human_immune' for human immune cells, 'mouse_immune' for mouse immune cells, 'human_brain' for human brain cells, and 'mouse_brain' for mouse brain cells.
     de_test: `str`,
         scCloud determines cell types using DE test results. This argument indicates which DE test result to use, can be either 't', 'fisher' or 'mwu'.
     de_alpha: `float`, optional (default: 0.05)
@@ -195,24 +198,24 @@ def infer_cell_types(
     >>> annotate_cluster.infer_cell_types(adata, 'human_immune', 'fisher')
     """
     import pkg_resources
-    if marker_file == "human_immune":
-        marker_file = pkg_resources.resource_filename(
+    if markers == "human_immune":
+        markers = pkg_resources.resource_filename(
             "scCloud.annotate_cluster", "human_immune_cell_markers.json"
         )
-    elif marker_file == "mouse_immune":
-        marker_file = pkg_resources.resource_filename(
+    elif markers == "mouse_immune":
+        markers = pkg_resources.resource_filename(
             "scCloud.annotate_cluster", "mouse_immune_cell_markers.json"
         )
-    elif marker_file == "mouse_brain":
-        marker_file = pkg_resources.resource_filename(
+    elif markers == "mouse_brain":
+        markers = pkg_resources.resource_filename(
             "scCloud.annotate_cluster", "mouse_brain_cell_markers.json"
         )
-    elif marker_file == "human_brain":
-        marker_file = pkg_resources.resource_filename(
+    elif markers == "human_brain":
+        markers = pkg_resources.resource_filename(
             "scCloud.annotate_cluster", "human_brain_cell_markers.json"
         )
 
-    anno = Annotator(marker_file, data.var_names)
+    anno = Annotator(markers, data.var_names)
 
     clusts = natsorted([x.rpartition(':')[2] for x in data.varm[de_key].dtype.names if x.startswith("WAD_score:")])
 
