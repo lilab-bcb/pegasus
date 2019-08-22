@@ -54,6 +54,7 @@ from scplot import (
     scatter_matrix,
     embedding,
     composition_plot,
+    variable_feature_plot
 )
 
 from ._version import get_versions
