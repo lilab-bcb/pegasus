@@ -6,7 +6,8 @@ from MulticoreTSNE import MulticoreTSNE as TSNE
 import umap as umap_module
 import forceatlas2 as fa2
 import logging
-
+from scCloud.misc import get_rep_key, X_from_rep_key
+from scCloud.tools.nearest_neighbors import is_cached
 logger = logging.getLogger('sccloud')
 
 from scCloud.tools import (
@@ -238,15 +239,11 @@ def tsne(
     TODO: Documentation.
     """
     start = time.time()
-
-    rep_key = "X_" + rep
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Cannot find {0} matrix. Please run {0} first!".format(rep))
-
+    rep_key, rep = get_rep_key(rep, data)
     n_jobs = effective_n_jobs(n_jobs)
 
     data.obsm["X_" + out_basis] = calc_tsne(
-        data.obsm[rep_key],
+        X_from_rep_key(data, rep_key),
         n_jobs,
         n_components,
         perplexity,
@@ -274,15 +271,13 @@ def fitsne(
     TODO: Documentation.
     """
     start = time.time()
-
-    rep_key = "X_" + rep if rep != "CITE-Seq" else rep
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Cannot find {0} matrix. Please run {0} first!".format(rep))
+    rep_key, rep = get_rep_key(rep, data)
+    #rep_key = "X_" + rep if rep != "CITE-Seq" else rep FIXME
 
     n_jobs = effective_n_jobs(n_jobs)
 
     data.obsm["X_" + out_basis] = calc_fitsne(
-        data.obsm[rep_key],
+        X_from_rep_key(data, rep_key),
         n_jobs,
         n_components,
         perplexity,
@@ -310,15 +305,11 @@ def umap(
     """
     start = time.time()
 
-    rep_key = "X_" + rep
+    rep_key, rep = get_rep_key(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if (
-        (indices_key not in data.uns)
-        or (distances_key not in data.uns)
-        or (n_neighbors > data.uns[indices_key].shape[1] + 1)
-    ):
+    if not is_cached(data, indices_key, distances_key, n_neighbors):
         raise ValueError("Please run neighbors first!")
     if rep_key not in data.obsm.keys():
         raise ValueError("Please run {} first!".format(rep))
@@ -330,7 +321,7 @@ def umap(
         data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
-        data.obsm[rep_key],
+        X_from_rep_key(data, rep_key),
         n_components,
         n_neighbors,
         min_dist,
@@ -348,6 +339,7 @@ def fle(
     data: "AnnData",
     file_name: str,
     n_jobs: int = -1,
+    rep='diffmap',
     K: int = 50,
     full_speed: bool = False,
     target_change_per_node: float = 2.0,
@@ -363,12 +355,9 @@ def fle(
     start = time.time()
     n_jobs = effective_n_jobs(n_jobs)
 
-    rep = "diffmap"
-    rep_key = "X_" + rep
-    W_rep = "W_" + rep
 
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Please run diffmap first!")
+    rep_key, rep = get_rep_key(rep, data)
+    W_rep = "W_" + rep
 
     if W_rep not in data.uns:
         neighbors(
@@ -457,11 +446,9 @@ def net_tsne(
     """
     start = time.time()
 
-    rep_key = "X_" + rep
-    distances_key = rep + "_knn_distances"
+    rep_key, rep = get_rep_key(rep, data)
 
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Please run {} first!".format(rep))
+    distances_key = rep + "_knn_distances"
 
     if distances_key not in data.uns:
         raise ValueError("Please run neighbors first!")
@@ -476,7 +463,8 @@ def net_tsne(
         random_state=random_state,
     )
 
-    X = data.obsm[rep_key][selected, :]
+    X_full = X_from_rep_key(data, rep_key)
+    X = X_full[selected, :]
     X_tsne = calc_tsne(
         X,
         n_jobs,
@@ -495,7 +483,7 @@ def net_tsne(
     Y_init[~selected, :] = net_train_and_predict(
         X,
         X_tsne,
-        data.obsm[rep_key][~selected, :],
+        X_full[~selected, :],
         net_alpha,
         random_state,
         verbose=True,
@@ -543,11 +531,8 @@ def net_fitsne(
     """
     start = time.time()
 
-    rep_key = "X_" + rep
+    rep_key, rep = get_rep_key(rep, data)
     distances_key = rep + "_knn_distances"
-
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Please run {} first!".format(rep))
 
     if distances_key not in data.uns:
         raise ValueError("Please run neighbors first!")
@@ -561,8 +546,8 @@ def net_fitsne(
         alpha=select_alpha,
         random_state=random_state,
     )
-
-    X = data.obsm[rep_key][selected, :]
+    X_full = X_from_rep_key(data, rep_key)
+    X = X_full[selected, :]
     X_fitsne = calc_fitsne(
         X,
         n_jobs,
@@ -581,7 +566,7 @@ def net_fitsne(
     Y_init[~selected, :] = net_train_and_predict(
         X,
         X_fitsne,
-        data.obsm[rep_key][~selected, :],
+        X_full[~selected, :],
         net_alpha,
         random_state,
         verbose=True,
@@ -631,12 +616,9 @@ def net_umap(
     """
     start = time.time()
 
-    rep_key = "X_" + rep
+    rep_key, rep = get_rep_key(rep, data)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
-
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Please run {} first!".format(rep))
 
     if (indices_key not in data.uns) or (distances_key not in data.uns):
         raise ValueError("Please run neighbors first!")
@@ -650,8 +632,8 @@ def net_umap(
         alpha=select_alpha,
         random_state=random_state,
     )
-
-    X = data.obsm[rep_key][selected, :]
+    X_full = X_from_rep_key(data, rep_key)
+    X = X_full[selected, :]
 
     ds_indices_key = "ds_" + rep + "_knn_indices"
     ds_distances_key = "ds_" + rep + "_knn_distances"
@@ -692,7 +674,7 @@ def net_umap(
     Y_init[~selected, :] = net_train_and_predict(
         X,
         X_umap,
-        data.obsm[rep_key][~selected, :],
+        X_full[~selected, :],
         net_alpha,
         random_state,
         verbose=True,
@@ -742,19 +724,18 @@ def net_fle(
     net_alpha: float = 0.1,
     polish_target_steps: int = 1500,
     out_basis: str = "net_fle",
+    rep: str = "diffmap"
 ) -> None:
     """
     TODO: Documentation.
     """
     start = time.time()
     n_jobs = effective_n_jobs(n_jobs)
+    rep_key, rep = get_rep_key(rep, data)
 
-    rep = "diffmap"
     rep_key = "X_" + rep
     W_rep = "W_" + rep
 
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Please run diffmap first!")
     if W_rep not in data.uns:
         neighbors(
             data,
@@ -774,7 +755,8 @@ def net_fle(
         random_state=random_state,
     )
 
-    X = data.obsm[rep_key][selected, :]
+    X_full = X_from_rep_key(data, rep_key)
+    X = X_full[selected, :]
 
     ds_indices_key = "ds_" + rep + "_knn_indices"
     ds_distances_key = "ds_" + rep + "_knn_distances"
@@ -809,7 +791,7 @@ def net_fle(
     Y_init[~selected, :] = net_train_and_predict(
         X,
         X_fle,
-        data.obsm[rep_key][~selected, :],
+        X_full[~selected, :],
         net_alpha,
         random_state,
         verbose=True,

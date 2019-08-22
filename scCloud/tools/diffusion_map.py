@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
 from typing import Tuple
 import logging
+from scCloud.misc import get_rep_key
 
 logger = logging.getLogger('sccloud')
 
@@ -74,7 +75,7 @@ def diffmap(
     """
 
     start = time.time()
-
+    rep_key, rep = get_rep_key(rep)
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Affinity matrix does not exist. Please run neighbors first!")

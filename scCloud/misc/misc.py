@@ -1,9 +1,22 @@
 import numpy as np
 import pandas as pd
-from typing import List, Tuple
+from typing import List
 
 from scCloud.io import read_input
 
+
+def get_rep_key(rep, data=None):
+    rep_key = ("X_" + rep) if rep is not None else None
+    if rep is None:
+        rep = 'X'
+    if data is not None and rep_key is not None and rep_key not in data.obsm.keys():
+        raise ValueError("Cannot find {0} matrix. Please run {0} first".format(rep))
+
+    return rep_key, rep
+
+
+def X_from_rep_key(data, rep_key):
+    return data.obsm[rep_key] if rep_key is not None else data.X
 
 def search_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", measure: str = "percentage") -> pd.DataFrame:
     """Extract and display gene expressions for each cluster from an `anndata` object.
@@ -65,17 +78,17 @@ def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_re
 
     Examples
     --------
-    >>> results = misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], test = 'fisher', thre = 2.0)
+    >>> results = scCloud.misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], de_test = 'fisher', thre = 2.0)
     """
 
-    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(test + '_qval:')]
+    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(de_test + '_qval:')]
     df_de = pd.DataFrame(data.varm[rec_key][columns], index = data.var_names)
     df_de = df_de.reindex(index = gene_list)
 
-    columns = [x for x in data.varm[rec_key].dtype.names if (x.startswith("percentage_fold_change:") if test == "fisher" else x.startswith("log_fold_change:"))]    
+    columns = [x for x in data.varm[rec_key].dtype.names if (x.startswith("percentage_fold_change:") if de_test == "fisher" else x.startswith("log_fold_change:"))]
     df_fc = pd.DataFrame(data.varm[rec_key][columns], index = data.var_names)
     df_fc = df_fc.reindex(index = gene_list)
-    if test != "fisher":
+    if de_test != "fisher":
         df_fc = np.exp(df_fc)
 
     results = np.zeros((len(gene_list), len(columns)), dtype=np.dtype("U4"))
@@ -131,7 +144,7 @@ def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: Lis
     restriction_vec : `list[str]`
         A vector of restrictions for selecting cells. Each restriction takes the format of attr:value,value,value
     group_str : `str`
-        How to group selected cells for ANOVA analysis. If group_str is for pseudotime, it has two formats. 1) 'pseudotime:time:n', which divides cells by equal pseudotime invertal; 2) 'pseudotime:size:n' divides cells by equal number of cells. 
+        How to group selected cells for ANOVA analysis. If group_str is for pseudotime, it has two formats. 1) 'pseudotime:time:n', which divides cells by equal pseudotime invertal; 2) 'pseudotime:size:n' divides cells by equal number of cells.
     fdr_alpha : `float`, optional (default: 0.05)
         False discovery rate.
     res_key : `str`, optional (default: None)
@@ -155,7 +168,7 @@ def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: Lis
         attr, value_str = rest_str.split(":")
         values = value_str.split(",")
         selected = selected & np.isin(data.obs[attr], values)
-    
+
     gene_list = np.array(glist)
     gene_list = gene_list[np.isin(gene_list, data.var_names)]
     ngene = gene_list.size
@@ -212,7 +225,7 @@ def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: Lis
 
         ngr = len(groups_str)
         group_idx = np.zeros((ngr, newdat.shape[0]), dtype=bool)
-        
+
         for i, gstr in enumerate(groups_str):
             name, values = gstr.split("~")
             group_names.append(name)

@@ -17,6 +17,7 @@ from .nearest_neighbors import (
     calculate_affinity_matrix,
     calc_kBET,
     calc_kSIM,
+    is_cached,
 )
 from .graph_operations import construct_graph
 from .diffusion_map import diffmap, reduce_diffmap_to_3d
