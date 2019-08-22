@@ -53,7 +53,7 @@ from scplot import (
     dotplot,
     scatter_matrix,
     embedding,
-    count_plot,
+    composition_plot,
 )
 
 from ._version import get_versions
