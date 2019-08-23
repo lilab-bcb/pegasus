@@ -1,0 +1,99 @@
+{
+	"title" : "Mouse immune cell markers",
+	"cell_types" : [
+		{
+			"name" : "T cell",
+			"markers" : [
+				{
+					"genes" : ["Cd28+", "Cd3d+", "Cd3e+", "Cd4+", "Cd8a+"],
+					"weight" : 1.0
+				}
+			],
+			"subtypes" : {
+				"title" : "T cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Treg",
+						"markers" : [
+							{
+								"genes" : ["Cd4+", "Foxp3+", "Ikzf2+", "Il2ra+", "Nrp1+", "Smad3+", "Stat5a+", "Stat5b+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Inhibitory",
+						"markers" : [
+							{
+								"genes" : ["Ctla4+", "Havcr2+", "Lag3+", "Pdcd1+", "Tigit+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Cytokines",
+						"markers" : [
+							{
+								"genes" : ["Ifng+", "Il10+", "Il2+", "Tgfb1+", "Tgfb2+", "Tnf+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Memory",
+						"markers" : [
+							{
+								"genes" : ["Cd44+", "Il7r+", "Sell+"],
+								"weight" : 1.0
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"name" : "Monocyte",
+			"markers" : [
+				{
+					"genes" : ["Lyz2+", "Lyz1+", "S100a4+", "Itgam+"],
+					"weight" : 0.8
+				},
+				{
+					"genes" : ["C1qb+", "C1qc+", "Mrc1+", "Cd52+"],
+					"weight" : 0.2
+				}
+			]
+		},
+		{
+			"name" : "B cell",
+			"markers" : [
+				{
+					"genes" : ["Cd19+", "Cd79b+", "Cd74+", "Igkc+", "Ighm+", "Iglc2+", "Ms4a1+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Neutrophil",
+			"markers" : [
+				{
+					"genes" : ["Mmp9+", "S100a8+", "S100a9+", "Il1b+", "Retnlg+", "Lcn2+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "NK cell",
+			"markers" : [
+				{
+					"genes" : ["Nkg7+"],
+					"weight" : 0.55
+				},
+				{
+					"genes" : ["Cd3d-", "Cd3e-"],
+					"weight" : 0.45
+				}
+			]
+		}
+	]
+}

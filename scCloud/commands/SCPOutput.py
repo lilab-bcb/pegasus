@@ -1,5 +1,5 @@
 from .Base import Base
-from scCloud.tools import run_scp_output
+from sccloud.tools import run_scp_output
 
 
 class SCPOutput(Base):

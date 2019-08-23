@@ -1,6 +1,6 @@
 import unittest
 
-import scCloud as scc
+import sccloud as scc
 from .test_util import assert_adata_equal
 
 import shutil

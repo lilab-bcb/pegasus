@@ -3,7 +3,7 @@ import unittest
 
 import h5py
 
-import scCloud as scc
+import sccloud as scc
 
 
 class TestAggregate(unittest.TestCase):

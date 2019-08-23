@@ -1,7 +1,7 @@
 import unittest
 import os
 
-import scCloud.commands
+import sccloud.commands
 
 
 class TestAnnotateClusterPipeline(unittest.TestCase):
@@ -9,12 +9,11 @@ class TestAnnotateClusterPipeline(unittest.TestCase):
         os.path.exists("test_annotate.txt") and os.remove("test_annotate.txt")
 
     def test_annotate(self):
-        cmd = scCloud.commands.annotate_cluster(
+        cmd = sccloud.commands.annotate_cluster(
             [
                 "annotate_cluster",
                 os.path.join("tests", "scCloud-test-data", "output", "test_de.h5ad"),
-                "test_annotate.txt",
-                "--json-file",
+                "--annotation",
                 os.path.join("tests", "scCloud-test-data", "input", "markers.json"),
             ]
         )

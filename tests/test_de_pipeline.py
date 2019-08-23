@@ -1,7 +1,7 @@
 import unittest
 import os
 import shutil
-import scCloud.commands
+import sccloud.commands
 from .test_util import assert_excel_equal
 
 
@@ -16,7 +16,7 @@ class TestDePipeline(unittest.TestCase):
             os.path.join("tests", "scCloud-test-data", "output", "test_cluster.h5ad"),
             "test_de.h5ad",
         )
-        cmd = scCloud.commands.de_analysis(
+        cmd = sccloud.commands.de_analysis(
             [
                 "de_analysis",
                 "test_de.h5ad",

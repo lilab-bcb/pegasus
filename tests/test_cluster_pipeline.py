@@ -1,6 +1,6 @@
 import unittest
 import os
-import scCloud.commands
+import sccloud.commands
 from .test_util import assert_adata_files_equal
 
 
@@ -10,7 +10,7 @@ class TestClusterPipeline(unittest.TestCase):
         os.path.exists("test_cluster.hvg.pdf") and os.remove("test_cluster.hvg.pdf")
 
     def test_cluster(self):
-        cmd = scCloud.commands.cluster(
+        cmd = sccloud.commands.cluster(
             [
                 "cluster",
                 os.path.join("tests", "scCloud-test-data", "input", "3k_pbmc"),

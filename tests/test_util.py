@@ -1,7 +1,7 @@
 import pandas as pd
 import scipy
 import numpy as np
-import scCloud as sc
+import sccloud as sc
 import subprocess
 import os
 

@@ -42,7 +42,7 @@ requires = [
 ]
 
 setup(
-    name="scCloud",
+    name="sccloud",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="scRNA-Seq analysis tools that scale to millions of cells",
@@ -72,7 +72,7 @@ setup(
     extras_require=dict(fitsne=["fitsne"], mkl=["mkl"]),
     python_requires="~=3.5",
     package_data={
-        "scCloud.annotate_cluster": [
+        "sccloud.annotate_cluster": [
             "human_immune_cell_markers.json",
             "mouse_immune_cell_markers.json",
             "mouse_brain_cell_markers.json",
@@ -80,5 +80,5 @@ setup(
         ],
         "scCloud.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
     },
-    entry_points={"console_scripts": ["scCloud=scCloud.__main__:main"]},
+    entry_points={"console_scripts": ["sccloud=sccloud.__main__:main"]},
 )

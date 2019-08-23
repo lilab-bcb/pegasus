@@ -1,5 +1,5 @@
 import unittest
-import scCloud.commands
+import sccloud.commands
 import os
 from .test_util import assert_excel_equal
 
@@ -9,7 +9,7 @@ class TestFindMarkersPipeline(unittest.TestCase):
         os.path.exists("test.markers.xlsx") and os.remove("test.markers.xlsx")
 
     def test_find_markers(self):
-        command = scCloud.commands.find_markers(
+        command = sccloud.commands.find_markers(
             [
                 "find_markers",
                 os.path.join("tests", "scCloud-test-data", "output", "test_de.h5ad"),

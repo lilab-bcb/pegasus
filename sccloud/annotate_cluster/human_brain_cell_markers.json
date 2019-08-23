@@ -1,0 +1,110 @@
+{
+	"title" : "Mouse brain cell markers",
+	"cell_types" : [
+		{
+			"name" : "Glutamatergic neuron",
+			"markers" : [
+				{
+					"genes" : ["RBFOX3+", "MEG3+", "SLC17A7+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "GABAergic neuron",
+			"markers" : [
+				{
+					"genes" : ["RBFOX3+", "MEG3+", "GAD1+", "GAD2+", "GRIK1+"],
+					"weight" : 1.0					
+				}
+			],
+			"subtypes" : {
+				"title" : "GABAergic neuron subtype markers",
+				"cell_types" : [
+					{
+						"name" : "GABAergic SST interneuron",
+						"markers" : [
+							{
+								"genes" : ["SST+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Gabaergic PVALB interneuron",
+						"markers" : [
+							{
+								"genes" : ["PVALB+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Gabaergic VIP interneuron",
+						"markers" : [
+							{
+								"genes" : ["VIP+"],
+								"weight" : 1.0
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"name" : "Astrocyte",
+			"markers" : [
+				{
+					"genes" : ["SLC1A3+", "GFAP+", "APOE+", "SLC1A2+", "SLC14A1+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Oligodendrocyte",
+			"markers" : [
+				{
+					"genes" : ["PLP1+", "MAG+", "MBP+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "OPC",
+			"markers" : [
+				{
+					"genes" : ["PDGFRA+", "VCAN+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Endothelial",
+			"markers" : [
+				{
+					"genes" : ["FLT1+", "CLDN5+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Mural",
+			"markers" : [
+				{
+					"genes" : ["PDGFRB+"],
+					"weight" : 1.0
+				}
+			]			
+		},
+		{
+			"name" : "Microglia",
+			"markers" : [
+				{
+					"genes" : ["TGFBR1+", "DOCK8+", "CD74+", "CSF1R+", "MS4A6A+", "PLXDC2+"],
+					"weight" : 1.0
+				}
+			]			
+		}
+	]
+}
+
