@@ -2,11 +2,11 @@ bigquery
 new-wdl
 docs/api/*.rst
 docs/_build
-scCloud/backup
+sccloud/backup
 *~
 
 .DS_Store
-scCloud/.DS_Store
+sccloud/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
