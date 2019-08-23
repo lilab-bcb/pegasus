@@ -2,9 +2,9 @@
 Single-cell cloud-based RNA-Seq tools.
 
 Usage:
-  scCloud <command> [<args>...]
-  scCloud -h | --help
-  scCloud -v | --version
+  sccloud <command> [<args>...]
+  sccloud -h | --help
+  sccloud -v | --version
 
 Sub-commands:
   Preprocessing:
@@ -12,8 +12,8 @@ Sub-commands:
   Demultiplexing:
     demuxEM                 Demultiplex cells/nuclei based on DNA barcodes for cell-hashing and nuclei-hashing data.
   Analyzing:
-    cluster                 Perform first-pass analysis using the count matrix generated from 'aggregate_matrix'. This subcommand could perform low quality cell filtration, batch correction, variable gene selection, dimension reduction, diffusion map calculation, graph-based clustering, tSNE visualization. The final results will be written into h5ad-formatted file, which Seurat could load. 
-    de_analysis             Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene. 
+    cluster                 Perform first-pass analysis using the count matrix generated from 'aggregate_matrix'. This subcommand could perform low quality cell filtration, batch correction, variable gene selection, dimension reduction, diffusion map calculation, graph-based clustering, tSNE visualization. The final results will be written into h5ad-formatted file, which Seurat could load.
+    de_analysis             Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene.
     find_markers            Find markers for each cluster by training classifiers using LightGBM.
     annotate_cluster        This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it works for human/mouse immune/brain cells.
   Plotting:
@@ -30,7 +30,7 @@ Sub-commands:
   MISC:
     check_indexes           Check CITE-Seq/hashing indexes to avoid index collision.
     down_sample             Down sample molecule_info to get raw_feature matrix.
-    
+
 Options:
   -h, --help          Show help information.
   -v, --version       Show version.
