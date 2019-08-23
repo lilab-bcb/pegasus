@@ -342,7 +342,7 @@ def run_pipeline(input_file, output_name, **kwargs):
                 ),
             },
         )
-        new_data.obsm["CITE-Seq"] = adt_matrix
+        new_data.obsm["X_CITE-Seq"] = adt_matrix
         adata = new_data
         print("ADT count matrix is attached.")
 
