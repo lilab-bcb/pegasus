@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import json
+import logging
+
 from sys import stdout
 from natsort import natsorted
-
 from typing import List, Dict, Union
-import logging
 
 logger = logging.getLogger('sccloud')
 

@@ -1,15 +1,15 @@
 import time
 import numpy as np
 import pandas as pd
-
-from scCloud.misc import get_rep_key, X_from_rep_key
+import logging
 
 from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
 from sklearn.neighbors import NearestNeighbors
 from joblib import effective_n_jobs
 from typing import List, Tuple
-import logging
+
+from scCloud.tools import update_rep, X_from_rep, knn_is_cached
 
 logger = logging.getLogger('sccloud')
 
@@ -80,13 +80,6 @@ def calculate_nearest_neighbors(
     return indices, distances
 
 
-def is_cached(data, indices_key, distances_key, K):
-    return (
-        (indices_key in data.uns)
-        and (distances_key in data.uns) and data.uns[indices_key].shape[0] == data.shape[0]
-        and (K <= data.uns[indices_key].shape[1] + 1)
-    )
-
 def get_neighbors(
     data: "AnnData",
     K: int = 100,
@@ -123,17 +116,17 @@ def get_neighbors(
     >>> indices, distances = tools.get_neighbors(adata)
     """
 
-    rep_key, rep = get_rep_key(rep)
+    rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if is_cached(data, indices_key, distances_key, K):
+    if knn_is_cached(data, indices_key, distances_key, K):
         indices = data.uns[indices_key]
         distances = data.uns[distances_key]
         logger.info("Found cached kNN results, no calculation is required.")
     else:
         indices, distances = calculate_nearest_neighbors(
-            X_from_rep_key(data, rep_key),
+            X_from_rep(data, rep),
             K=K,
             n_jobs=effective_n_jobs(n_jobs),
             random_state=random_state,
@@ -241,6 +234,7 @@ def neighbors(
 
     # calculate kNN
     start = time.time()
+    rep = update_rep(rep)
     indices, distances = get_neighbors(
         data,
         K=K,
@@ -253,8 +247,6 @@ def neighbors(
     logger.info("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
 
     # calculate affinity matrix
-    if rep is None:
-        rep = 'X'
     start = time.time()
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W

@@ -1,3 +1,5 @@
+from .utils import update_rep, X_from_rep, W_from_rep, knn_is_cached
+
 from .data_aggregation import aggregate_matrices
 from .preprocessing import (
     qc_metrics,
@@ -17,7 +19,6 @@ from .nearest_neighbors import (
     calculate_affinity_matrix,
     calc_kBET,
     calc_kSIM,
-    is_cached,
 )
 from .graph_operations import construct_graph
 from .diffusion_map import diffmap, reduce_diffmap_to_3d
@@ -50,4 +51,3 @@ from .scp_output import (
 )
 from .down_sampling import down_sample
 from .subcluster_utils import get_anndata_for_subclustering
-from .logging import Logging

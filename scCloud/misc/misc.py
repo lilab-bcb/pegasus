@@ -5,18 +5,6 @@ from typing import List
 from scCloud.io import read_input
 
 
-def get_rep_key(rep, data=None):
-    rep_key = ("X_" + rep) if rep is not None else None
-    if rep is None:
-        rep = 'X'
-    if data is not None and rep_key is not None and rep_key not in data.obsm.keys():
-        raise ValueError("Cannot find {0} matrix. Please run {0} first".format(rep))
-
-    return rep_key, rep
-
-
-def X_from_rep_key(data, rep_key):
-    return data.obsm[rep_key] if rep_key is not None else data.X
 
 def search_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", measure: str = "percentage") -> pd.DataFrame:
     """Extract and display gene expressions for each cluster from an `anndata` object.

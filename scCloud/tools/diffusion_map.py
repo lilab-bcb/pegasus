@@ -1,15 +1,19 @@
 import time
 import numpy as np
+import logging
+
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
 from typing import Tuple
-import logging
-from scCloud.misc import get_rep_key
+
+from scCloud.tools import update_rep, W_from_rep
 
 logger = logging.getLogger('sccloud')
+
+
 
 def calculate_normalized_affinity(
     W: "csr_matrix"
@@ -75,14 +79,9 @@ def diffmap(
     """
 
     start = time.time()
-    rep_key, rep = get_rep_key(rep)
-    rep_key = "W_" + rep
-    if rep_key not in data.uns:
-        raise ValueError("Affinity matrix does not exist. Please run neighbors first!")
-
-    W = data.uns[rep_key]
+    rep = update_rep(rep)
     Phi_pt, Lambda = calculate_diffusion_map(
-        W, n_components=n_components, alpha=alpha, solver=solver, random_state=random_state
+        W_from_rep(data, rep), n_components=n_components, alpha=alpha, solver=solver, random_state=random_state
     )
 
     data.obsm["X_diffmap"] = Phi_pt

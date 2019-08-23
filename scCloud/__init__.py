@@ -5,6 +5,18 @@ except NameError:
 
     matplotlib.use("Agg")
 
+import sys
+import logging
+
+logger = logging.getLogger('sccloud')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+
 from .io import infer_file_format, read_input, write_output
 from .tools import (
     aggregate_matrices,

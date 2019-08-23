@@ -1,22 +1,27 @@
 import time
 import numpy as np
 import scipy
-from joblib import effective_n_jobs
-from MulticoreTSNE import MulticoreTSNE as TSNE
+import logging
 import umap as umap_module
 import forceatlas2 as fa2
-import logging
-from scCloud.misc import get_rep_key, X_from_rep_key
-from scCloud.tools.nearest_neighbors import is_cached
-logger = logging.getLogger('sccloud')
+import uuid
+
+from joblib import effective_n_jobs
+from MulticoreTSNE import MulticoreTSNE as TSNE
 
 from scCloud.tools import (
+    update_rep,
+    X_from_rep,
+    W_from_rep, 
+    knn_is_cached,
     neighbors,
     net_train_and_predict,
     calculate_nearest_neighbors,
     calculate_affinity_matrix,
     construct_graph,
 )
+
+logger = logging.getLogger('sccloud')
 
 
 def calc_tsne(
@@ -226,7 +231,7 @@ def calc_force_directed_layout(
 
 def tsne(
     data: "AnnData",
-    rep: "str" = "pca",
+    rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
@@ -239,11 +244,11 @@ def tsne(
     TODO: Documentation.
     """
     start = time.time()
-    rep_key, rep = get_rep_key(rep, data)
+    rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
 
     data.obsm["X_" + out_basis] = calc_tsne(
-        X_from_rep_key(data, rep_key),
+        X_from_rep(data, rep),
         n_jobs,
         n_components,
         perplexity,
@@ -258,7 +263,7 @@ def tsne(
 
 def fitsne(
     data: "AnnData",
-    rep: "str" = "pca",
+    rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
@@ -271,13 +276,12 @@ def fitsne(
     TODO: Documentation.
     """
     start = time.time()
-    rep_key, rep = get_rep_key(rep, data)
-    #rep_key = "X_" + rep if rep != "CITE-Seq" else rep FIXME
 
+    rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
 
     data.obsm["X_" + out_basis] = calc_fitsne(
-        X_from_rep_key(data, rep_key),
+        X_from_rep(data, rep),
         n_jobs,
         n_components,
         perplexity,
@@ -292,7 +296,7 @@ def fitsne(
 
 def umap(
     data: "AnnData",
-    rep: "str" = "pca",
+    rep: str = "pca",
     n_components: int = 2,
     n_neighbors: int = 15,
     min_dist: float = 0.5,
@@ -305,14 +309,13 @@ def umap(
     """
     start = time.time()
 
-    rep_key, rep = get_rep_key(rep)
+    rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if not is_cached(data, indices_key, distances_key, n_neighbors):
+    X = X_from_rep(data, rep)
+    if not knn_is_cached(data, indices_key, distances_key, n_neighbors):
         raise ValueError("Please run neighbors first!")
-    if rep_key not in data.obsm.keys():
-        raise ValueError("Please run {} first!".format(rep))
 
     knn_indices = np.insert(
         data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
@@ -321,7 +324,7 @@ def umap(
         data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
-        X_from_rep_key(data, rep_key),
+        X,
         n_components,
         n_neighbors,
         min_dist,
@@ -337,9 +340,9 @@ def umap(
 
 def fle(
     data: "AnnData",
-    file_name: str,
+    file_name: str = None,
     n_jobs: int = -1,
-    rep='diffmap',
+    rep: str = "diffmap",
     K: int = 50,
     full_speed: bool = False,
     target_change_per_node: float = 2.0,
@@ -351,15 +354,17 @@ def fle(
 ) -> None:
     """
     TODO: Documentation.
+    if file_name == None, use uuid to generate random file name
     """
     start = time.time()
+
+    if file_name is None:
+        file_name = str(uuid.uuid4())
+
     n_jobs = effective_n_jobs(n_jobs)
+    rep = update_rep(rep)
 
-
-    rep_key, rep = get_rep_key(rep, data)
-    W_rep = "W_" + rep
-
-    if W_rep not in data.uns:
+    if ("W_" + rep) not in data.uns:
         neighbors(
             data,
             K=K,
@@ -370,7 +375,7 @@ def fle(
         )
 
     data.obsm["X_" + out_basis] = calc_force_directed_layout(
-        data.uns[W_rep],
+        W_from_rep(data, rep),
         file_name,
         n_jobs,
         target_change_per_node,
@@ -426,7 +431,7 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
 
 def net_tsne(
     data: "AnnData",
-    rep: "str" = "pca",
+    rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
@@ -446,11 +451,11 @@ def net_tsne(
     """
     start = time.time()
 
-    rep_key, rep = get_rep_key(rep, data)
-
+    rep = update_rep(rep)
+    indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if distances_key not in data.uns:
+    if not knn_is_cached(data, indices_key, distances_key, select_K):
         raise ValueError("Please run neighbors first!")
 
     n_jobs = effective_n_jobs(n_jobs)
@@ -463,7 +468,7 @@ def net_tsne(
         random_state=random_state,
     )
 
-    X_full = X_from_rep_key(data, rep_key)
+    X_full = X_from_rep(data, rep)
     X = X_full[selected, :]
     X_tsne = calc_tsne(
         X,
@@ -493,7 +498,7 @@ def net_tsne(
 
     polish_learning_rate = polish_learning_frac * data.shape[0]
     data.obsm["X_" + out_basis] = calc_tsne(
-        data.obsm[rep_key],
+        X_full,
         n_jobs,
         n_components,
         perplexity,
@@ -511,7 +516,7 @@ def net_tsne(
 
 def net_fitsne(
     data: "AnnData",
-    rep: "str" = "pca",
+    rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
@@ -531,10 +536,11 @@ def net_fitsne(
     """
     start = time.time()
 
-    rep_key, rep = get_rep_key(rep, data)
+    rep = update_rep(rep)
+    indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if distances_key not in data.uns:
+    if not knn_is_cached(data, indices_key, distances_key, select_K):
         raise ValueError("Please run neighbors first!")
 
     n_jobs = effective_n_jobs(n_jobs)
@@ -546,7 +552,7 @@ def net_fitsne(
         alpha=select_alpha,
         random_state=random_state,
     )
-    X_full = X_from_rep_key(data, rep_key)
+    X_full = X_from_rep(data, rep)
     X = X_full[selected, :]
     X_fitsne = calc_fitsne(
         X,
@@ -576,7 +582,7 @@ def net_fitsne(
 
     polish_learning_rate = polish_learning_frac * data.shape[0]
     data.obsm["X_" + out_basis] = calc_fitsne(
-        data.obsm[rep_key],
+        X_full,
         n_jobs,
         n_components,
         perplexity,
@@ -595,7 +601,7 @@ def net_fitsne(
 
 def net_umap(
     data: "AnnData",
-    rep: "str" = "pca",
+    rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
     n_neighbors: int = 15,
@@ -616,11 +622,11 @@ def net_umap(
     """
     start = time.time()
 
-    rep_key, rep = get_rep_key(rep, data)
+    rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if (indices_key not in data.uns) or (distances_key not in data.uns):
+    if not knn_is_cached(data, indices_key, distances_key, select_K):
         raise ValueError("Please run neighbors first!")
 
     n_jobs = effective_n_jobs(n_jobs)
@@ -632,21 +638,20 @@ def net_umap(
         alpha=select_alpha,
         random_state=random_state,
     )
-    X_full = X_from_rep_key(data, rep_key)
+    X_full = X_from_rep(data, rep)
     X = X_full[selected, :]
 
-    ds_indices_key = "ds_" + rep + "_knn_indices"
+    ds_indices_key = "ds_" + rep + "_knn_indices" # ds refers to down-sampling
     ds_distances_key = "ds_" + rep + "_knn_distances"
-    if (ds_indices_key not in data.uns) or (ds_distances_key not in data.uns):
-        indices, distances = calculate_nearest_neighbors(
-            X,
-            K=n_neighbors,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            full_speed=full_speed,
-        )
-        data.uns[ds_indices_key] = indices
-        data.uns[ds_distances_key] = distances
+    indices, distances = calculate_nearest_neighbors(
+        X,
+        K=n_neighbors,
+        n_jobs=n_jobs,
+        random_state=random_state,
+        full_speed=full_speed,
+    )
+    data.uns[ds_indices_key] = indices
+    data.uns[ds_distances_key] = distances
 
     knn_indices = np.insert(
         data.uns[ds_indices_key][:, 0: n_neighbors - 1], 0, range(X.shape[0]), axis=1
@@ -690,7 +695,7 @@ def net_umap(
     )
 
     data.obsm["X_" + out_basis] = calc_umap(
-        data.obsm[rep_key],
+        X_full,
         n_components,
         n_neighbors,
         min_dist,
@@ -709,8 +714,9 @@ def net_umap(
 
 def net_fle(
     data: "AnnData",
-    file_name: str,
+    file_name: str = None,
     n_jobs: int = -1,
+    rep: str = "diffmap",
     K: int = 50,
     full_speed: bool = False,
     target_change_per_node: float = 2.0,
@@ -724,19 +730,20 @@ def net_fle(
     net_alpha: float = 0.1,
     polish_target_steps: int = 1500,
     out_basis: str = "net_fle",
-    rep: str = "diffmap"
 ) -> None:
     """
     TODO: Documentation.
+    If file_name is None, file_name = str(uuid.uuid4())
     """
     start = time.time()
+
+    if file_name is None:
+        file_name = str(uuid.uuid4())
+
     n_jobs = effective_n_jobs(n_jobs)
-    rep_key, rep = get_rep_key(rep, data)
+    rep = get_rep(rep)
 
-    rep_key = "X_" + rep
-    W_rep = "W_" + rep
-
-    if W_rep not in data.uns:
+    if ("W_" + rep) not in data.uns:
         neighbors(
             data,
             K=K,
@@ -746,7 +753,12 @@ def net_fle(
             full_speed=full_speed,
         )
 
+    indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
+
+    if not knn_is_cached(data, indices_key, distances_key, select_K):
+        raise ValueError("Please run neighbors first!")
+
     selected = select_cells(
         data.uns[distances_key],
         select_frac,
@@ -755,20 +767,16 @@ def net_fle(
         random_state=random_state,
     )
 
-    X_full = X_from_rep_key(data, rep_key)
+    X_full = X_from_rep(data, rep)
     X = X_full[selected, :]
 
     ds_indices_key = "ds_" + rep + "_knn_indices"
     ds_distances_key = "ds_" + rep + "_knn_distances"
-    if (ds_indices_key not in data.uns) or (ds_distances_key not in data.uns):
-        indices, distances = calculate_nearest_neighbors(
-            X, K=K, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed
-        )
-        data.uns[ds_indices_key] = indices
-        data.uns[ds_distances_key] = distances
-    else:
-        indices = data.uns[ds_indices_key]
-        distances = data.uns[ds_distances_key]
+    indices, distances = calculate_nearest_neighbors(
+        X, K=K, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed
+    )
+    data.uns[ds_indices_key] = indices
+    data.uns[ds_distances_key] = distances
 
     W = calculate_affinity_matrix(indices, distances)
 
@@ -800,7 +808,7 @@ def net_fle(
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     data.obsm["X_" + out_basis] = calc_force_directed_layout(
-        data.uns[W_rep],
+        W_from_rep(data, rep),
         file_name,
         n_jobs,
         target_change_per_node,
