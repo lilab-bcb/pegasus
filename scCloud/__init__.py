@@ -8,11 +8,11 @@ except NameError:
 import sys
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
@@ -66,7 +66,7 @@ from scplot import (
     scatter_matrix,
     embedding,
     composition_plot,
-    variable_feature_plot
+    variable_feature_plot,
 )
 
 from ._version import get_versions

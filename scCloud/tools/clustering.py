@@ -15,7 +15,8 @@ from typing import List
 from scCloud.tools import construct_graph
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 def louvain(
     data: "AnnData",

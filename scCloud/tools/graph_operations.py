@@ -4,7 +4,8 @@ from scipy.sparse import issparse
 import igraph
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 def construct_graph(
     W: "csr_matrix", directed: bool = False, adjust_weights: bool = True

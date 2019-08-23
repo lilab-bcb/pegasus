@@ -35,12 +35,7 @@ from .visualization import (
     net_umap,
     net_fle,
 )
-from .diff_expr import (
-    de_analysis,
-    markers,
-    write_results_to_excel,
-    run_de_analysis,
-)
+from .diff_expr import de_analysis, markers, write_results_to_excel, run_de_analysis
 from .gradient_boosting import find_markers, run_find_markers
 from .convert_to_parquet import convert_to_parquet, run_conversion
 from .scp_output import (

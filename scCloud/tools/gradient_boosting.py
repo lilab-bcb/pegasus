@@ -16,16 +16,17 @@ from scCloud.io import read_input
 
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 def find_markers(
-    data: 'AnnData',
+    data: "AnnData",
     label_attr: str,
-    de_key: str = 'de_res',
+    de_key: str = "de_res",
     n_jobs: int = -1,
     min_gain: float = 1.0,
     random_state: int = 0,
-    remove_ribo: bool = False
+    remove_ribo: bool = False,
 ) -> Dict[str, Dict[str, List[str]]]:
     """
     TODO: Documentation.
@@ -71,7 +72,9 @@ def find_markers(
     ntot = (lgb.feature_importances_ >= min_gain).sum()
     ords = np.argsort(lgb.feature_importances_)[::-1][:ntot]
 
-    log_exprs = [x for x in data.varm[de_key].dtype.names if x.startswith("mean_logExpr:")]
+    log_exprs = [
+        x for x in data.varm[de_key].dtype.names if x.startswith("mean_logExpr:")
+    ]
     labels = [x.rpartition(":")[2] for x in log_exprs]
 
     titles = [("down", "down_gain"), ("weak", "weak_gain"), ("strong", "strong_gain")]
@@ -102,7 +105,7 @@ def run_find_markers(
     input_h5ad_file: str,
     output_file: str,
     label_attr: str,
-    de_key: str = 'de_res',
+    de_key: str = "de_res",
     n_jobs: int = -1,
     min_gain: float = 1.0,
     random_state: int = 0,
@@ -118,7 +121,7 @@ def run_find_markers(
     markers = find_markers(
         data,
         label_attr,
-        de_key = de_key,
+        de_key=de_key,
         n_jobs=n_jobs,
         min_gain=min_gain,
         random_state=random_state,

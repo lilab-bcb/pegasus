@@ -12,7 +12,7 @@ from MulticoreTSNE import MulticoreTSNE as TSNE
 from scCloud.tools import (
     update_rep,
     X_from_rep,
-    W_from_rep, 
+    W_from_rep,
     knn_is_cached,
     neighbors,
     net_train_and_predict,
@@ -21,7 +21,7 @@ from scCloud.tools import (
     construct_graph,
 )
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
 
 
 def calc_tsne(
@@ -225,8 +225,17 @@ def calc_force_directed_layout(
     TODO: Typing
     """
     G = construct_graph(W)
-    return fa2.forceatlas2(file_name, graph=G, n_jobs=n_jobs, target_change_per_node=target_change_per_node, \
-        target_steps=target_steps, is3d=is3d, memory=memory, random_state=random_state, init=init)
+    return fa2.forceatlas2(
+        file_name,
+        graph=G,
+        n_jobs=n_jobs,
+        target_change_per_node=target_change_per_node,
+        target_steps=target_steps,
+        is3d=is3d,
+        memory=memory,
+        random_state=random_state,
+        init=init,
+    )
 
 
 def tsne(
@@ -318,10 +327,10 @@ def umap(
         raise ValueError("Please run neighbors first!")
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
         X,
@@ -424,7 +433,9 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     ] = True
 
     end_time = time.time()
-    logger.info("select_cells finished. Time spent = {:.2}s.".format(end_time - start_time))
+    logger.info(
+        "select_cells finished. Time spent = {:.2}s.".format(end_time - start_time)
+    )
 
     return selected
 
@@ -486,12 +497,7 @@ def net_tsne(
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_tsne
     Y_init[~selected, :] = net_train_and_predict(
-        X,
-        X_tsne,
-        X_full[~selected, :],
-        net_alpha,
-        random_state,
-        verbose=True,
+        X, X_tsne, X_full[~selected, :], net_alpha, random_state, verbose=True
     )
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
@@ -570,12 +576,7 @@ def net_fitsne(
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_fitsne
     Y_init[~selected, :] = net_train_and_predict(
-        X,
-        X_fitsne,
-        X_full[~selected, :],
-        net_alpha,
-        random_state,
-        verbose=True,
+        X, X_fitsne, X_full[~selected, :], net_alpha, random_state, verbose=True
     )
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
@@ -641,7 +642,7 @@ def net_umap(
     X_full = X_from_rep(data, rep)
     X = X_full[selected, :]
 
-    ds_indices_key = "ds_" + rep + "_knn_indices" # ds refers to down-sampling
+    ds_indices_key = "ds_" + rep + "_knn_indices"  # ds refers to down-sampling
     ds_distances_key = "ds_" + rep + "_knn_distances"
     indices, distances = calculate_nearest_neighbors(
         X,
@@ -654,10 +655,10 @@ def net_umap(
     data.uns[ds_distances_key] = distances
 
     knn_indices = np.insert(
-        data.uns[ds_indices_key][:, 0: n_neighbors - 1], 0, range(X.shape[0]), axis=1
+        data.uns[ds_indices_key][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[ds_distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[ds_distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
     X_umap = calc_umap(
@@ -677,21 +678,16 @@ def net_umap(
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_umap
     Y_init[~selected, :] = net_train_and_predict(
-        X,
-        X_umap,
-        X_full[~selected, :],
-        net_alpha,
-        random_state,
-        verbose=True,
+        X, X_umap, X_full[~selected, :], net_alpha, random_state, verbose=True
     )
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
     data.obsm["X_" + out_basis] = calc_umap(
@@ -797,12 +793,7 @@ def net_fle(
     Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
     Y_init[selected, :] = X_fle
     Y_init[~selected, :] = net_train_and_predict(
-        X,
-        X_fle,
-        X_full[~selected, :],
-        net_alpha,
-        random_state,
-        verbose=True,
+        X, X_fle, X_full[~selected, :], net_alpha, random_state, verbose=True
     )
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init

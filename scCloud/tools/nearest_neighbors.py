@@ -11,7 +11,7 @@ from typing import List, Tuple
 
 from scCloud.tools import update_rep, X_from_rep, knn_is_cached
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
 
 
 def calculate_nearest_neighbors(
@@ -251,7 +251,9 @@ def neighbors(
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W
     end = time.time()
-    logger.info("Affinity matrix calculation is finished in {:.2f}s".format(end - start))
+    logger.info(
+        "Affinity matrix calculation is finished in {:.2f}s".format(end - start)
+    )
 
 
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):

@@ -9,7 +9,8 @@ import skmisc.loess as sl
 from typing import List
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.

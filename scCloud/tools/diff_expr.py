@@ -8,7 +8,9 @@ from collections import defaultdict
 
 from typing import List, Tuple, Dict
 import logging
-logger = logging.getLogger('sccloud')
+
+logger = logging.getLogger("sccloud")
+
 
 def calc_basic_stat(
     clust_id: str,
@@ -25,7 +27,7 @@ def calc_basic_stat(
 ) -> pd.DataFrame:
     """ Calcualte basic statistics for one cluster
     """
-    zero_vec = np.zeros(shape[1], dtype = np.float32)
+    zero_vec = np.zeros(shape[1], dtype=np.float32)
 
     # recover sparse matrix
     mat = csr_matrix((data, indices, indptr), shape=shape)
@@ -36,14 +38,18 @@ def calc_basic_stat(
         n1 = mat_clust.shape[0]
         n2 = shape[0] - n1
 
-        sum_clu = mat_clust.sum(axis = 0).A1
+        sum_clu = mat_clust.sum(axis=0).A1
         mean1 = sum_clu / n1 if n1 > 0 else zero_vec
         mean2 = (sum_vec - sum_clu) / n2 if n2 > 0 else zero_vec
         mean2[mean2 < 0.0] = 0.0
 
-        nonzeros = mat_clust.getnnz(axis = 0)
+        nonzeros = mat_clust.getnnz(axis=0)
         percents = (nonzeros / n1 * 100.0).astype(np.float32) if n1 > 0 else zero_vec
-        percents_other = ((cnt_vec - nonzeros) / n2 * 100.0).astype(np.float32) if n2 > 0 else zero_vec
+        percents_other = (
+            ((cnt_vec - nonzeros) / n2 * 100.0).astype(np.float32)
+            if n2 > 0
+            else zero_vec
+        )
     else:
         cond1 = cond_labels.categories[0]
         cond_labs = cond_labels[mask]
@@ -54,11 +60,19 @@ def calc_basic_stat(
         n1 = mat_cond1.shape[0]
         n2 = mat_cond2.shape[0]
 
-        mean1 = mat_cond1.mean(axis = 0).A1
-        mean2 = mat_cond2.mean(axis = 0).A1
+        mean1 = mat_cond1.mean(axis=0).A1
+        mean2 = mat_cond2.mean(axis=0).A1
 
-        percents = (mat_cond1.getnnz(axis = 0) / n1 * 100.0).astype(np.float32) if n1 > 0 else zero_vec
-        percents_other = (mat_cond2.getnnz(axis = 0) / n2 * 100.0).astype(np.float32) if n2 > 0 else zero_vec
+        percents = (
+            (mat_cond1.getnnz(axis=0) / n1 * 100.0).astype(np.float32)
+            if n1 > 0
+            else zero_vec
+        )
+        percents_other = (
+            (mat_cond2.getnnz(axis=0) / n2 * 100.0).astype(np.float32)
+            if n2 > 0
+            else zero_vec
+        )
 
     # calculate log_fold_change and WAD, Weighted Average Difference, https://almob.biomedcentral.com/articles/10.1186/1748-7188-3-8
     log_fold_change = mean1 - mean2
@@ -70,7 +84,7 @@ def calc_basic_stat(
     # calculate percent fold change
     idx = percents > 0.0
     idx_other = percents_other > 0.0
-    percent_fold_change = np.zeros(shape[1], dtype = np.float32)
+    percent_fold_change = np.zeros(shape[1], dtype=np.float32)
     percent_fold_change[(~idx) & (~idx_other)] = np.nan
     percent_fold_change[idx & (~idx_other)] = np.inf
     percent_fold_change[idx_other] = percents[idx_other] / percents_other[idx_other]
@@ -95,7 +109,13 @@ def calc_basic_stat(
 
 
 def collect_basic_statistics(
-    X: csr_matrix, cluster_labels: List[str], cond_labels: List[str], gene_names: List[str], n_jobs: int, temp_folder: str, verbose: bool
+    X: csr_matrix,
+    cluster_labels: List[str],
+    cond_labels: List[str],
+    gene_names: List[str],
+    n_jobs: int,
+    temp_folder: str,
+    verbose: bool,
 ) -> List[pd.DataFrame]:
     """ Collect basic statistics, triggering calc_basic_stat in parallel
     """
@@ -103,8 +123,8 @@ def collect_basic_statistics(
 
     sum_vec = cnt_vec = None
     if cond_labels is None:
-        sum_vec = X.sum(axis = 0).A1
-        cnt_vec = X.getnnz(axis = 0)
+        sum_vec = X.sum(axis=0).A1
+        cnt_vec = X.getnnz(axis=0)
 
     result_list = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
         delayed(calc_basic_stat)(
@@ -125,7 +145,11 @@ def collect_basic_statistics(
 
     end = time.time()
     if verbose:
-        logger.info("Collecting basic statistics is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info(
+            "Collecting basic statistics is done. Time spent = {:.2f}s.".format(
+                end - start
+            )
+        )
 
     return result_list
 
@@ -148,7 +172,7 @@ def calc_auc(
     csc_mat = csc_matrix((data, indices, indptr), shape=shape)
     mask = cluster_labels == clust_id
 
-    auroc = np.zeros(shape[1], dtype = np.float32)
+    auroc = np.zeros(shape[1], dtype=np.float32)
     # aupr = np.zeros(shape[1], dtype = np.float32)
 
     if cond_labels is None:
@@ -168,7 +192,9 @@ def calc_auc(
         for i in range(shape[1]):
             if cond_labels is None:
                 exprs[:] = 0.0
-                exprs[csc_mat.indices[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]] = csc_mat.data[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
+                exprs[
+                    csc_mat.indices[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
+                ] = csc_mat.data[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
             else:
                 exprs = csc_mat[mask, i].toarray()[:, 0]
 
@@ -193,7 +219,13 @@ def calc_auc(
 
 
 def calculate_auc_values(
-    Xc: csc_matrix, cluster_labels: List[str], cond_labels: List[str], gene_names: List[str], n_jobs: int, temp_folder: str, verbose: bool
+    Xc: csc_matrix,
+    cluster_labels: List[str],
+    cond_labels: List[str],
+    gene_names: List[str],
+    n_jobs: int,
+    temp_folder: str,
+    verbose: bool,
 ) -> List[pd.DataFrame]:
     """ Calculate AUROC values, triggering calc_auc in parallel
     """
@@ -216,7 +248,9 @@ def calculate_auc_values(
 
     end = time.time()
     if verbose:
-        logger.info("AUROC values are calculated. Time spent = {:.2f}s.".format(end - start))
+        logger.info(
+            "AUROC values are calculated. Time spent = {:.2f}s.".format(end - start)
+        )
 
     return result_list
 
@@ -248,12 +282,12 @@ def calc_t(
         n2 = shape[0] - n1
 
         if n1 > 1 and n2 > 1:
-            sum_clu = mat_clust.sum(axis = 0).A1
+            sum_clu = mat_clust.sum(axis=0).A1
             mean1 = sum_clu / n1
             mean2 = (sum_vec - sum_clu) / n2
             mean2[mean2 < 0.0] = 0.0
 
-            sum2_clu = mat_clust.power(2).sum(axis = 0).A1
+            sum2_clu = mat_clust.power(2).sum(axis=0).A1
             s1sqr = (sum2_clu - n1 * (mean1 ** 2)) / (n1 - 1)
             s2sqr = ((sum2_vec - sum2_clu) - n2 * (mean2 ** 2)) / (n2 - 1)
             s2sqr[s2sqr < 0.0] = 0.0
@@ -268,12 +302,12 @@ def calc_t(
         n2 = mat_cond2.shape[0]
 
         if n1 > 1 and n2 > 1:
-            mean1 = mat_cond1.mean(axis = 0).A1
-            psum1 = mat_cond1.power(2).sum(axis = 0).A1
+            mean1 = mat_cond1.mean(axis=0).A1
+            psum1 = mat_cond1.power(2).sum(axis=0).A1
             s1sqr = (psum1 - n1 * (mean1 ** 2)) / (n1 - 1)
 
-            mean2 = mat_cond2.mean(axis = 0).A1
-            psum2 = mat_cond2.power(2).sum(axis = 0).A1
+            mean2 = mat_cond2.mean(axis=0).A1
+            psum2 = mat_cond2.power(2).sum(axis=0).A1
             s2sqr = (psum2 - n2 * (mean2 ** 2)) / (n2 - 1)
 
     if n1 > 1 and n2 > 1:
@@ -305,7 +339,13 @@ def calc_t(
 
 
 def t_test(
-    X: csr_matrix, cluster_labels: List[str], cond_labels: List[str], gene_names: List[str], n_jobs: int, temp_folder: str, verbose: bool
+    X: csr_matrix,
+    cluster_labels: List[str],
+    cond_labels: List[str],
+    gene_names: List[str],
+    n_jobs: int,
+    temp_folder: str,
+    verbose: bool,
 ) -> List[pd.DataFrame]:
     """ Run Welch's t-test, triggering calc_t in parallel
     """
@@ -313,7 +353,7 @@ def t_test(
 
     sum_vec = sum2_vec = None
     if cond_labels is None:
-        sum_vec = X.sum(axis = 0).A1
+        sum_vec = X.sum(axis=0).A1
         sum2_vec = X.power(2).sum(axis=0).A1
 
     result_list = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
@@ -365,7 +405,7 @@ def calc_fisher(
         n1 = mat_clust.shape[0]
         n2 = shape[0] - n1
 
-        a_true = mat_clust.getnnz(axis = 0).astype(np.uint)
+        a_true = mat_clust.getnnz(axis=0).astype(np.uint)
         a_false = n1 - a_true
         b_true = cnt_vec.astype(np.uint) - a_true
         b_false = n2 - b_true
@@ -379,9 +419,9 @@ def calc_fisher(
         n1 = mat_cond1.shape[0]
         n2 = mat_cond2.shape[0]
 
-        a_true = mat_cond1.getnnz(axis = 0).astype(np.uint)
+        a_true = mat_cond1.getnnz(axis=0).astype(np.uint)
         a_false = n1 - a_true
-        b_true = mat_cond2.getnnz(axis = 0).astype(np.uint)
+        b_true = mat_cond2.getnnz(axis=0).astype(np.uint)
         b_false = n2 - b_true
 
     pvals = fisher.pvalue_npy(a_true, a_false, b_true, b_false)[2]
@@ -402,7 +442,13 @@ def calc_fisher(
 
 
 def fisher_test(
-    X: csr_matrix, cluster_labels: List[str], cond_labels: List[str], gene_names: List[str], n_jobs: int, temp_folder: str, verbose: bool
+    X: csr_matrix,
+    cluster_labels: List[str],
+    cond_labels: List[str],
+    gene_names: List[str],
+    n_jobs: int,
+    temp_folder: str,
+    verbose: bool,
 ) -> List[pd.DataFrame]:
     """ Run Fisher's exact test, triggering calc_fisher in parallel
     """
@@ -410,7 +456,7 @@ def fisher_test(
 
     cnt_vec = None
     if cond_labels is None:
-        cnt_vec = X.getnnz(axis = 0)
+        cnt_vec = X.getnnz(axis=0)
 
     result_list = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
         delayed(calc_fisher)(
@@ -430,7 +476,9 @@ def fisher_test(
 
     end = time.time()
     if verbose:
-        logger.info("Fisher's exact test is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info(
+            "Fisher's exact test is done. Time spent = {:.2f}s.".format(end - start)
+        )
 
     return result_list
 
@@ -450,7 +498,7 @@ def calc_mwu(
     """
 
     csc_mat = csc_matrix((data, indices, indptr), shape=shape)
-    U_stats = np.zeros(shape[1], dtype = np.float32)
+    U_stats = np.zeros(shape[1], dtype=np.float32)
     pvals = np.full(shape[1], 1.0)
     mask = cluster_labels == clust_id
 
@@ -475,13 +523,19 @@ def calc_mwu(
             if cond_labels is None:
                 if csc_mat.indptr[i + 1] - csc_mat.indptr[i] > 0:
                     exprs[:] = 0.0
-                    exprs[csc_mat.indices[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]] = csc_mat.data[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
-                    U_stats[i], pvals[i] = ss.mannwhitneyu(exprs[idx_x], exprs[idx_y], alternative="two-sided")
+                    exprs[
+                        csc_mat.indices[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
+                    ] = csc_mat.data[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
+                    U_stats[i], pvals[i] = ss.mannwhitneyu(
+                        exprs[idx_x], exprs[idx_y], alternative="two-sided"
+                    )
             else:
                 tmp_mat = csc_mat[mask, i]
                 if tmp_mat.data.size > 0:
                     exprs = tmp_mat.toarray()[:, 0]
-                    U_stats[i], pvals[i] = ss.mannwhitneyu(exprs[idx_x], exprs[idx_y], alternative="two-sided")
+                    U_stats[i], pvals[i] = ss.mannwhitneyu(
+                        exprs[idx_x], exprs[idx_y], alternative="two-sided"
+                    )
 
     passed, qvals = fdr(pvals)
 
@@ -501,7 +555,13 @@ def calc_mwu(
 
 
 def mwu_test(
-    Xc: csc_matrix, cluster_labels: List[str], cond_labels: List[str], gene_names: List[str], n_jobs: int, temp_folder: str, verbose: bool
+    Xc: csc_matrix,
+    cluster_labels: List[str],
+    cond_labels: List[str],
+    gene_names: List[str],
+    n_jobs: int,
+    temp_folder: str,
+    verbose: bool,
 ) -> List[pd.DataFrame]:
     """ Run Mann-Whitney U test, triggering calc_mwu in parallel
     """
@@ -524,7 +584,9 @@ def mwu_test(
 
     end = time.time()
     if verbose:
-        logger.info("Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start))
+        logger.info(
+            "Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start)
+        )
 
     return result_list
 
@@ -540,14 +602,24 @@ def organize_results(results: List[List[pd.DataFrame]]) -> pd.DataFrame:
         for j in range(m):
             reslist.append(results[j][i])
 
-    df = pd.concat(reslist, axis = 1)
+    df = pd.concat(reslist, axis=1)
     return df
 
 
-def de_analysis(data: 'AnnData', cluster: str, condition: str = None,
-    subset: str = None, result_key: str = 'de_res', n_jobs: int = -1, auc: bool = True,
-    t: bool = True, fisher: bool = False, mwu: bool = False,
-    temp_folder: str = None, verbose: bool = True) -> None:
+def de_analysis(
+    data: "AnnData",
+    cluster: str,
+    condition: str = None,
+    subset: str = None,
+    result_key: str = "de_res",
+    n_jobs: int = -1,
+    auc: bool = True,
+    t: bool = True,
+    fisher: bool = False,
+    mwu: bool = False,
+    temp_folder: str = None,
+    verbose: bool = True,
+) -> None:
     """
     TODO Documentation.
     subset: a comma-separated list of cluster labels. Then de will be performed only on these subsets.
@@ -568,17 +640,21 @@ def de_analysis(data: 'AnnData', cluster: str, condition: str = None,
         if not isinstance(cond_labels, pd.Categorical):
             cond_labels = pd.Categorical(cond_labels)
         if cond_labels.categories.size != 2:
-            raise ValueError("Number of distinct values in Condition is not equal to 2!")
+            raise ValueError(
+                "Number of distinct values in Condition is not equal to 2!"
+            )
 
     X = data.X if isinstance(data.X, csr_matrix) else data.X[:]
-    X.eliminate_zeros() # In case there is any extra zeros
+    X.eliminate_zeros()  # In case there is any extra zeros
 
     if subset is not None:
         # subset data for de analysis
-        subset = np.array(subset.split(','))
+        subset = np.array(subset.split(","))
         idx_s = np.isin(subset, cluster_labels.categories.values)
         if idx_s.sum() < subset.size:
-            raise ValueError("These cluster labels do not exist: " + ",".join(subset[~idx_s]) + "!")
+            raise ValueError(
+                "These cluster labels do not exist: " + ",".join(subset[~idx_s]) + "!"
+            )
 
         idx = np.isin(cluster_labels, subset)
         cluster_labels = cluster_labels[idx]
@@ -590,46 +666,86 @@ def de_analysis(data: 'AnnData', cluster: str, condition: str = None,
     gene_names = data.var_names
 
     results = []
-    results.append(collect_basic_statistics(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
+    results.append(
+        collect_basic_statistics(
+            X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose
+        )
+    )
 
     Xc = None
     if auc or mwu:
         t1 = time.time()
         Xc = X.tocsc()
         if verbose:
-            logger.info("Converting X to csc_matrix is done. Time spent = {:.2f}s.".format(time.time() - t1))
+            logger.info(
+                "Converting X to csc_matrix is done. Time spent = {:.2f}s.".format(
+                    time.time() - t1
+                )
+            )
 
     if auc:
-        results.append(calculate_auc_values(Xc, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
+        results.append(
+            calculate_auc_values(
+                Xc,
+                cluster_labels,
+                cond_labels,
+                gene_names,
+                n_jobs,
+                temp_folder,
+                verbose,
+            )
+        )
 
     if t:
-        results.append(t_test(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
+        results.append(
+            t_test(
+                X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose
+            )
+        )
 
     if fisher:
-        results.append(fisher_test(X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
+        results.append(
+            fisher_test(
+                X, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose
+            )
+        )
 
     if mwu:
-        results.append(mwu_test(Xc, cluster_labels, cond_labels, gene_names, n_jobs, temp_folder, verbose))
+        results.append(
+            mwu_test(
+                Xc,
+                cluster_labels,
+                cond_labels,
+                gene_names,
+                n_jobs,
+                temp_folder,
+                verbose,
+            )
+        )
 
     df = organize_results(results)
-    data.varm[result_key] = df.to_records(index = False)
+    data.varm[result_key] = df.to_records(index=False)
 
     end = time.time()
-    logger.info("Differential expression analysis is finished. Time spent = {:.2f}s.".format(end - start))
+    logger.info(
+        "Differential expression analysis is finished. Time spent = {:.2f}s.".format(
+            end - start
+        )
+    )
 
 
 def get_valid_gene_index(n: int, df: pd.DataFrame, alpha: float) -> List[bool]:
     """ get genes that are DE for at least one test. If no DE tests, all genes are valid.
     """
-    idx = np.zeros(n, dtype = bool)
+    idx = np.zeros(n, dtype=bool)
     has_test = False
-    for qval in ['t_qval', 'fisher_qval', 'mwu_qval']:
+    for qval in ["t_qval", "fisher_qval", "mwu_qval"]:
         if qval in df.columns:
             idx = idx | (df[qval].values <= alpha)
             has_test = True
 
     if not has_test:
-        idx = np.ones(data.shape[1], dtype = bool)
+        idx = np.ones(data.shape[1], dtype=bool)
 
     return idx
 
@@ -643,7 +759,13 @@ def get_sort_key(sort_by: List[str], col_names: List[str], direction: str):
     raise ValueError("No valid key!")
 
 
-def markers(data: 'AnnData', head: int = None, de_key: str = 'de_res', sort_by: str = 'auroc,WAD_score', alpha: float = 0.05) -> Dict[str, Dict[str, pd.DataFrame]]:
+def markers(
+    data: "AnnData",
+    head: int = None,
+    de_key: str = "de_res",
+    sort_by: str = "auroc,WAD_score",
+    alpha: float = 0.05,
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     """
     TODO: Documentation.
     head: list only top head genes for each cluster. head == None, show any DE genes.
@@ -654,35 +776,45 @@ def markers(data: 'AnnData', head: int = None, de_key: str = 'de_res', sort_by: 
     if de_key not in data.varm.keys():
         raise ValueError("Please run de_analysis first!")
 
-    sort_by = sort_by.split(',')
+    sort_by = sort_by.split(",")
 
     clust2cols = defaultdict(list)
     rec_array = data.varm[de_key]
     for name in rec_array.dtype.names:
-        col_name, sep, clust_id = name.partition(':')
+        col_name, sep, clust_id = name.partition(":")
         clust2cols[clust_id].append(col_name)
 
     results = defaultdict(dict)
     for clust_id, col_names in clust2cols.items():
-        rec_names = [x + ':' + clust_id for x in col_names]
-        df = pd.DataFrame(data = rec_array[rec_names], index = data.var_names)
+        rec_names = [x + ":" + clust_id for x in col_names]
+        df = pd.DataFrame(data=rec_array[rec_names], index=data.var_names)
         df.columns = col_names
-        df.index.name = 'feature'
+        df.index.name = "feature"
 
         idx = get_valid_gene_index(data.shape[1], df, alpha)
 
-        idx_up = idx & (df['log_fold_change'].values > 0)
-        df_up = df.loc[idx_up].sort_values(by=get_sort_key(sort_by, col_names, 'up'), ascending=False, inplace=False)
-        results[clust_id]['up'] = pd.DataFrame(df_up if head is None else df_up.iloc[0:head])
+        idx_up = idx & (df["log_fold_change"].values > 0)
+        df_up = df.loc[idx_up].sort_values(
+            by=get_sort_key(sort_by, col_names, "up"), ascending=False, inplace=False
+        )
+        results[clust_id]["up"] = pd.DataFrame(
+            df_up if head is None else df_up.iloc[0:head]
+        )
 
-        idx_down = idx & (df['log_fold_change'].values < 0)
-        df_down = df.loc[idx_down].sort_values(by=get_sort_key(sort_by, col_names, 'down'), ascending=True, inplace=False)
-        results[clust_id]['down'] = pd.DataFrame(df_down if head is None else df_down.iloc[0:head])
+        idx_down = idx & (df["log_fold_change"].values < 0)
+        df_down = df.loc[idx_down].sort_values(
+            by=get_sort_key(sort_by, col_names, "down"), ascending=True, inplace=False
+        )
+        results[clust_id]["down"] = pd.DataFrame(
+            df_down if head is None else df_down.iloc[0:head]
+        )
 
     return results
 
 
-def write_results_to_excel(results: Dict[str, Dict[str, pd.DataFrame]], output_file: str, ndigits: int = 3) -> None:
+def write_results_to_excel(
+    results: Dict[str, Dict[str, pd.DataFrame]], output_file: str, ndigits: int = 3
+) -> None:
     """ Write results into Excel workbook.
     TODO: Documentation.
     """
@@ -691,26 +823,29 @@ def write_results_to_excel(results: Dict[str, Dict[str, pd.DataFrame]], output_f
     import xlsxwriter
     from natsort import natsorted
 
-
-    def format_short_output_cols(df_orig: pd.DataFrame, ndigits: int = 3) -> pd.DataFrame:
+    def format_short_output_cols(
+        df_orig: pd.DataFrame, ndigits: int = 3
+    ) -> pd.DataFrame:
         """ Round related float columns to ndigits decimal points.
         """
         df = pd.DataFrame(df_orig)
 
         cols = []
         for name in df.columns:
-            if (not name.endswith('pval')) and (not name.endswith('qval')):
+            if (not name.endswith("pval")) and (not name.endswith("qval")):
                 cols.append(name)
 
         df.loc[:, cols] = df.loc[:, cols].round(ndigits)
         return df
 
-    def add_worksheet(workbook: 'workbook', df_orig: pd.DataFrame, sheet_name: str) -> None:
+    def add_worksheet(
+        workbook: "workbook", df_orig: pd.DataFrame, sheet_name: str
+    ) -> None:
         """ Add one worksheet with content as df
         """
         df = format_short_output_cols(df_orig)
-        df.reset_index(inplace = True)
-        worksheet = workbook.add_worksheet(name = sheet_name)
+        df.reset_index(inplace=True)
+        worksheet = workbook.add_worksheet(name=sheet_name)
 
         worksheet.add_table(
             0,
@@ -729,25 +864,26 @@ def write_results_to_excel(results: Dict[str, Dict[str, pd.DataFrame]], output_f
         # else:
         #     worksheet.write_row(0, 0, df.columns.values)
 
-
     workbook = xlsxwriter.Workbook(output_file, {"nan_inf_to_errors": True})
     workbook.formats[0].set_font_size(9)
 
     for clust_id in natsorted(results.keys()):
-        add_worksheet(workbook, results[clust_id]['up'], 'up ' + clust_id)
-        add_worksheet(workbook, results[clust_id]['down'], 'down ' + clust_id)
+        add_worksheet(workbook, results[clust_id]["up"], "up " + clust_id)
+        add_worksheet(workbook, results[clust_id]["down"], "down " + clust_id)
 
     workbook.close()
 
     end = time.time()
-    logger.info("Excel spreadsheet is written. Time spent = {:.2f}s.".format(end - start))
+    logger.info(
+        "Excel spreadsheet is written. Time spent = {:.2f}s.".format(end - start)
+    )
 
 
 def run_de_analysis(
     input_file: str,
     output_excel_file: str,
     cluster: str,
-    result_key: str = 'de_res',
+    result_key: str = "de_res",
     n_jobs: int = -1,
     auc: bool = True,
     t: bool = True,
@@ -756,8 +892,8 @@ def run_de_analysis(
     temp_folder: str = None,
     verbose: bool = True,
     alpha: float = 0.05,
-    ndigits: int = 3
-) -> None :
+    ndigits: int = 3,
+) -> None:
     """ For command line only
     """
     start = time.time()
@@ -766,14 +902,25 @@ def run_de_analysis(
 
     data = read_input(input_file, h5ad_mode="r+")
 
-    de_analysis(data, cluster, result_key = result_key, n_jobs = n_jobs, auc = auc, t = t, fisher = fisher, mwu = mwu, temp_folder = temp_folder, verbose = verbose)
+    de_analysis(
+        data,
+        cluster,
+        result_key=result_key,
+        n_jobs=n_jobs,
+        auc=auc,
+        t=t,
+        fisher=fisher,
+        mwu=mwu,
+        temp_folder=temp_folder,
+        verbose=verbose,
+    )
 
     write_output(data, input_file)
     logger.info("Differential expression results are written back to h5ad file.")
 
-    results = markers(data, de_key = result_key, alpha = alpha)
+    results = markers(data, de_key=result_key, alpha=alpha)
 
-    write_results_to_excel(results, output_excel_file, ndigits = ndigits)
+    write_results_to_excel(results, output_excel_file, ndigits=ndigits)
 
     end = time.time()
     logger.info("run_de_analysis is finished in {:.2f}s.".format(end - start))

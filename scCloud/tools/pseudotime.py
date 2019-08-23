@@ -7,7 +7,7 @@ from collections import deque
 from typing import List
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
 
 
 def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
@@ -33,10 +33,7 @@ def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
     data.obs["pseudotime"] = (distances - dmin) / (dmax - dmin)
 
     end = time.time()
-    logger.info(
-        "calc_pseudotime finished. Time spent = {:.2f}s".format(end - start)
-    )
-
+    logger.info("calc_pseudotime finished. Time spent = {:.2f}s".format(end - start))
 
 
 def construct_knn_graph(indices, distances):
@@ -52,24 +49,26 @@ def construct_knn_graph(indices, distances):
     G.es["weight"] = w
     return G
 
+
 def bfs_on_mst(G, root_id):
-    mst = G.spanning_tree(weights = "weight")
-    myiter = mst.bfsiter(root_id, advanced = True)
+    mst = G.spanning_tree(weights="weight")
+    myiter = mst.bfsiter(root_id, advanced=True)
     n = G.vcount()
-    parents = np.full(n, -1, dtype = int)
+    parents = np.full(n, -1, dtype=int)
     for value in myiter:
         if value[2] is not None:
             parents[value[0].index] = value[2].index
     return parents
 
+
 def infer_path(data, cluster, clust_id, path_name, k: int = 10):
-    assert 'roots' in data.uns and len(data.uns['roots']) == 1
-    root_id = int(np.isin(data.obs_names, data.uns['roots'][0]).nonzero()[0][0])
-    indices = data.uns['diffmap_knn_indices']
-    distances = data.uns['diffmap_knn_distances']
+    assert "roots" in data.uns and len(data.uns["roots"]) == 1
+    root_id = int(np.isin(data.obs_names, data.uns["roots"][0]).nonzero()[0][0])
+    indices = data.uns["diffmap_knn_indices"]
+    distances = data.uns["diffmap_knn_distances"]
     G = construct_knn_graph(indices, distances)
     parents = bfs_on_mst(G, root_id)
-    inpath = np.zeros(data.shape[0], dtype = bool)
+    inpath = np.zeros(data.shape[0], dtype=bool)
     idx = np.isin(data.obs[cluster], clust_id)
     inpath[idx] = True
 
@@ -87,8 +86,3 @@ def infer_path(data, cluster, clust_id, path_name, k: int = 10):
         inpath[indices[vid, 0:k]] = True
 
     data.obs[path_name] = inpath.astype(str)
-
-
-
-
-

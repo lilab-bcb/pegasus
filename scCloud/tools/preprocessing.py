@@ -9,7 +9,8 @@ from sklearn.decomposition import PCA
 from typing import Tuple
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 def qc_metrics(
     data: "AnnData",
@@ -290,7 +291,7 @@ def select_features(data: "AnnData", features: str = None) -> str:
 
     TODO: Documentation
     """
-    keyword = "fmat_" + str(features) # fmat: feature matrix
+    keyword = "fmat_" + str(features)  # fmat: feature matrix
 
     if keyword not in data.uns:
         if features is not None:

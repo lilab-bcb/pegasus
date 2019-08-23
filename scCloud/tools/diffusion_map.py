@@ -11,8 +11,7 @@ from typing import Tuple
 
 from scCloud.tools import update_rep, W_from_rep
 
-logger = logging.getLogger('sccloud')
-
+logger = logging.getLogger("sccloud")
 
 
 def calculate_normalized_affinity(
@@ -42,7 +41,9 @@ def calculate_diffusion_map(
     logger.info("Calculating normalized affinity matrix is done.")
 
     if solver == "randomized":
-        U, S, VT = randomized_svd(W_norm, n_components=n_components, random_state=random_state)
+        U, S, VT = randomized_svd(
+            W_norm, n_components=n_components, random_state=random_state
+        )
         signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
         Lambda = signs * S  # get eigenvalues
     else:
@@ -81,7 +82,11 @@ def diffmap(
     start = time.time()
     rep = update_rep(rep)
     Phi_pt, Lambda = calculate_diffusion_map(
-        W_from_rep(data, rep), n_components=n_components, alpha=alpha, solver=solver, random_state=random_state
+        W_from_rep(data, rep),
+        n_components=n_components,
+        alpha=alpha,
+        solver=solver,
+        random_state=random_state,
     )
 
     data.obsm["X_diffmap"] = Phi_pt
@@ -106,4 +111,6 @@ def reduce_diffmap_to_3d(data: "AnnData", random_state: int = 0) -> None:
     data.obsm["X_diffmap_pca"] = pca.fit_transform(data.obsm["X_diffmap"])
 
     end = time.time()
-    logger.info("Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start))
+    logger.info(
+        "Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start)
+    )

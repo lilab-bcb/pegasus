@@ -287,7 +287,7 @@ class MemData:
                     ).values.tolist()
                     feature_metadata = feature_metadata.merge(
                         other.feature_metadata, on=keys, how="outer", sort=False
-                    ) # If sort is True, feature keys will be changed even if all channels share the same feature keys.
+                    )  # If sort is True, feature keys will be changed even if all channels share the same feature keys.
                 fillna_dict = get_fillna_dict(feature_metadata)
                 feature_metadata.fillna(value=fillna_dict, inplace=True)
 
@@ -296,7 +296,13 @@ class MemData:
                     data=range(feature_metadata.shape[0]), index=feature_metadata.index
                 )
                 for array2d in array2d_list:
-                    if feature_metadata.shape[0] > array2d.feature_metadata.shape[0] or (feature_metadata.index != array2d.feature_metadata.index).sum() > 0:
+                    if (
+                        feature_metadata.shape[0] > array2d.feature_metadata.shape[0]
+                        or (
+                            feature_metadata.index != array2d.feature_metadata.index
+                        ).sum()
+                        > 0
+                    ):
                         mat = csr_matrix(
                             (array2d.matrix.shape[0], f2idx.size),
                             dtype=array2d.matrix.dtype,
@@ -310,14 +316,13 @@ class MemData:
 
                         array2d.matrix = mat
                         gc.collect()
-    
+
                     matrix_list.append(array2d.matrix)
 
                 newmat = vstack(matrix_list)
                 matrix_list = array2d_list = None
                 gc.collect()
                 self.data[keyword] = Array2D(barcode_metadata, feature_metadata, newmat)
-
 
     def restrain_keywords(self, keywords: str) -> None:
         if keywords is None:

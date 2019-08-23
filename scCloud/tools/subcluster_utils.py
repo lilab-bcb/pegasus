@@ -4,7 +4,7 @@ import anndata
 from typing import List
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
 
 
 def parse_subset_selections(subset_selections):
@@ -18,7 +18,7 @@ def parse_subset_selections(subset_selections):
     return subsets_dict
 
 
-def get_anndata_for_subclustering(data: 'AnnData', subset_selections: List[str]):
+def get_anndata_for_subclustering(data: "AnnData", subset_selections: List[str]):
     obs_index = np.full(data.shape[0], True)
     subsets_dict = parse_subset_selections(subset_selections)
     for key, value in subsets_dict.items():

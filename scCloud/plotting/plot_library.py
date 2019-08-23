@@ -15,7 +15,8 @@ from typing import List
 from .plot_utils import get_palettes, transform_basis
 
 
-Restriction = namedtuple('negation', 'values')
+Restriction = namedtuple("negation", "values")
+
 
 class RestrictionParser:
     def __init__(self, restrictions: List[str]):
@@ -23,10 +24,12 @@ class RestrictionParser:
         for restr_str in restrictions:
             attr, value_str = restr_str.split(":")
             negation = False
-            if value_str[0] == '~':
+            if value_str[0] == "~":
                 negation = True
                 value_str = value_str[1:]
-            self.restr[attr] = Restriction(negation = negation, values = value_str.split(","))
+            self.restr[attr] = Restriction(
+                negation=negation, values=value_str.split(",")
+            )
 
     def contains(self, attr: str) -> bool:
         return attr in self.restrs
@@ -34,7 +37,7 @@ class RestrictionParser:
     def get_attrs(self) -> List[str]:
         return self.restrs.keys()
 
-    def get_satisfied(self, data: 'AnnData') -> List[bool]:
+    def get_satisfied(self, data: "AnnData") -> List[bool]:
         selected = np.ones(data.shape[0], dtype=bool)
         for attr, restr in self.restrs.items():
             labels = data.obs[attr].astype(str)
@@ -43,8 +46,8 @@ class RestrictionParser:
             else:
                 selected = selected & np.isin(labels, restr.values)
         return selected
-        
-    def get_unsatisfied(self, data: 'AnnData', apply_to_all: bool) -> List[bool]:
+
+    def get_unsatisfied(self, data: "AnnData", apply_to_all: bool) -> List[bool]:
         unsel = np.zeros(data.shape[0], dtype=bool)
         if apply_to_all:
             for attr, restr in self.restrs.items():
@@ -68,10 +71,6 @@ class RestrictionParser:
             return np.isin(labels, rest_vec)
         else:
             return ~np.isin(labels, rest_vec)
-
-
-
-
 
 
 def get_nrows_and_ncols(num_figs, nrows, ncols):
@@ -321,7 +320,7 @@ def plot_scatter(
 
     restr_obj = RestrictionParser(restrictions)
     unsel = restr_obj.get_unsatisfied(data, apply_to_all)
-    
+
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[i, j]
@@ -440,7 +439,7 @@ def plot_scatter_groups(
     assert group in data.obs
     groups = as_category(data.obs[group])
     df_g = pd.DataFrame()
-    
+
     if showall:
         df_g["All"] = np.ones(data.shape[0], dtype=bool)
     if len(restrictions) == 0:

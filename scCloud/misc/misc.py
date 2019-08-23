@@ -5,8 +5,12 @@ from typing import List
 from scCloud.io import read_input
 
 
-
-def search_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", measure: str = "percentage") -> pd.DataFrame:
+def search_genes(
+    data: "AnnData",
+    gene_list: List[str],
+    rec_key: str = "de_res",
+    measure: str = "percentage",
+) -> pd.DataFrame:
     """Extract and display gene expressions for each cluster from an `anndata` object.
 
     This function helps to see marker expressions in clusters via the interactive python environment.
@@ -33,12 +37,19 @@ def search_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res",
     >>> results = misc.search_genes(data, ['CD3E', 'CD4', 'CD8'], measure = 'percentage')
     """
 
-    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(measure + ':')]
-    df = pd.DataFrame(data = data.varm[rec_key][columns], index = data.var_names)
-    return df.reindex(index = gene_list)
+    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(measure + ":")]
+    df = pd.DataFrame(data=data.varm[rec_key][columns], index=data.var_names)
+    return df.reindex(index=gene_list)
 
 
-def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_res", de_test: str = "fisher", de_alpha: float = 0.05, thre: float = 1.5) -> pd.DataFrame:
+def search_de_genes(
+    data: "AnnData",
+    gene_list: List[str],
+    rec_key: str = "de_res",
+    de_test: str = "fisher",
+    de_alpha: float = 0.05,
+    thre: float = 1.5,
+) -> pd.DataFrame:
     """Extract and display differential expression analysis results of markers for each cluster from an `anndata` object.
 
     This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
@@ -69,13 +80,23 @@ def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_re
     >>> results = scCloud.misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], de_test = 'fisher', thre = 2.0)
     """
 
-    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(de_test + '_qval:')]
-    df_de = pd.DataFrame(data.varm[rec_key][columns], index = data.var_names)
-    df_de = df_de.reindex(index = gene_list)
+    columns = [
+        x for x in data.varm[rec_key].dtype.names if x.startswith(de_test + "_qval:")
+    ]
+    df_de = pd.DataFrame(data.varm[rec_key][columns], index=data.var_names)
+    df_de = df_de.reindex(index=gene_list)
 
-    columns = [x for x in data.varm[rec_key].dtype.names if (x.startswith("percentage_fold_change:") if de_test == "fisher" else x.startswith("log_fold_change:"))]
-    df_fc = pd.DataFrame(data.varm[rec_key][columns], index = data.var_names)
-    df_fc = df_fc.reindex(index = gene_list)
+    columns = [
+        x
+        for x in data.varm[rec_key].dtype.names
+        if (
+            x.startswith("percentage_fold_change:")
+            if de_test == "fisher"
+            else x.startswith("log_fold_change:")
+        )
+    ]
+    df_fc = pd.DataFrame(data.varm[rec_key][columns], index=data.var_names)
+    df_fc = df_fc.reindex(index=gene_list)
     if de_test != "fisher":
         df_fc = np.exp(df_fc)
 
@@ -87,13 +108,16 @@ def search_de_genes(data: 'AnnData', gene_list: List[str], rec_key: str = "de_re
     results[(df_de <= de_alpha).values & (df_fc < 1.0).values] = "-"
     results[(df_de <= de_alpha).values & (df_fc <= 1.0 / thre).values] = "--"
 
-    clusts = [x.rpartition(':')[2] for x in columns]
+    clusts = [x.rpartition(":")[2] for x in columns]
     df = pd.DataFrame(data=results, index=gene_list, columns=clusts)
     return df
 
 
 def show_attributes(
-    input_file: str, show_attributes: bool, show_gene_attributes: bool, show_values_for_attributes: str
+    input_file: str,
+    show_attributes: bool,
+    show_gene_attributes: bool,
+    show_values_for_attributes: str,
 ) -> None:
     """ Show data attributes. For command line use.
     """
@@ -120,7 +144,14 @@ def show_attributes(
             )
 
 
-def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: List[str], group_str: str, fdr_alpha: float = 0.05, res_key: str = None) -> pd.DataFrame:
+def perform_oneway_anova(
+    data: "AnnData",
+    glist: List[str],
+    restriction_vec: List[str],
+    group_str: str,
+    fdr_alpha: float = 0.05,
+    res_key: str = None,
+) -> pd.DataFrame:
     """Perform one way ANOVA on a subset of cells (restricted by restriction_vec) grouped by group_str and control FDR at fdr_alpha.
     Parameters
     ----------
@@ -200,7 +231,9 @@ def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: Lis
             fr = 0
             for i in range(ngr):
                 to = fr + quotient + (i < residule)
-                name = "[{:.2f}, {:.2f}]".format(pseudotimes[ords[fr]], pseudotimes[ords[to - 1]])
+                name = "[{:.2f}, {:.2f}]".format(
+                    pseudotimes[ords[fr]], pseudotimes[ords[to - 1]]
+                )
                 group_names.append(name)
                 group_idx[i][ords[fr:to]] = True
                 fr = to
@@ -249,7 +282,7 @@ def perform_oneway_anova(data: 'AnnData', glist: List[str], restriction_vec: Lis
         data.uns[res_key] = raw_results
         data.obs[res_key] = "background"
         for i in range(ngr):
-            idx = np.zeros(data.shape[0], dtype = bool)
+            idx = np.zeros(data.shape[0], dtype=bool)
             idx[selected] = group_idx[i]
             data.obs.loc[idx, res_key] = group_names[i]
 

@@ -7,7 +7,8 @@ from sys import stdout
 from natsort import natsorted
 from typing import List, Dict, Union
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 class CellType:
     def __init__(self, name: str, ignore_nonde: bool = False):
@@ -18,7 +19,13 @@ class CellType:
         self.subtypes = None
         self.ignore_nonde = ignore_nonde
 
-    def evaluate(self, obj: 'json object', de_up: pd.DataFrame, de_down: pd.DataFrame, thre: float):
+    def evaluate(
+        self,
+        obj: "json object",
+        de_up: pd.DataFrame,
+        de_down: pd.DataFrame,
+        thre: float,
+    ):
         """ Calculate score for matching a cluster with a putative cell type.
         """
         self.score = self.avgp = 0.0
@@ -45,10 +52,14 @@ class CellType:
 
                         if fc >= thre:
                             numer += 2.0
-                            self.strong_support.append((marker, "{0:.2f}%".format(percent)))
+                            self.strong_support.append(
+                                (marker, "{0:.2f}%".format(percent))
+                            )
                         else:
                             numer += 1.0 + (fc - 1.0) / (thre - 1.0)
-                            self.weak_support.append((marker, "{0:.2f}%".format(percent)))
+                            self.weak_support.append(
+                                (marker, "{0:.2f}%".format(percent))
+                            )
                 else:
                     assert sign == "-"
                     if gsym not in de_up.index:
@@ -106,7 +117,7 @@ class Annotator:
             self.object = marker_file
         self.recalibrate(self.object, genes)
 
-    def recalibrate(self, obj: 'json object', genes: List[str]) -> None:
+    def recalibrate(self, obj: "json object", genes: List[str]) -> None:
         """ Remove markers that are not expressed (not in genes) and calculate partial weights for existing genes.
         """
         for celltype in obj["cell_types"]:
@@ -123,7 +134,14 @@ class Annotator:
             if sub_obj is not None:
                 self.recalibrate(sub_obj, genes)
 
-    def evaluate(self, de_up: pd.DataFrame, de_down: pd.DataFrame, thre: float = 1.5, ignore_nonde: bool = False, obj: 'json object' = None):
+    def evaluate(
+        self,
+        de_up: pd.DataFrame,
+        de_down: pd.DataFrame,
+        thre: float = 1.5,
+        ignore_nonde: bool = False,
+        obj: "json object" = None,
+    ):
         """ Evaluate a cluster to determine its putative cell type.
         """
         if obj is None:
@@ -131,13 +149,17 @@ class Annotator:
 
         results = []
         for celltype in obj["cell_types"]:
-            ct = CellType(celltype["name"], ignore_nonde = ignore_nonde)
+            ct = CellType(celltype["name"], ignore_nonde=ignore_nonde)
             ct.evaluate(celltype, de_up, de_down, thre)
             if ct.score >= 0.5:
                 sub_obj = celltype.get("subtypes", None)
                 if sub_obj is not None:
                     ct.subtypes = self.evaluate(
-                        de_up, de_down, thre = thre, ignore_nonde = ignore_nonde, obj = sub_obj
+                        de_up,
+                        de_down,
+                        thre=thre,
+                        ignore_nonde=ignore_nonde,
+                        obj=sub_obj,
                     )
             results.append(ct)
 
@@ -145,7 +167,9 @@ class Annotator:
 
         return results
 
-    def report(self, fout: 'output stream', results, thre: float, space: int = 4) -> None:
+    def report(
+        self, fout: "output stream", results, thre: float, space: int = 4
+    ) -> None:
         """ Write putative cell type reports to fout.
         """
         for ct in results:
@@ -156,14 +180,14 @@ class Annotator:
 
 
 def infer_cell_types(
-    data: 'AnnData',
+    data: "AnnData",
     markers: Union[str, Dict],
     de_test: str,
     de_alpha: float = 0.05,
-    de_key: str = 'de_res',
+    de_key: str = "de_res",
     threshold: float = 0.5,
     ignore_nonde: bool = False,
-    fout: 'output stream' = stdout,
+    fout: "output stream" = stdout,
 ) -> None:
     """Infer putative cell types for each cluster using legacy markers
 
@@ -198,6 +222,7 @@ def infer_cell_types(
     >>> annotate_cluster.infer_cell_types(adata, 'human_immune', 'fisher')
     """
     import pkg_resources
+
     if markers == "human_immune":
         markers = pkg_resources.resource_filename(
             "scCloud.annotate_cluster", "human_immune_cell_markers.json"
@@ -217,32 +242,52 @@ def infer_cell_types(
 
     anno = Annotator(markers, data.var_names)
 
-    clusts = natsorted([x.rpartition(':')[2] for x in data.varm[de_key].dtype.names if x.startswith("WAD_score:")])
+    clusts = natsorted(
+        [
+            x.rpartition(":")[2]
+            for x in data.varm[de_key].dtype.names
+            if x.startswith("WAD_score:")
+        ]
+    )
 
     for clust_id in clusts:
         idx = data.varm[de_key]["{0}_qval:{1}".format(de_test, clust_id)] <= de_alpha
 
         idx_up = idx & (data.varm[de_key]["log_fold_change:{0}".format(clust_id)] > 0.0)
-        idx_down = idx & (data.varm[de_key]["log_fold_change:{0}".format(clust_id)] < 0.0)
+        idx_down = idx & (
+            data.varm[de_key]["log_fold_change:{0}".format(clust_id)] < 0.0
+        )
         assert idx_up.sum() + idx_down.sum() == idx.sum()
 
-        cols = ["{0}:{1}".format(x, clust_id) for x in ["percentage_fold_change" if de_test == "fisher" else "log_fold_change", "percentage"]]
-        de_up = pd.DataFrame(data = data.varm[de_key][cols][idx_up], index = data.var_names[idx_up])
+        cols = [
+            "{0}:{1}".format(x, clust_id)
+            for x in [
+                "percentage_fold_change" if de_test == "fisher" else "log_fold_change",
+                "percentage",
+            ]
+        ]
+        de_up = pd.DataFrame(
+            data=data.varm[de_key][cols][idx_up], index=data.var_names[idx_up]
+        )
         de_up.rename(columns={cols[0]: "fc", cols[1]: "percent"}, inplace=True)
-        de_down = pd.DataFrame(data = data.varm[de_key][cols][idx_down], index = data.var_names[idx_down])
+        de_down = pd.DataFrame(
+            data=data.varm[de_key][cols][idx_down], index=data.var_names[idx_down]
+        )
         de_down.rename(columns={cols[0]: "fc", cols[1]: "percent"}, inplace=True)
 
         if de_test != "fisher":
             de_up["fc"] = np.exp(de_up["fc"])
             de_down["fc"] = np.exp(de_down["fc"])
 
-        results = anno.evaluate(de_up, de_down, ignore_nonde = ignore_nonde)
+        results = anno.evaluate(de_up, de_down, ignore_nonde=ignore_nonde)
 
         fout.write("Cluster {0}:\n".format(clust_id))
         anno.report(fout, results, threshold)
 
 
-def annotate(data: 'AnnData', name: str, based_on: str, anno_dict: Dict[str, str]) -> None:
+def annotate(
+    data: "AnnData", name: str, based_on: str, anno_dict: Dict[str, str]
+) -> None:
     """Add annotation to AnnData obj.
 
     Parameters
@@ -275,7 +320,7 @@ def run_annotate_cluster(
     marker_file: str,
     de_test: str,
     de_alpha: float = 0.05,
-    de_key: str = 'de_res',
+    de_key: str = "de_res",
     threshold: float = 0.5,
     ignore_nonde: bool = False,
 ) -> None:
@@ -287,7 +332,16 @@ def run_annotate_cluster(
     start = time.time()
     data = read_input(input_file, h5ad_mode="r")
     with open(output_file, "w") as fout:
-        infer_cell_types(data, marker_file, de_test, de_alpha = de_alpha, de_key = de_key, threshold = threshold, ignore_nonde = ignore_nonde, fout = fout)
+        infer_cell_types(
+            data,
+            marker_file,
+            de_test,
+            de_alpha=de_alpha,
+            de_key=de_key,
+            threshold=threshold,
+            ignore_nonde=ignore_nonde,
+            fout=fout,
+        )
     data.file.close()
     end = time.time()
     logger.info("Time spent for annotating clusters is {:.2f}s.".format(end - start))
@@ -301,6 +355,6 @@ def annotate_anndata_object(input_file: str, annotation: str) -> None:
 
     data = read_input(input_file, h5ad_mode="r+")
     anno_name, clust_name, anno_str = annotation.split(":")
-    anno_dict = {str(i + 1) : x for i, x in enumerate(anno_str.split(";"))}
+    anno_dict = {str(i + 1): x for i, x in enumerate(anno_str.split(";"))}
     annotate(data, anno_name, clust_name, anno_dict)
     write_output(data, input_file)

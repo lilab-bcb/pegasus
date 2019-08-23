@@ -43,7 +43,6 @@ def run_pipeline(input_file, output_name, **kwargs):
         adata = tools.get_anndata_for_subclustering(adata, kwargs["subset_selections"])
         is_raw = True  # get submat and then set is_raw to True
 
-
     if is_raw:
         if not kwargs["subcluster"]:
             # filter out low quality cells/genes
@@ -360,7 +359,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         seurat_data = adata.copy()
         seurat_data.raw = raw_data
         seurat_data.uns["scale.data"] = adata.uns["fmat_highly_variable_features"]
-        seurat_data.uns["scale.data.rownames"] = adata.var_names[adata.var['highly_variable_features']].values
+        seurat_data.uns["scale.data.rownames"] = adata.var_names[
+            adata.var["highly_variable_features"]
+        ].values
         io.write_output(seurat_data, output_name + ".seurat")
 
     # write out results

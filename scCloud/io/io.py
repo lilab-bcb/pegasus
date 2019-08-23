@@ -15,7 +15,8 @@ from . import Array2D, MemData
 import anndata
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v2 format matrix from hdf5 file
@@ -156,7 +157,9 @@ def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     return data
 
 
-def determine_file_name(path: str, names: List[str], errmsg: str, fname: str = None, exts: List[str] = None) -> str:
+def determine_file_name(
+    path: str, names: List[str], errmsg: str, fname: str = None, exts: List[str] = None
+) -> str:
     """ Try several file name options and determine which one is correct.
     """
     for name in names:
@@ -178,8 +181,8 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         path,
         ["matrix.mtx.gz", "matrix.mtx"],
         "Expression matrix in mtx format is not found",
-        fname = fname,
-        exts = [".mtx"],
+        fname=fname,
+        exts=[".mtx"],
     )
     mat = csr_matrix(mmread(mtx_file).T)
 
@@ -187,16 +190,16 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         path,
         ["cells.tsv.gz", "barcodes.tsv.gz", "barcodes.tsv"],
         "Barcode metadata information is not found",
-        fname = fname,
-        exts = ["_barcode.tsv", ".cells.tsv"],
+        fname=fname,
+        exts=["_barcode.tsv", ".cells.tsv"],
     )
 
     feature_file = determine_file_name(
         path,
         ["genes.tsv.gz", "features.tsv.gz", "genes.tsv"],
         "Feature metadata information is not found",
-        fname = fname,
-        exts = ["_gene.tsv", ".genes.tsv"],
+        fname=fname,
+        exts=["_gene.tsv", ".genes.tsv"],
     )
 
     barcode_base = os.path.basename(barcode_file)
@@ -238,9 +241,15 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
                 feature_file, sep="\t", header=None, names=["featurekey", "featurename"]
             )
         elif format_type == "scumi":
-            values = pd.read_csv(feature_file, sep="\t", header=None).iloc[:, 0].values.astype(str)
+            values = (
+                pd.read_csv(feature_file, sep="\t", header=None)
+                .iloc[:, 0]
+                .values.astype(str)
+            )
             arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
-            feature_metadata = pd.DataFrame(data = {"featurekey" : arr[:, 0], "featurename" : arr[:, 1]})
+            feature_metadata = pd.DataFrame(
+                data={"featurekey": arr[:, 0], "featurename": arr[:, 1]}
+            )
         else:
             assert format_type == "dropEst"
             feature_metadata = pd.read_csv(
@@ -285,11 +294,21 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
         path = os.path.dirname(path)
 
     data = MemData()
-    if os.path.isfile(os.path.join(path, "matrix.mtx.gz")) or os.path.isfile(
-        os.path.join(path, "matrix.mtx")) or (orig_file is not None and os.path.isfile(orig_file)):
+    if (
+        os.path.isfile(os.path.join(path, "matrix.mtx.gz"))
+        or os.path.isfile(os.path.join(path, "matrix.mtx"))
+        or (orig_file is not None and os.path.isfile(orig_file))
+    ):
         if genome is None:
             genome = os.path.basename(path)
-        data.addData(genome, load_one_mtx_file(path, ngene=ngene, fname= None if orig_file is None else os.path.splitext(orig_file)[0]))
+        data.addData(
+            genome,
+            load_one_mtx_file(
+                path,
+                ngene=ngene,
+                fname=None if orig_file is None else os.path.splitext(orig_file)[0],
+            ),
+        )
     else:
         for dir_entry in os.scandir(path):
             if dir_entry.is_dir():
@@ -680,6 +699,7 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
                 data.uns.pop(keyword)
 
         import pathlib
+
         output_name = pathlib.Path(output_name)
         if data.isbacked and output_name == data.filename:
             import h5py

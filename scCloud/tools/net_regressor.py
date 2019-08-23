@@ -6,7 +6,8 @@ from sklearn.utils import check_array
 from sklearn.neural_network import MLPRegressor
 import logging
 
-logger = logging.getLogger('sccloud')
+logger = logging.getLogger("sccloud")
+
 
 class MaxStdScaler(BaseEstimator, TransformerMixin):
     def __init__(self, copy=True, factor=1.0):

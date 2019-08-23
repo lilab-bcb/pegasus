@@ -2,7 +2,8 @@ import time
 import numpy as np
 from scipy.sparse import issparse
 import logging
-logger = logging.getLogger('sccloud')
+
+logger = logging.getLogger("sccloud")
 
 from scCloud.tools import estimate_feature_statistics, select_features
 
@@ -37,7 +38,9 @@ def estimate_adjustment_matrices(data: "AnnData") -> bool:
         estimate_feature_statistics(data, True)
 
     if data.uns["Channels"].size == 1:
-        logger.warning("Warning: data only contains 1 channel. Batch correction disabled!")
+        logger.warning(
+            "Warning: data only contains 1 channel. Batch correction disabled!"
+        )
         return False
 
     nchannel = data.uns["Channels"].size
@@ -76,7 +79,7 @@ def correct_batch_effects(data: "AnnData", keyword: str, features: str = None) -
         plus = data.varm["plus"][selected, :]
         muls = data.varm["muls"][selected, :]
     else:
-        selected = np.ones(data.shape[1], dtype = bool)
+        selected = np.ones(data.shape[1], dtype=bool)
         plus = data.varm["plus"]
         muls = data.varm["muls"]
 
@@ -84,7 +87,9 @@ def correct_batch_effects(data: "AnnData", keyword: str, features: str = None) -
         idx = np.isin(data.obs["Channel"], channel)
         if idx.sum() == 0:
             continue
-        X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(plus[:, i], newshape=(1, m))
+        X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(
+            plus[:, i], newshape=(1, m)
+        )
     X[X < 0.0] = 0.0
 
 
@@ -111,4 +116,6 @@ def correct_batch(data: "AnnData", features: str = None) -> None:
         correct_batch_effects(data, keyword, features)
         end = time.time()
         tot_seconds += end - start
-        logger.info("Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds))
+        logger.info(
+            "Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds)
+        )

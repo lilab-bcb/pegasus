@@ -42,11 +42,11 @@ Examples:
                 self.args["<input_h5ad_file>"],
                 self.args["<output_file>"],
                 self.args["--marker-file"],
-                de_test = self.args["--de-test"],
-                de_alpha = float(self.args["--de-alpha"]),
-                de_key = self.args["--de-key"],
-                threshold = float(self.args["--minimum-report-score"]),
-                ignore_nonde = self.args["--do-not-use-non-de-genes"],
+                de_test=self.args["--de-test"],
+                de_alpha=float(self.args["--de-alpha"]),
+                de_key=self.args["--de-key"],
+                threshold=float(self.args["--minimum-report-score"]),
+                ignore_nonde=self.args["--do-not-use-non-de-genes"],
             )
         else:
             annotate_anndata_object(
