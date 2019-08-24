@@ -1,18 +1,18 @@
-Use ``scCloud`` as a command line tool
+Use ``sccloud`` as a command line tool
 ---------------------------------------
 
-``scCloud`` can be used as a command line tool. Type::
+``sccloud`` can be used as a command line tool. Type::
 
-	scCloud -h
+	sccloud -h
 
 to see the help information::
 
 	Usage:
-		scCloud <command> [<args>...]
-		scCloud -h | --help
-		scCloud -v | --version
+		sccloud <command> [<args>...]
+		sccloud -h | --help
+		sccloud -v | --version
 
-``scCloud`` has 14 sub-commands in 8 groups.
+``sccloud`` has 14 sub-commands in 8 groups.
 
 * Preprocessing:
 
@@ -88,38 +88,38 @@ Suppose you have ``example.csv`` ready with the following contents::
 
 You want to analyze all four samples but correct batch effects for bone marrow and pbmc samples separately. You can run the following commands::
 
-	scCloud aggregate_matrix --attributes Source,Platform,Donor example.csv example
-	scCloud cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
-	scCloud de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
-	scCloud annotate_cluster example.h5ad example.anno.txt
-	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
-	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
-	scCloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
+	sccloud aggregate_matrix --attributes Source,Platform,Donor example.csv example
+	sccloud cluster -p 20 --correct-batch-effect --batch-group-by Source -run-louvain --run-tsne example_10x.h5 example
+	sccloud de_analysis --labels louvain_labels -p 20 --fisher example.h5ad example_de.xlsx
+	sccloud annotate_cluster example.h5ad example.anno.txt
+	sccloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
+	sccloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
+	sccloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
 
 The above analysis will give you tSNE, louvain cluster labels and diffusion maps in ``example.h5ad``. You can investigate donor-specific effects by looking at ``example.composition.pdf``. ``example.scatter.pdf`` plotted tSNE colored by louvain_labels and Donor info side-by-side. You can explore the diffusion map in 3D by looking at ``example.diffmap.html``. This html maps all diffusion components into 3D using PCA.
 
 If you want to perform subcluster analysis by combining cluster 1 and 3, run the following command::
 
-	scCloud subcluster -p 20 --correct-batch-effect example.h5ad 1,3 example_sub
+	sccloud subcluster -p 20 --correct-batch-effect example.h5ad 1,3 example_sub
 
 
 ---------------------------------
 
 
-``scCloud aggregate_matrix``
+``sccloud aggregate_matrix``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The first step for single cell analysis is to generate one count matrix from cellranger's channel-specific count matrices. ``scCloud aggregate_matrix`` allows aggregating arbitrary matrices with the help of a *CSV* file.
+The first step for single cell analysis is to generate one count matrix from cellranger's channel-specific count matrices. ``sccloud aggregate_matrix`` allows aggregating arbitrary matrices with the help of a *CSV* file.
 
 Type::
 
-	scCloud aggregate_matrix -h
+	sccloud aggregate_matrix -h
 
 to see the usage information::
 
 	Usage:
-		scCloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene>]
-		scCloud aggregate_matrix -h
+		sccloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene>]
+		sccloud aggregate_matrix -h
 
 * Arguments:
 
@@ -147,7 +147,7 @@ to see the usage information::
 		If files are stored in google cloud. Assuming google cloud sdk is installed.
 
 	-\\-select-only-singlets
-		If we have demultiplexed data, turning on this option will make scCloud only include barcodes that are predicted as singlets.
+		If we have demultiplexed data, turning on this option will make sccloud only include barcodes that are predicted as singlets.
 
 	-\\-minimum-number-of-genes <ngene>
 		Only keep barcodes with at least <ngene> expressed genes.
@@ -158,30 +158,30 @@ to see the usage information::
 * Outputs:
 
 	output_name.h5sc
-		A scCloud-formatted HDF5 file containing the count matrices and associated attributes.
+		A sccloud-formatted HDF5 file containing the count matrices and associated attributes.
 
 * Examples::
 
-	scCloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
+	sccloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
 
 
 ---------------------------------
 
 
-``scCloud demuxEM``
+``sccloud demuxEM``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have data generated by cell-hashing or nuclei-hashing, you can use ``scCloud demuxEM`` to demultiplex your data. 
+If you have data generated by cell-hashing or nuclei-hashing, you can use ``sccloud demuxEM`` to demultiplex your data. 
 
 Type::
 
-	scCloud demuxEM -h
+	sccloud demuxEM -h
 
 to see the usage information::
 
 	Usage:
-		scCloud demuxEM [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
-		scCloud demuxEM -h
+		sccloud demuxEM [options] <input_adt_csv_file> <input_raw_gene_bc_matrices_h5.h5> <output_name>
+		sccloud demuxEM -h
 
 * Arguments:
 
@@ -229,7 +229,7 @@ to see the usage information::
 * Outputs:
 
 	output_name_demux.h5sc
-		RNA expression matrix with demultiplexed sample identities in scCloud HDF5 format.
+		RNA expression matrix with demultiplexed sample identities in sccloud HDF5 format.
 
 	output_name_ADTs.h5ad
 		Antibody tag matrix in h5ad format.
@@ -254,31 +254,31 @@ to see the usage information::
 
 * Examples::
 
-	scCloud demuxEM -p 8 --hash-type cell-hashing --generate-diagnostic-plots example_adt.csv example_raw_gene_bc_matrices_h5.h5 example_output
+	sccloud demuxEM -p 8 --hash-type cell-hashing --generate-diagnostic-plots example_adt.csv example_raw_gene_bc_matrices_h5.h5 example_output
 
 
 ---------------------------------
 
 
-``scCloud cluster``
+``sccloud cluster``
 ^^^^^^^^^^^^^^^^^^^
 
-Once we collected the count matrix in 10x (``example_10x.h5``) or scCloud (``example.h5sc``) format, we can perform single cell analysis using ``scCloud cluster``.
+Once we collected the count matrix in 10x (``example_10x.h5``) or sccloud (``example.h5sc``) format, we can perform single cell analysis using ``sccloud cluster``.
 
 Type::
 
-	scCloud cluster -h
+	sccloud cluster -h
 
 to see the usage information::
 
 	Usage:
-		scCloud cluster [options] <input_file> <output_name>
-		scCloud cluster -h
+		sccloud cluster [options] <input_file> <output_name>
+		sccloud cluster -h
 
 * Arguments:
 
 	input_file
-		Input file in 10x or scCloud format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
+		Input file in 10x or sccloud format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
 
 	output_name      
 		Output file name. All outputs will use it as the prefix.
@@ -292,7 +292,7 @@ to see the usage information::
 		Input file is processed and thus no PCA & diffmap will be run.
 
 	-\\-genome <genome>
-		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+		A string contains comma-separated genome names. sccloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
 
 	-\\-min-genes-on-raw <number>
 		If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
@@ -301,7 +301,7 @@ to see the usage information::
 		Only select DemuxEM-predicted singlets for analysis.
 
 	-\\-cite-seq
-		Data are CITE-Seq data. scCloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
+		Data are CITE-Seq data. sccloud will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
 
 	-\\-cite-seq-capping <percentile>
 		For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
@@ -346,7 +346,7 @@ to see the usage information::
 		Total counts per cell after normalization. [default: 1e5]
 
 	-\\-select-hvf-flavor <flavor>
-		Highly variable feature selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
+		Highly variable feature selection method. <flavor> can be 'sccloud' or 'Seurat'. [default: sccloud]
 
 	-\\-select-hvf-ngenes <nfeatures>
 		Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
@@ -552,7 +552,7 @@ to see the usage information::
 * Outputs:
 
 	output_name.h5ad
-		Output file in h5ad format. To load this file in python, use ``import scCloud; data = scCloud.tools.read_input('output_name.h5ad', mode = 'a')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). If '--make-output-seurat-compatible' is on, this file can be loaded into R and converted into a Seurat object.
+		Output file in h5ad format. To load this file in python, use ``import sccloud; data = sccloud.tools.read_input('output_name.h5ad', mode = 'a')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). If '--make-output-seurat-compatible' is on, this file can be loaded into R and converted into a Seurat object.
 
 	output_name.seruat.h5ad
 		Optional output. Only exists if '--output-seruat-compatible' is set. 'output_name.h5ad' in seurat-compatible manner. This file can be loaded into R and converted into a Seurat object.
@@ -574,17 +574,17 @@ to see the usage information::
 
 * Examples::
 
-	scCloud cluster -p 20 --correct-batch-effect --louvain --tsne example_10x.h5 example
-	scCloud cluster -p 20 --leiden --umap --net-fle example.h5sc example
+	sccloud cluster -p 20 --correct-batch-effect --louvain --tsne example_10x.h5 example
+	sccloud cluster -p 20 --leiden --umap --net-fle example.h5sc example
 
 
 ---------------------------------
 
 
-``scCloud de_analysis``
+``sccloud de_analysis``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we have the clusters, we can detect markers using ``scCloud de_analysis``.
+Once we have the clusters, we can detect markers using ``sccloud de_analysis``.
 
 Type::
 
@@ -593,8 +593,8 @@ Type::
 to see the usage information::
 
 	Usage:
-		scCloud de_analysis [options] <input_h5ad_file> <output_spreadsheet>
-		scCloud de_analysis -h
+		sccloud de_analysis [options] <input_h5ad_file> <output_spreadsheet>
+		sccloud de_analysis -h
 
 * Arguments:
 
@@ -652,16 +652,16 @@ to see the usage information::
 
 * Examples::
 
-	scCloud de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu example.h5ad example_de.xlsx
+	sccloud de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu example.h5ad example_de.xlsx
 
 
 ---------------------------------
 
 
-``scCloud find_markers``
+``sccloud find_markers``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we have the DE results, we can optionally find cluster-specific markers with gradient boosting using ``scCloud find_markers``.
+Once we have the DE results, we can optionally find cluster-specific markers with gradient boosting using ``sccloud find_markers``.
 
 Type::
 
@@ -713,27 +713,27 @@ to see the usage information::
 
 * Examples::
 
-	scCloud find_markers --labels louvain_labels --remove-ribo --min-gain 10.0 -p 10 example.h5ad example.markers.xlsx
+	sccloud find_markers --labels louvain_labels --remove-ribo --min-gain 10.0 -p 10 example.h5ad example.markers.xlsx
 
 
 ---------------------------------
 
 
-``scCloud annotate_cluster``
+``sccloud annotate_cluster``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once we have the DE results, we could optionally identify putative cell types for each cluster using ``scCloud annotate_cluster``. Currently, this subcommand works for human/mouse immune/brain cells. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
+Once we have the DE results, we could optionally identify putative cell types for each cluster using ``sccloud annotate_cluster``. Currently, this subcommand works for human/mouse immune/brain cells. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
 
 Type::
 
-	scCloud annotate_cluster -h
+	sccloud annotate_cluster -h
 
 to see the usage information::
 
 	Usage:
-		scCloud annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
-		scCloud annotate_cluster --annotation <annotation_string> <input_h5ad_file>
-		scCloud annotate_cluster -h
+		sccloud annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+		sccloud annotate_cluster --annotation <annotation_string> <input_h5ad_file>
+		sccloud annotate_cluster -h
 
 * Arguments:
 
@@ -746,7 +746,7 @@ to see the usage information::
 * Options:
 
 	-\\-marker-file <file>
-		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``, which triggers scCloud to markers included in the package. [default: human_immune]
+		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``, which triggers sccloud to markers included in the package. [default: human_immune]
 
 	-\\-de-test <test>
 		DE test to use to infer cell types. [default: t]
@@ -776,28 +776,28 @@ to see the usage information::
 
 * Examples::
 
-	scCloud annotate_cluster example.h5ad example.anno.txt
-	scCloud annotate_cluster --annotation "anno:T cells;B cells;NK cells;Monocytes" example.h5ad
+	sccloud annotate_cluster example.h5ad example.anno.txt
+	sccloud annotate_cluster --annotation "anno:louvain_labels:T cells;B cells;NK cells;Monocytes" example.h5ad
 
 
 ---------------------------------
 
 
 
-``scCloud plot``
+``sccloud plot``
 ^^^^^^^^^^^^^^^^^
 
-We can make a variety of figures using ``scCloud plot``.
+We can make a variety of figures using ``sccloud plot``.
 
 Type::
 
-	scCloud plot -h
+	sccloud plot -h
 
 to see the usage information::
 
 	Usage:
-  		scCloud plot [options] [--restriction <restriction>...] <plot_type> <input_h5ad_file> <output_file>
-		scCloud plot -h
+  		sccloud plot [options] [--restriction <restriction>...] <plot_type> <input_h5ad_file> <output_file>
+		sccloud plot -h
 
 * Arguments:
 
@@ -855,10 +855,10 @@ to see the usage information::
 		Plot y axis in log10 scale for composition plot.
 
 	-\\-nrows <nrows>
-		Number of rows in the figure. If not set, scCloud will figure it out automatically.
+		Number of rows in the figure. If not set, sccloud will figure it out automatically.
 
 	-\\-ncols <ncols>
-		Number of columns in the figure. If not set, scCloud will figure it out automatically.
+		Number of columns in the figure. If not set, sccloud will figure it out automatically.
 
 	-\\-subplot-size <sizes>
 		Sub-plot size in inches, w x h, separated by comma. Note that margins are not counted in the sizes. For composition, default is (6, 4). For scatter plots, default is (4, 4).
@@ -910,32 +910,32 @@ to see the usage information::
 
 Examples::
 
-	scCloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
-	scCloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
-	scCloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.pdf
-	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.pdf
-	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.pdf
-	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.pdf
+	sccloud plot composition --cluster-labels louvain_labels --attribute Donor --style normalized --not-stacked example.h5ad example.composition.pdf
+	sccloud plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad example.scatter.pdf
+	sccloud plot scatter_groups --cluster-labels louvain_labels --group Donor example.h5ad example.scatter_groups.pdf
+	sccloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.pdf
+	sccloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.pdf
+	sccloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.pdf
 	sccloud plot qc_violin --qc-type gene --cluster-labels louvain_labels --attribute Channel --subplot-size 7,5 --qc-xtick-font 5 --qc-line-width 0.5 example.h5ad example.qc_violin.pdf
 
 
 ---------------------------------
 
 
-``scCloud iplot``
+``sccloud iplot``
 ^^^^^^^^^^^^^^^^^^
 
-We can also make interactive plots in html format using ``scCloud iplot``. These interactive plots are very helpful if you want to explore the diffusion maps.
+We can also make interactive plots in html format using ``sccloud iplot``. These interactive plots are very helpful if you want to explore the diffusion maps.
 
 Type::
 
-	scCloud iplot -h
+	sccloud iplot -h
 
 to see the usage information::
 
 	Usage:
-		scCloud iplot --attribute <attr> [options] <basis> <input_h5ad_file> <output_html_file>
-		scCloud iplot -h
+		sccloud iplot --attribute <attr> [options] <basis> <input_h5ad_file> <output_html_file>
+		sccloud iplot -h
 
 * Arguments:
 
@@ -967,8 +967,8 @@ to see the usage information::
 
 * Examples::
 
-	scCloud iplot --attribute louvain_labels tsne example.h5ad example.tsne.html
-	scCloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
+	sccloud iplot --attribute louvain_labels tsne example.h5ad example.tsne.html
+	sccloud iplot --attribute louvain_labels diffmap_pca example.h5ad example.diffmap.html
 
 
 ---------------------------------
@@ -1021,17 +1021,17 @@ to see the usage information::
 ``sccloud subcluster``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-If there is a subset of cells that we want to further cluster, we can run ``scCloud subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
+If there is a subset of cells that we want to further cluster, we can run ``sccloud subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
 
 Type::
 
-	scCloud subcluster -h
+	sccloud subcluster -h
 
 to see the usage information::
 
 	Usage:
-		scCloud subcluster [options] --subset-selection <subset-selection>... <input_file> <output_name>
-		scCloud subcluster -h
+		sccloud subcluster [options] --subset-selection <subset-selection>... <input_file> <output_name>
+		sccloud subcluster -h
 
 * Arguments:
 
@@ -1381,7 +1381,7 @@ to see the usage information::
 * Arguments:
 
 	input_raw_gene_bc_matrices_h5.h5sc
-		Input raw RNA expression matrix in scCloud hdf5 format.
+		Input raw RNA expression matrix in sccloud hdf5 format.
 
 	input_adt_csv_file
 		Input ADT (antibody tag) count matrix in CSV format.
@@ -1400,12 +1400,12 @@ to see the usage information::
 * Outputs:
 
 	output_name.h5sc
-		Output file in scCloud hdf5 format. This file contains two groups --- one for RNAs, and the other for ADTs.
+		Output file in sccloud hdf5 format. This file contains two groups --- one for RNAs, and the other for ADTs.
 
 * Examples::
 
-	scCloud merge_rna_adt example_raw_h5.h5sc example_adt.csv example_merged_raw
-	scCloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5sc example_adt.csv example_merged_raw
+	sccloud merge_rna_adt example_raw_h5.h5sc example_adt.csv example_merged_raw
+	sccloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5sc example_adt.csv example_merged_raw
 
 
 ---------------------------------
