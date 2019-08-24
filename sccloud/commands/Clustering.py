@@ -43,7 +43,7 @@ Options:
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
 
   --select-hvf-flavor <flavor>                     Highly variable feature selection method. <flavor> can be 'sccloud' or 'Seurat'. [default: sccloud]
-  --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
+  --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <nfeatures> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
   --no-select-hvf                                  Do not select highly variable features.
   --plot-hvf                                       Plot highly variable feature selection.
 
@@ -137,7 +137,7 @@ Outputs:
   output_name.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel.
   output_name.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
   output_name.hvf.pdf              Optional output. Only exists if '--plot-hvf' is set. This file contains a scatter plot describing the highly variable gene selection procedure.
-  output_name.loom                 Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
+  output_name.loom                 Optional output. Only exists if '--output-loom' is set. 'output_name.h5ad' in loom format for visualization.
 
 Examples:
   sccloud cluster -p 20 --correct-batch-effect --louvain --tsne manton_bm_10x.h5 manton_bm

@@ -118,13 +118,13 @@ Type::
 to see the usage information::
 
 	Usage:
-		scCloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene> --dropseq-genome <genome>]
+		scCloud aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene>]
 		scCloud aggregate_matrix -h
 
 * Arguments:
 
 	csv_file
-		Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x format (e.g. /sample/filtered_gene_bc_matrices_h5.h5) or dropseq format (e.g. /sample/sample.umi.dge.txt.gz). See below for an example csv::
+		Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x v2/v3, DGE, mtx, csv or loom format. If matrix is in DGE, mtx or csv format, an addition Reference column is required. See below for an example csv::
 
 			Sample,Source,Platform,Donor,Reference,Location
  			sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
@@ -152,20 +152,17 @@ to see the usage information::
 	-\\-minimum-number-of-genes <ngene>
 		Only keep barcodes with at least <ngene> expressed genes.
 
-	-\\-dropseq-genome <genome>
-		If inputs are dropseq data, this option needs to turn on and provides the reference genome name.
-
 	\-h, -\\-help
 		Print out help information.
 
 * Outputs:
 
-	output_name_10x.h5
-		A 10x-formatted HDF5 file containing the count matrices and associated attributes.
+	output_name.h5sc
+		A scCloud-formatted HDF5 file containing the count matrices and associated attributes.
 
 * Examples::
 
-	scCloud aggregate_matrix --restriction Source:pbmc --restriction Donor:1 --attributes Source,Platform,Donor example.csv example
+	scCloud aggregate_matrix --restriction Source:BM,CB --restriction Individual:1-8 --attributes Source,Platform Manton_count_matrix.csv manton_bm_cb
 
 
 ---------------------------------
@@ -231,8 +228,8 @@ to see the usage information::
 
 * Outputs:
 
-	output_name_demux_10x.h5
-		RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
+	output_name_demux.h5sc
+		RNA expression matrix with demultiplexed sample identities in scCloud HDF5 format.
 
 	output_name_ADTs.h5ad
 		Antibody tag matrix in h5ad format.
@@ -266,7 +263,7 @@ to see the usage information::
 ``scCloud cluster``
 ^^^^^^^^^^^^^^^^^^^
 
-Once we collected the count matrix ``example_10x.h5``, we can perform single cell analysis using ``scCloud cluster``.
+Once we collected the count matrix in 10x (``example_10x.h5``) or scCloud (``example.h5sc``) format, we can perform single cell analysis using ``scCloud cluster``.
 
 Type::
 
@@ -281,7 +278,7 @@ to see the usage information::
 * Arguments:
 
 	input_file
-		Input file in 10x format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
+		Input file in 10x or scCloud format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
 
 	output_name      
 		Output file name. All outputs will use it as the prefix.
@@ -296,7 +293,10 @@ to see the usage information::
 
 	-\\-genome <genome>
 		A string contains comma-separated genome names. scCloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
-  
+
+	-\\-min-genes-on-raw <number>
+		If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
+
 	-\\-select-singlets
 		Only select DemuxEM-predicted singlets for analysis.
 
@@ -321,12 +321,6 @@ to see the usage information::
 	-\\-output-loom
 		Output loom-formatted file.
 
-	-\\-correct-batch-effect
-		Correct for batch effects.
-
-	-\\-batch-group-by <expression>
-		Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
-
   	-\\-min-genes <number>
 		Only keep cells with at least <number> of genes. [default: 500]
 
@@ -348,109 +342,139 @@ to see the usage information::
 	-\\-gene-percent-cells <ratio>
 		Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes. [default: 0.0005]
 
-	-\\-min-genes-on-raw <number>
-		If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
-
 	-\\-counts-per-cell-after <number>
 		Total counts per cell after normalization. [default: 1e5]
+
+	-\\-select-hvf-flavor <flavor>
+		Highly variable feature selection method. <flavor> can be 'scCloud' or 'Seurat'. [default: scCloud]
+
+	-\\-select-hvf-ngenes <nfeatures>
+		Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
+
+	-\\-no-select-hvf
+		Do not select highly variable features.
+
+	-\\-plot-hvf
+		Plot highly variable feature selection.
+
+	-\\-correct-batch-effect
+		Correct for batch effects.
+
+	-\\-batch-group-by <expression>
+		Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
 
 	-\\-random-state <seed>
 		Random number generator seed. [default: 0]
 
 	-\\-temp-folder <temp_folder>
-		joblib temporary folder for memmapping numpy arrays.
-
-	-\\-run-uncentered-pca
-		Run uncentered PCA.
-
-	-\\-no-variable-gene-selection
-		Do not select variable genes.
-
-	-\\-no-submat-to-dense
-		Do not convert variable-gene-selected submatrix to a dense matrix.
+		Joblib temporary folder for memmapping numpy arrays.
   
 	-\\-nPC <number>
-		Number of PCs. [default: 50]
+		Number of principal components. [default: 50]
 
-	-\\-nDC <number>
+	-\\-knn-K <number>
+		Number of nearest neighbors for building kNN graph. [default: 100]
+
+	-\\-knn-full-speed
+		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+
+	-\\-kBET
+		Calculate kBET.
+
+	-\\-kBET-batch <batch>
+		kBET batch keyword.
+
+	-\\-kBET-alpha <alpha>
+		kBET rejection alpha. [default: 0.05]
+
+	-\\-kBET-K <K>
+		kBET K. [default: 25]
+
+	-\\-diffmap
+		Calculate diffusion maps.
+
+	-\\-diffmap-ndc <number>
 		Number of diffusion components. [default: 50]
 
 	-\\-diffmap-alpha <alpha>
 		Power parameter for diffusion-based pseudotime. [default: 0.5]
 
-	-\\-diffmap-K <K>
-		Number of neighbors used for constructing affinity matrix. [default: 100]
+	-\\-diffmap-solver <solver>
+		Solver for eigen decomposition, either 'randomized' or 'eigsh'. [default: randomized]
 
-	-\\-diffmap-full-speed
-		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+	-\\-diffmap-to-3d
+		If map diffusion map into 3D space using PCA.
 
 	-\\-calculate-pseudotime <roots>
 		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
-  	-\\-run-louvain
+  	-\\-louvain
   		Run louvain clustering algorithm.
 
 	-\\-louvain-resolution <resolution>
 		Resolution parameter for the louvain clustering algorithm. [default: 1.3]
 
-	-\\-louvain-affinity <affinity>
-		Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
-
 	-\\-louvain-class-label <label>
 		Louvain cluster label name in AnnData. [default: louvain_labels]
 
-	-\\-run-approximated-louvain
-		Run approximated louvain clustering algorithm.
+	-\\-leiden
+		Run leiden clustering algorithm.
 
-	-\\-approx-louvain-basis <basis>
-		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
+	-\\-leiden-resolution <resolution>
+		Resolution parameter for the leiden clustering algorithm. [default: 1.3]
 
-	-\\-approx-louvain-nclusters <number>
+	-\\-leiden-niter <niter>
+		Number of iterations of running the Leiden algorithm. If <niter> is negative, run Leiden iteratively until no improvement. [default: -1]
+
+	-\\-leiden-class-label <label>
+		Leiden cluster label name in AnnData. [default: leiden_labels]
+
+	-\\-spectral-louvain
+		Run spectral-louvain clustering algorithm.
+
+	-\\-spectral-louvain-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca', or 'diffmap'. [default: diffmap]
+
+	-\\-spectral-louvain-nclusters <number>
 		Number of clusters for Kmeans initialization. [default: 30]
 
-	-\\-approx-louvain-ninit <number>
+	-\\-spectral-louvain-ninit <number>
 		Number of Kmeans tries. [default: 20]
 
-	-\\-approx-louvain-resolution <resolution>.
+	-\\-spectral-louvain-resolution <resolution>.
 		Resolution parameter for louvain. [default: 1.3]
 
-	-\\-approx-louvain-affinity <affinity>
-		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+	-\\-spectral-louvain-class-label <label>
+		Spectral-louvain label name in AnnData. [default: spectral_louvain_labels]
 
-	-\\-approx-louvain-class-label <label>
-		Approximated louvain label name in AnnData. [default: approx_louvain_labels]
+	-\\-spectral-leiden
+		Run spectral-leiden clustering algorithm.
 
-	-\\-run-approximated-leiden
-		Run approximated leiden clustering algorithm.
+	-\\-spectral-leiden-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca', or 'diffmap'. [default: diffmap]
 
-	-\\-approx-leiden-basis <basis>
-		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
-
-	-\\-approx-leiden-nclusters <number>
+	-\\-spectral-leiden-nclusters <number>
 		Number of clusters for Kmeans initialization. [default: 30]
 
-	-\\-approx-leiden-ninit <number>
+	-\\-spectral-leiden-ninit <number>
 		Number of Kmeans tries. [default: 20]
 
-	-\\-approx-leiden-resolution <resolution>
+	-\\-spectral-leiden-resolution <resolution>
 		Resolution parameter for leiden. [default: 1.3]
 
-	-\\-approx-leiden-affinity <affinity>
-		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+	-\\-spectral-leiden-class-label <label>
+		Spectral-leiden label name in AnnData. [default: spectral_leiden_labels]
 
-	-\\-approx-leiden-class-label <label>
-		Approximated leiden label name in AnnData. [default: approx_leiden_labels]
-
-	-\\-run-tsne
+	-\\-tsne
 		Run multi-core t-SNE for visualization.
 
-	-\\-tsne-perplexity <perplexity>
-		t-SNE's perplexity parameter. [default: 30]
-
-  	-\\-run-fitsne
+	-\\-fitsne
   		Run FIt-SNE for visualization.
 
-  	-\\-run-umap
+	-\\-tsne-perplexity <perplexity>
+		t-SNE's perplexity parameter, used by both tSNE, FItSNE and net-tSNE. [default: 30]
+
+  	-\\-umap
   		Run umap for visualization.
 
 	-\\-umap-K <K>
@@ -462,7 +486,7 @@ to see the usage information::
 	-\\-umap-spread <spread>
 		Umap parameter. [default: 1.0]
 
-	-\\-run-fle
+	-\\-fle
 		Run force-directed layout embedding.
 
 	-\\-fle-K <K>
@@ -474,8 +498,8 @@ to see the usage information::
 	-\\-fle-target-steps <steps>
 		Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
 
-	-\\-fle-3D
-		Calculate 3D force-directed layout.
+	-\\-fle-memory <memory>
+		Memory size in GB for the Java FA2 component. [default: 8]
 
 	-\\-net-down-sample-fraction <frac>
 		Down sampling fraction for net-related visualization. [default: 0.1]
@@ -489,10 +513,7 @@ to see the usage information::
 	-\\-net-regressor-L2-penalty <value>
 		L2 penalty parameter for the deep net regressor. [default: 0.1]
 
-	-\\-net-ds-full-speed
-		For net-UMAP and net-FLE, use full speed for the down-sampled data.
-
-	-\\-run-net-tsne
+	-\\-net-tsne
 		Run net tSNE for visualization.
 
 	-\\-net-tsne-polish-learning-frac <frac>
@@ -503,18 +524,6 @@ to see the usage information::
 
 	-\\-net-tsne-out-basis <basis>
 		Output basis for net-tSNE. [default: net_tsne]
-
-	-\\-run-net-fitsne
-		Run net FIt-SNE for visualization.
-
-	-\\-net-fitsne-polish-learning-frac <frac>
-		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.5]
-
-	-\\-net-fitsne-polish-niter <niter>
-		Number of iterations for polishing FItSNE run. [default: 150]
-
-	-\\-net-fitsne-out-basis <basis>
-		Output basis for net-FItSNE. [default: net_fitsne]
 
 	-\\-run-net-umap
 		Run net umap for visualization.
@@ -528,11 +537,8 @@ to see the usage information::
 	-\\-net-umap-out-basis <basis>
 		Output basis for net-UMAP. [default: net_umap]
 
-	-\\-run-net-fle
+	-\\-net-fle
 		Run net FLE.
-
-	-\\-net-fle-ds-full-speed
-		If run full-speed kNN on down-sampled data points.
 
 	-\\-net-fle-polish-target-steps <steps>
 		After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
@@ -548,8 +554,11 @@ to see the usage information::
 	output_name.h5ad
 		Output file in h5ad format. To load this file in python, use ``import scCloud; data = scCloud.tools.read_input('output_name.h5ad', mode = 'a')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). If '--make-output-seurat-compatible' is on, this file can be loaded into R and converted into a Seurat object.
 
-	output_name.seurat.h5ad
-		Optional output. Only exists if '--output-seurat-compatible' is set. 'output_name.h5ad' in seurat-compatible manner. This file can be loaded into R and converted into a Seurat object.
+	output_name.seruat.h5ad
+		Optional output. Only exists if '--output-seruat-compatible' is set. 'output_name.h5ad' in seurat-compatible manner. This file can be loaded into R and converted into a Seurat object.
+
+	output_name.loom
+		Optional output. Only exists if '--output-loom' is set. 'output_name.h5ad' in loom format for visualization.
 
 	output_name.filt.xlsx
 		Optional output. Only exists if '--output-filtration-results' is set. This file has two sheets --- Cell filtration stats and Gene filtration stats. The first sheet records cell filtering results and it has 10 columns: Channel, channel name; kept, number of cells kept; median_n_genes, median number of expressed genes in kept cells; median_n_umis, median number of UMIs in kept cells; median_percent_mito, median mitochondrial rate as UMIs between mitochondrial genes and all genes in kept cells; filt, number of cells filtered out; total, total number of cells before filtration, if the input contain all barcodes, this number is the cells left after '--min-genes-on-raw' filtration; median_n_genes_before, median expressed genes per cell before filtration; median_n_umis_before, median UMIs per cell before filtration; median_percent_mito_before, median mitochondrial rate per cell before filtration. The channels are sorted in ascending order with respect to the number of kept cells per channel. The second sheet records genes that failed to pass the filtering. This sheet has 3 columns: gene, gene name; n_cells, number of cells this gene is expressed; percent_cells, the fraction of cells this gene is expressed. Genes are ranked in ascending order according to number of cells the gene is expressed. Note that only genes not expressed in any cell are removed from the data. Other filtered genes are marked as non-robust and not used for TPM-like normalization.
@@ -563,12 +572,10 @@ to see the usage information::
 	output_name.filt.mito.pdf
 		Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
 
-	output_name.loom
-		Optional output. Only exists if '--output-loom' is set. output_name.h5ad in loom format for visualization.
-
 * Examples::
 
-	scCloud cluster -p 20 --correct-batch-effect --run-louvain --run-tsne example_10x.h5 example
+	scCloud cluster -p 20 --correct-batch-effect --louvain --tsne example_10x.h5 example
+	scCloud cluster -p 20 --leiden --umap --net-fle example.h5sc example
 
 
 ---------------------------------
@@ -581,12 +588,12 @@ Once we have the clusters, we can detect markers using ``scCloud de_analysis``.
 
 Type::
 
-	scCloud de_analysis -h
+	sccloud de_analysis -h
 
 to see the usage information::
 
 	Usage:
-		scCloud de_analysis [--labels <attr> -p <threads> --alpha <alpha> --fisher --mwu --roc] <input_h5ad_file> <output_spreadsheet>
+		scCloud de_analysis [options] <input_h5ad_file> <output_spreadsheet>
 		scCloud de_analysis -h
 
 * Arguments:
@@ -599,11 +606,20 @@ to see the usage information::
 
 * Options:
 
+	\-p <threads>
+		Use <threads> threads. [default: 1]
+
 	-\\-labels <attr>
 		<attr> used as cluster labels. [default: louvain_labels]
 
-	-\\-alpha <alpha>
-		Control false discovery rate at <alpha>. [default: 0.05]
+	-\\-result-key <key>
+		Store DE results into AnnData varm with key = <key>. [default: de_res]
+
+	-\\-auc
+		Calculate area under ROC (AUROC) and area under Precision-Recall (AUPR).
+
+	-\\-t
+		Calculate Welch's t-test.
 
 	-\\-fisher
 		Calculate Fisher's exact test.
@@ -611,11 +627,17 @@ to see the usage information::
 	-\\-mwu
 		Calculate Mann-Whitney U test.
 
-	-\\-roc
-		Calculate area under cuver in ROC curve.
+	-\\-temp-folder <temp_folder>
+		Joblib temporary folder for memmapping numpy arrays.
 
-	\-p <threads>
-		Use <threads> threads. [default: 1]
+	-\\-alpha <alpha>
+		Control false discovery rate at <alpha>. [default: 0.05]
+
+	-\\-ndigits <ndigits>
+		Round non p-values and q-values to <ndigits> after decimal point in the excel. [default: 3]
+
+	-\\-quiet 
+		Do not show detailed intermediate outputs.
 
 	\-h, -\\-help
 		Print out help information.
@@ -623,14 +645,14 @@ to see the usage information::
 * Outputs:
 
 	input_h5ad_file
-		DE results would be written back to the 'var' fields.
+		DE results would be written back to the 'varm' field with name set by '--result-key <key>'.
 
 	output_spreadsheet
 		An excel spreadsheet containing DE results. Each cluster has two tabs in the spreadsheet. One is for up-regulated genes and the other is for down-regulated genes.
 
 * Examples::
 
-	scCloud de_analysis --labels louvain_labels -p 20 --fisher --mwu --roc example.h5ad example_de.xlsx
+	scCloud de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu example.h5ad example_de.xlsx
 
 
 ---------------------------------
@@ -643,13 +665,13 @@ Once we have the DE results, we can optionally find cluster-specific markers wit
 
 Type::
 
-	scCloud find_markers -h
+	sccloud find_markers -h
 
 to see the usage information::
 
 	Usage:
-		scCloud find_markers [options] <input_h5ad_file> <output_spreadsheet>
-		scCloud find_markers -h
+		sccloud find_markers [options] <input_h5ad_file> <output_spreadsheet>
+		sccloud find_markers -h
 
 * Arguments:
 
@@ -661,8 +683,14 @@ to see the usage information::
 
 * Options:
 
+	\-p <threads>
+		Use <threads> threads. [default: 1]
+
 	-\\-labels <attr>
 		<attr> used as cluster labels. [default: louvain_labels]
+
+	-\\-de_key <key>
+		Key for storing DE results in 'varm' field.
 
 	-\\-remove-ribo
 		Remove ribosomal genes with either RPL or RPS as prefixes.
@@ -673,8 +701,7 @@ to see the usage information::
 	-\\-random-state <seed>
 		Random state for initializing LightGBM and KMeans. [default: 0]
 
-	\-p <threads>
-		Use <threads> threads. [default: 1]
+	
 
 	\-h, -\\-help
 		Print out help information.
@@ -704,22 +731,31 @@ Type::
 to see the usage information::
 
 	Usage:
-		scCloud annotate_cluster [--json-file <file> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
+		scCloud annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
 		scCloud annotate_cluster --annotation <annotation_string> <input_h5ad_file>
 		scCloud annotate_cluster -h
 
 * Arguments:
 
 	input_h5ad_file
-		Single cell data with DE analysis done by ``scCloud de_analysis``.
+		Single cell data with DE analysis done by ``sccloud de_analysis``.
 
 	output_file
 		Output annotation file.
 
 * Options:
 
-	-\\-json-file <file>
+	-\\-marker-file <file>
 		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``, which triggers scCloud to markers included in the package. [default: human_immune]
+
+	-\\-de-test <test>
+		DE test to use to infer cell types. [default: t]
+
+	-\\-de-alpha <alpha>
+		False discovery rate to control family-wise error rate. [default: 0.05]
+
+	-\\-de-key <key>
+		Keyword where the DE results store in 'varm' field. [default: de_res]
 
 	-\\-minimum-report-score <score>
 		Minimum cell type score to report a potential cell type. [default: 0.5]
@@ -728,7 +764,7 @@ to see the usage information::
 		Do not count non DE genes as down-regulated.
 
 	-\\-annotation <annotation_string>
-		Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: 'anno_attr:anno_1;anno_2;...;anno_n'. 'anno_attr' is the annotation attribute in the h5ad object and anno_i is the annotation for cluster i.
+		Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: ``'anno_name:clust_name:anno_1;anno_2;...;anno_n'``, where ``anno_name`` is the annotation attribute in the h5ad object, ``clust_name`` is the attribute with cluster ids, and ``anno_i`` is the annotation for cluster i.
 
 	\-h, -\\-help
 		Print out help information.
@@ -766,10 +802,10 @@ to see the usage information::
 * Arguments:
 
 	plot_type
-		Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', and 'heatmap'.
+		Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', 'heatmap', and 'qc_violin'.
 
 	input_h5ad_file
-		Single cell data with clustering done by Scanpy in h5ad file format.
+		Single cell data in h5ad file format with clustering done by ``sccloud cluster``.
 
   	output_file
   		Output image file.
@@ -780,19 +816,19 @@ to see the usage information::
 		DPI value for the figure. [default: 500]
 
 	-\\-cluster-labels <attr>
-		Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', and 'heatmap'.
+		Use <attr> as cluster labels. This option is used in 'composition', 'scatter_groups', 'heatmap', and 'qc_violin'.
 
   	-\\-attribute <attr>
-  		Plot <attr> against cluster labels. This option is only used in 'composition'.
+  		Plot <attr> against cluster labels. This option is only used in 'composition' and 'qc_violin'.
 
 	-\\-basis <basis>
-		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', or 'diffmap_pca'. If CITE-Seq data is used, basis can also be 'citeseq_fitsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: fitsne]
+		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'rpca', 'fle', 'diffmap_pca', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'. If CITE-Seq data is used, basis can also be 'citeseq_fitsne'. This option is used in 'scatter', 'scatter_groups', 'scatter_genes', and 'scatter_gene_groups'. [default: fitsne]
 
 	-\\-attributes <attrs>
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
 
 	-\\-restriction <restriction>...
-		Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value'. This option is used in 'composition' and 'scatter'.
+		Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value', or 'attr:~value,value..' which means excluding values. This option is used in 'composition' and 'scatter'.
 	
 	-\\-apply-to-each-figure
 		Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict. 
@@ -857,6 +893,18 @@ to see the usage information::
 	-\\-heatmap-title <title>
 		Title for heatmap.
 
+	-\\-qc-type <type>
+		Plot qc_violin by annotation, <type> can be either 'gene', 'count' (UMI), or 'mito' (mitochondrial rate). [default: gene]
+
+	-\\-qc-xtick-font <font>
+		x tick font for qc_violin. [default: 5]
+
+	-\\-qc-xtick-rotation
+		If rorate x label.
+
+	-\\-qc-line-width <width>
+		Line width for qc_violin. [default: 0.5]
+
 	\-h, -\\-help
 		Print out help information.
 
@@ -868,6 +916,7 @@ Examples::
 	scCloud plot scatter_genes --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP example.h5ad example.genes.pdf
 	scCloud plot scatter_gene_groups --gene CD8A --group Donor example.h5ad example.gene_groups.pdf
 	scCloud plot heatmap --cluster-labels louvain_labels --genes CD8A,CD4,CD3G,MS4A1,NCAM1,CD14,ITGAX,IL3RA,CD38,CD34,PPBP --heatmap-title 'markers' example.h5ad example.heatmap.pdf
+	sccloud plot qc_violin --qc-type gene --cluster-labels louvain_labels --attribute Channel --subplot-size 7,5 --qc-xtick-font 5 --qc-line-width 0.5 example.h5ad example.qc_violin.pdf
 
 
 ---------------------------------
@@ -891,7 +940,7 @@ to see the usage information::
 * Arguments:
 
 	basis
-		Basis can be either 'tsne', 'fitsne', 'umap', 'diffmap', 'pca', 'rpca' or 'diffmap_pca'.
+		Basis can be either 'tsne', 'fitsne', 'umap', 'diffmap', 'pca', or 'diffmap_pca'.
 	
 	input_h5ad_file
 		Single cell data with clustering done in h5ad file format.
@@ -925,20 +974,20 @@ to see the usage information::
 ---------------------------------
 
 
-``scCloud view``
+``sccloud view``
 ^^^^^^^^^^^^^^^^^
 
 We may want to further perform sub-cluster analysis on a subset of cells. This sub-command helps us to define the subset.
 
 Type::
 
-	scCloud view -h
+	sccloud view -h
 
 to see the usage information::
 
 	Usage:
-		scCloud view [--show-attributes --show-gene-attributes --show-values-for-attributes <attributes>] <input_h5ad_file>
-		scCloud view -h
+		sccloud view [--show-attributes --show-gene-attributes --show-values-for-attributes <attributes>] <input_h5ad_file>
+		sccloud view -h
 
 * Arguments:
 
@@ -961,15 +1010,15 @@ to see the usage information::
 
 * Examples::
 
-	scCloud view --show-attributes example.h5ad
-	scCloud view --show-gene-attributes example.h5ad
-	scCloud view --show-values-for-attributes louvain_labels,Donor example.h5ad
+	sccloud view --show-attributes example.h5ad
+	sccloud view --show-gene-attributes example.h5ad
+	sccloud view --show-values-for-attributes louvain_labels,Donor example.h5ad
 
 
 ---------------------------------
 
 
-``scCloud subcluster``
+``sccloud subcluster``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If there is a subset of cells that we want to further cluster, we can run ``scCloud subcluster``. This sub-command will outputs a new h5ad file that you can run ``de_analysis``, ``plot`` and ``iplot`` on.
@@ -1003,130 +1052,148 @@ to see the usage information::
 	-\\-correct-batch-effect
 		Correct for batch effects.
 
+	-\\-batch-group-by
+		Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+sccloud..+attrn', or 'attr=value11,sccloud..,value1n_1;value21,sccloud..,value2n_2;sccloud..;valuem1,sccloud..,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',sccloud..,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,sccloud..,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+
 	-\\-output-loom
 		Output loom-formatted file.
+
+	-\\-select-hvf-flavor <flavor>
+		Highly variable feature selection method. <flavor> can be 'sccloud' or 'Seurat'. [default: sccloud]
+
+	-\\-select-hvf-ngenes <nfeatures>
+		Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <nfeatures> is 'None', select HVGs with z-score cutoff at 0.5 [default: 2000]
+
+	-\\-no-select-hvf
+		Do not select highly variable features.
+
+	-\\-plot-hvf
+		Plot highly variable feature selection.
 
 	-\\-random-state <seed>
 		Random number generator seed. [default: 0]
 
 	-\\-temp-folder <temp_folder>
 		Joblib temporary folder for memmapping numpy arrays.
-
-	-\\-run-uncentered-pca
-		Run uncentered PCA.
-
-	-\\-no-variable-gene-selection
-		Do not select variable genes.
-
-	-\\-no-submat-to-dense
-		Do not convert variable-gene-selected submatrix to a dense matrix.
   
 	-\\-nPC <number>
-		Number of PCs. [default: 50]
+		Number of principal components. [default: 50]
 
-	-\\-nDC <number>
+	-\\-knn-K <number>
+		Number of nearest neighbors for building kNN graph. [default: 100]
+
+	-\\-knn-full-speed
+		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+
+	-\\-kBET
+		Calculate kBET.
+
+	-\\-kBET-batch <batch>
+		kBET batch keyword.
+
+	-\\-kBET-alpha <alpha>
+		kBET rejection alpha. [default: 0.05]
+
+	-\\-kBET-K <K> 
+		kBET K. [default: 25]
+
+	-\\-diffmap
+		Calculate diffusion maps.
+
+	-\\-diffmap-ndc <number>
 		Number of diffusion components. [default: 50]
 
 	-\\-diffmap-alpha <alpha>
 		Power parameter for diffusion-based pseudotime. [default: 0.5]
 
-	-\\-diffmap-K <K>
-		Number of neighbors used for constructing affinity matrix. [default: 100]
+	-\\-diffmap-solver <solver>
+		Solver for eigen decomposition, either 'randomized' or 'eigsh'. [default: randomized]
 
-	-\\-diffmap-full-speed
-		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+	-\\-diffmap-to-3d
+		If map diffusion map into 3D space using PCA.
 
 	-\\-calculate-pseudotime <roots>
 		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
-  	-\\-run-louvain
+  	-\\-louvain
   		Run louvain clustering algorithm.
 
 	-\\-louvain-resolution <resolution>
 		Resolution parameter for the louvain clustering algorithm. [default: 1.3]
 
-	-\\-louvain-affinity <affinity>
-		Affinity matrix to be used. Could be 'W_norm', 'W_diffmap', or 'W_diffmap_norm'. [default: W_norm]
-
 	-\\-louvain-class-label <label>
 		Louvain cluster label name in AnnData. [default: louvain_labels]
 
-	-\\-run-leiden
+	-\\-leiden
 		Run leiden clustering algorithm.
 
 	-\\-leiden-resolution <resolution>
 		Resolution parameter for the leiden clustering algorithm. [default: 1.3]
 
-	-\\-leiden-affinity <affinity>
-		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+	-\\-leiden-niter <niter>
+		Number of iterations of running the Leiden algorithm. If <niter> is negative, run Leiden iteratively until no improvement. [default: -1]
 
 	-\\-leiden-class-label <label>
 		Leiden cluster label name in AnnData. [default: leiden_labels]
 
-	-\\-run-approximated-louvain
-		Run approximated louvain clustering algorithm.
+	-\\-spectral-louvain
+		Run spectral-louvain clustering algorithm.
 
-	-\\-approx-louvain-basis <basis>
-		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
+	-\\-spectral-louvain-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. [default: diffmap]
 
-	-\\-approx-louvain-nclusters <number>
+	-\\-spectral-louvain-nclusters <number>
 		Number of clusters for Kmeans initialization. [default: 30]
 
-	-\\-approx-louvain-ninit <number>
+	-\\-spectral-louvain-ninit <number>
 		Number of Kmeans tries. [default: 20]
 
-	-\\-approx-louvain-resolution <resolution>.
+	-\\-spectral-louvain-resolution <resolution>.
 		Resolution parameter for louvain. [default: 1.3]
 
-	-\\-approx-louvain-affinity <affinity>
-		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+	-\\-spectral-louvain-class-label <label>
+		Spectral-louvain label name in AnnData. [default: spectral_louvain_labels]
 
-	-\\-approx-louvain-class-label <label>
-		Approximated louvain label name in AnnData. [default: approx_louvain_labels]
+	-\\-spectral-leiden
+		Run spectral-leiden clustering algorithm.
 
-	-\\-run-approximated-leiden
-		Run approximated leiden clustering algorithm.
+	-\\-spectral-leiden-basis <basis>
+		Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. [default: diffmap]
 
-	-\\-approx-leiden-basis <basis>
-		Basis used for KMeans clustering. Can be 'pca', 'rpca', or 'diffmap'. [default: diffmap]
-
-	-\\-approx-leiden-nclusters <number>
+	-\\-spectral-leiden-nclusters <number>
 		Number of clusters for Kmeans initialization. [default: 30]
 
-	-\\-approx-leiden-ninit <number>
+	-\\-spectral-leiden-ninit <number>
 		Number of Kmeans tries. [default: 20]
 
-	-\\-approx-leiden-resolution <resolution>
+	-\\-spectral-leiden-resolution <resolution>
 		Resolution parameter for leiden. [default: 1.3]
 
-	-\\-approx-leiden-affinity <affinity>
-		Affinity matrix to be used. Could be 'W' or 'W_diffmap'. [default: W]
+	-\\-spectral-leiden-class-label <label>
+		Spectral-leiden label name in AnnData. [default: spectral_leiden_labels]
 
-	-\\-approx-leiden-class-label <label>
-		Approximated leiden label name in AnnData. [default: approx_louvain_labels]
-
-	-\\-run-tsne
+	-\\-tsne
 		Run multi-core t-SNE for visualization.
+
+	-\\-run-fitsne
+  		Run FIt-SNE for visualization.
 
 	-\\-tsne-perplexity <perplexity>
 		t-SNE's perplexity parameter. [default: 30]
 
-  	-\\-run-fitsne
-  		Run FIt-SNE for visualization.
-
-  	-\\-run-umap
+  	-\\-umap
   		Run umap for visualization.
 
 	-\\-umap-K <K>
 		K neighbors for umap. [default: 15]
 
 	-\\-umap-min-dist <number>
-		Umap parameter. [default: 0.1]
+		Umap parameter. [default: 0.5]
 
 	-\\-umap-spread <spread>
 		Umap parameter. [default: 1.0]
 
-	-\\-run-fle
+	-\\-fle
 		Run force-directed layout embedding.
 
 	-\\-fle-K <K>
@@ -1138,8 +1205,8 @@ to see the usage information::
 	-\\-fle-target-steps <steps>
 		Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
 
-	-\\-fle-3D
-		Calculate 3D force-directed layout.
+	-\\-fle-memory <memory>
+		Memory size in GB for the Java FA2 component. [default: 8]
 
 	-\\-net-down-sample-fraction <frac>
 		Down sampling fraction for net-related visualization. [default: 0.1]
@@ -1153,10 +1220,7 @@ to see the usage information::
 	-\\-net-regressor-L2-penalty <value>
 		L2 penalty parameter for the deep net regressor. [default: 0.1]
 
-	-\\-net-ds-full-speed
-		For net-UMAP and net-FLE, use full speed for the down-sampled data.
-
-	-\\-run-net-tsne
+	-\\-net-tsne
 		Run net tSNE for visualization.
 
 	-\\-net-tsne-polish-learning-frac <frac>
@@ -1168,19 +1232,7 @@ to see the usage information::
 	-\\-net-tsne-out-basis <basis>
 		Output basis for net-tSNE. [default: net_tsne]
 
-	-\\-run-net-fitsne
-		Run net FIt-SNE for visualization.
-
-	-\\-net-fitsne-polish-learning-frac <frac>
-		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.5]
-
-	-\\-net-fitsne-polish-niter <niter>
-		Number of iterations for polishing FItSNE run. [default: 150]
-
-	-\\-net-fitsne-out-basis <basis>
-		Output basis for net-FItSNE. [default: net_fitsne]
-
-	-\\-run-net-umap
+	-\\-net-umap
 		Run net umap for visualization.
 
 	-\\-net-umap-polish-learning-rate <rate>
@@ -1192,11 +1244,8 @@ to see the usage information::
 	-\\-net-umap-out-basis <basis>
 		Output basis for net-UMAP. [default: net_umap]
 
-	-\\-run-net-fle
+	-\\-net-fle
 		Run net FLE.
-
-	-\\-net-fle-ds-full-speed
-		If run full-speed kNN on down-sampled data points.
 
 	-\\-net-fle-polish-target-steps <steps>
 		After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
@@ -1217,26 +1266,26 @@ to see the usage information::
 
 * Examples::
 
-	scCloud subcluster -p 20 --correct-batch-effect --subset-selection louvain_labels:3,6 --subset-selection Condition:CB_nonmix --run-tsne --run-louvain manton_bm.h5ad manton_bm_subset
+	sccloud subcluster -p 20 --correct-batch-effect --subset-selection louvain_labels:3,6 --subset-selection Condition:CB_nonmix --tsne --louvain manton_bm.h5ad manton_bm_subset
 
 
 ---------------------------------
 
 
-``scCloud scp_output``
+``sccloud scp_output``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If we want to visualize analysis results on single cell portal (SCP), we can generate required files for SCP using this subcommand.
 
 Type::
 
-	scCloud scp_output -h
+	sccloud scp_output -h
 
 to see the usage information::
 
 	Usage:
-		scCloud scp_output <input_h5ad_file> <output_name>
-		scCloud scp_output -h
+		sccloud scp_output <input_h5ad_file> <output_name>
+		sccloud scp_output -h
 
 * Arguments:
 
@@ -1248,6 +1297,12 @@ to see the usage information::
 
 * Options:
 
+	-\\-dense
+		Output dense expression matrix instead.
+
+	-\\-round-to <ndigit>
+		Round expression to <ndigit> after the decimal point. [default: 2]
+
 	\-h, -\\-help
 		Print out help information.
 
@@ -1258,26 +1313,26 @@ to see the usage information::
 
 * Examples::
 
-	scCloud scp_output example.h5ad example
+	sccloud scp_output example.h5ad example
 
 
 ---------------------------------
 
 
-``scCloud parquet``
+``sccloud parquet``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Generate a PARQUET file for web-based visualization.
 
 Type::
 
-	scCloud parquet -h
+	sccloud parquet -h
 
 to see the usage information::
 
 	Usage:
-		scCloud parquet [options] <input_h5ad_file> <output_name>
-		scCloud parquet -h
+		sccloud parquet [options] <input_h5ad_file> <output_name>
+		sccloud parquet -h
 
 * Arguments:
 
@@ -1302,41 +1357,41 @@ to see the usage information::
 
 * Examples::
 
-	scCloud parquet example.h5ad example.parquet
+	sccloud parquet example.h5ad example.parquet
 
 
 ---------------------------------
 
 
-``scCloud merge_rna_adt``
+``sccloud merge_rna_adt``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If we have CITE-Seq data, we can merge RNA count matrix and ADT (antibody tag) count matrix into one file using this subcommand.
 
 Type::
 
-	scCloud merge_rna_adt -h
+	sccloud merge_rna_adt -h
 
 to see the usage information::
 
 	Usage:
-		scCloud merge_rna_adt <input_raw_gene_bc_matrices_h5.h5> <input_adt_csv_file> <output_10x.h5>
-		scCloud merge_rna_adt -h
+		sccloud merge_rna_adt <input_raw_gene_bc_matrices_h5.h5sc> <input_adt_csv_file> <output_name>
+		sccloud merge_rna_adt -h
 
 * Arguments:
 
-	input_raw_gene_bc_matrices_h5.h5
-		Input raw RNA expression matrix in 10x hdf5 format.
+	input_raw_gene_bc_matrices_h5.h5sc
+		Input raw RNA expression matrix in scCloud hdf5 format.
 
 	input_adt_csv_file
 		Input ADT (antibody tag) count matrix in CSV format.
 
-	output_10x.h5
-		Merged output file in 10x hdf5 format.
+	output_name
+		Merged output name.
 
 * Options:
 
-	\--antibody-control-csv <antibody_control_csv_file>
+	-\\-antibody-control-csv <antibody_control_csv_file>
 		A CSV file containing the IgG control information for each antibody.
 
 	\-h, -\\-help
@@ -1344,32 +1399,32 @@ to see the usage information::
 
 * Outputs:
 
-	output_10x.h5
-		Output file in 10x hdf5 format. This file contains two groups --- one is for RNAs and the other is for ADTs.
+	output_name.h5sc
+		Output file in scCloud hdf5 format. This file contains two groups --- one for RNAs, and the other for ADTs.
 
 * Examples::
 
-	scCloud merge_rna_adt example_raw_h5.h5 example_adt.csv example_merged_raw_10x.h5
-	scCloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5 example_adt.csv example_merged_raw_10x.h5
+	scCloud merge_rna_adt example_raw_h5.h5sc example_adt.csv example_merged_raw
+	scCloud merge_rna_adt --antibody-control-csv antibody_control.csv example_raw_h5.h5sc example_adt.csv example_merged_raw
 
 
 ---------------------------------
 
 
-``scCloud check_indexes``
+``sccloud check_indexes``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If we run CITE-Seq or any kind of hashing, we need to make sure that the library indexes of CITE-Seq/hashing do not collide with 10x's RNA indexes. This command can help us to determine which 10x index sets we should use.
 
 Type::
 
-	scCloud check_indexes -h
+	sccloud check_indexes -h
 
 to see the usage information::
 
 	Usage:
-		scCloud check_indexes [--num-mismatch <mismatch> --num-report <report>] <index_file>
-		scCloud check_indexes -h
+		sccloud check_indexes [--num-mismatch <mismatch> --num-report <report>] <index_file>
+		sccloud check_indexes -h
 
 * Arguments:
 
@@ -1393,5 +1448,5 @@ to see the usage information::
 
 * Examples::
 
-	scCloud check_indexes --num-report 8 index_file.txt
+	sccloud check_indexes --num-report 8 index_file.txt
 

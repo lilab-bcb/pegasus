@@ -21,7 +21,7 @@ Options:
   -h, --help        Print out help information.
 
 Outputs:
-  output_name.sccloud.h5        Output file in sccloud HDF5 format. This file contains two groups --- one is for RNAs and the other is for ADTs.
+  output_name.sccloud.h5        Output file in sccloud HDF5 format. This file contains two groups --- one for RNAs, and the other for ADTs.
 
 Examples:
   sccloud merge_rna_adt example_raw_h5.h5 example_adt.csv example_merged

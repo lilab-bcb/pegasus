@@ -24,7 +24,7 @@ Options:
   --minimum-report-score <score>          Minimum cell type score to report a potential cell type. [default: 0.5]
   --do-not-use-non-de-genes               Do not count non DE genes as down-regulated.
 
-  --annotation <annotation_string>        Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: 'anno_name:clust_name:anno_1;anno_2;sccloud..;anno_n'. 'anno_name' is the annotation attribute in the h5ad object, 'clust_name' is the attribute with cluster ids, and anno_i is the annotation for cluster i.
+  --annotation <annotation_string>        Write cell type annotations in <annotation_string> into <input_h5ad_file>. <annotation_string> has this format: 'anno_name:clust_name:anno_1;anno_2;...;anno_n'. 'anno_name' is the annotation attribute in the h5ad object, 'clust_name' is the attribute with cluster ids, and anno_i is the annotation for cluster i.
 
   -h, --help                              Print out help information.
 

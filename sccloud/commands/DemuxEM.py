@@ -31,7 +31,7 @@ Options:
   -h, --help                                 Print out help information.
 
 Outputs:
-  output_name_demux_10x.h5                               RNA expression matrix with demultiplexed sample identities in 10x's hdf5 format.
+  output_name_demux.h5sc                                 RNA expression matrix with demultiplexed sample identities in scCloud HDF5 format.
   output_name_ADTs.h5ad                                  Antibody tag matrix in h5ad format.
   output_name_demux.h5ad                                 Demultiplexed RNA count matrix in h5ad format.
   output_name.ambient_hashtag.hist.pdf                   Optional output. A histogram plot depicting hashtag distributions of empty droplets and non-empty droplets.

@@ -12,7 +12,7 @@ Usage:
   sccloud iplot -h
 
 Arguments:
-  basis                  Basis can be either 'tsne', 'fitsne', 'umap', 'diffmap', 'pca', 'rpca' or 'diffmap_pca'.
+  basis                  Basis can be either 'tsne', 'fitsne', 'umap', 'diffmap', 'pca', or 'diffmap_pca'.
   input_h5ad_file        Single cell data with clustering done in h5ad file format.
   output_html_file       Output interactive plot in html format.
 

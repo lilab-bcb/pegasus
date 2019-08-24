@@ -22,17 +22,55 @@ def qc_metrics(
     percent_mito: float = 0.1,
     percent_cells: float = 0.0005,
 ) -> None:
-    """
-    TODO: documentation
+    """Generate Quality Control (QC) metrics on the dataset.
+    
+    Parameters
+    ----------
+    **data**: `anndata.AnnData`
+       Annotated data matrix with rows for cells and columns for genes.
+    mito_prefix: `str` (default: `"MT-"`)
+       Prefix for mitochondrial genes.
+    min_genes: `int` (default: `500`)
+       Only keep cells with at least `min_genes` genes.
+    max_genes: `int` (default: `6000`)
+       Only keep cells with less than `max_genes` genes.
+    min_umis: `int` (default: `100`)
+       Only keep cells with at least `min_umis` UMIs.
+    max_umis: `int` (default: `600,000`)
+       Only keep cells with less than `max_umis` UMIs.
+    percent_mito: `float` (default: `0.1`)
+       Only keep cells with mitochondrial ratio less than `percent_mito` of total counts.
+    percent_cells: `float` (default: `0.0005`)
+       Only use genes that are expressed in at ratio `percent_cells` x 100% of cells to be `robust`.
 
-    Sets passed_qc, n_genes, n_counts, percent_mito on data.obs and passed_qc, n_cells, percent_cells, and robust on data.var
+    Returns
+    -------
+    `None`
 
-    :param data:
-       Annotated data matrix
-    :param mito_prefix: str
-       String that mitochrondrial genes start with
-    :param percent_cells: float
-       Cutoff for a feature to be `robust`
+    Update `obs` and `var` fields in `data`:
+    In `data.obs`,
+    `n_genes`
+        Total number of genes for each cell.
+    `n_counts`
+        Total number of counts for each cell.
+    `percent_mito`
+        Percent of mitochondrial genes for each cell.
+    `passed_qc`
+        Boolean type indicating if a cell passes the QC process based on the QC metrics.
+
+    In `data.var`,
+    `n_cells`
+        Total number of cells in which each gene is measured.
+    `percent_cells`
+        Percent of cells in which each gene is measured.
+    `robust`
+        Boolean type indicating if a gene is robust based on the QC metrics.
+    `highly_variable_features`
+        Boolean type indicating if a gene is a highly variable feature. By default, set all robust genes as highly variable features.
+
+    Examples
+    --------
+    >>> scc.qcmetrics(adata)
     """
 
     data.obs["passed_qc"] = False

@@ -17,7 +17,7 @@ Arguments:
 Options:
   -p <threads>                 Use <threads> threads. [default: 1]
   --labels <attr>              <attr> used as cluster labels. [default: louvain_labels]
-  --de-key <key>               Key for storing DE results in obsm. [default: de_res]
+  --de-key <key>               Key for storing DE results in 'varm' field. [default: de_res]
   --remove-ribo                Remove ribosomal genes with either RPL or RPS as prefixes.
   --min-gain <gain>            Only report genes with a feature importance score (in gain) of at least <gain>. [default: 1.0]
   --random-state <seed>        Random state for initializing LightGBM and KMeans. [default: 0]

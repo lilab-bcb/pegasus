@@ -24,7 +24,7 @@ Options:
   --output-loom                                    Output loom-formatted file.
 
   --select-hvf-flavor <flavor>                     Highly variable feature selection method. <flavor> can be 'sccloud' or 'Seurat'. [default: sccloud]
-  --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
+  --select-hvf-ngenes <nfeatures>                  Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <nfeatures> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
   --no-select-hvf                                  Do not select highly variable features.
   --plot-hvf                                       Plot highly variable feature selection.
 
@@ -32,8 +32,8 @@ Options:
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
   --nPC <number>                                   Number of principal components. [default: 50]
-  --knn-K <number>                                  Number of nearest neighbors for building kNN graph. [default: 100]
-  --knn-full-speed                                  For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
+  --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
+  --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
   --kBET                                           Calculate kBET.
   --kBET-batch <batch>                             kBET batch keyword.
