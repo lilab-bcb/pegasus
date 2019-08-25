@@ -90,7 +90,7 @@ def correct_batch_effects(data: "AnnData", keyword: str, features: str = None) -
         X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(
             plus[:, i], newshape=(1, m)
         )
-    X[X < 0.0] = 0.0
+    #X[X < 0.0] = 0.0
 
 
 def correct_batch(data: "AnnData", features: str = None) -> None:
