@@ -29,14 +29,14 @@ to see the help information::
 	cluster
 		Perform first-pass analysis using the count matrix generated from 'aggregate_matrix'. This subcommand could perform low quality cell filtration, batch correction, variable gene selection, dimension reduction, diffusion map calculation, graph-based clustering, tSNE visualization. The final results will be written into h5ad-formatted file, which Seurat could load.
   		
-    de_analysis
-    	Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene.
+	de_analysis
+		Detect markers for each cluster by performing differential expression analysis per cluster (within cluster vs. outside cluster). DE tests include Welch's t-test, Fisher's exact test, Mann-Whitney U test. It can also calculate AUROC values for each gene.
     
-    find_markers
+	find_markers
 		Find markers for each cluster by training classifiers using LightGBM.
     
-    annotate_cluster
-    	This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it works for human/mouse immune/brain cells.
+	annotate_cluster
+		This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it works for human/mouse immune/brain cells.
 
 * Plotting:
 
@@ -52,7 +52,7 @@ to see the help information::
 		View attribute (e.g. cluster labels) and their values. This subcommand is used to determine cells to run subcluster analysis.
 
 	subcluster
-    	Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
+		Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
 
 * Web-based visualization:
 

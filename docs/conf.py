@@ -21,16 +21,16 @@ sys.path.insert(
 
 # -- Project information -----------------------------------------------------
 
-project = "scCloud"
-copyright = "2018, Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al."
+project = "sccloud"
+copyright = "2019, Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
 author = (
-    "Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al."
+    "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
 )
 
 # The short X.Y version
-version = "0.9.0"
+version = "0.14.0"
 # The full version, including alpha/beta/rc tags
-release = "0.9.0"
+release = "0.14.0.rc1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -116,17 +116,17 @@ html_static_path = ["_static"]
 
 html_context = dict(
     display_github=True,  # Integrate GitHub
-    github_user="broadinstitute",  # Username
-    github_repo="scRNA-Seq",  # Repo name
+    github_user="klarman-cell-observatory",  # Username
+    github_repo="scCloudPy",  # Repo name
     github_version="master",  # Version
-    conf_py_path="/scCloud/docs/",  # Path in the checkout to the docs root
+    conf_py_path="/scCloudPy/docs/",  # Path in the checkout to the docs root
 )
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "scCloud_doc"
+htmlhelp_basename = "sccloud_doc"
 
 
 def setup(app):
@@ -156,9 +156,9 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "scCloud.tex",
-        "scCloud Documentation",
-        "Bo Li, Siranush Sarkizova, Joshua Gould, Marcin Tabaka, Orr Ashenberg, and et al.",
+        "sccloud.tex",
+        "sccloud Documentation",
+        "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al.",
         "manual",
     )
 ]
@@ -168,7 +168,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "scCloud", "scCloud Documentation", [author], 1)]
+man_pages = [(master_doc, "sccloud", "sccloud Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -179,10 +179,10 @@ man_pages = [(master_doc, "scCloud", "scCloud Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "scCloud",
-        "scCloud Documentation",
+        "sccloud",
+        "sccloud Documentation",
         author,
-        "scCloud",
+        "sccloud",
         "One line description of project.",
         "Miscellaneous",
     )

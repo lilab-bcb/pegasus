@@ -12,7 +12,7 @@ This installation instruction has been tested on Linux (Ubuntu Linux 18.04 and 1
 Python
 ######
 
-scCloud works with Python 3 (Python 3.5 or greater) only. 
+sccloud works with Python 3 (Python 3.5 or greater) only. 
 
 For Ubuntu, install Python 3 by::
 
@@ -39,30 +39,30 @@ Install via PyPI
 Linux
 #####
 
-Assuming Python 3 is installed on your OS. Then install ``pip`` for Python 3, along with some extra libraries for building scCloud::
+Assuming Python 3 is installed on your OS. Then install ``pip`` for Python 3, along with some extra libraries for building sccloud::
 
 	sudo apt install python3-pip
 
 
-Now install scCloud via ``pip``::
+Now install sccloud via ``pip``::
 
-	pip3 install scCloud
+	pip3 install sccloud
 
 Alternatively, if you want to use ``mkl`` package for speed improvement, type::
 
-	pip3 install scCloud[mkl]
+	pip3 install sccloud[mkl]
 
-If you want to use scCloud's FIt-SNE feature. First, install ``fftw`` library::
+If you want to use sccloud's FIt-SNE feature. First, install ``fftw`` library::
 
 	sudo apt install libfftw3-dev
 
 Then type::
 
-	pip3 install scCloud[fitsne]
+	pip3 install sccloud[fitsne]
 
 Or if you want both extra features, type::
 
-	pip3 install scCloud[mkl,fitsne]
+	pip3 install sccloud[mkl,fitsne]
 
 .. _below: ./installation.html#install-via-miniconda
 
@@ -83,7 +83,7 @@ macOS
 Install via Miniconda
 ^^^^^^^^^^^^^^^^^^^^^
 
-You can also choose to install scCloud in a dedicated Conda environment without affecting your OS.
+You can also choose to install sccloud in a dedicated Conda environment without affecting your OS.
 
 
 Package Manager
@@ -114,58 +114,63 @@ Use the following commands::
 
 Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
-Install scCloud
+Install sccloud
 ###############
 
 Both Linux and macOS share this installation step.
 
-1. Create a conda environment for scCloud. Let ``scCloud`` be its name, but you are free to choose your own::
+1. Create a conda environment for sccloud. Let ``sccloud`` be its name, but you are free to choose your own::
 
-	conda create -n scCloud -y pip
+	conda create -n sccloud -y pip
+
 For macOS, you may need to do the following extra commands after creation::
 
-	mkdir -p $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/activate.d
-	mkdir -p $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/deactivate.d
-	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/activate.d/env_vars.sh
-	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/scCloud/etc/conda/deactivate.d/env_vars.sh
+	mkdir -p $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/activate.d
+	mkdir -p $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/deactivate.d
+	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/activate.d/env_vars.sh
+	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/deactivate.d/env_vars.sh
+
 where ``$CONDA_PATH`` is set in the previous step.
 
 2. Enter conda environment by activating::
 
-	conda activate scCloud
+	conda activate sccloud
+
 or::
 
-	source activate scCloud
+	source activate sccloud
 
 3. (Optional) If you want to use the Intel ``mkl`` package for speed improvement, type::
 
 	conda install -y -c anaconda numpy
-Also, if you want to use scCloud's FIt-SNE feature, which depends on ``fftw`` package, type::
+
+Also, if you want to use sccloud's FIt-SNE feature, which depends on ``fftw`` package, type::
 
 	conda install -y -c conda-forge fftw
 
-4. Install scCloud::
+4. Install sccloud::
 
-	pip install scCloud
-If you want to use scCloud's FIt-SNE feature, type::
+	pip install sccloud
 
-	pip install scCloud[fitsne]
+If you want to use sccloud's FIt-SNE feature, type::
+
+	pip install sccloud[fitsne]
 
 -----------------------------------
 
-Use **scCloud** in UGER
+Use **sccloud** in UGER
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 First, you need to request a RedHat7 server::
 
 	qrsh -q interactive -l h_vmem=4g -l os=RedHat7 -P regevlab
 
-Then, if you have installed **scCloud**, you could activate the virtual environment::
+Then, if you have installed **sccloud**, you could activate the virtual environment::
 
-	source activate scCloud
+	source activate sccloud
 
 Or, you can use an installed version by typing::
 
-	source /ahg/regevdata/users/libo/miniconda3/bin/activate scCloud
+	source /ahg/regevdata/users/libo/miniconda3/bin/activate sccloud
 
 .. _Miniconda: http://conda.pydata.org/miniconda.html
