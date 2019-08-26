@@ -69,8 +69,8 @@ def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
             gncells[i] = ncells[gchannels].sum()
             gmeans[:, i] = np.dot(means[:, gchannels], ncells[gchannels]) / gncells[i]
             gstds[:, i] = (
-                partial_sum[:, gchannels].sum(axis=1) / gncells[i]
-            ) ** 0.5  # calculate std
+                              partial_sum[:, gchannels].sum(axis=1) / gncells[i]
+                          ) ** 0.5  # calculate std
             if groups.size > 1:
                 batch_adjusted_vars += gncells[i] * (
                     (gmeans[:, i] - overall_means) ** 2
@@ -165,8 +165,8 @@ def select_hvf_seurat_single(
     log_disp_mean = log_disp_groups.mean()
     log_disp_std = log_disp_groups.std(ddof=1)
     log_disp_zscore = (
-        df["log_dispersion"].values - log_disp_mean.loc[df["bin"]].values
-    ) / log_disp_std.loc[df["bin"]].values
+                          df["log_dispersion"].values - log_disp_mean.loc[df["bin"]].values
+                      ) / log_disp_std.loc[df["bin"]].values
     log_disp_zscore[np.isnan(log_disp_zscore)] = 0.0
 
     hvf_rank = np.full(X.shape[1], -1, dtype=int)
@@ -299,6 +299,8 @@ def highly_variable_features(
     start = time.time()
 
     if "Channels" not in data.uns:
+        if "Channel" not in data.obs:
+            data.obs["Channel"] = ""
         data.uns["Channels"] = data.obs["Channel"].unique()
 
     if data.uns["Channels"].size == 1 and consider_batch:
