@@ -737,7 +737,7 @@ def net_fle(
         file_name = str(uuid.uuid4())
 
     n_jobs = effective_n_jobs(n_jobs)
-    rep = get_rep(rep)
+    rep = update_rep(rep)
 
     if ("W_" + rep) not in data.uns:
         neighbors(
