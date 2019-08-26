@@ -745,7 +745,7 @@ def get_valid_gene_index(n: int, df: pd.DataFrame, alpha: float) -> List[bool]:
             has_test = True
 
     if not has_test:
-        idx = np.ones(data.shape[1], dtype=bool)
+        idx = np.ones(n, dtype=bool)
 
     return idx
 
