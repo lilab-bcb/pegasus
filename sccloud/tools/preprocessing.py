@@ -26,47 +26,40 @@ def qc_metrics(
     
     Parameters
     ----------
-    **data**: `anndata.AnnData`
+    data: ``anndata.AnnData``
        Annotated data matrix with rows for cells and columns for genes.
-    mito_prefix: `str` (default: `"MT-"`)
+    mito_prefix: ``str``, optional, default: ``"MT-"``
        Prefix for mitochondrial genes.
-    min_genes: `int` (default: `500`)
-       Only keep cells with at least `min_genes` genes.
-    max_genes: `int` (default: `6000`)
-       Only keep cells with less than `max_genes` genes.
-    min_umis: `int` (default: `100`)
-       Only keep cells with at least `min_umis` UMIs.
-    max_umis: `int` (default: `600,000`)
-       Only keep cells with less than `max_umis` UMIs.
-    percent_mito: `float` (default: `0.1`)
-       Only keep cells with mitochondrial ratio less than `percent_mito` of total counts.
-    percent_cells: `float` (default: `0.0005`)
-       Only use genes that are expressed in at ratio `percent_cells` x 100% of cells to be `robust`.
+    min_genes: ``int``, optional, default: ``500``
+       Only keep cells with at least ``min_genes`` genes.
+    max_genes: ``int``, optional, default: ``6000``
+       Only keep cells with less than ``max_genes`` genes.
+    min_umis: ``int``, optional, default: ``100``
+       Only keep cells with at least ``min_umis`` UMIs.
+    max_umis: ``int``, optional, default: ``600,000``
+       Only keep cells with less than ``max_umis`` UMIs.
+    percent_mito: ``float``, optional, default: ``0.1``
+       Only keep cells with mitochondrial ratio less than ``percent_mito`` of total counts.
+    percent_cells: ``float``, optional, default: ``0.0005``
+       Only use genes that are expressed in at ratio `percent_cells` x 100% of cells to be ``robust``.
 
     Returns
     -------
-    `None`
+    ``None``
 
-    Update `obs` and `var` fields in `data`:
-    In `data.obs`,
-    `n_genes`
-        Total number of genes for each cell.
-    `n_counts`
-        Total number of counts for each cell.
-    `percent_mito`
-        Percent of mitochondrial genes for each cell.
-    `passed_qc`
-        Boolean type indicating if a cell passes the QC process based on the QC metrics.
+    Update ``data.obs``:
+    
+        * ``n_genes``: Total number of genes for each cell.
+        * ``n_counts``: Total number of counts for each cell.
+        * ``percent_mito``: Percent of mitochondrial genes for each cell.
+        * ``passed_qc``: Boolean type indicating if a cell passes the QC process based on the QC metrics.
 
-    In `data.var`,
-    `n_cells`
-        Total number of cells in which each gene is measured.
-    `percent_cells`
-        Percent of cells in which each gene is measured.
-    `robust`
-        Boolean type indicating if a gene is robust based on the QC metrics.
-    `highly_variable_features`
-        Boolean type indicating if a gene is a highly variable feature. By default, set all robust genes as highly variable features.
+    Update ``data.var``:
+
+        * ``n_cells``: Total number of cells in which each gene is measured.
+        * ``percent_cells``: Percent of cells in which each gene is measured.
+        * ``robust``: Boolean type indicating if a gene is robust based on the QC metrics.
+        * ``highly_variable_features``: Boolean type indicating if a gene is a highly variable feature. By default, set all robust genes as highly variable features.
 
     Examples
     --------
@@ -116,10 +109,24 @@ def qc_metrics(
 
 
 def get_filter_stats(data: "AnnData") -> Tuple["pandas.DataFrame", "pandas.DataFrame"]:
-    """
-    TODO: documentation
+    """Calculate filtration stats on cell barcodes and genes, respectively.
 
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
 
+    Returns
+    -------
+    df_cells: ``pandas.DataFrame``
+        Data frame of stats on cell filtration.
+
+    df_genes: ``pandas.DataFrame``
+        Data frame of stats on gene filtration.
+
+    Examples
+    --------
+    >>> scc.get_filter_stats(adata)
     """
 
     # cell stats
@@ -182,8 +189,22 @@ def get_filter_stats(data: "AnnData") -> Tuple["pandas.DataFrame", "pandas.DataF
 
 
 def filter_data(data: "AnnData") -> None:
-    """ Filter data based on qc_metrics calculated
-    TODO: Documentation
+    """ Filter data based on qc_metrics calculated in ``scc.qc_metrics``.
+    
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data`` with cells and genes after filtration.
+
+    Examples
+    --------
+    >>> scc.filter_data(adata)
     """
 
     assert "passed_qc" in data.obs
@@ -307,8 +328,25 @@ def run_filter_data(
 
 
 def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
-    """Normalization and then take log
-    TODO: Documentation
+    """Normalization, and then apply natural logarithm to the data.
+    
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    norm_count: ``int``, optional, default: ``1e5``.
+        Total count of cells after normalization.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.X`` with count matrix after log-normalization.
+
+    Examples
+    --------
+    >>> scc.log_norm(adata)
     """
 
     start = time.time()
@@ -324,10 +362,28 @@ def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
 
 
 def select_features(data: "AnnData", features: str = None) -> str:
-    """ Subset the features and store the resulting matrix in dense format in data.uns with 'fmat_' prefix. 'fmat_*' will be removed before writing out the disk.
-    :param features: a keyword in data.var, which refers to a boolean array. None refers to all features
+    """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
+    
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
 
-    TODO: Documentation
+    features: ``str``, optional, default: ``None``. 
+        a keyword in ``data.var``, which refers to a boolean array. None refers to all features
+
+    Returns
+    -------
+    keyword: ``str``
+        The keyword in ``data.uns`` referring to the features selected.
+
+    Update ``data.uns``:
+
+        * ``data.uns[keyword]``: A submatrix of the data containing features selected.
+
+    Examples
+    --------
+    >>> scc.select_features(adata)
     """
     keyword = "fmat_" + str(features)  # fmat: feature matrix
 
@@ -354,8 +410,50 @@ def pca(
     max_value: float = 10,
     random_state: int = 0,
 ) -> None:
-    """Calculate PCA
-    TODO: documentation. Feature selection time is not included.
+    """Perform Principle Component Analysis (PCA) to the data.
+
+    The calculation uses *scikit-learn* implementation.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    n_components: ``int``, optional, default: ``50``.
+        Number of Principal Components to get.
+
+    features: ``str``, optional, default: ``"highly_variable_features"``.
+        Keyword in ``data.var`` to specify features used for PCA.
+
+    standardize: ``bool``, optional, default: ``True``.
+        Whether to scale the data to unit variance and zero mean or not.
+
+    max_value: ``float``, optional, default: ``10``.
+        The threshold to truncate data after scaling. If ``None``, do not truncate.
+
+    random_state: ``int``, optional, default: ``0``.
+        Random seed to be set for reproducing result.
+
+
+    Returns
+    -------
+    ``None``.
+
+    Update ``data.obsm``:
+
+        * ``data.obsm["X_pca"]``: PCA matrix of the data.
+
+    Update ``data.uns``:
+
+        * ``data.uns["PCs"]``: The principal components containing the loadings.
+
+        * ``data.uns["pca_variance"]``: Explained variance, i.e. the eigenvalues of the covariance matrix.
+
+        * ``data.uns["pca_variance_ratio"]``: Ratio of explained variance.
+
+    Examples
+    --------
+    >>> scc.pca(adata)
     """
 
     keyword = select_features(data, features)

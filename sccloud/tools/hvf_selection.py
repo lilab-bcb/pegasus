@@ -290,10 +290,46 @@ def highly_variable_features(
     max_mean: float = 7,
     n_jobs: int = -1,
 ) -> None:
-    """
-    TODO: Documentation.
-    n_top == None refers to no n_top genes
-    n_jobs: -1 refers to use all available threads
+    """ Highly variable features (HVF) selection. The input data should be logarithmized.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    consider_batch: ``bool``.
+        Whether consider batch effects or not.
+
+    flavor: ``str``, optional, default: ``"sccloud"``
+        The HVF selection method to use. Available choices are ``"sccloud"`` or ``"Seurat"``.
+
+    n_top: ``int``, optional, default: ``2000``
+        Number of genes to be selected as HVF. if ``None``, no gene will be selected.
+
+    span: ``float``, optional, default: ``0.02``
+        Only applicable when ``flavor`` is ``"sccloud"``. The smoothing factor used by *scikit-learn loess* model in sccloud HVF selection method.
+
+    min_disp: ``float``, optional, default: ``0.5``
+        Minimum normalized dispersion.
+
+    max_disp: ``float``, optional, default: ``np.inf``
+        Maximum normalized dispersion. Set it to ``np.inf`` for infinity bound.
+
+    min_mean: ``float``, optional, default: ``0.0125``
+        Minimum mean.
+
+    max_mean: ``float``, optional, default: ``7``
+        Maximum mean.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to be used during calculation. If ``-1``, all available threads will be used.
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> scc.highly_variable_features(adata, consider_batch = False)
     """
 
     start = time.time()
