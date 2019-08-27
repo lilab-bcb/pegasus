@@ -3,4 +3,5 @@ from .annotate_cluster import (
     annotate,
     run_annotate_cluster,
     annotate_anndata_object,
+    infer_cluster_names
 )

@@ -53,7 +53,7 @@ from .tools import (
     find_markers,
     infer_path,
 )
-from .annotate_cluster import infer_cell_types, annotate
+from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .demuxEM import estimate_background_probs, demultiplex
 from .misc import search_genes, search_de_genes
 

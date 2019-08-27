@@ -92,7 +92,7 @@ class CellType:
         if nump > 0:
             self.avgp /= nump
 
-    def tostring(self):
+    def __repr__(self):
         res = "name: {0}; score: {1:.2f}; average marker percentage: {2:.2f}%".format(
             self.name, self.score, self.avgp
         )
@@ -167,6 +167,17 @@ class Annotator:
 
         return results
 
+    def gather(self, results, output_results, thre: float, type_level,
+               ) -> None:
+        """ Gather putative cell types.
+        """
+        for ct in results:
+            if ct.score >= thre:
+                output_results.append(dict(cell_type=ct, type_level=type_level))
+                if ct.subtypes is not None:
+                    self.gather(ct.subtypes, output_results, 0.5, type_level + 1)
+        return output_results
+
     def report(
         self, fout: "output stream", results, thre: float, space: int = 4
     ) -> None:
@@ -174,9 +185,24 @@ class Annotator:
         """
         for ct in results:
             if ct.score >= thre:
-                fout.write(" " * space + ct.tostring() + "\n")
+                fout.write(" " * space + str(ct) + "\n")
                 if ct.subtypes is not None:
                     self.report(fout, ct.subtypes, 0.5, space + 4)
+
+
+def infer_cluster_names(cell_type_results):
+    cluster_ids = natsorted(cell_type_results.keys())
+    names = []
+    unique_names = set()
+    for cluster_id in cluster_ids:
+        results = cell_type_results[cluster_id]
+        name = results[0]['cell_type'].name if len(results) > 0 else cluster_id
+        if name in unique_names:
+            name = name + '-' + str(cluster_id)
+        unique_names.add(name)
+        names.append(name)
+
+    return names
 
 
 def infer_cell_types(
@@ -186,9 +212,8 @@ def infer_cell_types(
     de_alpha: float = 0.05,
     de_key: str = "de_res",
     threshold: float = 0.5,
-    ignore_nonde: bool = False,
-    fout: "output stream" = stdout,
-) -> None:
+    ignore_nonde: bool = False
+) -> List[Dict]:
     """Infer putative cell types for each cluster using legacy markers
 
     Parameters
@@ -208,20 +233,18 @@ def infer_cell_types(
         Only report putative cell types with a score larger than threshold.
     ignore_nonde: `bool`, optional (default: False)
         Do not consider non DE genes as weak negative markers.
-    fout: `output stream`, optional (default: stdout)
-        Where to write results. If default, write to stdout.
 
     Returns
     -------
 
-    None
+    List of inferred cell types per cluster
 
     Examples
     --------
 
     >>> annotate_cluster.infer_cell_types(adata, 'human_immune', 'fisher')
     """
-    import pkg_resources
+
     predefined_markers = dict(human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
         mouse_brain="mouse_brain_cell_markers.json",
@@ -229,6 +252,7 @@ def infer_cell_types(
     )
 
     if markers in predefined_markers:
+        import pkg_resources
         markers = pkg_resources.resource_filename(
             "sccloud.annotate_cluster", predefined_markers[markers]
         )
@@ -242,7 +266,7 @@ def infer_cell_types(
             if x.startswith("WAD_score:")
         ]
     )
-
+    cell_type_results = {}
     for clust_id in clusts:
         idx = data.varm[de_key]["{0}_qval:{1}".format(de_test, clust_id)] <= de_alpha
 
@@ -274,8 +298,14 @@ def infer_cell_types(
 
         results = anno.evaluate(de_up, de_down, ignore_nonde=ignore_nonde)
 
-        fout.write("Cluster {0}:\n".format(clust_id))
-        anno.report(fout, results, threshold)
+        output_results = []
+        anno.gather(results, output_results, threshold, 1)
+        # sort descending by score, type_level
+        output_results = sorted(output_results, key=lambda x: (x['cell_type'].score, x['type_level']), reverse=True)
+        cell_type_results[clust_id] = output_results
+        # fout.write("Cluster {0}:\n".format(clust_id))
+        # anno.report(fout, results, threshold)
+    return cell_type_results
 
 
 def annotate(
@@ -325,16 +355,22 @@ def run_annotate_cluster(
     start = time.time()
     data = read_input(input_file, h5ad_mode="r")
     with open(output_file, "w") as fout:
-        infer_cell_types(
+        results = infer_cell_types(
             data,
             marker_file,
             de_test,
             de_alpha=de_alpha,
             de_key=de_key,
             threshold=threshold,
-            ignore_nonde=ignore_nonde,
-            fout=fout,
+            ignore_nonde=ignore_nonde
         )
+        for cluster_id in results:
+            fout.write('Cluster {}:\n'.format(cluster_id))
+            cluster_results = results[cluster_id]
+            for cluster_result in cluster_results:
+                fout.write('- ' + str(cluster_result['cell_type']) + '; type level {}'.format(
+                    cluster_result['type_level']) + '\n')
+
     data.file.close()
     end = time.time()
     logger.info("Time spent for annotating clusters is {:.2f}s.".format(end - start))
