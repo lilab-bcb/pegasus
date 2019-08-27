@@ -216,8 +216,8 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
     elif barcode_base.endswith(".cells.tsv") and feature_base.endswith(".genes.tsv"):
         format_type = "dropEst"
     else:
-        assert False
-
+        raise ValueError('Unknown format type')
+    print(format_type)
     if format_type == "HCA DCP":
         barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=0)
         assert "cellkey" in barcode_metadata
@@ -250,12 +250,13 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
             feature_metadata = pd.DataFrame(
                 data={"featurekey": arr[:, 0], "featurename": arr[:, 1]}
             )
-        else:
-            assert format_type == "dropEst"
+        elif format_type == "dropEst":
             feature_metadata = pd.read_csv(
                 feature_file, sep="\t", header=None, names=["featurekey"]
             )
             feature_metadata["featurename"] = feature_metadata["featurekey"]
+        else:
+            raise ValueError('Unknown format type')
 
     array2d = Array2D(barcode_metadata, feature_metadata, mat)
     array2d.filter(ngene=ngene)
@@ -660,7 +661,97 @@ def read_input(
     return data
 
 
-def write_output(data: "MemData or AnnData", output_name: str) -> None:
+def _write_key_value_to_h5(f, key, value, **kwargs):
+    import h5py
+    from collections.abc import Mapping
+    from scipy.sparse import issparse
+
+    if isinstance(value, Mapping):
+        for k, v in value.items():
+            if not isinstance(k, str):
+                logging.warning(
+                    'dict key {} transformed to str upon writing to h5,'
+                    'using string keys is recommended'
+                        .format(k)
+                )
+            _write_key_value_to_h5(f, key + '/' + str(k), v, **kwargs)
+        return
+
+    def preprocess_writing(value):
+        if value is None or issparse(value):
+            return value
+        else:
+            value = np.array(value)  # make sure value is an array
+            if value.ndim == 0: value = np.array([value])  # hm, why that?
+        # make sure string format is chosen correctly
+        if value.dtype.kind == 'U': value = value.astype(h5py.special_dtype(vlen=str))
+        return value
+
+    value = preprocess_writing(value)
+
+    # FIXME: for some reason, we need the following for writing string arrays
+    if key in f.keys() and value is not None: del f[key]
+
+    # ignore arrays with empty dtypes
+    if value is None or not value.dtype.descr:
+        return
+    try:
+        if key in set(f.keys()):
+            is_valid_group = (
+                isinstance(f[key], h5py.Group)
+                and f[key].shape == value.shape
+                and f[key].dtype == value.dtype
+                and not isinstance(f[key], h5py.SparseDataset)
+            )
+            if not is_valid_group and not issparse(value):
+                f[key][()] = value
+                return
+            else:
+                del f[key]
+        elif '/' in key:
+            # check if parent node exists and is not a group
+            # for old h5ad files in which obsm/varm were stored as compound datasets
+            parent_node = key[:key.index('/')]
+            if parent_node in f.keys() and isinstance(f[parent_node], h5py.Dataset):
+                del f[parent_node]
+        f.create_dataset(key, data=value, **kwargs)
+    except TypeError:
+        try:
+            if value.dtype.names is None:
+                dt = h5py.special_dtype(vlen=str)
+                f.create_dataset(key, data=value, dtype=dt, **kwargs)
+            else:  # try writing composite datatypes with byte strings
+                new_dtype = [
+                    (dt[0], 'S{}'.format(int(dt[1][2:]) * 4))
+                    for dt in value.dtype.descr
+                ]
+                if key in set(f.keys()):
+                    if (
+                        f[key].shape == value.shape
+                        and f[key].dtype == value.dtype
+                    ):
+                        f[key][()] = value.astype(new_dtype)
+                        return
+                    else:
+                        del f[key]
+                f.create_dataset(
+                    key, data=value.astype(new_dtype), **kwargs)
+        except Exception as e:
+            logging.warning(
+                'Could not save field with key = {!r} to hdf5 file: {}'
+                    .format(key, e)
+            )
+
+
+def __write_backed_h5ad(data, whitelist):
+    d = data._to_dict_fixed_width_arrays()
+    h5_file = data.file._file
+    for key, value in d.items():
+        if key in whitelist:
+            _write_key_value_to_h5(h5_file, key, value, compression='gzip')
+
+
+def write_output(data: "MemData or AnnData", output_name: str, whitelist: List = None) -> None:
     """ Write data back to disk.
 
     This function is used to write data back to disk.
@@ -672,7 +763,9 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
         data to write back, can be either an MemData or AnnData object.
     output_name : `str`
         output file name. MemData ends with suffix '.h5sc' and AnnData ends with suffix '.h5ad'. If output_name has no suffix, an appropriate suffix will be appended.
-
+    whitelist : `list`
+        List that indicates changed fields when writing h5ad file in backed mode. For example,
+         ['uns/Groups', 'obsm/PCA'] will only write Groups in uns, and PCA in obsm; the rest of the fields will be unchanged.
     Returns
     -------
     None
@@ -708,18 +801,25 @@ def write_output(data: "MemData or AnnData", output_name: str) -> None:
 
         if output_file_format == 'h5ad':
             import pathlib
-
+            write_partial = False
             output_name = pathlib.Path(output_name)
             if data.isbacked and output_name == data.filename:
                 import h5py
-
                 h5_file = data.file._file
+                write_partial = whitelist is not None and len(whitelist) > 0 and h5_file.h5f.mode == 'r+'
+                if write_partial:
+                    whitelist = set(whitelist)
                 # Fix old h5ad files in which obsm/varm were stored as compound datasets
-                if "obsm" in h5_file.keys() and isinstance(h5_file["obsm"], h5py.Dataset):
-                    del h5_file["obsm"]
-                if "varm" in h5_file.keys() and isinstance(h5_file["varm"], h5py.Dataset):
-                    del h5_file["varm"]
-            data.write(output_name, compression="gzip")
+                for key in ["obsm", "varm"]:
+                    if key in h5_file.keys() and isinstance(h5_file[key], h5py.Dataset):
+                        del h5_file[key]
+                        logging.info('Fixing {} in old h5ad'.format(key))
+                        if write_partial:
+                            whitelist.add(key)
+            if not write_partial:
+                data.write(output_name, compression="gzip")
+            else:
+                __write_backed_h5ad(data, whitelist)
         elif output_file_format == 'loom':
             data.write_loom(output_name, write_obsm_varm=True)
         else:
