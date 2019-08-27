@@ -222,22 +222,15 @@ def infer_cell_types(
     >>> annotate_cluster.infer_cell_types(adata, 'human_immune', 'fisher')
     """
     import pkg_resources
+    predefined_markers = dict(human_immune="human_immune_cell_markers.json",
+        mouse_immune="mouse_immune_cell_markers.json",
+        mouse_brain="mouse_brain_cell_markers.json",
+        human_brain="human_brain_cell_markers.json"
+    )
 
-    if markers == "human_immune":
+    if markers in predefined_markers:
         markers = pkg_resources.resource_filename(
-            "sccloud.annotate_cluster", "human_immune_cell_markers.json"
-        )
-    elif markers == "mouse_immune":
-        markers = pkg_resources.resource_filename(
-            "sccloud.annotate_cluster", "mouse_immune_cell_markers.json"
-        )
-    elif markers == "mouse_brain":
-        markers = pkg_resources.resource_filename(
-            "sccloud.annotate_cluster", "mouse_brain_cell_markers.json"
-        )
-    elif markers == "human_brain":
-        markers = pkg_resources.resource_filename(
-            "sccloud.annotate_cluster", "human_brain_cell_markers.json"
+            "sccloud.annotate_cluster", predefined_markers[markers]
         )
 
     anno = Annotator(markers, data.var_names)
