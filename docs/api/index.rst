@@ -1,6 +1,5 @@
 .. module:: sccloud
 
-.. automodule:: sccloud
 
 API
 ===

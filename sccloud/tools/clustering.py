@@ -25,8 +25,35 @@ def louvain(
     random_state: int = 0,
     class_label: str = "louvain_labels",
 ) -> None:
-    """
-    TODO: Documentation
+    """Cluster the cells using Louvain algorithm.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    resolution: ``int``, optional, default: ``1.3``
+        Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for reproducing results.
+
+    class_label: ``str``, optional, default: ``"louvain_labels"``
+        Key name for storing cluster labels in ``data.obs``.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[class_label]``: Cluster labels of cells as categorical data.
+
+    Examples
+    --------
+    >>> scc.louvain(adata)
     """
 
     start = time.time()
@@ -59,8 +86,38 @@ def leiden(
     random_state: int = 0,
     class_label: str = "leiden_labels",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Cluster the data using Leiden algorithm.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    resolution: ``int``, optional, default: ``1.3``
+        Resolution factor. Higher resolution tends to find more clusters.
+
+    n_iter: ``int``, optional, default: ``-1``
+        Number of iterations that Leiden algorithm runs. If ``-1``, run the algorithm until reaching its optimal clustering.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for reproducing results.
+
+    class_label: ``str``, optional, default: ``"leiden_labels"``
+        Key name for storing cluster labels in ``data.obs``.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[class_label]``: Cluster labels of cells as categorical data.
+
+    Examples
+    --------
+    >>> scc.leiden(adata)
     """
 
     start = time.time()
@@ -194,16 +251,57 @@ def spectral_louvain(
     rep: str = "pca",
     resolution: float = 1.3,
     rep_kmeans: str = "diffmap",
-    n_clusters: str = 30,
+    n_clusters: int = 30,
     n_init: int = 20,
     n_jobs: int = -1,
     random_state: int = 0,
     temp_folder: str = None,
     class_label: str = "spectral_louvain_labels",
 ) -> None:
-    """
-    TODO: Documentation.
-    rep_kmeans: representation to run kmeans, default is diffmap.
+    """ Cluster the data using Spectral Louvain algorithm.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    resolution: ``int``, optional, default: ``1.3``
+        Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
+
+    rep_kmeans: ``str``, optional, default: ``"diffmap"``
+        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates.
+
+    n_clusters: ``int``, optional, default: ``30``
+        The number of clusters set for the KMeans.
+
+    n_init: ``int``, optional, default: ``20``
+        Size of random seeds at initialization.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for reproducing results.
+
+    temp_folder: ``str``, optional, default: ``None``
+        Temporary folder name for joblib to use during the computation.
+
+    class_label: ``str``, optional, default: ``"spectral_louvain_labels"``
+        Key name for storing cluster labels in ``data.obs``.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[class_label]``: Cluster labels for cells as categorical data.
+
+    Examples
+    --------
+    >>> scc.spectral_louvain(adata)
     """
 
     start = time.time()
@@ -246,15 +344,57 @@ def spectral_leiden(
     rep: str = "pca",
     resolution: float = 1.3,
     rep_kmeans: str = "diffmap",
-    n_clusters: str = 30,
+    n_clusters: int = 30,
     n_init: int = 20,
     n_jobs: int = -1,
     random_state: int = 0,
     temp_folder: str = None,
     class_label: str = "spectral_leiden_labels",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Cluster the data using Spectral Leiden algorithm.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    resolution: ``int``, optional, default: ``1.3``
+        Resolution factor. Higher resolution tends to find more clusters.
+
+    rep_kmeans: ``str``, optional, default: ``"diffmap"``
+        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates.
+
+    n_clusters: ``int``, optional, default: ``30``
+        The number of clusters set for the KMeans.
+
+    n_init: ``int``, optional, default: ``20``
+        Size of random seeds at initialization.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for reproducing results.
+
+    temp_folder: ``str``, optional, default: ``None``
+        Temporary folder name for joblib to use during the computation.
+
+    class_label: ``str``, optional, default: ``"spectral_leiden_labels"``
+        Key name for storing cluster labels in ``data.obs``.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[class_label]``: Cluster labels for cells as categorical data.
+
+    Examples
+    --------
+    >>> scc.spectral_leiden(adata)
     """
 
     start = time.time()

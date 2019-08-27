@@ -249,8 +249,49 @@ def tsne(
     random_state: int = 0,
     out_basis: str = "tsne",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Calculate tSNE embedding using MulticoreTSNE_ package.
+
+    .. _MulticoreTSNE: https://github.com/DmitryUlyanov/Multicore-TSNE
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    n_components: ``int``, optional, default: ``2``
+        Dimension of calculated tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
+
+    perplexity: ``float``, optional, default: ``30``
+        The perplexity is related to the number of nearest neighbors used in other manifold learning algorithms. Larger datasets usually require a larger perplexity.
+
+    early_exaggeration: ``int``, optional, default: ``12``
+        Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
+
+    learning_rate: ``float``, optional, default: ``1000``
+        The learning rate can be a critical parameter, which should be between 100 and 1000.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    out_basis: ``str``, optional, default: ``"tsne"``
+        Key name for calculated tSNE coordinates to store.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: tSNE coordinates of the data.
+
+    Examples
+    --------
+    >>> scc.tsne(adata)
     """
     start = time.time()
     rep = update_rep(rep)
@@ -281,8 +322,49 @@ def fitsne(
     random_state: int = 0,
     out_basis: str = "fitsne",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Calculate FIt-SNE embedding using fitsne_ package.
+
+    .. _fitsne: https://github.com/KlugerLab/FIt-SNE
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    n_components: ``int``, optional, default: ``2``
+        Dimension of calculated FI-tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
+
+    perplexity: ``float``, optional, default: ``30``
+        The perplexity is related to the number of nearest neighbors used in other manifold learning algorithms. Larger datasets usually require a larger perplexity.
+
+    early_exaggeration: ``int``, optional, default: ``12``
+        Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
+
+    learning_rate: ``float``, optional, default: ``1000``
+        The learning rate can be a critical parameter, which should be between 100 and 1000.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    out_basis: ``str``, optional, default: ``"fitsne"``
+        Key name for calculated FI-tSNE coordinates to store.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: FI-tSNE coordinates of the data.
+
+    Examples
+    --------
+    >>> scc.fitsne(adata)
     """
     start = time.time()
 
@@ -313,8 +395,46 @@ def umap(
     random_state: int = 0,
     out_basis: str = "umap",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Calculate UMAP embedding using umap-learn_ package.
+
+    .. _umap-learn: https://github.com/lmcinnes/umap
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    n_components: ``int``, optional, default: ``2``
+        Dimension of calculated UMAP coordinates. By default, generate 2-dimensional data for 2D visualization.
+
+    n_neighbors: ``int``, optional, default: ``15``
+        Number of nearest neighbors considered during the computation.
+
+    min_dist: ``float``, optional, default: ``0.5``
+        The effective minimum distance between embedded data points.
+
+    spread: ``float``, optional, default: ``1.0``
+        The effective scale of embedded data points.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    out_basis: ``str``, optional, default: ``"umap"``
+        Key name for calculated UMAP coordinates to store.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: UMAP coordinates of the data.
+
+    Examples
+    --------
+    >>> scc.umap(adata)
     """
     start = time.time()
 
@@ -361,9 +481,60 @@ def fle(
     random_state: int = 0,
     out_basis: str = "fle",
 ) -> None:
-    """
-    TODO: Documentation.
-    if file_name == None, use uuid to generate random file name
+    """Construct the Force-directed (FLE) graph using ForceAtlas2_ implementation, with Python wrapper as forceatlas2-python_.
+
+    .. _ForceAtlas2: https://github.com/klarman-cell-observatory/forceatlas2
+    .. _forceatlas2-python: https://github.com/klarman-cell-observatory/forceatlas2-python
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    file_name: ``str``, optional, default: ``None``
+        Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``uuid`` to generate random file name.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    rep: ``str``, optional, default: ``"diffmap"``
+        Representation of data used for the calculation. By default, use Diffusion Map coordinates. If ``None``, use the count matrix ``data.X``.
+
+    K: ``int``, optional, default: ``50``
+        Number of nearest neighbors to be considered during the computation.
+
+    full_speed: ``bool``, optional, default: ``False``
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * Otherwise, use only one thread to make sure results are reproducible.
+
+    target_change_per_node: ``float``, optional, default: ``2.0``
+        Target change per node to stop ForceAtlas2.
+
+    target_steps: ``int``, optional, default: ``5000``
+        Maximum number of iterations before stopping the ForceAtlas2 algorithm.
+
+    is3d: ``bool``, optional, default: ``False``
+        If ``True``, calculate 3D force-directed layout.
+
+    memory: ``int``, optional, default: ``8``
+        Memory size in GB for the Java FA2 component. By default, use 8GB memory.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    out_basis: ``str``, optional, default: ``"fle"``
+        Key name for calculated FLE coordinates to store.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: FLE coordinates of the data.
+
+    Examples
+    --------
+    >>> scc.fle(adata)
     """
     start = time.time()
 
@@ -457,8 +628,72 @@ def net_tsne(
     polish_n_iter: int = 150,
     out_basis: str = "net_tsne",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Calculate approximated tSNE embedding using Deep Learning model to improve the speed.
+
+    In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells (``n_obs``) and columns for genes (``n_feature``).
+
+    rep: ``str``, optional, default: ``"pca"``
+        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    n_components: ``int``, optional, default: ``2``
+        Dimension of calculated tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
+
+    perplexity: ``float``, optional, default: ``30``
+        The perplexity is related to the number of nearest neighbors used in other manifold learning algorithms. Larger datasets usually require a larger perplexity.
+
+    early_exaggeration: ``int``, optional, default: ``12``
+        Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
+
+    learning_rate: ``float``, optional, default: ``1000``
+        The learning rate can be a critical parameter, which should be between 100 and 1000.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    select_frac: ``float``, optional, default: ``0.1``
+        Down sampling fraction on the cells.
+
+    select_K: ``int``, optional, default: ``25``
+        Number of neighbors to be used to estimate local density for each data point for down sampling.
+
+    select_alpha: ``float``, optional, default: ``1.0``
+        Weight the down sample to be proportional to ``radius ** select_alpha``.
+
+    net_alpha: ``float``, optional, default: ``0.1``
+        L2 penalty (regularization term) parameter of the deep regressor.
+
+    polish_learning_frac: ``float``, optional, default: ``0.33``
+        After running the deep regressor to predict new coordinates, use ``polish_learning_frac`` * ``n_obs`` as the learning rate to polish the coordinates.
+
+    polish_n_iter: ``int``, optional, default: ``150``
+        Number of iterations for polishing tSNE run.
+
+    out_basis: ``str``, optional, default: ``"net_tsne"``
+        Key name for the approximated tSNE coordinates calculated.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: Net tSNE coordinates of the data.
+
+    Update ``data.obs``:
+        * ``data.obs['ds_selected']``: Boolean array to indicate which cells are selected during the down sampling phase.
+
+    Examples
+    --------
+    >>> scc.net_tsne(adata)
     """
     start = time.time()
 
@@ -537,8 +772,72 @@ def net_fitsne(
     polish_n_iter: int = 150,
     out_basis: "str" = "net_fitsne",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Calculate approximated FI-tSNE embedding using Deep Learning model to improve the speed.
+
+    In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells (``n_obs``) and columns for genes (``n_feature``).
+
+    rep: ``str``, optional, default: ``"pca"``
+        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    n_components: ``int``, optional, default: ``2``
+        Dimension of calculated tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
+
+    perplexity: ``float``, optional, default: ``30``
+        The perplexity is related to the number of nearest neighbors used in other manifold learning algorithms. Larger datasets usually require a larger perplexity.
+
+    early_exaggeration: ``int``, optional, default: ``12``
+        Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
+
+    learning_rate: ``float``, optional, default: ``1000``
+        The learning rate can be a critical parameter, which should be between 100 and 1000.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    select_frac: ``float``, optional, default: ``0.1``
+        Down sampling fraction on the cells.
+
+    select_K: ``int``, optional, default: ``25``
+        Number of neighbors to be used to estimate local density for each data point for down sampling.
+
+    select_alpha: ``float``, optional, default: ``1.0``
+        Weight the down sample to be proportional to ``radius ** select_alpha``.
+
+    net_alpha: ``float``, optional, default: ``0.1``
+        L2 penalty (regularization term) parameter of the deep regressor.
+
+    polish_learning_frac: ``float``, optional, default: ``0.5``
+        After running the deep regressor to predict new coordinates, use ``polish_learning_frac`` * ``n_obs`` as the learning rate to polish the coordinates.
+
+    polish_n_iter: ``int``, optional, default: ``150``
+        Number of iterations for polishing FI-tSNE run.
+
+    out_basis: ``str``, optional, default: ``"net_fitsne"``
+        Key name for the approximated FI-tSNE coordinates calculated.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: Net FI-tSNE coordinates of the data.
+
+    Update ``data.obs``:
+        * ``data.obs['ds_selected']``: Boolean array to indicate which cells are selected during the down sampling phase.
+
+    Examples
+    --------
+    >>> scc.net_fitsne(adata)
     """
     start = time.time()
 
@@ -618,8 +917,73 @@ def net_umap(
     polish_n_epochs: int = 30,
     out_basis: str = "net_umap",
 ) -> None:
-    """
-    TODO: Documentation.
+    """Calculate approximated UMAP embedding using Deep Learning model to improve the speed.
+
+    In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: ``str``, optional, default: ``"pca"``
+        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    n_components: ``int``, optional, default: ``2``
+        Dimension of calculated UMAP coordinates. By default, generate 2-dimensional data for 2D visualization.
+
+    n_neighbors: ``int``, optional, default: ``15``
+        Number of nearest neighbors considered during the computation.
+
+    min_dist: ``float``, optional, default: ``0.1``
+        The effective minimum distance between embedded data points.
+
+    spread: ``float``, optional, default: ``1.0``
+        The effective scale of embedded data points.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    select_frac: ``float``, optional, default: ``0.1``
+        Down sampling fraction on the cells.
+
+    select_K: ``int``, optional, default: ``25``
+        Number of neighbors to be used to estimate local density for each data point for down sampling.
+
+    select_alpha: ``float``, optional, default: ``1.0``
+        Weight the down sample to be proportional to ``radius ** select_alpha``.
+
+    full_speed: ``bool``, optional, default: ``False``
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * Otherwise, use only one thread to make sure results are reproducible.
+
+    net_alpha: ``float``, optional, default: ``0.1``
+        L2 penalty (regularization term) parameter of the deep regressor.
+
+    polish_learning_frac: ``float``, optional, default: ``10.0``
+        After running the deep regressor to predict new coordinates, use ``polish_learning_frac`` * ``n_obs`` as the learning rate to polish the coordinates.
+
+    polish_n_iter: ``int``, optional, default: ``30``
+        Number of iterations for polishing UMAP run.
+
+    out_basis: ``str``, optional, default: ``"net_umap"``
+        Key name for calculated UMAP coordinates to store.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: Net UMAP coordinates of the data.
+
+    Update ``data.obs``:
+        * ``data.obs['ds_selected']``: Boolean array to indicate which cells are selected during the down sampling phase.
+
+    Examples
+    --------
+    >>> scc.net_umap(adata)
     """
     start = time.time()
 
@@ -727,9 +1091,79 @@ def net_fle(
     polish_target_steps: int = 1500,
     out_basis: str = "net_fle",
 ) -> None:
-    """
-    TODO: Documentation.
-    If file_name is None, file_name = str(uuid.uuid4())
+    """Construct the approximated Force-directed (FLE) graph using Deep Learning model to improve the speed.
+
+    In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    file_name: ``str``, optional, default: ``None``
+        Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``uuid`` to generate random file name.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    rep: ``str``, optional, default: ``"diffmap"``
+        Representation of data used for the calculation. By default, use Diffusion Map coordinates. If ``None``, use the count matrix ``data.X``.
+
+    K: ``int``, optional, default: ``50``
+        Number of nearest neighbors to be considered during the computation.
+
+    full_speed: ``bool``, optional, default: ``False``
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * Otherwise, use only one thread to make sure results are reproducible.
+
+    target_change_per_node: ``float``, optional, default: ``2.0``
+        Target change per node to stop ForceAtlas2.
+
+    target_steps: ``int``, optional, default: ``5000``
+        Maximum number of iterations before stopping the ForceAtlas2 algorithm.
+
+    is3d: ``bool``, optional, default: ``False``
+        If ``True``, calculate 3D force-directed layout.
+
+    memory: ``int``, optional, default: ``8``
+        Memory size in GB for the Java FA2 component. By default, use 8GB memory.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    select_frac: ``float``, optional, default: ``0.1``
+        Down sampling fraction on the cells.
+
+    select_K: ``int``, optional, default: ``25``
+        Number of neighbors to be used to estimate local density for each data point for down sampling.
+
+    select_alpha: ``float``, optional, default: ``1.0``
+        Weight the down sample to be proportional to ``radius ** select_alpha``.
+
+    net_alpha: ``float``, optional, default: ``0.1``
+        L2 penalty (regularization term) parameter of the deep regressor.
+
+    polish_target_steps: ``int``, optional, default: ``1500``
+        After running the deep regressor to predict new coordinate, Number of ForceAtlas2 iterations.
+
+    out_basis: ``str``, optional, default: ``"net_fle"``
+        Key name for calculated FLE coordinates to store.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_basis]``: Net FLE coordinates of the data.
+
+    Update ``data.obs``:
+        * ``data.obs['ds_selected']``: Boolean array to indicate which cells are selected during the down sampling phase.
+
+    Examples
+    --------
+    >>> scc.net_fle(adata)
     """
     start = time.time()
 

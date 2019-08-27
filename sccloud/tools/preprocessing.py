@@ -370,7 +370,7 @@ def select_features(data: "AnnData", features: str = None) -> str:
         Annotated data matrix with rows for cells and columns for genes.
 
     features: ``str``, optional, default: ``None``. 
-        a keyword in ``data.var``, which refers to a boolean array. None refers to all features
+        a keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
 
     Returns
     -------

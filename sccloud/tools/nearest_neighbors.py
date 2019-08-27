@@ -209,23 +209,33 @@ def neighbors(
     Parameters
     ----------
 
-    data : `AnnData`
-        An AnnData object.
-    K : `int`, optional (default: 100)
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    K: ``int``, optional, default: ``100``
         Number of neighbors, including the data point itself.
-    rep : `str`, optional (default: 'pca')
-        Representation used to calculate kNN. Use `None` use data.X
-    n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads
-    random_state: `int`, optional (default: 0)
-        Random seed for random number generator.
-    full_speed: `bool`, optional (default: False)
-        If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+
+    rep: ``str``, optional, default: ``"pca"``
+        Embedding representation used to calculate kNN. If ``None``, use ``data.X``; otherwise, keyword ``'X_' + rep`` must exist in ``data.obsm``.
+    
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+    
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+    
+    full_speed: ``bool``, optional, default: ``False``
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * Otherwise, use only one thread to make sure results are reproducible.
 
     Returns
     -------
+    ``None``
 
-    kNN indices and distances arrays.
+    Update ``data.uns``:
+        * ``data.uns[rep + "_knn_indices"]``: kNN index matrix. Row i is the index list of kNN of cell i (excluding itself), sorted from nearest to farthest.
+        * ``data.uns[rep + "_knn_distances"]``: kNN distance matrix. Row i is the distance list of kNN of cell i (excluding itselt), sorted from smallest to largest.
+        * ``data.uns["W_" + rep]``: kNN graph of the data in terms of affinity matrix.
 
     Examples
     --------
@@ -289,13 +299,52 @@ def calc_kBET(
     random_state: int = 0,
     temp_folder: str = None,
 ) -> Tuple[float, float, float]:
-    """
-    TODO: Documentation
-    This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [M. Büttner, et al.] in Nature Methods, 2018.
+    """Calculate the kBET metric of the data w.r.t. a specific sample attribute and embedding.
 
-    :return:
-        stat_mean: average chi-square statistic over all the data points.
-        pvalue_mean: average p-value over all the data points.
+    This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [Büttner18]_ in Nature Methods, 2018.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    attr: ``str``
+        The sample attribute to consider. Must exist in ``data.obs``.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation to be used. The key ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    K: ``int``, optional, default: ``25``
+        Number of nearest neighbors, using L2 metric.
+
+    alpha: ``float``, optional, default: ``0.05``
+        Acceptance rate threshold. A cell is accepted if its kBET p-value is greater than or equal to ``alpha``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads used. If ``-1``, use all available threads.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    temp_folder: ``str``, optional, default: ``None``
+        Temporary folder for joblib execution.
+
+    Returns
+    -------
+    stat_mean: ``float``
+        Mean kBET chi-square statistic over all cells.
+
+    pvalue_mean: ``float``
+        Mean kBET p-value over all cells.
+
+    accept_rate: ``float``
+        kBET Acceptance rate of the sample.
+
+    Examples
+    --------
+    >>> scc.calc_kBET(adata, attr = 'Channel')
+
+    >>> scc.calc_kBET(adata, attr = 'Channel', rep = 'umap')
     """
     assert attr in data.obs
     if data.obs[attr].dtype.name != "category":
@@ -353,9 +402,46 @@ def calc_kSIM(
     n_jobs: int = -1,
     random_state: int = 0,
 ) -> Tuple[float, float]:
-    """
-    TODO: Documentation.
-    This kSIM metric measures if attr are not diffused too much
+    """Calculate the kSIM metric of the data w.r.t. a specific sample attribute and embedding.
+
+    This kSIM metric measures if attr are not diffused too much.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    attr: ``str``
+        The sample attribute to consider. Must exist in ``data.obs``.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation to consider. The key ``'X_' + rep`` must exist in ``data.obsm``.
+
+    K: ``int``, optional, default: ``25``
+        The number of nearest neighbors to be considered.
+
+    min_rate: ``float``, optional, default: ``0.9``
+        Acceptance rate threshold. A cell is accepted if its kSIM rate is larger than or equal to ``min_rate``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads used. If ``-1``, use all available threads.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    Returns
+    -------
+    kSIM_mean: ``float``
+        Mean kSIM rate over all the cells.
+
+    kSIM_accept_rate: ``float``
+        kSIM Acceptance rate of the sample.
+
+    Examples
+    --------
+    >>> scc.calc_kSIM(adata, attr = 'cell_type')
+
+    >>> scc.calc_kSIM(adata, attr = 'cell_type', rep = 'umap')
     """
     assert attr in data.obs
     nsample = data.shape[0]
