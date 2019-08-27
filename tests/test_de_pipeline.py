@@ -6,9 +6,9 @@ from .test_util import assert_excel_equal
 
 
 class TestDePipeline(unittest.TestCase):
-    def tearDown(self):
-        os.path.exists("test_de.xlsx") and os.remove("test_de.xlsx")
-        os.path.exists("test_de.h5ad") and os.remove("test_de.h5ad")
+    # def tearDown(self):
+    #     os.path.exists("test_de.xlsx") and os.remove("test_de.xlsx")
+    #     os.path.exists("test_de.h5ad") and os.remove("test_de.h5ad")
 
     def test_de_analysis(self):
         # de_analysis modifies h5ad file
@@ -24,6 +24,7 @@ class TestDePipeline(unittest.TestCase):
                 "--fisher",
                 "--mwu",
                 "--auc",
+                "--t",
                 "--labels",
                 "leiden_labels",
             ]
