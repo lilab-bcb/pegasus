@@ -64,6 +64,16 @@ class TestRead(unittest.TestCase):
         adata2 = scc.read_input("test_obsm_compound.h5ad")
         assert_adata_equal(self, adata, adata2)
 
+    def test_read_write_old_5ad_backed_whitelist(self):
+        shutil.copy(
+            "tests/scCloud-test-data/input/test_obsm_compound.h5ad",
+            "test_obsm_compound.h5ad",
+        )
+        adata = scc.read_input("test_obsm_compound.h5ad", h5ad_mode="r+")
+        scc.write_output(adata, "test_obsm_compound.h5ad", whitelist=['obs'])
+        adata2 = scc.read_input("test_obsm_compound.h5ad")
+        assert_adata_equal(self, adata, adata2)
+
 
 if __name__ == "__main__":
     unittest.main()
