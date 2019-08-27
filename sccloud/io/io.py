@@ -217,7 +217,6 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         format_type = "dropEst"
     else:
         raise ValueError('Unknown format type')
-    print(format_type)
     if format_type == "HCA DCP":
         barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=0)
         assert "cellkey" in barcode_metadata
@@ -661,7 +660,7 @@ def read_input(
     return data
 
 
-def _write_key_value_to_h5(f, key, value, **kwargs):
+def _write_key_value_to_h5(f, key, value, whitelist, **kwargs):
     import h5py
     from collections.abc import Mapping
     from scipy.sparse import issparse
@@ -674,7 +673,7 @@ def _write_key_value_to_h5(f, key, value, **kwargs):
                     'using string keys is recommended'
                         .format(k)
                 )
-            _write_key_value_to_h5(f, key + '/' + str(k), v, **kwargs)
+            _write_key_value_to_h5(f, key + '/' + str(k), v, whitelist=whitelist, **kwargs)
         return
 
     def preprocess_writing(value):
@@ -686,12 +685,13 @@ def _write_key_value_to_h5(f, key, value, **kwargs):
         # make sure string format is chosen correctly
         if value.dtype.kind == 'U': value = value.astype(h5py.special_dtype(vlen=str))
         return value
-
+    if key not in whitelist:
+        return
     value = preprocess_writing(value)
 
     # FIXME: for some reason, we need the following for writing string arrays
-    if key in f.keys() and value is not None: del f[key]
 
+    if key in f.keys() and value is not None: del f[key]
     # ignore arrays with empty dtypes
     if value is None or not value.dtype.descr:
         return
@@ -743,12 +743,11 @@ def _write_key_value_to_h5(f, key, value, **kwargs):
             )
 
 
-def __write_backed_h5ad(data, whitelist):
+def __update_backed_h5ad(data, whitelist):
     d = data._to_dict_fixed_width_arrays()
     h5_file = data.file._file
     for key, value in d.items():
-        if key in whitelist:
-            _write_key_value_to_h5(h5_file, key, value, compression='gzip')
+        _write_key_value_to_h5(h5_file, key, value, compression='gzip', whitelist=whitelist)
 
 
 def write_output(data: "MemData or AnnData", output_name: str, whitelist: List = None) -> None:
@@ -812,14 +811,15 @@ def write_output(data: "MemData or AnnData", output_name: str, whitelist: List =
                 # Fix old h5ad files in which obsm/varm were stored as compound datasets
                 for key in ["obsm", "varm"]:
                     if key in h5_file.keys() and isinstance(h5_file[key], h5py.Dataset):
+                        if write_partial:
+                            for name in h5_file[key].dtype.names:
+                                whitelist.add(key + '/' + str(name))
                         del h5_file[key]
                         logging.info('Fixing {} in old h5ad'.format(key))
-                        if write_partial:
-                            whitelist.add(key)
             if not write_partial:
                 data.write(output_name, compression="gzip")
             else:
-                __write_backed_h5ad(data, whitelist)
+                __update_backed_h5ad(data, whitelist)
         elif output_file_format == 'loom':
             data.write_loom(output_name, write_obsm_varm=True)
         else:
