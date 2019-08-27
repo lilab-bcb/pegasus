@@ -22,7 +22,7 @@ def get_anndata_for_subclustering(data: "AnnData", subset_selections: List[str])
     obs_index = np.full(data.shape[0], True)
     subsets_dict = parse_subset_selections(subset_selections)
     for key, value in subsets_dict.items():
-        logger.info(key, "corresponds to", value)
+        logger.info("{} in {}".format(str(key), str(value)))
         obs_index = obs_index & np.isin(data.obs[key], value)
     data = data[obs_index, :]
 
