@@ -28,8 +28,39 @@ def find_markers(
     random_state: int = 0,
     remove_ribo: bool = False,
 ) -> Dict[str, Dict[str, List[str]]]:
-    """
-    TODO: Documentation.
+    """Find markers using gradient boosting method.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    label_attr: ``str``
+        Cluster labels used for finding markers. Must exist in ``data.obs``.
+
+    de_key: ``str``, optional, default: ``"de_res"``
+        Keyword of DE analysis result stored in ``data.varm``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to used. If ``-1``, use all available threads.
+
+    min_gain: ``float``, optional, default: ``1.0``
+        Only report genes with a feature importance score (in gain) of at least ``min_gain``.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    remove_ribo: ``bool``, optional, default: ``False``
+        If ``True``, remove ribosomal genes with either RPL or RPS as prefixes.
+
+    Returns
+    -------
+    markers: ``Dict[str, Dict[str, List[str]]]``
+        A Python dictionary containing marker information in structure ``dict[cluster_id]['up' or 'down'][dataframe]``.
+
+    Examples
+    --------
+    >>> marker_dict = scc.find_markers(adata, label_attr = 'leiden_labels')
     """
     start = time.time()
 

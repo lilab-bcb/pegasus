@@ -110,7 +110,42 @@ def scp_write_expression(data, output_name, is_sparse=True, round_to=2):
         write_dense_matrix(expr_file, data, round_to)
 
 
-def run_scp_output(input_h5ad_file, output_name, is_sparse, round_to):
+def run_scp_output(input_h5ad_file: str, output_name: str, is_sparse: bool = True, round_to: int = 2):
+    """Generate outputs for single cell portal.
+
+    Parameters
+    ----------
+    input_h5ad_file: ``str``
+        Input h5ad file name.
+
+    output_name: ``str``
+        Name prefix for output files.
+
+    is_sparse: ``bool``, optional, default: ``True``
+        If ``True``, enforce the count matrix to be sparse after written into files.
+
+    round_to: ``int``, optional, default: ``2``
+        Round numbers to ``round_to`` decimal places.
+
+    Returns
+    -------
+    ``None``
+
+    Generate several files:
+        * ``output_name.scp.basis.coords.txt``, where ``basis`` is for each key in ``adata.obsm`` field.
+        * ``output_name.scp.metadata.txt``.
+        * Gene expression files:
+            * If in sparse format: 
+                * ``output_name.scp.features.tsv``, information on genes;
+                * ``output_name.scp.barcodes.tsv``, information on cell barcodes;
+                * ``output_name.scp.matrix.mtx``, count matrix.
+            * If not in sparse: 
+                * ``output_name.scp.expr.txt``.
+
+    Examples
+    --------
+    >>> scc.run_scp_output("result.h5ad", output_name = "scp_result")
+    """
     adata = read_input(input_h5ad_file, h5ad_mode="a")
     start = time.time()
     scp_write_coords(adata, output_name)
