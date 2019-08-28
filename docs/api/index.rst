@@ -11,7 +11,7 @@ API
 Analysis Tools
 --------------
 
-.. currentmodule :: sccloud
+.. module:: sccloud
 
 Read and Write
 ~~~~~~~~~~~~~~
