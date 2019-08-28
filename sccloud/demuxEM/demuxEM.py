@@ -7,7 +7,28 @@ import multiprocessing
 from sklearn.cluster import KMeans
 
 
-def estimate_background_probs(adt, random_state=0):
+def estimate_background_probs(adt: "AnnData", random_state: int = 0):
+    """For cell-hashing data, estimate antibody background probability using EM algorithm.
+
+    Parameters
+    ----------
+    adt: ``anndata.AnnData``
+        Annotated data matrix for antibody.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``adt.uns``:
+        * ``adt.uns["background_probs"]``: estimated antibody background probability.
+
+    Example
+    -------
+    >>> scc.estimate_background_probs(adt)
+    """
     adt.obs["counts"] = adt.X.sum(axis=1).A1 if adt.shape[1] > 1 else adt.X
     counts_log10 = np.log10(adt.obs["counts"].values.reshape(-1, 1))
     kmeans = KMeans(n_clusters=2, random_state=random_state).fit(counts_log10)
@@ -98,8 +119,50 @@ def calc_demux(data, adt, nsample, min_signal, probs="raw_probs"):
 
 
 def demultiplex(
-    data, adt, min_signal=10.0, alpha=0.0, alpha_noise=1.0, tol=1e-6, n_threads=1
+    data: "AnnData",
+    adt: "AnnData",
+    min_signal: float = 10.0,
+    alpha: float = 0.0,
+    alpha_noise: float = 1.0,
+    tol: float = 1e-6,
+    n_threads: int = 1,
 ):
+    """Demultiplexing cell-hashing data, using the estimated antibody background probability calculated in ``scc.estimate_background_probs``.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix for gene expression matrix.
+
+    adt: ``anndata.AnnData``
+        Annotated data matrix for antibody count matrix.
+
+    min_signal: ``float``, optional, default: ``10.0``
+        Any cell/nucleus with less than ``min_signal`` hashtags from the signal will be marked as ``unknown``.
+
+    alpha: ``float``, optional, default: ``0.0``
+        The Dirichlet prior concentration parameter (alpha) on samples. An alpha value < 1.0 will make the prior sparse.
+
+    alpha_noise: ``float``, optional, default: ``1.0``
+
+    tol: ``float``, optional, default: ``1e-6``
+        Tolerance threshold when judging equivalence of two floating point values.
+
+    n_threads: ``int``, optional, default: ``1``
+        Number of threads to use. Must be a positive integer.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs["demux_type"]``: Demultiplexed types of the cells. Either ``singlet``, ``doublet``, or ``unknown``.
+        * ``data.obs["assignment"]``: Assignment of each cell to droplet.
+
+    Examples
+    --------
+    >>> scc.demultiplex(adata, adt)
+    """
     start = time.time()
 
     nsample = adt.shape[1]
