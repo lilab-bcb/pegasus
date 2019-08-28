@@ -368,6 +368,6 @@ def run_pipeline(input_file, output_name, **kwargs):
     io.write_output(adata, output_name)
 
     if kwargs["output_loom"]:
-        adata.write_loom(output_name + ".loom")
+        io.write_output(adata, output_name + ".loom")
 
     print("Results are written.")
