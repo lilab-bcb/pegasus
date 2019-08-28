@@ -660,7 +660,6 @@ def read_input(
     return data
 
 
-
 def _parse_whitelist(whitelist: List[str]):
     parse_results = {}
     for value in whitelist:
@@ -672,14 +671,16 @@ def _parse_whitelist(whitelist: List[str]):
         curr_dict[tokens[-1]] = None
     return parse_results
 
+
 def _update_backed_h5ad(group: 'hdf5 group', dat: dict, whitelist: dict):
     import h5py
     from collections.abc import Mapping
-    
+
+
     for key, value in dat.items():
         if not isinstance(key, str):
             logging.warning('Dictionary key {} is transformed to str upon writing to h5,'
-                'using string keys is recommended'.format(key))
+                            'using string keys is recommended'.format(key))
             key = str(key)
 
         if whitelist is None or key in whitelist:
@@ -689,8 +690,8 @@ def _update_backed_h5ad(group: 'hdf5 group', dat: dict, whitelist: dict):
                 _update_backed_h5ad(subgroup, value, whitelist[key] if whitelist is not None else None)
             else:
                 value = np.array(value) if np.ndim(value) > 0 else np.array([value])
-                sdt = h5py.special_dtype(vlen = str)
-                if value.dtype.kind == 'U': 
+                sdt = h5py.special_dtype(vlen=str)
+                if value.dtype.kind == 'U':
                     value = value.astype(sdt)
                 if value.dtype.names is not None:
                     new_dtype = value.dtype.descr
@@ -702,8 +703,7 @@ def _update_backed_h5ad(group: 'hdf5 group', dat: dict, whitelist: dict):
                     if hasU: value = value.astype(new_dtype)
                 if key in group.keys():
                     del group[key]
-                group.create_dataset(key, data = value, compression = "gzip")
-
+                group.create_dataset(key, data=value, compression="gzip")
 
 
 def write_output(data: "MemData or AnnData", output_file: str, whitelist: List = []) -> None:
@@ -748,7 +748,7 @@ def write_output(data: "MemData or AnnData", output_file: str, whitelist: List =
     output_file = file_name + '.' + suffix
 
     # Eliminate objects starting with fmat_ from uns
-    if isinstance(data, anndata.AnnData):    
+    if isinstance(data, anndata.AnnData):
         keys = list(data.uns)
         for keyword in keys:
             if keyword.startswith("fmat_"):
@@ -758,9 +758,9 @@ def write_output(data: "MemData or AnnData", output_file: str, whitelist: List =
     if suffix == 'h5sc':
         data.write_h5_file(output_file)
     elif suffix == 'loom':
-        data.write_loom(output_file, write_obsm_varm = True)
-    elif not data.isbacked:
-        data.write(output_file, compression = "gzip")
+        data.write_loom(output_file, write_obsm_varm=True)
+    elif not data.isbacked or (data.isbacked and data.file._file.h5f.mode != 'r+'):
+        data.write(output_file, compression="gzip")
     else:
         assert data.file._file.h5f.mode == 'r+'
         import h5py
