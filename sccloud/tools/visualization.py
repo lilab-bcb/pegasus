@@ -447,10 +447,10 @@ def umap(
         raise ValueError("Please run neighbors first!")
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
         X,
@@ -492,7 +492,7 @@ def fle(
         Annotated data matrix with rows for cells and columns for genes.
 
     file_name: ``str``, optional, default: ``None``
-        Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``uuid`` to generate random file name.
+        Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``tempfile.mkstemp`` to generate file name.
 
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all available threads.
@@ -504,7 +504,7 @@ def fle(
         Number of nearest neighbors to be considered during the computation.
 
     full_speed: ``bool``, optional, default: ``False``
-        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
     target_change_per_node: ``float``, optional, default: ``2.0``
@@ -539,7 +539,8 @@ def fle(
     start = time.time()
 
     if file_name is None:
-        file_name = str(uuid.uuid4())
+        import tempfile
+        _, file_name = tempfile.mkstemp()
 
     n_jobs = effective_n_jobs(n_jobs)
     rep = update_rep(rep)
@@ -956,7 +957,7 @@ def net_umap(
         Weight the down sample to be proportional to ``radius ** select_alpha``.
 
     full_speed: ``bool``, optional, default: ``False``
-        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
     net_alpha: ``float``, optional, default: ``0.1``
@@ -1019,10 +1020,10 @@ def net_umap(
     data.uns[ds_distances_key] = distances
 
     knn_indices = np.insert(
-        data.uns[ds_indices_key][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
+        data.uns[ds_indices_key][:, 0: n_neighbors - 1], 0, range(X.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[ds_distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[ds_distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
 
     X_umap = calc_umap(
@@ -1048,10 +1049,10 @@ def net_umap(
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
     )
 
     data.obsm["X_" + out_basis] = calc_umap(
@@ -1103,7 +1104,7 @@ def net_fle(
         Annotated data matrix with rows for cells and columns for genes.
 
     file_name: ``str``, optional, default: ``None``
-        Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``uuid`` to generate random file name.
+        Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``tempfile.mkstemp`` to generate file name.
 
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all available threads.
@@ -1115,7 +1116,7 @@ def net_fle(
         Number of nearest neighbors to be considered during the computation.
 
     full_speed: ``bool``, optional, default: ``False``
-        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
     target_change_per_node: ``float``, optional, default: ``2.0``
@@ -1168,7 +1169,9 @@ def net_fle(
     start = time.time()
 
     if file_name is None:
-        file_name = str(uuid.uuid4())
+        if file_name is None:
+            import tempfile
+            _, file_name = tempfile.mkstemp()
 
     n_jobs = effective_n_jobs(n_jobs)
     rep = update_rep(rep)
