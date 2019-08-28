@@ -18,23 +18,28 @@ def search_genes(
     Parameters
     ----------
 
-    data : `anndata` object
-        An `anndata` object containing the expression matrix and differential expression results.
-    gene_list : `list[str]`
+    data: ``anndata.AnnData``
+        Annotated data matrix containing the expression matrix and differential expression results.
+
+    gene_list: ``List[str]``
         A list of gene symbols.
-    rec_key : `str`
-        varm keyword that stores DE results.
-    measure : `str`
-        Can be either `percentage` or `mean_logExpr`. `percentage` shows the percentage of cells expressed the genes and `mean_logExpr` shows the mean log expression.
+
+    rec_key: ``str``, optional, default: ``"de_res"``
+        Keyword of DE analysis result stored in ``data.varm``.
+
+    measure : ``str``, optional, default: ``"percentage"``
+        Can be either ``"percentage"`` or ``"mean_logExpr"``:
+            * ``percentage`` shows the percentage of cells expressed the genes;
+            * ``mean_logExpr`` shows the mean log expression.
 
     Returns
     -------
-    `pandas.DataFrame`
+    ``pandas.DataFrame``
         A data frame containing marker expressions in each cluster.
 
     Examples
     --------
-    >>> results = misc.search_genes(data, ['CD3E', 'CD4', 'CD8'], measure = 'percentage')
+    >>> results = scc.search_genes(adata, ['CD3E', 'CD4', 'CD8'])
     """
 
     columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(measure + ":")]
@@ -50,34 +55,43 @@ def search_de_genes(
     de_alpha: float = 0.05,
     thre: float = 1.5,
 ) -> pd.DataFrame:
-    """Extract and display differential expression analysis results of markers for each cluster from an `anndata` object.
+    """Extract and display differential expression analysis results of markers for each cluster.
 
-    This function helps to see if markers are up or down regulated in each cluster via the interactive python environment. `++` indicates up-regulated and fold change >= threshold, `+` indicates up-regulated but fold change < threshold, `--` indicates down-regulated and fold change <= 1 / threshold, `-` indicates down-regulated but fold change > 1 / threshold, '?' indicates not differentially expressed.
+    This function helps to see if markers are up or down regulated in each cluster via the interactive python environment: 
+        * ``++`` indicates up-regulated and fold change >= threshold;
+        * ``+`` indicates up-regulated but fold change < threshold;
+        * ``--`` indicates down-regulated and fold change <= 1 / threshold; 
+        * ``-`` indicates down-regulated but fold change > 1 / threshold;
+        * ``?`` indicates not differentially expressed.
 
     Parameters
     ----------
+    data: ``anndata.Anndata``
+        Annotated data matrix containing the expression matrix and differential expression results.
 
-    data : `anndata` object
-        An `anndata` object containing the expression matrix and differential expression results.
-    gene_list : `list[str]`
+    gene_list: ``List[str]``
         A list of gene symbols.
-    rec_key : `str`
-        varm keyword that stores DE results.
-    de_test : `str`, optional (default: `fisher`)
-        Differential expression test to look at, could be either `t`, `fisher` or `mwu`.
-    de_alpha : `float`, optional (default: 0.05)
+
+    rec_key: ``str``, optional, default: ``"de_res"``
+        Keyword of DE analysis result stored in ``data.varm``.
+
+    de_test : ``str``, optional, default: ``"fisher"``
+        Differential expression test to look at, could be either ``t``, ``fisher`` or ``mwu``.
+
+    de_alpha : ``float``, optional, default: ``0.05``
         False discovery rate.
-    thre : `float`, optional (default: `1.5`)
-        Fold change threshold to determine if the marker is a strong DE (`++` or `--`) or weak DE (`+` or `-`).
+
+    thre : ``float``, optional, default: ``1.5``
+        Fold change threshold to determine if the marker is a strong DE (``++`` or ``--``) or weak DE (``+`` or ``-``).
 
     Returns
     -------
-    `pandas.DataFrame`
+    ``pandas.DataFrame``
         A data frame containing marker differential expression results for each cluster.
 
     Examples
     --------
-    >>> results = sccloud.misc.search_de_genes(data, ['CD3E', 'CD4', 'CD8'], de_test = 'fisher', thre = 2.0)
+    >>> df = sccloud.misc.search_de_genes(adata, ['CD3E', 'CD4', 'CD8'], thre = 2.0)
     """
 
     columns = [

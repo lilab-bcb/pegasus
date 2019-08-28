@@ -17,7 +17,7 @@ requires = [
     "statsmodels",
     "natsort",
     "anndata",
-    "numba<0.44.0",
+    "numba",
     "numpy",
     "tables",
     "xlsxwriter",

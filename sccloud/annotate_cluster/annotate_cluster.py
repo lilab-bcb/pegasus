@@ -219,30 +219,41 @@ def infer_cell_types(
     Parameters
     ----------
 
-    data : `AnnData`
+    data : ``anndata.AnnData``
         AnnData object.
-    markers : `str`
-        A JSON file containing legacy markers or a python dictionary describing the markers. If you want to use predefined sccloud markers, use 'human_immune' for human immune cells, 'mouse_immune' for mouse immune cells, 'human_brain' for human brain cells, and 'mouse_brain' for mouse brain cells.
-    de_test: `str`,
-        sccloud determines cell types using DE test results. This argument indicates which DE test result to use, can be either 't', 'fisher' or 'mwu'.
-    de_alpha: `float`, optional (default: 0.05)
+
+    markers : ``str`` or ``Dict``
+        * If ``str``, it 
+            * either refers to a JSON file containing legacy markers, or
+            * ``'human_immune'`` for predefined sccloud markers on human immune cells;
+            * ``'mouse_immune'`` for mouse immune cells;
+            * ``'human_brain'`` for human brain cells;
+            * ``'mouse_brain'`` for mouse brain cells.
+        * If ``Dict``, it refers to a Python dictionary describing the markers.
+
+    de_test: ``str``
+        sccloud determines cell types using DE test results. This argument indicates which DE test result to use, can be either ``'t'``, ``'fisher'`` or ``'mwu'``.
+
+    de_alpha: ``float``, optional, default: ``0.05``
         False discovery rate for controling family-wide error.
-    de_key : `str`, optional (default: de_res)
-        The keyword in varm that stores DE results.
-    threshold : `float`, optional (defaut: 0.5)
-        Only report putative cell types with a score larger than threshold.
-    ignore_nonde: `bool`, optional (default: False)
+
+    de_key : ``str``, optional, default: ``"de_res"``
+        The keyword in ``data.varm`` that stores DE analysis results.
+
+    threshold : ``float``, optional, defaut: ``0.5``
+        Only report putative cell types with a score larger than or equal to ``threshold``.
+
+    ignore_nonde: ``bool``, optional, default: ``False``
         Do not consider non DE genes as weak negative markers.
 
     Returns
     -------
-
-    List of inferred cell types per cluster
+    ``cell_type_results``: ``List[Dict]``
+        A list of inferred cell types, one dictionary per cluster.
 
     Examples
     --------
-
-    >>> annotate_cluster.infer_cell_types(adata, 'human_immune', 'fisher')
+    >>> annotate_cluster.infer_cell_types(adata, markers = 'human_immune', de_test = 'fisher')
     """
 
     predefined_markers = dict(human_immune="human_immune_cell_markers.json",

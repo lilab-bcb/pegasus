@@ -11,8 +11,26 @@ logger = logging.getLogger("sccloud")
 
 
 def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
-    """
-    TODO: documentation.
+    """Calculate Pseudotime based on Diffusion Map.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    roots: ``List[str]``
+        List of cell barcodes in the data.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs["pseudotime"]``: Pseudotime result.
+
+    Examples
+    --------
+    >>> scc.calc_pseudotime(adata, roots = list(adata.obs_names[0:100]))
     """
     start = time.time()
 
@@ -61,7 +79,37 @@ def bfs_on_mst(G, root_id):
     return parents
 
 
-def infer_path(data, cluster, clust_id, path_name, k: int = 10):
+def infer_path(data: "AnnData", cluster: str, clust_id, path_name: str, k: int = 10):
+    """Inference on path of a cluster.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    cluster: ``str``
+        Cluster name. Must exist in ``data.obs``.
+
+    clust_id
+        Cluster label. Must be a value of ``data.obs[cluster]``.
+
+    path_name: ``str``
+        Key name of the resulting path information.
+
+    k: ``int``, optional, default: ``10``
+        Number of nearest neighbors on Diffusion Map coordinates used in path reference.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[path_name]``: The inferred path information on Diffusion Map about a specific cluster.
+
+    Examples
+    --------
+    >>> scc.infer_path(adata, cluster = 'leiden_labels', clust_id = '1', path_name = 'leiden_1_path')
+    """
     assert "roots" in data.uns and len(data.uns["roots"]) == 1
     root_id = int(np.isin(data.obs_names, data.uns["roots"][0]).nonzero()[0][0])
     indices = data.uns["diffmap_knn_indices"]
