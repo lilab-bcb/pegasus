@@ -905,7 +905,7 @@ def net_umap(
     n_jobs: int = -1,
     n_components: int = 2,
     n_neighbors: int = 15,
-    min_dist: float = 0.1,
+    min_dist: float = 0.5,
     spread: float = 1.0,
     random_state: int = 0,
     select_frac: float = 0.1,
@@ -937,7 +937,7 @@ def net_umap(
     n_neighbors: ``int``, optional, default: ``15``
         Number of nearest neighbors considered during the computation.
 
-    min_dist: ``float``, optional, default: ``0.1``
+    min_dist: ``float``, optional, default: ``0.5``
         The effective minimum distance between embedded data points.
 
     spread: ``float``, optional, default: ``1.0``
