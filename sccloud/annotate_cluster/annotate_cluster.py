@@ -179,28 +179,39 @@ class Annotator:
         return output_results
 
     def report(
-        self, fout: "output stream", results, thre: float, space: int = 4
+        self, fout: "output stream", ct_list, thre: float, space: int = 4
     ) -> None:
         """ Write putative cell type reports to fout.
         """
-        for ct in results:
+        for ct in ct_list:
             if ct.score >= thre:
                 fout.write(" " * space + str(ct) + "\n")
                 if ct.subtypes is not None:
                     self.report(fout, ct.subtypes, 0.5, space + 4)
 
 
-def infer_cluster_names(cell_type_results):
-    cluster_ids = natsorted(cell_type_results.keys())
+def infer_cluster_names(cell_type_dict, threshold: float = 0.5):
+    cluster_ids = natsorted(cell_type_dict.keys())
     names = []
-    unique_names = set()
+    name_dict = dict()
     for cluster_id in cluster_ids:
-        results = cell_type_results[cluster_id]
-        name = results[0]['cell_type'].name if len(results) > 0 else cluster_id
-        if name in unique_names:
-            name = name + '-' + str(cluster_id)
-        unique_names.add(name)
-        names.append(name)
+        ct_list = cell_type_dict[cluster_id]
+        
+        if len(ct_list) == 0 or ct_list[0].score < threshold:
+            cell_name = cluster_id
+        else:
+            ct = ct_list[0]
+            while ct.subtypes is not None and ct.subtypes[0].score >= threshold:
+                ct = ct.subtypes[0]
+            cell_name = ct.name
+
+            if cell_name in name_dict:
+                name_dict[cell_name] += 1
+                cell_name = cell_name + '-' + str(name_dict[cell_name])
+            else:
+                name_dict[cell_name] = 1
+
+        names.append(cell_name)
 
     return names
 
@@ -212,8 +223,9 @@ def infer_cell_types(
     de_alpha: float = 0.05,
     de_key: str = "de_res",
     threshold: float = 0.5,
-    ignore_nonde: bool = False
-) -> List[Dict]:
+    ignore_nonde: bool = False,
+    output_file: str = None,
+) -> Dict:
     """Infer putative cell types for each cluster using legacy markers
 
     Parameters
@@ -255,6 +267,9 @@ def infer_cell_types(
     --------
     >>> annotate_cluster.infer_cell_types(adata, markers = 'human_immune', de_test = 'fisher')
     """
+
+    if output_file is not None:
+        fout = open(output_file, 'w')
 
     predefined_markers = dict(human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
@@ -309,13 +324,22 @@ def infer_cell_types(
 
         results = anno.evaluate(de_up, de_down, ignore_nonde=ignore_nonde)
 
-        output_results = []
-        anno.gather(results, output_results, threshold, 1)
-        # sort descending by score, type_level
-        output_results = sorted(output_results, key=lambda x: (x['cell_type'].score, x['type_level']), reverse=True)
-        cell_type_results[clust_id] = output_results
-        # fout.write("Cluster {0}:\n".format(clust_id))
-        # anno.report(fout, results, threshold)
+        if output_file is not None:
+            fout.write("Cluster {}:\n".format(clust_id))
+            anno.report(fout, results, threshold)
+
+        #output_results = []
+        #anno.gather(results, output_results, threshold, 1)
+        ## sort descending by score, type_level
+        #output_results = sorted(output_results, key=lambda x: (x['cell_type'].score, x['type_level']), reverse=True)
+        #cell_type_results[clust_id] = output_results
+        cell_type_results[clust_id] = results
+        ## fout.write("Cluster {0}:\n".format(clust_id))
+        ## anno.report(fout, results, threshold)
+
+    if output_file is not None:
+        fout.close()
+
     return cell_type_results
 
 
@@ -366,22 +390,16 @@ def run_annotate_cluster(
     start = time.time()
     data = read_input(input_file, h5ad_mode="r")
     with open(output_file, "w") as fout:
-        results = infer_cell_types(
+        infer_cell_types(
             data,
             marker_file,
             de_test,
             de_alpha=de_alpha,
             de_key=de_key,
             threshold=threshold,
-            ignore_nonde=ignore_nonde
+            ignore_nonde=ignore_nonde,
+            output_file = output_file
         )
-        for cluster_id in results:
-            fout.write('Cluster {}:\n'.format(cluster_id))
-            cluster_results = results[cluster_id]
-            for cluster_result in cluster_results:
-                fout.write('- ' + str(cluster_result['cell_type']) + '; type level {}'.format(
-                    cluster_result['type_level']) + '\n')
-
     data.file.close()
     end = time.time()
     logger.info("Time spent for annotating clusters is {:.2f}s.".format(end - start))
