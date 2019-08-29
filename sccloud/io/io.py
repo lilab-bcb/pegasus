@@ -216,7 +216,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
     elif barcode_base.endswith(".cells.tsv") and feature_base.endswith(".genes.tsv"):
         format_type = "dropEst"
     else:
-        raise ValueError('Unknown format type')
+        raise ValueError("Unknown format type")
     if format_type == "HCA DCP":
         barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=0)
         assert "cellkey" in barcode_metadata
@@ -242,8 +242,8 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         elif format_type == "scumi":
             values = (
                 pd.read_csv(feature_file, sep="\t", header=None)
-                    .iloc[:, 0]
-                    .values.astype(str)
+                .iloc[:, 0]
+                .values.astype(str)
             )
             arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
             feature_metadata = pd.DataFrame(
@@ -255,7 +255,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
             )
             feature_metadata["featurename"] = feature_metadata["featurekey"]
         else:
-            raise ValueError('Unknown format type')
+            raise ValueError("Unknown format type")
 
     array2d = Array2D(barcode_metadata, feature_metadata, mat)
     array2d.filter(ngene=ngene)
@@ -663,7 +663,7 @@ def read_input(
 def _parse_whitelist(whitelist: List[str]):
     parse_results = {}
     for value in whitelist:
-        tokens = value.split('/')
+        tokens = value.split("/")
         curr_dict = parse_results
         for i in range(len(tokens) - 1):
             curr_dict[tokens[i]] = dict()
@@ -672,41 +672,49 @@ def _parse_whitelist(whitelist: List[str]):
     return parse_results
 
 
-def _update_backed_h5ad(group: 'hdf5 group', dat: dict, whitelist: dict):
+def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
     import h5py
     from collections.abc import Mapping
 
-
     for key, value in dat.items():
         if not isinstance(key, str):
-            logging.warning('Dictionary key {} is transformed to str upon writing to h5,'
-                            'using string keys is recommended'.format(key))
+            logging.warning(
+                "Dictionary key {} is transformed to str upon writing to h5,"
+                "using string keys is recommended".format(key)
+            )
             key = str(key)
 
         if whitelist is None or key in whitelist:
             if isinstance(value, Mapping):
-                subgroup = group[key] if key in group.keys() else group.create_group(key)
+                subgroup = (
+                    group[key] if key in group.keys() else group.create_group(key)
+                )
                 assert isinstance(subgroup, h5py.Group)
-                _update_backed_h5ad(subgroup, value, whitelist[key] if whitelist is not None else None)
+                _update_backed_h5ad(
+                    subgroup, value, whitelist[key] if whitelist is not None else None
+                )
             else:
                 value = np.array(value) if np.ndim(value) > 0 else np.array([value])
                 sdt = h5py.special_dtype(vlen=str)
-                if value.dtype.kind == 'U':
+                if value.dtype.kind == "U":
                     value = value.astype(sdt)
                 if value.dtype.names is not None:
                     new_dtype = value.dtype.descr
                     hasU = False
                     for i in range(len(value.dtype)):
-                        if value.dtype[i].kind == 'U':
+                        if value.dtype[i].kind == "U":
                             new_dtype[i] = (new_dtype[i][0], sdt)
                             hasU = True
-                    if hasU: value = value.astype(new_dtype)
+                    if hasU:
+                        value = value.astype(new_dtype)
                 if key in group.keys():
                     del group[key]
                 group.create_dataset(key, data=value, compression="gzip")
 
 
-def write_output(data: "MemData or AnnData", output_file: str, whitelist: List = []) -> None:
+def write_output(
+    data: "MemData or AnnData", output_file: str, whitelist: List = []
+) -> None:
     """ Write data back to disk.
 
     This function is used to write data back to disk.
@@ -733,19 +741,26 @@ def write_output(data: "MemData or AnnData", output_file: str, whitelist: List =
     start = time.time()
 
     if (not isinstance(data, MemData)) and (not isinstance(data, anndata.AnnData)):
-        raise ValueError('data is neither an MemData nor AnnData object!')
+        raise ValueError("data is neither an MemData nor AnnData object!")
 
     # Identify and correct file suffix
-    file_name, _, suffix = output_file.partition('.')
-    if suffix == '':
-        suffix = 'h5sc' if isinstance(data, MemData) else 'h5ad'
-    if isinstance(data, MemData) and suffix != 'h5sc':
-        logging.warning("MemData object must save in a file ends with .h5sc! Suffix is modified.")
-        suffix = 'h5sc'
-    if isinstance(data, anndata.AnnData) and (suffix not in ['h5ad', 'loom']):
-        logging.warning("AnnData object must save in a h5ad or loom file! Suffix is modified as h5ad.")
-        suffix = 'h5ad'
-    output_file = file_name + '.' + suffix
+    file_name, _, suffix = output_file.rpartition(".")
+    if file_name == "":
+        file_name = output_file
+        suffix = "h5sc" if isinstance(data, MemData) else "h5ad"
+    if isinstance(data, MemData) and suffix != "h5sc":
+        logging.warning(
+            "Detected file suffix for this MemData object is not .h5sc. We will assume output_file is a file name and append .h5sc suffix."
+        )
+        file_name = output_file
+        suffix = "h5sc"
+    if isinstance(data, anndata.AnnData) and (suffix not in ["h5ad", "loom"]):
+        logging.warning(
+            "Detected file suffix for this AnnData object is neither .h5ad or .loom. We will assume output_file is a file name and append .h5ad suffix."
+        )
+        file_name = output_file
+        suffix = "h5ad"
+    output_file = file_name + "." + suffix
 
     # Eliminate objects starting with fmat_ from uns
     if isinstance(data, anndata.AnnData):
@@ -755,14 +770,14 @@ def write_output(data: "MemData or AnnData", output_file: str, whitelist: List =
                 data.uns.pop(keyword)
 
     # Write outputs
-    if suffix == 'h5sc':
+    if suffix == "h5sc":
         data.write_h5_file(output_file)
-    elif suffix == 'loom':
+    elif suffix == "loom":
         data.write_loom(output_file, write_obsm_varm=True)
-    elif not data.isbacked or (data.isbacked and data.file._file.h5f.mode != 'r+'):
+    elif not data.isbacked or (data.isbacked and data.file._file.h5f.mode != "r+"):
         data.write(output_file, compression="gzip")
     else:
-        assert data.file._file.h5f.mode == 'r+'
+        assert data.file._file.h5f.mode == "r+"
         import h5py
 
         h5_file = data.file._file.h5f
@@ -772,7 +787,9 @@ def write_output(data: "MemData or AnnData", output_file: str, whitelist: List =
                 del h5_file[key]
                 whitelist.append(key)
 
-        _update_backed_h5ad(h5_file, data._to_dict_fixed_width_arrays(), _parse_whitelist(whitelist))
+        _update_backed_h5ad(
+            h5_file, data._to_dict_fixed_width_arrays(), _parse_whitelist(whitelist)
+        )
         h5_file.close()
 
     end = time.time()

@@ -67,7 +67,7 @@ from scplot import (
     embedding,
     composition_plot,
     variable_feature_plot,
-    volcano
+    volcano,
 )
 
 from ._version import get_versions

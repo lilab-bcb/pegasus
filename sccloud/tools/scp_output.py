@@ -110,7 +110,9 @@ def scp_write_expression(data, output_name, is_sparse=True, round_to=2):
         write_dense_matrix(expr_file, data, round_to)
 
 
-def run_scp_output(input_h5ad_file: str, output_name: str, is_sparse: bool = True, round_to: int = 2):
+def run_scp_output(
+    input_h5ad_file: str, output_name: str, is_sparse: bool = True, round_to: int = 2
+):
     """Generate outputs for single cell portal.
 
     Parameters

@@ -1005,8 +1005,12 @@ def run_de_analysis(
         verbose=verbose,
     )
 
-    write_output(data, input_file, whitelist=['varm/{}'.format(result_key)])
-    logger.info("Differential expression results are written to varm/{} in h5ad file.".format(result_key))
+    write_output(data, input_file, whitelist=["varm/{}".format(result_key)])
+    logger.info(
+        "Differential expression results are written to varm/{} in h5ad file.".format(
+            result_key
+        )
+    )
 
     results = markers(data, de_key=result_key, alpha=alpha)
 

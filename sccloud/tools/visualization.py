@@ -447,10 +447,10 @@ def umap(
         raise ValueError("Please run neighbors first!")
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
     data.obsm["X_" + out_basis] = calc_umap(
         X,
@@ -540,6 +540,7 @@ def fle(
 
     if file_name is None:
         import tempfile
+
         _, file_name = tempfile.mkstemp()
 
     n_jobs = effective_n_jobs(n_jobs)
@@ -1020,10 +1021,10 @@ def net_umap(
     data.uns[ds_distances_key] = distances
 
     knn_indices = np.insert(
-        data.uns[ds_indices_key][:, 0: n_neighbors - 1], 0, range(X.shape[0]), axis=1
+        data.uns[ds_indices_key][:, 0 : n_neighbors - 1], 0, range(X.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[ds_distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[ds_distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
     X_umap = calc_umap(
@@ -1049,10 +1050,10 @@ def net_umap(
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
     knn_indices = np.insert(
-        data.uns[indices_key][:, 0: n_neighbors - 1], 0, range(data.shape[0]), axis=1
+        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
     )
     knn_dists = np.insert(
-        data.uns[distances_key][:, 0: n_neighbors - 1], 0, 0.0, axis=1
+        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
     )
 
     data.obsm["X_" + out_basis] = calc_umap(
@@ -1171,6 +1172,7 @@ def net_fle(
     if file_name is None:
         if file_name is None:
             import tempfile
+
             _, file_name = tempfile.mkstemp()
 
     n_jobs = effective_n_jobs(n_jobs)

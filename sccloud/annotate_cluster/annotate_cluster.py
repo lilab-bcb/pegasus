@@ -168,7 +168,11 @@ class Annotator:
         return results
 
     def report(
-        self, fout: "output stream", ct_list: List["CellType"], thre: float, space: int = 4
+        self,
+        fout: "output stream",
+        ct_list: List["CellType"],
+        thre: float,
+        space: int = 4,
     ) -> None:
         """ Write putative cell type reports to fout.
         """
@@ -180,8 +184,7 @@ class Annotator:
 
 
 def infer_cluster_names(
-    cell_type_dict: Dict[str, List["CellType"]], 
-    threshold: float = 0.5
+    cell_type_dict: Dict[str, List["CellType"]], threshold: float = 0.5
 ) -> List[str]:
     """Decide cluster names based on cell types automatically.
 
@@ -208,7 +211,7 @@ def infer_cluster_names(
     name_dict = dict()
     for cluster_id in cluster_ids:
         ct_list = cell_type_dict[cluster_id]
-        
+
         if len(ct_list) == 0 or ct_list[0].score < threshold:
             cell_name = cluster_id
         else:
@@ -219,7 +222,7 @@ def infer_cluster_names(
 
             if cell_name in name_dict:
                 name_dict[cell_name] += 1
-                cell_name = cell_name + '-' + str(name_dict[cell_name])
+                cell_name = cell_name + "-" + str(name_dict[cell_name])
             else:
                 name_dict[cell_name] = 1
 
@@ -284,16 +287,18 @@ def infer_cell_types(
     """
 
     if output_file is not None:
-        fout = open(output_file, 'w')
+        fout = open(output_file, "w")
 
-    predefined_markers = dict(human_immune="human_immune_cell_markers.json",
+    predefined_markers = dict(
+        human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
         mouse_brain="mouse_brain_cell_markers.json",
-        human_brain="human_brain_cell_markers.json"
+        human_brain="human_brain_cell_markers.json",
     )
 
     if markers in predefined_markers:
         import pkg_resources
+
         markers = pkg_resources.resource_filename(
             "sccloud.annotate_cluster", predefined_markers[markers]
         )
@@ -343,9 +348,8 @@ def infer_cell_types(
             fout.write("Cluster {}:\n".format(clust_id))
             anno.report(fout, results, threshold)
 
-        
         cell_type_results[clust_id] = results
-        
+
     if output_file is not None:
         fout.close()
 
@@ -406,7 +410,7 @@ def run_annotate_cluster(
         de_key=de_key,
         threshold=threshold,
         ignore_nonde=ignore_nonde,
-        output_file = output_file
+        output_file=output_file,
     )
     data.file.close()
     end = time.time()
