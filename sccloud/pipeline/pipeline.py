@@ -362,10 +362,10 @@ def run_pipeline(input_file, output_name, **kwargs):
         seurat_data.uns["scale.data.rownames"] = adata.var_names[
             adata.var["highly_variable_features"]
         ].values
-        io.write_output(seurat_data, output_name + ".seurat")
+        io.write_output(seurat_data, output_name + ".seurat.h5ad")
 
     # write out results
-    io.write_output(adata, output_name)
+    io.write_output(adata, output_name + ".h5ad")
 
     if kwargs["output_loom"]:
         io.write_output(adata, output_name + ".loom")
