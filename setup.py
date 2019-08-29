@@ -11,7 +11,7 @@ requires = [
     "matplotlib>=2.0.0",
     "pandas>=0.21",
     "Cython",
-    "scipy<1.3",
+    "scipy",
     "seaborn",
     "scikit-learn>=0.21.3",
     "statsmodels",
