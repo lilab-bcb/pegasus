@@ -42,7 +42,7 @@ Options:
 
   --diffmap                                        Calculate diffusion maps.
   --diffmap-ndc <number>                           Number of diffusion components. [default: 50]
-  --diffmap-alpha <alpha>                          Power parameter for diffusion-based pseudotime. [default: 0.5]
+  --diffmap-t <t>                                  Diffmap T.
   --diffmap-solver <solver>                        Solver for eigen decomposition, either 'randomized' or 'eigsh'. [default: randomized]
   --diffmap-to-3d                                  If map diffusion map into 3D space using PCA.
   --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
@@ -144,7 +144,7 @@ Examples:
             "kBET_K": int(self.args["--kBET-K"]),
             "diffmap": self.args["--diffmap"],
             "diffmap_ndc": int(self.args["--diffmap-ndc"]),
-            "diffmap_alpha": float(self.args["--diffmap-alpha"]),
+            "diffmap_t": self.convert_to_float(self.args["--diffmap-t"]),
             "diffmap_solver": self.args["--diffmap-solver"],
             "diffmap_to_3d": self.args["--diffmap-to-3d"],
             "pseudotime": self.split_string(self.args["--calculate-pseudotime"]),

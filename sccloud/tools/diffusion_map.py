@@ -28,8 +28,8 @@ def calculate_normalized_affinity(
 
 
 def calculate_diffusion_map(
-    W: "csr_matrix", n_components: int, alpha: float, solver: str, random_state: int
-) -> Tuple["np.array", "np.array"]:
+    W: "csr_matrix", n_components: int, t: float, solver: str, random_state: int
+) -> Tuple["np.array", "np.array", "np.array"]:
     assert issparse(W)
 
     nc, labels = connected_components(W, directed=True, connection="strong")
@@ -59,19 +59,22 @@ def calculate_diffusion_map(
     U = U[:, 1:]
 
     Phi = U / diag_half[:, np.newaxis]
-    Lambda_new = Lambda / (1 - alpha * Lambda)
+    if t is None:
+        Lambda_new = Lambda / (1 - Lambda)
+    else:
+        Lambda_new = Lambda / (1 - Lambda) * (1 - Lambda ** t)
 
     # U_df = U * Lambda #symmetric diffusion component
     Phi_pt = Phi * Lambda_new  # asym pseudo component
 
-    return Phi_pt, Lambda  # , U_df, W_norm
+    return Phi_pt, Lambda, Phi  # , U_df, W_norm
 
 
 def diffmap(
     data: "AnnData",
     n_components: int = 50,
     rep: str = "pca",
-    alpha: float = 0.5,
+    t: float = None,
     solver: str = "randomized",
     random_state: int = 0,
 ) -> None:
@@ -88,8 +91,8 @@ def diffmap(
     rep: ``str``, optional, default: ``"pca"``
         Embedding Representation of data used for calculating the Diffusion Map. By default, use PCA coordinates.
 
-    alpha: ``float``, optional, default: ``0.5``
-        Power parameter for diffusion-based pseudotime.
+    t: ``float``, optional, default: None
+        Sum until time step t.
 
     solver: ``str``, optional, default: ``"randomized"``
         Solver for eigen decomposition:
@@ -116,16 +119,17 @@ def diffmap(
 
     start = time.time()
     rep = update_rep(rep)
-    Phi_pt, Lambda = calculate_diffusion_map(
+    Phi_pt, Lambda, Phi = calculate_diffusion_map(
         W_from_rep(data, rep),
         n_components=n_components,
-        alpha=alpha,
+        t=t,
         solver=solver,
         random_state=random_state,
     )
 
     data.obsm["X_diffmap"] = Phi_pt
     data.uns["diffmap_evals"] = Lambda
+    data.obsm["X_phi"] = Phi
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 

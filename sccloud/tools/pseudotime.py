@@ -54,6 +54,14 @@ def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
     logger.info("calc_pseudotime finished. Time spent = {:.2f}s".format(end - start))
 
 
+
+def calc_diffmap_dis(data: "AnnData", source: str, t: int, save_to: str) -> None:
+    mask = np.isin(data.obs_names, source)
+    diffmap = data.obsm["X_phi"] * (data.uns["diffmap_evals"] ** t)
+    dis = euclidean_distances(diffmap[mask, :], diffmap)[0,:]
+    data.obs[save_to] = 1.0 - dis
+
+
 def construct_knn_graph(indices, distances):
     G = igraph.Graph(directed=False)
     G.add_vertices(indices.shape[0])

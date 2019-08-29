@@ -302,6 +302,8 @@ def plot_scatter(
     legend_fontsize=None,
     apply_to_all=True,
     show_background=False,
+    vmin=0.0,
+    vmax=1.0,
 ):
     df = pd.DataFrame(
         data.obsm["X_" + basis][:, 0:2], columns=[basis + c for c in ["1", "2"]]
@@ -348,7 +350,7 @@ def plot_scatter(
                         cmap="viridis",
                         rasterized=True,
                     )
-
+                    img.set_clim(vmin, vmax)
                     left, bottom, width, height = ax.get_position().bounds
                     rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
                     ax_colorbar = fig.add_axes(rect)

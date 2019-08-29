@@ -132,7 +132,7 @@ def run_pipeline(input_file, output_name, **kwargs):
                 adata,
                 n_components=kwargs["diffmap_ndc"],
                 rep="pca",
-                alpha=kwargs["diffmap_alpha"],
+                t=kwargs["diffmap_t"],
                 solver=kwargs["diffmap_solver"],
                 random_state=kwargs["random_state"],
             )
