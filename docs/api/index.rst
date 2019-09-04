@@ -1,5 +1,7 @@
 .. module:: sccloud
 
+.. automodule:: sccloud
+    :noindex:
 
 API
 ===
@@ -11,7 +13,6 @@ API
 Analysis Tools
 --------------
 
-.. module:: sccloud
 
 Read and Write
 ~~~~~~~~~~~~~~
