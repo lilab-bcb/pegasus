@@ -135,6 +135,7 @@ def run_pipeline(input_file, output_name, **kwargs):
                 t=kwargs["diffmap_t"],
                 solver=kwargs["diffmap_solver"],
                 random_state=kwargs["random_state"],
+                max_t=kwargs["max_t"],
             )
             if kwargs["diffmap_to_3d"]:
                 tools.reduce_diffmap_to_3d(adata, random_state=kwargs["random_state"])

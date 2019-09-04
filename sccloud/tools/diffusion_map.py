@@ -5,9 +5,10 @@ import logging
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
+from scipy.stats import entropy
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
-from typing import Tuple
+from typing import List, Tuple
 
 from sccloud.tools import update_rep, W_from_rep
 
@@ -27,8 +28,33 @@ def calculate_normalized_affinity(
     return W_norm, diag, diag_half
 
 
+def calc_von_neumann_entropy(lambdas: List[float], t: float) -> float:
+    etas = 1.0 - lambdas ** t
+    etas = etas / etas.sum()
+    return entropy(etas)
+
+
+def find_knee_point(x: List[float], y: List[float]) -> int:
+    """ Return the knee point, which is defined as the point furthest from line between two end points
+    """
+    p1 = np.array((x[0], y[0]))
+    p2 = np.array((x[-1], y[-1]))
+    length_p12 = np.linalg.norm(p2 - p1)
+
+    max_dis = 0.0
+    knee = 0
+    for cand_knee in range(1, len(x) - 1):
+        p3 = np.array((x[cand_knee], y[cand_knee]))
+        dis = np.linalg.norm(np.cross(p2 - p1, p3 - p1)) / length_p12
+        if max_dis < dis:
+            max_dis = dis
+            knee = cand_knee
+
+    return knee
+
+
 def calculate_diffusion_map(
-    W: "csr_matrix", n_components: int, t: float, solver: str, random_state: int
+    W: "csr_matrix", n_components: int, solver: str, random_state: int, max_t: int
 ) -> Tuple["np.array", "np.array", "np.array"]:
     assert issparse(W)
 
@@ -40,31 +66,33 @@ def calculate_diffusion_map(
     W_norm, diag, diag_half = calculate_normalized_affinity(W)
     logger.info("Calculating normalized affinity matrix is done.")
 
-    if solver == "randomized":
-        U, S, VT = randomized_svd(
-            W_norm, n_components=n_components, random_state=random_state
-        )
-        signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
-        Lambda = signs * S  # get eigenvalues
-    else:
-        assert solver == "eigsh"
+    if solver == "eigsh":
         np.random.seed(random_state)
         v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
         Lambda, U = eigsh(W_norm, k=n_components, v0=v0)
         Lambda = Lambda[::-1]
         U = U[:, ::-1]
-
+    else:
+        assert solver == "randomized"
+        U, S, VT = randomized_svd(
+            W_norm, n_components=n_components, random_state=random_state
+        )
+        signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
+        Lambda = signs * S  # get eigenvalues
+        
     # remove the first eigen value and vector
     Lambda = Lambda[1:]
     U = U[:, 1:]
-
     Phi = U / diag_half[:, np.newaxis]
-    if t is None:
-        Lambda_new = Lambda / (1 - Lambda)
-    else:
-        Lambda_new = Lambda / (1 - Lambda) * (1 - Lambda ** t)
+
+    # Find the knee point 
+    x = np.array(range(1, max_t + 1), dtype = float)
+    y = np.array([calc_von_neumann_entropy(Lambda, t) for t in x])
+    t = x[find_knee_point(x, y)]
+    logger.info("Detected knee point at t = {:.0f}.".format(t))
 
     # U_df = U * Lambda #symmetric diffusion component
+    Lambda_new = Lambda * ((1.0 - Lambda ** t) / (1.0 - Lambda)) 
     Phi_pt = Phi * Lambda_new  # asym pseudo component
 
     return Phi_pt, Lambda, Phi  # , U_df, W_norm
@@ -74,9 +102,9 @@ def diffmap(
     data: "AnnData",
     n_components: int = 50,
     rep: str = "pca",
-    t: float = None,
-    solver: str = "randomized",
+    solver: str = "eigsh",
     random_state: int = 0,
+    max_t: float = 2000,
 ) -> None:
     """Calculate Diffusion Map.
 
@@ -91,16 +119,16 @@ def diffmap(
     rep: ``str``, optional, default: ``"pca"``
         Embedding Representation of data used for calculating the Diffusion Map. By default, use PCA coordinates.
 
-    t: ``float``, optional, default: None
-        Sum until time step t.
-
-    solver: ``str``, optional, default: ``"randomized"``
+    solver: ``str``, optional, default: ``"eigsh"``
         Solver for eigen decomposition:
-            * ``"randomized"``: default setting. Use *scikit-learn* `randomized_svd <https://scikit-learn.org/stable/modules/generated/sklearn.utils.extmath.randomized_svd.html>`_ as the solver to calculate a truncated randomized SVD.
-            * ``"eigsh"``: Use *scipy* `eigsh <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_ as the solver to find eigenvalus and eigenvectors using the Implicitly Restarted Lanczos Method.
+            * ``"eigsh"``: default setting. Use *scipy* `eigsh <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_ as the solver to find eigenvalus and eigenvectors using the Implicitly Restarted Lanczos Method.
+            * ``"randomized"``: Use *scikit-learn* `randomized_svd <https://scikit-learn.org/stable/modules/generated/sklearn.utils.extmath.randomized_svd.html>`_ as the solver to calculate a truncated randomized SVD.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
+
+    max_t: ``float``, optional, default: 2000
+        scCloud tries to determine the best t to sum up to between [1, max_t].
 
     Returns
     -------
@@ -125,6 +153,7 @@ def diffmap(
         t=t,
         solver=solver,
         random_state=random_state,
+        max_t = max_t,
     )
 
     data.obsm["X_diffmap"] = Phi_pt
