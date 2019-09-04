@@ -96,7 +96,6 @@ Cluster algorithms
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud.tools
 .. currentmodule:: sccloud
 
 .. autosummary::
