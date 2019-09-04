@@ -17,6 +17,8 @@ Analysis Tools
 Read and Write
 ~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -26,6 +28,8 @@ Read and Write
 
 Preprocess
 ~~~~~~~~~~
+
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -42,6 +46,8 @@ Preprocess
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -50,6 +56,8 @@ Batch Correction
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -60,6 +68,8 @@ Nearest Neighbors
 
 Diffusion Map
 ~~~~~~~~~~~~~
+
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -73,6 +83,8 @@ Diffusion Map
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -83,6 +95,9 @@ Cluster algorithms
 
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. module:: sccloud.tools
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -99,6 +114,8 @@ Visualization Algorithms
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -110,6 +127,8 @@ Differential Expression Analysis
 Write single-cell-portal-formatted outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -117,6 +136,8 @@ Write single-cell-portal-formatted outputs
 
 Annotate clusters:
 ------------------
+
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -130,6 +151,8 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -142,6 +165,8 @@ Interactive Plots
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -152,6 +177,8 @@ Quality Control Plots
 Demultiplexing
 --------------
 
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
@@ -161,6 +188,8 @@ Demultiplexing
 
 Miscellaneous
 -------------
+
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
