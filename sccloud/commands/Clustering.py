@@ -37,8 +37,8 @@ Options:
   --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: 100]
   --max-umis <number>                              Only keep cells with less than <number> of UMIs. [default: 600000]
   --mito-prefix <prefix>                           Prefix for mitochondrial genes. If multiple prefixes are provided, separate them by comma (e.g. "MT-,mt-"). [default: MT-]
-  --percent-mito <ratio>                           Only keep cells with mitochondrial ratio less than <ratio>. [default: 0.1]
-  --gene-percent-cells <ratio>                     Only use genes that are expressed in at <ratio> * 100 percent of cells to select variable genes. [default: 0.0005]
+  --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>. [default: 10.0]
+  --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent> percent of cells to select variable genes. [default: 0.05]
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
 

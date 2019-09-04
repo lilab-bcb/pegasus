@@ -19,11 +19,11 @@ def qc_metrics(
     max_genes: int = 6000,
     min_umis: int = 100,
     max_umis: int = 600000,
-    percent_mito: float = 0.1,
-    percent_cells: float = 0.0005,
+    percent_mito: float = 10.0,
+    percent_cells: float = 0.05,
 ) -> None:
     """Generate Quality Control (QC) metrics on the dataset.
-    
+
     Parameters
     ----------
     data: ``anndata.AnnData``
@@ -38,17 +38,17 @@ def qc_metrics(
        Only keep cells with at least ``min_umis`` UMIs.
     max_umis: ``int``, optional, default: ``600,000``
        Only keep cells with less than ``max_umis`` UMIs.
-    percent_mito: ``float``, optional, default: ``0.1``
-       Only keep cells with mitochondrial ratio less than ``percent_mito`` of total counts.
-    percent_cells: ``float``, optional, default: ``0.0005``
-       Only use genes that are expressed in at ratio `percent_cells` x 100% of cells to be ``robust``.
+    percent_mito: ``float``, optional, default: ``10.0``
+       Only keep cells with percent mitochondrial genes less than ``percent_mito`` of total counts.
+    percent_cells: ``float``, optional, default: ``0.05``
+       Only assign genes to be ``robust`` that are expressed in at least `percent_cells` of cells.
 
     Returns
     -------
     ``None``
 
     Update ``data.obs``:
-    
+
         * ``n_genes``: Total number of genes for each cell.
         * ``n_counts``: Total number of counts for each cell.
         * ``percent_mito``: Percent of mitochondrial genes for each cell.
@@ -80,9 +80,9 @@ def qc_metrics(
         return False
 
     mito_genes = data.var_names.map(startswith).values.nonzero()[0]
-    data.obs["percent_mito"] = data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(
+    data.obs["percent_mito"] = (data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(
         data.obs["n_counts"].values, 1.0
-    )
+    )) * 100
 
     # Assign passed_qc
     filters = [
@@ -101,7 +101,7 @@ def qc_metrics(
     ]  # compute gene stats in space of filtered cells only
 
     var["n_cells"] = data.X.getnnz(axis=0)
-    var["percent_cells"] = var["n_cells"] / data.shape[0]
+    var["percent_cells"] = (var["n_cells"] / data.shape[0]) * 100
     var["robust"] = var["percent_cells"] >= percent_cells
     var["highly_variable_features"] = var[
         "robust"
@@ -190,7 +190,7 @@ def get_filter_stats(data: "AnnData") -> Tuple["pandas.DataFrame", "pandas.DataF
 
 def filter_data(data: "AnnData") -> None:
     """ Filter data based on qc_metrics calculated in ``scc.qc_metrics``.
-    
+
     Parameters
     ----------
     data: ``anndata.AnnData``
@@ -290,8 +290,8 @@ def run_filter_data(
     max_genes: int = 6000,
     min_umis: int = 100,
     max_umis: int = 600000,
-    percent_mito: float = 0.1,
-    percent_cells: float = 0.0005,
+    percent_mito: float = 10.0,
+    percent_cells: float = 0.05,
 ) -> None:
     """ This function is for command line use.
     TODO: Documentation
@@ -329,7 +329,7 @@ def run_filter_data(
 
 def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
-    
+
     Parameters
     ----------
     data: ``anndata.AnnData``
@@ -363,13 +363,13 @@ def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
 
 def select_features(data: "AnnData", features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
-    
+
     Parameters
     ----------
     data: ``anndata.AnnData``
         Annotated data matrix with rows for cells and columns for genes.
 
-    features: ``str``, optional, default: ``None``. 
+    features: ``str``, optional, default: ``None``.
         a keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
 
     Returns
