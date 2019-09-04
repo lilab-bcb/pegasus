@@ -17,6 +17,7 @@ Analysis Tools
 Read and Write
 ~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -29,6 +30,7 @@ Read and Write
 Preprocess
 ~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -46,6 +48,7 @@ Preprocess
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -57,6 +60,7 @@ Batch Correction
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -69,6 +73,7 @@ Nearest Neighbors
 Diffusion Map
 ~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -83,6 +88,7 @@ Diffusion Map
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -96,6 +102,7 @@ Cluster algorithms
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -113,6 +120,7 @@ Visualization Algorithms
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -126,6 +134,7 @@ Differential Expression Analysis
 Write single-cell-portal-formatted outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -136,6 +145,7 @@ Write single-cell-portal-formatted outputs
 Annotate clusters:
 ------------------
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -150,6 +160,7 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -164,6 +175,7 @@ Interactive Plots
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -176,6 +188,7 @@ Quality Control Plots
 Demultiplexing
 --------------
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
@@ -188,6 +201,7 @@ Demultiplexing
 Miscellaneous
 -------------
 
+.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::
