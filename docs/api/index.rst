@@ -1,5 +1,7 @@
 .. module:: sccloud
 
+.. automodule:: sccloud
+    :noindex:
 
 API
 ===
@@ -11,117 +13,146 @@ API
 Analysis Tools
 --------------
 
-.. module:: sccloud
 
 Read and Write
 ~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	read_input
-	write_output
-	aggregate_matrices
+	sccloud.read_input
+	sccloud.write_output
+	sccloud.aggregate_matrices
 
 Preprocess
 ~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	qc_metrics
-	get_filter_stats
-	filter_data
-	select_features
-	log_norm
-	highly_variable_features
-	pca
+	sccloud.qc_metrics
+	sccloud.get_filter_stats
+	sccloud.filter_data
+	sccloud.select_features
+	sccloud.log_norm
+	sccloud.highly_variable_features
+	sccloud.pca
 
 
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	set_group_attribute
-	correct_batch
+	sccloud.set_group_attribute
+	sccloud.correct_batch
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	neighbors
-	calc_kBET
-	calc_kSIM
+	sccloud.neighbors
+	sccloud.calc_kBET
+	sccloud.calc_kSIM
 
 Diffusion Map
 ~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	diffmap
-	reduce_diffmap_to_3d
-	calc_pseudotime
-	infer_path
+	sccloud.diffmap
+	sccloud.reduce_diffmap_to_3d
+	sccloud.calc_pseudotime
+	sccloud.infer_path
 
 
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	louvain
-	leiden
-	spectral_louvain
-	spectral_leiden
+	sccloud.louvain
+	sccloud.leiden
+	sccloud.spectral_louvain
+	sccloud.spectral_leiden
 
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	tsne
-	fitsne
-	umap
-	fle
-	net_tsne
-	net_fitsne
-	net_umap
-	net_fle
+	sccloud.tsne
+	sccloud.fitsne
+	sccloud.umap
+	sccloud.fle
+	sccloud.net_tsne
+	sccloud.net_fitsne
+	sccloud.net_umap
+	sccloud.net_fle
 
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	de_analysis
-	markers
-	find_markers
-	write_results_to_excel
+	sccloud.de_analysis
+	sccloud.markers
+	sccloud.find_markers
+	sccloud.write_results_to_excel
 
 Write single-cell-portal-formatted outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	tools.run_scp_output
+	sccloud.tools.run_scp_output
 
 Annotate clusters:
 ------------------
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	infer_cell_types
-	annotate
+	sccloud.infer_cell_types
+	sccloud.annotate
 
 Plotting
 --------
@@ -129,40 +160,52 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	embedding
-	composition_plot
-	variable_feature_plot
-	heatmap
-	dotplot
+	sccloud.embedding
+	sccloud.composition_plot
+	sccloud.variable_feature_plot
+	sccloud.heatmap
+	sccloud.dotplot
 
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	violin
-	scatter
-	scatter_matrix
+	sccloud.violin
+	sccloud.scatter
+	sccloud.scatter_matrix
 
 Demultiplexing
 --------------
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	estimate_background_probs
-	demultiplex
+	sccloud.estimate_background_probs
+	sccloud.demultiplex
 
 
 Miscellaneous
 -------------
 
+.. module:: sccloud
+.. currentmodule:: sccloud
+
 .. autosummary::
 	:toctree: .
 
-	search_genes
-	search_de_genes
+	sccloud.search_genes
+	sccloud.search_de_genes

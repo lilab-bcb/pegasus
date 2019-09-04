@@ -33,7 +33,7 @@ requires = [
     "lightgbm==2.2.1",
     "python-igraph",
     "MulticoreTSNE-modified",
-    "hnswlib-modified",
+    "hnswlib",
     "fisher-modified",
     "louvain-github",
     "leidenalg",
