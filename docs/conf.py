@@ -56,6 +56,38 @@ extensions = [
 
 autodoc_member_order = "bysource"
 autodoc_default_flags = ["members"]
+autodoc_mock_imports = [
+    "matplotlib>=2.0.0",
+    "pandas>=0.21",
+    "Cython",
+    "scipy<1.3",
+    "seaborn",
+    "scikit-learn>=0.21.3",
+    "statsmodels",
+    "natsort",
+    "anndata",
+    "numba",
+    "numpy",
+    "tables",
+    "xlsxwriter",
+    "loompy",
+    "docopt",
+    "setuptools",
+    "plotly",
+    "pybind11",
+    "joblib",
+    "scikit-misc",
+    "pyarrow",
+    "umap-learn>=0.3.9",
+    "lightgbm==2.2.1",
+    "python-igraph",
+    "MulticoreTSNE-modified",
+    "hnswlib",
+    "fisher-modified",
+    "louvain-github",
+    "leidenalg",
+    "forceatlas2-python",
+    "scplot"]
 autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
@@ -195,3 +227,5 @@ texinfo_documents = [
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
