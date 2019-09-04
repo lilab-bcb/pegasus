@@ -1,6 +1,4 @@
-version: 2
 build:
   image: latest
 python:
   version: 3.7
-  setup_py_install: true
