@@ -85,14 +85,17 @@ def calculate_diffusion_map(
     U = U[:, 1:]
     Phi = U / diag_half[:, np.newaxis]
 
-    # Find the knee point 
-    x = np.array(range(1, max_t + 1), dtype = float)
-    y = np.array([calc_von_neumann_entropy(Lambda, t) for t in x])
-    t = x[find_knee_point(x, y)]
-    logger.info("Detected knee point at t = {:.0f}.".format(t))
+    if max_t == -1:
+        Lambda_new = Lambda / (1.0 - Lambda)
+    else:
+        # Find the knee point 
+        x = np.array(range(1, max_t + 1), dtype = float)
+        y = np.array([calc_von_neumann_entropy(Lambda, t) for t in x])
+        t = x[find_knee_point(x, y)]
+        logger.info("Detected knee point at t = {:.0f}.".format(t))
 
-    # U_df = U * Lambda #symmetric diffusion component
-    Lambda_new = Lambda * ((1.0 - Lambda ** t) / (1.0 - Lambda)) 
+        # U_df = U * Lambda #symmetric diffusion component
+        Lambda_new = Lambda * ((1.0 - Lambda ** t) / (1.0 - Lambda)) 
     Phi_pt = Phi * Lambda_new  # asym pseudo component
 
     return Phi_pt, Lambda, Phi  # , U_df, W_norm
