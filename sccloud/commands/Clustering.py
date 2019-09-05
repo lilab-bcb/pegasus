@@ -189,7 +189,7 @@ Examples:
             "kBET_K": int(self.args["--kBET-K"]),
             "diffmap": self.args["--diffmap"],
             "diffmap_ndc": int(self.args["--diffmap-ndc"]),
-            "diffmap_maxt": self.convert_to_float(self.args["--diffmap-maxt"]),
+            "diffmap_maxt": int(self.args["--diffmap-maxt"]),
             "diffmap_solver": self.args["--diffmap-solver"],
             "diffmap_to_3d": self.args["--diffmap-to-3d"],
             "pseudotime": self.split_string(self.args["--calculate-pseudotime"]),
