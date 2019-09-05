@@ -153,7 +153,6 @@ def diffmap(
     Phi_pt, Lambda, Phi = calculate_diffusion_map(
         W_from_rep(data, rep),
         n_components=n_components,
-        t=t,
         solver=solver,
         random_state=random_state,
         max_t = max_t,
