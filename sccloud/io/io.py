@@ -586,6 +586,8 @@ def read_input(
     h5ad_mode: str = "a",
     ngene: int = None,
     select_singlets: bool = False,
+    channel_attr: str = None,
+    black_list: List[str] = [],
 ) -> "MemData or AnnData or List[AnnData]":
     """Load data into memory.
 
@@ -608,6 +610,10 @@ def read_input(
         Minimum number of genes to keep a barcode. Default is to keep all barcodes.
     select_singlets : `bool`, optional (default: False)
         If only keep DemuxEM-predicted singlets when loading data.
+    channel_attr : `str', optional (default: None)
+        Use channel_attr to represent different samples. This will set a 'Channel' column field with channel_attr.
+    black_list : `List[str]`, optional (default: [])
+        Attributes in black list will be poped out.
 
     Returns
     -------
@@ -650,9 +656,9 @@ def read_input(
     if file_format != "h5ad":
         data.restrain_keywords(genome)
         if return_type == "AnnData":
-            data = data.convert_to_anndata(concat_matrices=concat_matrices)
+            data = data.convert_to_anndata(concat_matrices=concat_matrices, channel_attr=channel_attr, black_list=black_list)
     else:
-        assert return_type == "AnnData"
+        assert (return_type == "AnnData") and (channel_attr is None) and (black_list == [])
 
     end = time.time()
     logger.info("Read input is finished. Time spent = {:.2f}s.".format(end - start))

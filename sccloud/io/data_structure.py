@@ -341,7 +341,7 @@ class MemData:
         for keyword in remove_set:
             self.data.pop(keyword)
 
-    def convert_to_anndata(self, concat_matrices=False) -> "AnnData or List[AnnData]":
+    def convert_to_anndata(self, concat_matrices: bool =False, channel_attr: str = None, black_list: List[str] = []) -> "AnnData or List[AnnData]":
         """Convert an MemData object into SCANPY's AnnData object
 
         Parameters
@@ -349,6 +349,12 @@ class MemData:
 
         concat_matrices : `bool`, optional (default: False)
             If concatenate multiple matrices. If so, return only one AnnData object, otherwise, might return a list of AnnData objects.
+
+        channel_attr : `str`, optional (default: None)
+            Use channel_attr to represent different samples. This will set a 'Channel' column field with channel_attr.
+
+        black_list : `List[str]`, optional (default: [])
+            Attributes in black list will be poped out.
 
         Returns
         -------
@@ -382,8 +388,13 @@ class MemData:
 
             obs_dict = array2d.barcode_metadata.to_dict(orient="list")
             obs_dict["obs_names"] = array2d.barcode_metadata.index.values
+            if (channel_attr is not None) and (channel_attr in obs_dict):
+                obs_dict["Channel"] = obs_dict[channel_attr]
             if "Channel" not in obs_dict:
                 obs_dict["Channel"] = [""] * array2d.barcode_metadata.shape[0]
+            for attr in black_list:
+                if attr in obs_dict:
+                    obs_dict.pop(attr)
 
             if not concat_matrices or len(genomes) == 1:
                 var_dict = array2d.feature_metadata.to_dict(orient="list")
