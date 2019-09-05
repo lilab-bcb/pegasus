@@ -132,10 +132,9 @@ def run_pipeline(input_file, output_name, **kwargs):
                 adata,
                 n_components=kwargs["diffmap_ndc"],
                 rep="pca",
-                t=kwargs["diffmap_t"],
                 solver=kwargs["diffmap_solver"],
                 random_state=kwargs["random_state"],
-                max_t=kwargs["max_t"],
+                max_t=kwargs["diffmap_maxt"],
             )
             if kwargs["diffmap_to_3d"]:
                 tools.reduce_diffmap_to_3d(adata, random_state=kwargs["random_state"])
