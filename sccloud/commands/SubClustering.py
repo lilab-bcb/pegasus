@@ -41,9 +41,9 @@ Options:
   --kBET-K <K>                                     kBET K. [default: 25]
 
   --diffmap                                        Calculate diffusion maps.
-  --diffmap-ndc <number>                           Number of diffusion components. [default: 50]
+  --diffmap-ndc <number>                           Number of diffusion components. [default: 100]
   --diffmap-solver <solver>                        Solver for eigen decomposition, either 'eigsh' or 'randomized'. [default: eigsh]
-  --diffmap-maxt <max_t>                           Maximum time stamp to search for the knee point. [default: 2000]
+  --diffmap-maxt <max_t>                           Maximum time stamp to search for the knee point. [default: 5000]
   --diffmap-to-3d                                  If map diffusion map into 3D space using PCA.
   --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
