@@ -124,6 +124,8 @@ Examples:
             "subset_selections": self.args["--subset-selection"],
             "n_jobs": int(self.args["--threads"]),
             "genome": None,
+            "channel_attr": None,
+            "black_list": None,
             "batch_correction": self.args["--correct-batch-effect"],
             "group_attribute": self.args["--batch-group-by"],
             "output_loom": self.args["--output-loom"],

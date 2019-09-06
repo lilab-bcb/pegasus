@@ -17,6 +17,10 @@ def run_pipeline(input_file, output_name, **kwargs):
         concat_matrices=False if kwargs["cite_seq"] else True,
         h5ad_mode=("a" if (is_raw or kwargs["subcluster"]) else "r+"),
         select_singlets=kwargs["select_singlets"],
+        channel_attr=kwargs["channel_attr"],
+        black_list=(
+            kwargs["black_list"].split(",") if kwargs["black_list"] is not None else []
+        ),
     )
 
     if not kwargs["cite_seq"]:

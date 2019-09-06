@@ -19,6 +19,8 @@ Options:
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
   --genome <genome>                                A string contains comma-separated genome names. sccloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+  --channel <channel_attr>                         Use <channel_attr> to represent different samples. This will set a 'Channel' column field with <channel_attr>.
+  --black-list <black_list>                        Cell barcode attributes in black list will be poped out. Format is "attr1,attr2,...,attrn".
 
   --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
   --select-singlets                                Only select DemuxEM-predicted singlets for analysis.
@@ -148,6 +150,8 @@ Examples:
             "n_jobs": int(self.args["--threads"]),
             "processed": self.args["--processed"],
             "genome": self.args["--genome"],
+            "channel_attr": self.args["--channel"],
+            "black_list": self.args["--black-list"],
             "subcluster": False,
             "min_genes_on_raw": int(self.args["--min-genes-on-raw"]),
             "select_singlets": self.args["--select-singlets"],
