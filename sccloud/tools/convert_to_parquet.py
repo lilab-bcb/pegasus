@@ -7,7 +7,7 @@ from sccloud.io import read_input
 
 
 def convert_to_parquet(data, output_name, nthreads):
-    data.obs.index.name = "barcode"
+    data.obs.index.name = "sccloud.cell.barcode"
     df = data.obs.reset_index()
     if "X_pca" in data.obsm.keys():
         df["PCA_X"] = data.obsm["X_pca"][:, 0]
@@ -31,6 +31,15 @@ def convert_to_parquet(data, output_name, nthreads):
         df["DIFFMAP_X"] = data.obsm["X_diffmap_pca"][:, 0]
         df["DIFFMAP_Y"] = data.obsm["X_diffmap_pca"][:, 1]
         df["DIFFMAP_Z"] = data.obsm["X_diffmap_pca"][:, 2]
+    if "X_net_tsne" in data.obsm.keys():
+        df["NET_TSNE_X"] = data.obsm["X_net_tsne"][:, 0]
+        df["NET_TSNE_Y"] = data.obsm["X_net_tsne"][:, 1]
+    if "X_net_umap" in data.obsm.keys():
+        df["NET_UMAP_X"] = data.obsm["X_net_umap"][:, 0]
+        df["NET_UMAP_Y"] = data.obsm["X_net_umap"][:, 1]
+    if "X_net_fle" in data.obsm.keys():
+        df["NET_FLE_X"] = data.obsm["X_net_fle"][:, 0]
+        df["NET_FLE_Y"] = data.obsm["X_net_fle"][:, 1]
     metadata_table = pa.Table.from_pandas(df, nthreads=nthreads)
 
     df_expr = pd.DataFrame(data=data.X.toarray(), columns=data.var_names)
