@@ -18,7 +18,7 @@ def scp_write_coords(data, output_name):
         group_str = "".join(["\tgroup"] * len(cluster_labels))
 
     basis_set = set(data.obsm_keys())
-    for basis in ["X_tsne", "X_fitsne", "X_umap", "X_diffmap_pca", "X_fle"]:
+    for basis in ["X_tsne", "X_fitsne", "X_umap", "X_diffmap_pca", "X_fle", "X_net_tsne", "X_net_umap", "X_net_fle"]:
         if basis in basis_set:
             coords = ["X", "Y"] if basis != "X_diffmap_pca" else ["X", "Y", "Z"]
             coo_str = "\t".join(coords)
