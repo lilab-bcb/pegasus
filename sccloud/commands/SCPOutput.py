@@ -7,8 +7,8 @@ class SCPOutput(Base):
 Generate outputs for single cell portal.
 
 Usage:
-  scCloud scp_output [--dense --round-to <ndigit>] <input_h5ad_file> <output_name>
-  scCloud scp_output -h
+  sccloud scp_output [--dense --round-to <ndigit>] <input_h5ad_file> <output_name>
+  sccloud scp_output -h
 
 Arguments:
   input_h5ad_file        Analyzed single cell data in h5ad format.
@@ -23,7 +23,7 @@ Outputs:
   output_name.scp.metadata.txt, output_name.scp.barcodes.tsv, output_name.scp.genes.tsv, output_name.scp.matrix.mtx, output_name.scp.*.coords.txt, output_name.scp.expr.txt         Files that single cell portal needs.
 
 Examples:
-  scCloud scp_output manton_bm.h5ad manton_bm
+  sccloud scp_output manton_bm.h5ad manton_bm
     """
 
     def execute(self):

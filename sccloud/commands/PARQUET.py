@@ -7,8 +7,8 @@ class PARQUET(Base):
 Generate a PARQUET file for web-based visualization.
 
 Usage:
-  scCloud parquet [options] <input_h5ad_file> <output_name>
-  scCloud parquet -h
+  sccloud parquet [options] <input_h5ad_file> <output_name>
+  sccloud parquet -h
 
 Arguments:
   input_h5ad_file        Analyzed single cell data in h5ad format.
@@ -22,7 +22,7 @@ Outputs:
   output_name.parquet        Generated PARQUET file that contains metadata and expression levels for every gene.
 
 Examples:
-  scCloud parquet manton_bm.h5ad manton_bm
+  sccloud parquet -p 8 manton_bm.h5ad manton_bm
     """
 
     def execute(self):

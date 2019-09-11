@@ -39,9 +39,9 @@ def qc_metrics(
     max_umis: ``int``, optional, default: ``600,000``
        Only keep cells with less than ``max_umis`` UMIs.
     percent_mito: ``float``, optional, default: ``10.0``
-       Only keep cells with percent mitochondrial genes less than ``percent_mito`` of total counts.
+       Only keep cells with percent mitochondrial genes less than ``percent_mito`` % of total counts.
     percent_cells: ``float``, optional, default: ``0.05``
-       Only assign genes to be ``robust`` that are expressed in at least `percent_cells` of cells.
+       Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
 
     Returns
     -------
@@ -294,7 +294,6 @@ def run_filter_data(
     percent_cells: float = 0.05,
 ) -> None:
     """ This function is for command line use.
-    TODO: Documentation
     """
 
     start = time.time()

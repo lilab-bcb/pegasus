@@ -103,11 +103,11 @@ def calculate_diffusion_map(
 
 def diffmap(
     data: "AnnData",
-    n_components: int = 50,
+    n_components: int = 100,
     rep: str = "pca",
     solver: str = "eigsh",
     random_state: int = 0,
-    max_t: float = 2000,
+    max_t: float = 5000,
 ) -> None:
     """Calculate Diffusion Map.
 
@@ -116,7 +116,7 @@ def diffmap(
     data: ``anndata.AnnData``
         Annotated data matrix with rows for cells and columns for genes.
 
-    n_components: ``int``, optional, default: ``50``
+    n_components: ``int``, optional, default: ``100``
         Number of diffusion components to calculate.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -130,8 +130,8 @@ def diffmap(
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
 
-    max_t: ``float``, optional, default: 2000
-        scCloud tries to determine the best t to sum up to between [1, max_t].
+    max_t: ``float``, optional, default: ``5000``
+        scCloud tries to determine the best t to sum up to between ``[1, max_t]``.
 
     Returns
     -------

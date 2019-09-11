@@ -19,6 +19,8 @@ Options:
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
   --genome <genome>                                A string contains comma-separated genome names. sccloud will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+  --channel <channel_attr>                         Use <channel_attr> to represent different samples. This will set a 'Channel' column field with <channel_attr>.
+  --black-list <black_list>                        Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
   --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
   --select-singlets                                Only select DemuxEM-predicted singlets for analysis.
@@ -37,8 +39,8 @@ Options:
   --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: 100]
   --max-umis <number>                              Only keep cells with less than <number> of UMIs. [default: 600000]
   --mito-prefix <prefix>                           Prefix for mitochondrial genes. If multiple prefixes are provided, separate them by comma (e.g. "MT-,mt-"). [default: MT-]
-  --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>. [default: 10.0]
-  --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent> percent of cells to select variable genes. [default: 0.05]
+  --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>%. [default: 10.0]
+  --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent>% of cells to select variable genes. [default: 0.05]
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
 
@@ -63,9 +65,9 @@ Options:
   --kBET-K <K>                                     kBET K. [default: 25]
 
   --diffmap                                        Calculate diffusion maps.
-  --diffmap-ndc <number>                           Number of diffusion components. [default: 50]
+  --diffmap-ndc <number>                           Number of diffusion components. [default: 100]
   --diffmap-solver <solver>                        Solver for eigen decomposition, either 'eigsh' or 'randomized'. [default: eigsh]
-  --diffmap-maxt <max_t>                           Maximum time stamp to search for the knee point. [default: 2000]
+  --diffmap-maxt <max_t>                           Maximum time stamp to search for the knee point. [default: 5000]
   --diffmap-to-3d                                  If map diffusion map into 3D space using PCA.
   --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
@@ -148,6 +150,8 @@ Examples:
             "n_jobs": int(self.args["--threads"]),
             "processed": self.args["--processed"],
             "genome": self.args["--genome"],
+            "channel_attr": self.args["--channel"],
+            "black_list": self.args["--black-list"],
             "subcluster": False,
             "min_genes_on_raw": int(self.args["--min-genes-on-raw"]),
             "select_singlets": self.args["--select-singlets"],
