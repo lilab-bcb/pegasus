@@ -18,6 +18,7 @@ def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
     assert issparse(data.X)
 
     if consider_batch:
+        start = time.time()
         if "Channels" not in data.uns:
             data.uns["Channels"] = data.obs["Channel"].unique()
 
@@ -88,6 +89,12 @@ def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
         data.var["mean"] = overall_means
         data.var["var"] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
             data.shape[0] - 1.0
+        )
+        end = time.time()
+        logger.info(
+            "Estimation on feature statistics per channel is finished. Time spent = {:.2f}s.".format(
+                end - start
+            )
         )
     else:
         mean = data.X.mean(axis=0).A1
