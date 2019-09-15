@@ -272,7 +272,7 @@ def spectral_louvain(
         Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
 
     rep_kmeans: ``str``, optional, default: ``"diffmap"``
-        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates.
+        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates. If diffmap is not calculated, use PCA coordinates instead.
 
     n_clusters: ``int``, optional, default: ``30``
         The number of clusters set for the KMeans.
@@ -307,7 +307,10 @@ def spectral_louvain(
     start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
-        raise ValueError("Please run {} first!".format(rep_kmeans))
+        logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
+        rep_kmeans = "pca"
+        if "X_" + rep_kmeans not in data.obsm.keys():
+            raise ValueError("Please run {} first!".format(rep_kmeans))
     if "W_" + rep not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
@@ -365,7 +368,7 @@ def spectral_leiden(
         Resolution factor. Higher resolution tends to find more clusters.
 
     rep_kmeans: ``str``, optional, default: ``"diffmap"``
-        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates.
+        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates. If diffmap is not calculated, use PCA coordinates instead.
 
     n_clusters: ``int``, optional, default: ``30``
         The number of clusters set for the KMeans.
@@ -400,7 +403,10 @@ def spectral_leiden(
     start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
-        raise ValueError("Please run {} first!".format(rep_kmeans))
+        logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
+        rep_kmeans = "pca"
+        if "X_" + rep_kmeans not in data.obsm.keys():
+            raise ValueError("Please run {} first!".format(rep_kmeans))
     if "W_" + rep not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 

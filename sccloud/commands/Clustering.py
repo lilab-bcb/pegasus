@@ -81,14 +81,14 @@ Options:
   --leiden-class-label <label>                     Leiden cluster label name in AnnData. [default: leiden_labels]
 
   --spectral-louvain                               Run spectral-louvain clustering algorithm.
-  --spectral-louvain-basis <basis>                 Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. [default: diffmap]
+  --spectral-louvain-basis <basis>                 Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. If 'diffmap' is not calculated, use 'pca' instead. [default: diffmap]
   --spectral-louvain-nclusters <number>            Number of clusters for Kmeans initialization. [default: 30]
   --spectral-louvain-ninit <number>                Number of Kmeans tries. [default: 20]
   --spectral-louvain-resolution <resolution>       Resolution parameter for louvain. [default: 1.3]
   --spectral-louvain-class-label <label>           Spectral-louvain label name in AnnData. [default: spectral_louvain_labels]
 
   --spectral-leiden                                Run spectral-leiden clustering algorithm.
-  --spectral-leiden-basis <basis>                  Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. [default: diffmap]
+  --spectral-leiden-basis <basis>                  Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. If 'diffmap' is not calculated, use 'pca' instead. [default: diffmap]
   --spectral-leiden-nclusters <number>             Number of clusters for Kmeans initialization. [default: 30]
   --spectral-leiden-ninit <number>                 Number of Kmeans tries. [default: 20]
   --spectral-leiden-resolution <resolution>        Resolution parameter for leiden. [default: 1.3]

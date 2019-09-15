@@ -121,11 +121,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         # calculate diffmap
         if (
             kwargs["fle"]
-            or kwargs["net_tsne"]
-            or kwargs["net_umap"]
             or kwargs["net_fle"]
-            or kwargs["spectral_louvain"]
-            or kwargs["spectral_leiden"]
         ):
             if not kwargs["diffmap"]:
                 print("Turn on --diffmap option!")
