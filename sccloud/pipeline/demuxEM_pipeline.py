@@ -4,7 +4,7 @@ from sccloud import io, tools, demuxEM
 
 def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
     # load input data
-    adt = io.read_input(input_adt_file, genome="_ADT_")
+    adt = io.read_input(input_adt_file, genome="_ADT_", polish_feature_name=False)
     print("ADT file is loaded.")
     data = io.read_input(input_rna_file, genome=kwargs["genome"], concat_matrices=True)
     print("RNA file is loaded.")

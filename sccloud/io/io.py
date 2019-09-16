@@ -588,6 +588,7 @@ def read_input(
     select_singlets: bool = False,
     channel_attr: str = None,
     black_list: List[str] = [],
+    polish_feature_name: bool = True,
 ) -> "MemData or AnnData or List[AnnData]":
     """Load data into memory.
 
@@ -614,6 +615,8 @@ def read_input(
         Use channel_attr to represent different samples. This will set a 'Channel' column field with channel_attr.
     black_list : `List[str]`, optional (default: [])
         Attributes in black list will be poped out.
+    polish_feature_name : `bool`, optional (default: True)
+        Only matters if convert to AnnData. If true, will make sure var_names are unique. 
 
     Returns
     -------
@@ -656,7 +659,7 @@ def read_input(
     if file_format != "h5ad":
         data.restrain_keywords(genome)
         if return_type == "AnnData":
-            data = data.convert_to_anndata(concat_matrices=concat_matrices, channel_attr=channel_attr, black_list=black_list)
+            data = data.convert_to_anndata(concat_matrices=concat_matrices, channel_attr=channel_attr, black_list=black_list, polish_feature_name=polish_feature_name)
     else:
         assert (return_type == "AnnData") and (channel_attr is None) and (black_list == [])
 
