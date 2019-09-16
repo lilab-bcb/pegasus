@@ -672,9 +672,13 @@ def _parse_whitelist(whitelist: List[str]):
         tokens = value.split("/")
         curr_dict = parse_results
         for i in range(len(tokens) - 1):
-            curr_dict[tokens[i]] = dict()
+            if tokens[i] not in curr_dict:
+                curr_dict[tokens[i]] = dict()
             curr_dict = curr_dict[tokens[i]]
-        curr_dict[tokens[-1]] = None
+            if curr_dict is None:
+                break
+        if curr_dict is not None:
+            curr_dict[tokens[-1]] = None
     return parse_results
 
 
@@ -719,7 +723,7 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
 
 
 def write_output(
-    data: "MemData or AnnData", output_file: str, whitelist: List = []
+    data: "MemData or AnnData", output_file: str, whitelist: List = ["obs", "obsm", "uns", "var", "varm"]
 ) -> None:
     """ Write data back to disk.
 
@@ -732,7 +736,7 @@ def write_output(
         data to write back, can be either an MemData or AnnData object.
     output_file : `str`
         output file name. If data is MemData, output_file should ends with suffix '.h5sc'. Otherwise, output_file can end with either '.h5ad' or '.loom'. If output_file ends with '.loom', a LOOM file will be generated. If no suffix is detected, an appropriate one will be appended.
-    whitelist : `list`
+    whitelist : `list`, optional, default = ["obs", "obsm", "uns", "var", "varm"]
         List that indicates changed fields when writing h5ad file in backed mode. For example,
          ['uns/Groups', 'obsm/PCA'] will only write Groups in uns, and PCA in obsm; the rest of the fields will be unchanged.
     Returns
