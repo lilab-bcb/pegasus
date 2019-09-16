@@ -434,7 +434,7 @@ def spectral_leiden(
 
     end = time.time()
     logger.info(
-        "Approximated Leiden clustering is done. Time spent = {:.2f}s.".format(
+        "Spectral Leiden clustering is done. Time spent = {:.2f}s.".format(
             end - start
         )
     )
