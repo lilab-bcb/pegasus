@@ -13,58 +13,16 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+from pathlib import Path
 import sys
-from unittest.mock import MagicMock
 
-class Mock(MagicMock):
-    @classmethod
-    def __get__attr(cls, name):
-        return MagicMock()
-
-MOCK_MODULES = [
-    "matplotlib",
-    "pandas",
-    "Cython",
-    "scipy",
-    "seaborn",
-    "scikit-learn",
-    "statsmodels",
-    "natsort",
-    "anndata",
-    "numba",
-    "numpy",
-    "tables",
-    "xlsxwriter",
-    "loompy",
-    "docopt",
-    "setuptools",
-    "plotly",
-    "pybind11",
-    "joblib",
-    "scikit-misc",
-    "pyarrow",
-    "umap-learn",
-    "lightgbm",
-    "python-igraph",
-    "MulticoreTSNE-modified",
-    "hnswlib",
-    "fisher-modified",
-    "louvain-github",
-    "leidenalg",
-    "forceatlas2-python",
-    "scplot",
-    "sccloud"
-]
-
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../sccloud"))
-)
+HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE.parent))
+import sccloud
 
 # -- Project information -----------------------------------------------------
 
-project = "sccloud"
+project = "scCloud"
 copyright = "2019, Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
 author = (
     "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
@@ -73,21 +31,24 @@ author = (
 # The short X.Y version
 version = "0.14.0"
 # The full version, including alpha/beta/rc tags
-release = "0.14.0.rc1"
+release = "0.14.0.rc3"
 
 
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
     "sphinx.ext.todo",
+    "sphinx.ext.mathjax",
     "sphinx.ext.coverage",
     "sphinx.ext.imgmath",
     "sphinx.ext.ifconfig",
@@ -95,11 +56,13 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
+    "sphinx_autodoc_typehints",
 ]
 
 autodoc_member_order = "bysource"
 autodoc_default_flags = ["members"]
 autosummary_generate = True
+todo_include_todos = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -128,6 +91,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
+intersphinx_mapping = dict(
+    anndata=('https://anndata.readthedocs.io/en/latest/', None),
+    numpy=('https://docs.scipy.org/doc/numpy/', None),
+    pandas=('http://pandas.pydata.org/pandas-docs/stable/', None),
+    sklearn=('https://scikit-learn.org/dev/', None),
+)
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -140,7 +110,7 @@ html_theme = "sphinx_rtd_theme"
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {"navigation_depth": 2}
+html_theme_options = {"navigation_depth": 4}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -162,14 +132,14 @@ html_context = dict(
     github_user="klarman-cell-observatory",  # Username
     github_repo="scCloudPy",  # Repo name
     github_version="master",  # Version
-    conf_py_path="/scCloudPy/docs/",  # Path in the checkout to the docs root
+    conf_py_path="/docs/",  # Path in the checkout to the docs root
 )
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "sccloud_doc"
+htmlhelp_basename = "scCloud_doc"
 
 
 def setup(app):
@@ -200,7 +170,7 @@ latex_documents = [
     (
         master_doc,
         "sccloud.tex",
-        "sccloud Documentation",
+        "scCloud Documentation",
         "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al.",
         "manual",
     )
@@ -211,7 +181,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "sccloud", "sccloud Documentation", [author], 1)]
+man_pages = [(master_doc, "scCloud", "scCloud Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -222,10 +192,10 @@ man_pages = [(master_doc, "sccloud", "sccloud Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "sccloud",
-        "sccloud Documentation",
+        "scCloud",
+        "scCloud Documentation",
         author,
-        "sccloud",
+        "scCloud",
         "One line description of project.",
         "Miscellaneous",
     )

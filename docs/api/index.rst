@@ -17,8 +17,6 @@ Analysis Tools
 Read and Write
 ~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -30,8 +28,6 @@ Read and Write
 Preprocess
 ~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -48,8 +44,6 @@ Preprocess
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -60,8 +54,6 @@ Batch Correction
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -73,8 +65,6 @@ Nearest Neighbors
 Diffusion Map
 ~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -88,8 +78,6 @@ Diffusion Map
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -102,8 +90,6 @@ Cluster algorithms
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -120,8 +106,6 @@ Visualization Algorithms
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -134,8 +118,6 @@ Differential Expression Analysis
 Write single-cell-portal-formatted outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -145,8 +127,6 @@ Write single-cell-portal-formatted outputs
 Annotate clusters:
 ------------------
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -160,8 +140,6 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -175,8 +153,6 @@ Interactive Plots
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -188,8 +164,6 @@ Quality Control Plots
 Demultiplexing
 --------------
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -201,8 +175,6 @@ Demultiplexing
 Miscellaneous
 -------------
 
-.. module:: sccloud
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
