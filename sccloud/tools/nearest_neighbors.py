@@ -240,7 +240,7 @@ def neighbors(
 
     Examples
     --------
-    >>> tools.neighbors(adata)
+    >>> scc.neighbors(adata)
     """
 
     # calculate kNN
