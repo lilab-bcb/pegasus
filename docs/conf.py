@@ -18,41 +18,44 @@ from unittest.mock import MagicMock
 
 class Mock(MagicMock):
     @classmethod
-    def __getattr__(cls, name):
+    def __get__attr(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ['numpy', 
-    'leidenalg', 
-    'louvain-github', 
-    'fisher-modified', 
-    'python-igraph', 
-    'MulticoreTSNE-modified', 
-    'Cython',
-    'hnswlib',
-    'matplotlib',
-    'pandas',
-    'scipy',
-    'seaborn',
-    'scikit-learn',
-    'statsmodels',
-    'natsort',
-    'anndata',
-    'numba',
-    'tables',
-    'xlsxwriter',
-    'loompy',
-    'docopt',
-    'setuptools',
-    'plotly',
-    'pybind11',
-    'joblib',
-    'scikit-misc',
-    'pyarrow',
-    'umap-learn',
-    'lightgbm',
-    'forceatlas2-python',
-    'scplot'
+MOCK_MODULES = [
+    "matplotlib",
+    "pandas",
+    "Cython",
+    "scipy",
+    "seaborn",
+    "scikit-learn",
+    "statsmodels",
+    "natsort",
+    "anndata",
+    "numba",
+    "numpy",
+    "tables",
+    "xlsxwriter",
+    "loompy",
+    "docopt",
+    "setuptools",
+    "plotly",
+    "pybind11",
+    "joblib",
+    "scikit-misc",
+    "pyarrow",
+    "umap-learn",
+    "lightgbm",
+    "python-igraph",
+    "MulticoreTSNE-modified",
+    "hnswlib",
+    "fisher-modified",
+    "louvain-github",
+    "leidenalg",
+    "forceatlas2-python",
+    "scplot",
+    "sccloud"
 ]
+
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 sys.path.insert(
