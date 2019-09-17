@@ -212,7 +212,7 @@ def polish_featurename(
         idn = dup_ids[feature_names[i]]
         dup_ids[feature_names[i]] += 1
         if idn > 0:
-            feature_names[i] = feature_names[i] + ".{}".format(idn)
+            feature_names[i] = feature_names[i] + ".#~{}".format(idn + 1) # duplicate ID starts from 2. .#~ makes it unique.
 
     return feature_names, feature_keys
 
@@ -341,7 +341,7 @@ class MemData:
         for keyword in remove_set:
             self.data.pop(keyword)
 
-    def convert_to_anndata(self, concat_matrices: bool =False, channel_attr: str = None, black_list: List[str] = [], polish_feature_name: bool = True) -> "AnnData or List[AnnData]":
+    def convert_to_anndata(self, concat_matrices: bool =False, channel_attr: str = None, black_list: List[str] = []) -> "AnnData or List[AnnData]":
         """Convert an MemData object into SCANPY's AnnData object
 
         Parameters
@@ -355,9 +355,6 @@ class MemData:
 
         black_list : `List[str]`, optional (default: [])
             Attributes in black list will be poped out.
-        
-        polish_feature_name : `bool`, optional (default: True)
-            If polish feature names, only take effects if no concat_matrices.
 
         Returns
         -------
@@ -401,17 +398,11 @@ class MemData:
 
             if not concat_matrices or len(genomes) == 1:
                 var_dict = array2d.feature_metadata.to_dict(orient="list")
-
-                if polish_feature_name:
-                    feature_names, feature_keys = polish_featurename(
-                        var_dict.pop("featurename"),
-                        array2d.feature_metadata.index.values,
-                        [genome],
-                    )
-                else:
-                    feature_names = var_dict["featurename"]
-                    feature_keys = array2d.feature_metadata.index.values
-
+                feature_names, feature_keys = polish_featurename(
+                    var_dict.pop("featurename"),
+                    array2d.feature_metadata.index.values,
+                    [genome],
+                )
                 var_dict["var_names"] = feature_names
                 var_dict["gene_ids"] = feature_keys
 

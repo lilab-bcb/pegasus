@@ -6,6 +6,9 @@ from natsort import natsorted
 import multiprocessing
 from sklearn.cluster import KMeans
 
+from typing import List
+
+
 
 def estimate_background_probs(adt: "AnnData", random_state: int = 0):
     """For cell-hashing data, estimate antibody background probability using EM algorithm.
@@ -117,6 +120,25 @@ def calc_demux(data, adt, nsample, min_signal, probs="raw_probs"):
         assignments, categories=natsorted(np.unique(assignments))
     )
 
+def has_duplicate_names(names: List[str]) -> bool:
+    for name in names:
+        if name.find(".#~") >= 0:
+            return True
+    return False
+
+def remove_suffix(assigns: List[str]) -> List[str]:
+    assigns = assigns.astype(str)
+    results = []
+    for value in assigns:
+        fields = value.split(",")
+        for i, item in enumerate(fields):
+            pos = item.find(".#~")
+            if pos >= 0:
+                fields[i] = item[:pos]
+        results.append(",".join(fields))
+    results = np.array(results)
+    return pd.Categorical(results, categories=natsorted(np.unique(results)))
+
 
 def demultiplex(
     data: "AnnData",
@@ -157,7 +179,8 @@ def demultiplex(
 
     Update ``data.obs``:
         * ``data.obs["demux_type"]``: Demultiplexed types of the cells. Either ``singlet``, ``doublet``, or ``unknown``.
-        * ``data.obs["assignment"]``: Assignment of each cell to droplet.
+        * ``data.obs["assignment"]``: Assigned samples of origin for each cell barcode.
+        * ``data.obs["assignment.dedup"]``: Only exist if one sample name can correspond to multiple feature barcodes. In this array, each feature barcode is assigned a unique sample name.
 
     Examples
     --------
@@ -206,6 +229,10 @@ def demultiplex(
             data.obsm["raw_probs"][idx_df, :] = pool.starmap(estimate_probs, iter_array)
 
         calc_demux(data, adt, nsample, min_signal)
+
+        if has_duplicate_names(adt.var_names):
+            data.obs["assignment.dedup"] = data.obs["assignment"]
+            data.obs["assignment"] = remove_suffix(data.obs["assignment"].values)
 
     end = time.time()
     print("demuxEM.demultiplex is finished. Time spent = {:.2f}s.".format(end - start))

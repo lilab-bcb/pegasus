@@ -4,7 +4,7 @@ from sccloud import io, tools, demuxEM
 
 def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
     # load input data
-    adt = io.read_input(input_adt_file, genome="_ADT_", polish_feature_name=False)
+    adt = io.read_input(input_adt_file, genome="_ADT_")
     print("ADT file is loaded.")
     data = io.read_input(input_rna_file, genome=kwargs["genome"], concat_matrices=True)
     print("RNA file is loaded.")
@@ -52,6 +52,13 @@ def run_demuxEM_pipeline(input_adt_file, input_rna_file, output_name, **kwargs):
         assignment[:] = ""
         assignment[idx] = data.obs.loc[selected, "assignment"]
         array2d.barcode_metadata["assignment"] = assignment
+
+        if "assignment.dedup" in data.obs:
+            assignment_dedup = np.empty(barcodes.size, dtype="object")
+            assignment_dedup[:] = ""
+            assignment_dedup[idx] = data.obs.loc[selected, "assignment.dedup"]
+            array2d.barcode_metadata["assignment.dedup"] = assignment_dedup
+
     print("Demultiplexing results are added to raw expression matrices.")
 
     # generate plots
