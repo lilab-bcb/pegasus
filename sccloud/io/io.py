@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import os.path
 from scipy.io import mmread
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 import tables
 import gzip
 
@@ -704,22 +704,30 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
                     subgroup, value, whitelist[key] if whitelist is not None else None
                 )
             else:
-                value = np.array(value) if np.ndim(value) > 0 else np.array([value])
-                sdt = h5py.special_dtype(vlen=str)
-                if value.dtype.kind == "U":
-                    value = value.astype(sdt)
-                if value.dtype.names is not None:
-                    new_dtype = value.dtype.descr
-                    hasU = False
-                    for i in range(len(value.dtype)):
-                        if value.dtype[i].kind == "U":
-                            new_dtype[i] = (new_dtype[i][0], sdt)
-                            hasU = True
-                    if hasU:
-                        value = value.astype(new_dtype)
                 if key in group.keys():
-                    del group[key]
-                group.create_dataset(key, data=value, compression="gzip")
+                    del group[key] 
+                if issparse(value):
+                    sparse_mat = group.create_group(key)
+                    sparse_mat.attrs["h5sparse_format"] = value.format
+                    sparse_mat.attrs["h5sparse_shape"] = np.array(value.shape)
+                    sparse_mat.create_dataset("data", data=value.data, compression="gzip")
+                    sparse_mat.create_dataset("indices", data=value.indices, compression="gzip")
+                    sparse_mat.create_dataset("indptr", data=value.indptr, compression="gzip")
+                else:
+                    value = np.array(value) if np.ndim(value) > 0 else np.array([value])
+                    sdt = h5py.special_dtype(vlen=str)
+                    if value.dtype.kind in {"U", "O"} :
+                        value = value.astype(sdt)
+                    if value.dtype.names is not None:
+                        new_dtype = value.dtype.descr
+                        convert_type = False
+                        for i in range(len(value.dtype)):
+                            if value.dtype[i].kind in {"U", "O"}:
+                                new_dtype[i] = (new_dtype[i][0], sdt)
+                                convert_type = True
+                        if convert_type:
+                            value = value.astype(new_dtype)
+                    group.create_dataset(key, data=value, compression="gzip")
 
 
 def write_output(
