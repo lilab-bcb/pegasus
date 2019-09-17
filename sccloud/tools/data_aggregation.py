@@ -5,6 +5,7 @@ import time
 from subprocess import check_call
 
 from typing import List
+from anndata import AnnData
 
 from sccloud.io import infer_file_format, read_input, write_output, MemData
 
@@ -41,7 +42,7 @@ def parse_restriction_string(rstr):
 
 def aggregate_matrices(
     csv_file: str,
-    what_to_return: str = "AnnData",
+    what_to_return: str = AnnData,
     restrictions: List[str] = [],
     attributes: List[str] = [],
     google_cloud: bool = False,

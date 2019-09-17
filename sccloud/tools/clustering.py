@@ -1,14 +1,21 @@
 import time
 import numpy as np
 import pandas as pd
+from anndata import AnnData
 from joblib import Parallel, delayed, effective_n_jobs
 from natsort import natsorted
 
 import ctypes
 import ctypes.util
 
-import louvain as louvain_module
-import leidenalg
+try:
+    import louvain as louvain_module
+except ImportError:
+    print("Need louvain!")
+try:
+    import leidenalg
+except ImportError:
+    print("Need leidenalg!")
 from sklearn.cluster import KMeans
 from typing import List
 
@@ -19,7 +26,7 @@ logger = logging.getLogger("sccloud")
 
 
 def louvain(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     resolution: int = 1.3,
     random_state: int = 0,
@@ -79,7 +86,7 @@ def louvain(
 
 
 def leiden(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     resolution: int = 1.3,
     n_iter: int = -1,
@@ -212,7 +219,7 @@ def run_one_instance_of_kmeans(n_clusters: int, X: "np.array", seed: int) -> Lis
 
 
 def run_multiple_kmeans(
-    data: "AnnData",
+    data: AnnData,
     rep: "str",
     n_jobs: int,
     n_clusters: int,
@@ -247,7 +254,7 @@ def run_multiple_kmeans(
 
 
 def spectral_louvain(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     resolution: float = 1.3,
     rep_kmeans: str = "diffmap",
@@ -343,7 +350,7 @@ def spectral_louvain(
 
 
 def spectral_leiden(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     resolution: float = 1.3,
     rep_kmeans: str = "diffmap",

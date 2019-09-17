@@ -7,13 +7,14 @@ from scipy.sparse import issparse
 from sklearn.decomposition import PCA
 
 from typing import Tuple
+from anndata import AnnData
 import logging
 
 logger = logging.getLogger("sccloud")
 
 
 def qc_metrics(
-    data: "AnnData",
+    data: AnnData,
     mito_prefix: str = "MT-",
     min_genes: int = 500,
     max_genes: int = 6000,
@@ -108,7 +109,7 @@ def qc_metrics(
     ]  # default all robust genes are "highly" variable
 
 
-def get_filter_stats(data: "AnnData") -> Tuple["pandas.DataFrame", "pandas.DataFrame"]:
+def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Calculate filtration stats on cell barcodes and genes, respectively.
 
     Parameters
@@ -188,7 +189,7 @@ def get_filter_stats(data: "AnnData") -> Tuple["pandas.DataFrame", "pandas.DataF
     return df_cells, df_genes
 
 
-def filter_data(data: "AnnData") -> None:
+def filter_data(data: AnnData) -> None:
     """ Filter data based on qc_metrics calculated in ``scc.qc_metrics``.
 
     Parameters
@@ -218,7 +219,7 @@ def filter_data(data: "AnnData") -> None:
 
 
 def generate_filter_plots(
-    data: "AnnData", plot_filt: str, plot_filt_figsize: str = None
+    data: AnnData, plot_filt: str, plot_filt_figsize: str = None
 ) -> None:
     """ This function generates filtration plots, only used in command line.
     """
@@ -281,7 +282,7 @@ def generate_filter_plots(
 
 
 def run_filter_data(
-    data: "AnnData",
+    data: AnnData,
     output_filt: str = None,
     plot_filt: str = None,
     plot_filt_figsize: Tuple[int, int] = None,
@@ -326,7 +327,7 @@ def run_filter_data(
     logger.info("filter_data is finished. Time spent = {:.2f}s.".format(end - start))
 
 
-def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
+def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
     Parameters
@@ -360,7 +361,7 @@ def log_norm(data: "AnnData", norm_count: float = 1e5) -> None:
     logger.info("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
 
-def select_features(data: "AnnData", features: str = None) -> str:
+def select_features(data: AnnData, features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
 
     Parameters
@@ -402,7 +403,7 @@ def select_features(data: "AnnData", features: str = None) -> str:
 
 
 def pca(
-    data: "AnnData",
+    data: AnnData,
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,

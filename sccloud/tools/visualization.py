@@ -6,8 +6,12 @@ import umap as umap_module
 import forceatlas2 as fa2
 import uuid
 
+from anndata import AnnData
 from joblib import effective_n_jobs
-from MulticoreTSNE import MulticoreTSNE as TSNE
+try:
+    from MulticoreTSNE import MulticoreTSNE as TSNE
+except ImportError:
+    print("Need Multicore-TSNE!")
 
 from sccloud.tools import (
     update_rep,
@@ -239,7 +243,7 @@ def calc_force_directed_layout(
 
 
 def tsne(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -312,7 +316,7 @@ def tsne(
 
 
 def fitsne(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -386,7 +390,7 @@ def fitsne(
 
 
 def umap(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     n_components: int = 2,
     n_neighbors: int = 15,
@@ -468,7 +472,7 @@ def umap(
 
 
 def fle(
-    data: "AnnData",
+    data: AnnData,
     file_name: str = None,
     n_jobs: int = -1,
     rep: str = "diffmap",
@@ -614,7 +618,7 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
 
 
 def net_tsne(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -758,7 +762,7 @@ def net_tsne(
 
 
 def net_fitsne(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -902,7 +906,7 @@ def net_fitsne(
 
 
 def net_umap(
-    data: "AnnData",
+    data: AnnData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -1075,7 +1079,7 @@ def net_umap(
 
 
 def net_fle(
-    data: "AnnData",
+    data: AnnData,
     file_name: str = None,
     n_jobs: int = -1,
     rep: str = "diffmap",

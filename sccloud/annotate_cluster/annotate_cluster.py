@@ -6,6 +6,7 @@ import logging
 from sys import stdout
 from natsort import natsorted
 from typing import List, Dict, Union
+from anndata import AnnData
 
 logger = logging.getLogger("sccloud")
 
@@ -232,7 +233,7 @@ def infer_cluster_names(
 
 
 def infer_cell_types(
-    data: "AnnData",
+    data: AnnData,
     markers: Union[str, Dict],
     de_test: str,
     de_alpha: float = 0.05,
@@ -357,7 +358,7 @@ def infer_cell_types(
 
 
 def annotate(
-    data: "AnnData", name: str, based_on: str, anno_dict: Dict[str, str]
+    data: AnnData, name: str, based_on: str, anno_dict: Dict[str, str]
 ) -> None:
     """Add annotation to AnnData obj.
 

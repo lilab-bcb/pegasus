@@ -7,12 +7,13 @@ from collections import defaultdict
 from joblib import Parallel, delayed
 import skmisc.loess as sl
 from typing import List
+from anndata import AnnData
 import logging
 
 logger = logging.getLogger("sccloud")
 
 
-def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
+def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
     assert issparse(data.X)
@@ -106,7 +107,7 @@ def estimate_feature_statistics(data: "AnnData", consider_batch: bool) -> None:
 
 
 def select_hvf_scCloud(
-    data: "AnnData", consider_batch: bool, n_top: int = 2000, span: float = 0.02
+    data: AnnData, consider_batch: bool, n_top: int = 2000, span: float = 0.02
 ) -> None:
     """ Select highly variable features using the sccloud method
     """
@@ -239,7 +240,7 @@ def select_hvf_seurat_multi(
 
 
 def select_hvf_seurat(
-    data: "AnnData",
+    data: AnnData,
     consider_batch: bool,
     n_top: int,
     min_disp: float,
@@ -286,7 +287,7 @@ def select_hvf_seurat(
 
 
 def highly_variable_features(
-    data: "AnnData",
+    data: AnnData,
     consider_batch: bool,
     flavor: str = "sccloud",
     n_top: int = 2000,

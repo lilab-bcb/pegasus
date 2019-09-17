@@ -6,6 +6,7 @@ import logging
 from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
 from sklearn.neighbors import NearestNeighbors
+from anndata import AnnData
 from joblib import effective_n_jobs
 from typing import List, Tuple
 
@@ -81,7 +82,7 @@ def calculate_nearest_neighbors(
 
 
 def get_neighbors(
-    data: "AnnData",
+    data: AnnData,
     K: int = 100,
     rep: str = "pca",
     n_jobs: int = -1,
@@ -197,7 +198,7 @@ def calculate_affinity_matrix(
 
 
 def neighbors(
-    data: "AnnData",
+    data: AnnData,
     K: int = 100,
     rep: "str" = "pca",
     n_jobs: int = -1,
@@ -290,7 +291,7 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
 
 
 def calc_kBET(
-    data: "AnnData",
+    data: AnnData,
     attr: str,
     rep: str = "pca",
     K: int = 25,
@@ -394,7 +395,7 @@ def calc_kBET(
 
 
 def calc_kSIM(
-    data: "AnnData",
+    data: AnnData,
     attr: str,
     rep: str = "pca",
     K: int = 25,

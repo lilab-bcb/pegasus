@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
+from anndata import AnnData
 from scipy.sparse import csr_matrix, csc_matrix
 from joblib import Parallel, delayed, effective_n_jobs
 from statsmodels.stats.multitest import fdrcorrection as fdr
@@ -607,7 +608,7 @@ def organize_results(results: List[List[pd.DataFrame]]) -> pd.DataFrame:
 
 
 def de_analysis(
-    data: "AnnData",
+    data: AnnData,
     cluster: str,
     condition: str = None,
     subset: str = None,
@@ -809,7 +810,7 @@ def get_sort_key(sort_by: List[str], col_names: List[str], direction: str):
 
 
 def markers(
-    data: "AnnData",
+    data: AnnData,
     head: int = None,
     de_key: str = "de_res",
     sort_by: str = "auroc,WAD_score",

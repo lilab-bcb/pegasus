@@ -7,10 +7,10 @@ import multiprocessing
 from sklearn.cluster import KMeans
 
 from typing import List
+from anndata import AnnData
 
 
-
-def estimate_background_probs(adt: "AnnData", random_state: int = 0):
+def estimate_background_probs(adt: AnnData, random_state: int = 0):
     """For cell-hashing data, estimate antibody background probability using EM algorithm.
 
     Parameters
@@ -141,8 +141,8 @@ def remove_suffix(assigns: List[str]) -> List[str]:
 
 
 def demultiplex(
-    data: "AnnData",
-    adt: "AnnData",
+    data: AnnData,
+    adt: AnnData,
     min_signal: float = 10.0,
     alpha: float = 0.0,
     alpha_noise: float = 1.0,

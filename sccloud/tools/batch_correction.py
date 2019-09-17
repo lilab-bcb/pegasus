@@ -1,6 +1,7 @@
 import time
 import numpy as np
 from scipy.sparse import issparse
+from anndata import AnnData
 import logging
 
 logger = logging.getLogger("sccloud")
@@ -8,7 +9,7 @@ logger = logging.getLogger("sccloud")
 from sccloud.tools import estimate_feature_statistics, select_features
 
 
-def set_group_attribute(data: "AnnData", attribute_string: str) -> None:
+def set_group_attribute(data: AnnData, attribute_string: str) -> None:
     """Set group attributes used in batch correction.
 
 Batch correction assumes the differences in gene expression between channels are due to batch effects.
@@ -69,7 +70,7 @@ biologically different from others. In this case, *sccloud* will only perform ba
         data.obs["Group"] = data.obs[attribute_string]
 
 
-def estimate_adjustment_matrices(data: "AnnData") -> bool:
+def estimate_adjustment_matrices(data: AnnData) -> bool:
     """ Estimate adjustment matrices
     """
 
@@ -108,7 +109,7 @@ def estimate_adjustment_matrices(data: "AnnData") -> bool:
     return True
 
 
-def correct_batch_effects(data: "AnnData", keyword: str, features: str = None) -> None:
+def correct_batch_effects(data: AnnData, keyword: str, features: str = None) -> None:
     """ Apply calculated plus and muls to correct batch effects for a dense matrix
     """
     X = data.uns[keyword]
@@ -132,7 +133,7 @@ def correct_batch_effects(data: "AnnData", keyword: str, features: str = None) -
     # X[X < 0.0] = 0.0
 
 
-def correct_batch(data: "AnnData", features: str = None) -> None:
+def correct_batch(data: AnnData, features: str = None) -> None:
     """Batch correction on data.
 
     Parameters

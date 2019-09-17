@@ -1,7 +1,10 @@
 import time
 import numpy as np
 from scipy.sparse import issparse
-import igraph
+try:
+    import igraph
+except ImportError:
+    print("Need python-igraph!")
 import logging
 
 logger = logging.getLogger("sccloud")
@@ -10,6 +13,7 @@ logger = logging.getLogger("sccloud")
 def construct_graph(
     W: "csr_matrix", directed: bool = False, adjust_weights: bool = True
 ) -> "igraph":
+
     start = time.time()
 
     assert issparse(W)

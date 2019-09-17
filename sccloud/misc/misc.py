@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
 from typing import List
+from anndata import AnnData
 
 from sccloud.io import read_input
 
 
 def search_genes(
-    data: "AnnData",
+    data: AnnData,
     gene_list: List[str],
     rec_key: str = "de_res",
     measure: str = "percentage",
@@ -48,7 +49,7 @@ def search_genes(
 
 
 def search_de_genes(
-    data: "AnnData",
+    data: AnnData,
     gene_list: List[str],
     rec_key: str = "de_res",
     de_test: str = "fisher",
@@ -159,7 +160,7 @@ def show_attributes(
 
 
 def perform_oneway_anova(
-    data: "AnnData",
+    data: AnnData,
     glist: List[str],
     restriction_vec: List[str],
     group_str: str,

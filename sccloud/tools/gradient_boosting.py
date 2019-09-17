@@ -5,6 +5,7 @@ from collections import defaultdict
 from joblib import effective_n_jobs
 
 from typing import List, Dict
+from anndata import AnnData
 
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
@@ -20,7 +21,7 @@ logger = logging.getLogger("sccloud")
 
 
 def find_markers(
-    data: "AnnData",
+    data: AnnData,
     label_attr: str,
     de_key: str = "de_res",
     n_jobs: int = -1,

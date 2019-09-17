@@ -9,6 +9,7 @@ from scipy.stats import entropy
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
 from typing import List, Tuple
+from anndata import AnnData
 
 from sccloud.tools import update_rep, W_from_rep
 
@@ -102,7 +103,7 @@ def calculate_diffusion_map(
 
 
 def diffmap(
-    data: "AnnData",
+    data: AnnData,
     n_components: int = 100,
     rep: str = "pca",
     solver: str = "eigsh",
@@ -168,7 +169,7 @@ def diffmap(
     logger.info("diffmap finished. Time spent = {:.2f}s.".format(end - start))
 
 
-def reduce_diffmap_to_3d(data: "AnnData", random_state: int = 0) -> None:
+def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
     """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
 
     Parameters

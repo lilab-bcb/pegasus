@@ -1,16 +1,20 @@
 import time
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
-import igraph
+try:
+    import igraph
+except ImportError as error:
+    print("Need python-igraph!")
 from collections import deque
 
 from typing import List
+from anndata import AnnData
 import logging
 
 logger = logging.getLogger("sccloud")
 
 
-def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
+def calc_pseudotime(data: AnnData, roots: List[str]) -> None:
     """Calculate Pseudotime based on Diffusion Map.
 
     Parameters
@@ -55,7 +59,7 @@ def calc_pseudotime(data: "AnnData", roots: List[str]) -> None:
 
 
 
-def calc_diffmap_dis(data: "AnnData", source: str, t: int, save_to: str) -> None:
+def calc_diffmap_dis(data: AnnData, source: str, t: int, save_to: str) -> None:
     mask = np.isin(data.obs_names, source)
     diffmap = data.obsm["X_phi"] * (data.uns["diffmap_evals"] ** t)
     dis = euclidean_distances(diffmap[mask, :], diffmap)[0,:]
@@ -87,7 +91,7 @@ def bfs_on_mst(G, root_id):
     return parents
 
 
-def infer_path(data: "AnnData", cluster: str, clust_id, path_name: str, k: int = 10):
+def infer_path(data: AnnData, cluster: str, clust_id, path_name: str, k: int = 10):
     """Inference on path of a cluster.
 
     Parameters
