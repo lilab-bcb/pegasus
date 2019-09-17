@@ -14,46 +14,6 @@
 #
 import os
 import sys
-from unittest.mock import MagicMock
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
-MOCK_MODULES = ['numpy', 
-    'leidenalg', 
-    'louvain-github', 
-    'fisher-modified', 
-    'python-igraph', 
-    'MulticoreTSNE-modified', 
-    'Cython',
-    'hnswlib',
-    'matplotlib',
-    'pandas',
-    'scipy',
-    'seaborn',
-    'scikit-learn',
-    'statsmodels',
-    'natsort',
-    'anndata',
-    'numba',
-    'tables',
-    'xlsxwriter',
-    'loompy',
-    'docopt',
-    'setuptools',
-    'plotly',
-    'pybind11',
-    'joblib',
-    'scikit-misc',
-    'pyarrow',
-    'umap-learn',
-    'lightgbm',
-    'forceatlas2-python',
-    'scplot'
-]
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../sccloud"))
