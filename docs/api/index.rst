@@ -1,4 +1,3 @@
-.. py:module:: sccloud
 .. automodule:: sccloud
     :noindex:
 
@@ -12,11 +11,8 @@ API
 Analysis Tools
 --------------
 
-
 Read and Write
 ~~~~~~~~~~~~~~
-
-.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -27,7 +23,6 @@ Read and Write
 
 Preprocess
 ~~~~~~~~~~
-
 
 .. autosummary::
 	:toctree: .
@@ -44,8 +39,6 @@ Preprocess
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
-.. py:currentmodule:: sccloud
-
 .. autosummary::
 	:toctree: .
 
@@ -54,8 +47,6 @@ Batch Correction
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
-
-.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -66,8 +57,6 @@ Nearest Neighbors
 
 Diffusion Map
 ~~~~~~~~~~~~~
-
-.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -81,8 +70,6 @@ Diffusion Map
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
-.. py:currentmodule:: sccloud
-
 .. autosummary::
 	:toctree: .
 
@@ -93,8 +80,6 @@ Cluster algorithms
 
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -111,8 +96,6 @@ Visualization Algorithms
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. py:currentmodule:: sccloud
-
 .. autosummary::
 	:toctree: .
 
@@ -123,8 +106,6 @@ Differential Expression Analysis
 
 Annotate clusters:
 ------------------
-
-.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -138,8 +119,6 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
-.. py:currentmodule:: sccloud
-
 .. autosummary::
 	:toctree: .
 
@@ -152,8 +131,6 @@ Interactive Plots
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. py:currentmodule:: sccloud
-
 .. autosummary::
 	:toctree: .
 
@@ -164,8 +141,6 @@ Quality Control Plots
 Demultiplexing
 --------------
 
-.. py:currentmodule:: sccloud
-
 .. autosummary::
 	:toctree: .
 
@@ -175,8 +150,6 @@ Demultiplexing
 
 Miscellaneous
 -------------
-
-.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
