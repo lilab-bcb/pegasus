@@ -1,3 +1,4 @@
+.. py:module:: sccloud
 .. automodule:: sccloud
     :noindex:
 
@@ -15,7 +16,7 @@ Analysis Tools
 Read and Write
 ~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -43,7 +44,7 @@ Preprocess
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -54,7 +55,7 @@ Batch Correction
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -66,7 +67,7 @@ Nearest Neighbors
 Diffusion Map
 ~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -80,7 +81,7 @@ Diffusion Map
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -93,7 +94,7 @@ Cluster algorithms
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -110,7 +111,7 @@ Visualization Algorithms
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -123,7 +124,7 @@ Differential Expression Analysis
 Annotate clusters:
 ------------------
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -137,7 +138,7 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -151,7 +152,7 @@ Interactive Plots
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -163,7 +164,7 @@ Quality Control Plots
 Demultiplexing
 --------------
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -175,7 +176,7 @@ Demultiplexing
 Miscellaneous
 -------------
 
-.. currentmodule:: sccloud
+.. py:currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
