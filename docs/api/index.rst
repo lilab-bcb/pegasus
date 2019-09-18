@@ -17,6 +17,7 @@ Analysis Tools
 Read and Write
 ~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -28,6 +29,7 @@ Read and Write
 Preprocess
 ~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -44,6 +46,7 @@ Preprocess
 Batch Correction
 ~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -54,6 +57,7 @@ Batch Correction
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
@@ -65,6 +69,7 @@ Nearest Neighbors
 Diffusion Map
 ~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
