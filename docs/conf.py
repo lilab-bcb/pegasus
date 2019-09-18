@@ -59,8 +59,10 @@ extensions = [
     "sphinx_autodoc_typehints",
 ]
 
-autodoc_member_order = "bysource"
-autodoc_default_flags = ["members"]
+autodoc_default_options = {
+    "members": True,
+    "member-order": "bysource"
+}
 autosummary_generate = True
 todo_include_todos = False
 

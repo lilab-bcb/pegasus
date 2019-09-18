@@ -603,14 +603,14 @@ def read_input(
     return_type : `str`
         Return object type, can be either 'MemData' or 'AnnData'.
     concat_matrices : `boolean`, optional (default: False)
-        If input file contains multiple matrices, if concatenate them into one AnnData object or return a list of AnnData objects.
-    h5ad_mode : `str`, optional (default: `a`)
-        If input is in h5ad format, the backed mode for loading the data. mode could be 'a', 'r', 'r+'. 'a' refers to load all into memory.
+        If input file contains multiple matrices, turning this option on will concatenate them into one AnnData object. Otherwise return a list of AnnData objects.
+    h5ad_mode : `str`, optional (default: 'a')
+        If input is in h5ad format, the backed mode for loading the data. Mode could be 'a', 'r', 'r+', where 'a' refers to load the whole matrix into memory.
     ngene : `int`, optional (default: None)
         Minimum number of genes to keep a barcode. Default is to keep all barcodes.
     select_singlets : `bool`, optional (default: False)
-        If only keep DemuxEM-predicted singlets when loading data.
-    channel_attr : `str', optional (default: None)
+        If this option is on, only keep DemuxEM-predicted singlets when loading data.
+    channel_attr : `str`, optional (default: None)
         Use channel_attr to represent different samples. This will set a 'Channel' column field with channel_attr.
     black_list : `List[str]`, optional (default: [])
         Attributes in black list will be poped out.
@@ -622,9 +622,9 @@ def read_input(
 
     Examples
     --------
-    >>> adata = io.read_input('example_10x.h5', genomes = 'mm10')
-    >>> adata = io.read_input('example.h5ad', mode = 'r+')
-    >>> adata = io.read_input('example_ADT.csv')
+    >>> adata = scc.read_input('example_10x.h5', genome = 'mm10')
+    >>> adata = scc.read_input('example.h5ad', h5ad_mode = 'r+')
+    >>> adata = scc.read_input('example_ADT.csv')
     """
 
     start = time.time()
@@ -745,15 +745,15 @@ def write_output(
     output_file : `str`
         output file name. If data is MemData, output_file should ends with suffix '.h5sc'. Otherwise, output_file can end with either '.h5ad' or '.loom'. If output_file ends with '.loom', a LOOM file will be generated. If no suffix is detected, an appropriate one will be appended.
     whitelist : `list`, optional, default = ["obs", "obsm", "uns", "var", "varm"]
-        List that indicates changed fields when writing h5ad file in backed mode. For example,
-         ['uns/Groups', 'obsm/PCA'] will only write Groups in uns, and PCA in obsm; the rest of the fields will be unchanged.
+        List that indicates changed fields when writing h5ad file in backed mode. For example, ['uns/Groups', 'obsm/PCA'] will only write Groups in uns, and PCA in obsm; the rest of the fields will be unchanged.
+
     Returns
     -------
-    None
+    `None`
 
     Examples
     --------
-    >>> io.write_output(adata, 'test.h5ad')
+    >>> scc.write_output(adata, 'test.h5ad')
     """
 
     start = time.time()

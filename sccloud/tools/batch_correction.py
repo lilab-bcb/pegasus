@@ -12,9 +12,7 @@ from sccloud.tools import estimate_feature_statistics, select_features
 def set_group_attribute(data: AnnData, attribute_string: str) -> None:
     """Set group attributes used in batch correction.
 
-Batch correction assumes the differences in gene expression between channels are due to batch effects.
-However, in many cases, we know that channels can be partitioned into several groups and each group is 
-biologically different from others. In this case, *sccloud* will only perform batch correction for channels within each group.  
+    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, *sccloud* will only perform batch correction for channels within each group.
 
     Parameters
     ----------
@@ -23,35 +21,37 @@ biologically different from others. In this case, *sccloud* will only perform ba
 
     attribute_string: ``str``
         Attributes used to construct groups:
-            * If ``None``, assume all channels are from one group.
 
-            * ``attr``, where ``attr`` is a keyword in ``data.obs``. 
-            So the groups are defined by this sample attribute.
+        * ``None``
+            Assume all channels are from one group.
 
-            *``att1+att2+...+attrn``, where ``attr1`` to ``attrn`` are keywords in ``data.obs``. 
-            So the groups are defined by the Cartesian product of these *n* attributes.
+        * ``attr`` 
+            Define groups by sample attribute ``attr``, which is a keyword in ``data.obs``.
 
-            * ``attr=value_11,...value_1n_1;value_21,...value_2n_2;...;value_m1,...,value_mn_m``, where ``attr`` is a keyword in ``data.obs``.
-            In this form, there will be *(m+1)* groups. A cell belongs to group *i* (*i > 1*) if and only if 
-            its sample attribute ``attr`` has a value among ``value_i1``, ... ``value_in_i``.
-            A cell belongs to group 0 if it does not belong to any other groups.
+        * ``att1+att2+...+attrn`` 
+            Define groups by the Cartesian product of these *n* attributes, which are keywords in ``data.obs``.
+
+        * ``attr=value_11,...value_1n_1;value_21,...value_2n_2;...;value_m1,...,value_mn_m``
+            In this form, there will be *(m+1)* groups. A cell belongs to group *i* (*i > 1*) if and only if its sample attribute ``attr``, which is a keyword in ``data.obs``, has a value among ``value_i1``, ... ``value_in_i``. A cell belongs to group 0 if it does not belong to any other groups.
 
     Returns
     -------
-    ``None``
+    None
 
-    Update ``data.obs``:
+        Update ``data.obs``:
+        
         * ``data.obs["Group"]``: Group ID for each cell.
 
     Examples
     --------
+
     >>> scc.set_group_attribute(adata, attr_string = "Individual")
 
     >>> scc.set_group_attribute(adata, attr_string = "Individual+assignment")
 
-    >>> scc.set_group_attribute(adata, attr_string = "Channel=1,3,5;2,4,6,8")
-    
+    >>> scc.set_group_attribute(adata, attr_string = "Channel=1,3,5;2,4,6,8")    
     """
+    
     if attribute_string.find("=") >= 0:
         attr, value_str = attribute_string.split("=")
         assert attr in data.obs.columns

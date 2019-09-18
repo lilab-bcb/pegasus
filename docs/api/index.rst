@@ -1,5 +1,3 @@
-.. module:: sccloud
-
 .. automodule:: sccloud
     :noindex:
 
@@ -122,21 +120,9 @@ Differential Expression Analysis
 	find_markers
 	write_results_to_excel
 
-Write single-cell-portal-formatted outputs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. module:: sccloud.tools
-.. currentmodule:: sccloud
-
-.. autosummary::
-	:toctree: .
-
-	tools.run_scp_output
-
 Annotate clusters:
 ------------------
 
-.. module:: sccloud
 .. currentmodule:: sccloud
 
 .. autosummary::

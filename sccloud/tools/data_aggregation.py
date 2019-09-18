@@ -76,12 +76,12 @@ def aggregate_matrices(
 
     Returns
     -------
-
-    None
+    `None` or `AnnData` or `MemData`
+        Either `None` or an `AnnData` object or a `MemData` object.
 
     Examples
     --------
-    >>> tools.aggregate_matrix('example.csv', 'example_10x.h5', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'])
+    >>> scc.aggregate_matrix('example.csv', 'example_10x.h5', ['Source:pbmc', 'Donor:1'], ['Source', 'Platform', 'Donor'])
     """
 
     df = pd.read_csv(csv_file, header=0, index_col="Sample")
