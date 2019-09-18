@@ -22,25 +22,24 @@ Read and Write
 .. autosummary::
 	:toctree: .
 
-	sccloud.read_input
-	sccloud.write_output
-	sccloud.aggregate_matrices
+	read_input
+	write_output
+	aggregate_matrices
 
 Preprocess
 ~~~~~~~~~~
 
-.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.qc_metrics
-	sccloud.get_filter_stats
-	sccloud.filter_data
-	sccloud.select_features
-	sccloud.log_norm
-	sccloud.highly_variable_features
-	sccloud.pca
+	qc_metrics
+	get_filter_stats
+	filter_data
+	select_features
+	log_norm
+	highly_variable_features
+	pca
 
 
 Batch Correction
@@ -51,8 +50,8 @@ Batch Correction
 .. autosummary::
 	:toctree: .
 
-	sccloud.set_group_attribute
-	sccloud.correct_batch
+	set_group_attribute
+	correct_batch
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
@@ -62,9 +61,9 @@ Nearest Neighbors
 .. autosummary::
 	:toctree: .
 
-	sccloud.neighbors
-	sccloud.calc_kBET
-	sccloud.calc_kSIM
+	neighbors
+	calc_kBET
+	calc_kSIM
 
 Diffusion Map
 ~~~~~~~~~~~~~
@@ -74,70 +73,77 @@ Diffusion Map
 .. autosummary::
 	:toctree: .
 
-	sccloud.diffmap
-	sccloud.reduce_diffmap_to_3d
-	sccloud.calc_pseudotime
-	sccloud.infer_path
+	diffmap
+	reduce_diffmap_to_3d
+	calc_pseudotime
+	infer_path
 
 
 Cluster algorithms
 ~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.louvain
-	sccloud.leiden
-	sccloud.spectral_louvain
-	sccloud.spectral_leiden
+	louvain
+	leiden
+	spectral_louvain
+	spectral_leiden
 
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.tsne
-	sccloud.fitsne
-	sccloud.umap
-	sccloud.fle
-	sccloud.net_tsne
-	sccloud.net_fitsne
-	sccloud.net_umap
-	sccloud.net_fle
+	tsne
+	fitsne
+	umap
+	fle
+	net_tsne
+	net_fitsne
+	net_umap
+	net_fle
 
 Differential Expression Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.de_analysis
-	sccloud.markers
-	sccloud.find_markers
-	sccloud.write_results_to_excel
+	de_analysis
+	markers
+	find_markers
+	write_results_to_excel
 
 Write single-cell-portal-formatted outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. module:: sccloud.tools
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.tools.run_scp_output
+	tools.run_scp_output
 
 Annotate clusters:
 ------------------
 
+.. module:: sccloud
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.infer_cell_types
-	sccloud.annotate
+	infer_cell_types
+	annotate
 
 Plotting
 --------
@@ -145,44 +151,48 @@ Plotting
 Interactive Plots
 ~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.embedding
-	sccloud.composition_plot
-	sccloud.variable_feature_plot
-	sccloud.heatmap
-	sccloud.dotplot
+	embedding
+	composition_plot
+	variable_feature_plot
+	heatmap
+	dotplot
 
 Quality Control Plots
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.violin
-	sccloud.scatter
-	sccloud.scatter_matrix
+	violin
+	scatter
+	scatter_matrix
 
 Demultiplexing
 --------------
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.estimate_background_probs
-	sccloud.demultiplex
+	estimate_background_probs
+	demultiplex
 
 
 Miscellaneous
 -------------
 
+.. currentmodule:: sccloud
 
 .. autosummary::
 	:toctree: .
 
-	sccloud.search_genes
-	sccloud.search_de_genes
+	search_genes
+	search_de_genes
