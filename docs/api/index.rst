@@ -1,6 +1,9 @@
 .. automodule:: sccloud
     :noindex:
 
+.. module:: sccloud
+
+
 API
 ===
 
