@@ -9,7 +9,7 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
 
 requires = [
     "matplotlib>=2.0.0",
-    "pandas>=0.21",
+    "pandas>=0.24",
     "Cython",
     "scipy<1.3",
     "seaborn",
