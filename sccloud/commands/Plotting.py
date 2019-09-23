@@ -55,6 +55,7 @@ Options:
   --qc-xtick-rotation                If rotate x label.
   --qc-line-width <width>            Line width for qc_violin. [default: 0.5]
 
+  --set-palettes <str>               A comma-separated list of colors for visualization.
   -h, --help                         Print out help information.
 
 Examples:
@@ -114,6 +115,7 @@ Examples:
             "qc_xtick_font": int(self.args["--qc-xtick-font"]),
             "qc_xtick_rotation": self.args["--qc-xtick-rotation"],
             "qc_line_width": float(self.args["--qc-line-width"]),
+            "palettes" : self.args["--set-palettes"],
         }
 
         if self.args["--alpha"] is None:

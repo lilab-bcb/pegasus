@@ -174,6 +174,7 @@ def plot_composition(
     wspace=0.3,
     hspace=None,
     restrictions=[],
+    **others,
 ):
     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
     
@@ -206,7 +207,7 @@ def plot_composition(
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
     restrictions: `list[str]`, optional (default: `[]`)
         This parameter is used to select a subset of data to plot.
-
+    
     Returns
     -------
 
@@ -304,6 +305,7 @@ def plot_scatter(
     show_background=False,
     vmin=0.0,
     vmax=1.0,
+    **others,
 ):
     df = pd.DataFrame(
         data.obsm["X_" + basis][:, 0:2], columns=[basis + c for c in ["1", "2"]]
@@ -365,11 +367,15 @@ def plot_scatter(
                     labels[idx] = ""
                     labels = as_category(labels)
                     label_size = labels.categories.size
-                    palettes = get_palettes(
-                        label_size,
-                        with_background=idx.sum() > 0,
-                        show_background=show_background,
-                    )
+
+                    if "palettes" in others:
+                        palettes = np.array(others["palettes"].split(","))
+                    else:
+                        palettes = get_palettes(
+                            label_size,
+                            with_background=idx.sum() > 0,
+                            show_background=show_background,
+                        )
 
                     for k, cat in enumerate(labels.categories):
                         idx = np.isin(labels, cat)
@@ -425,6 +431,7 @@ def plot_scatter_groups(
     alpha=None,
     legend_fontsize=None,
     showall=True,
+    **others,
 ):
     df = pd.DataFrame(
         data.obsm["X_" + basis][:, 0:2], columns=[basis + c for c in ["1", "2"]]
@@ -520,6 +527,7 @@ def plot_scatter_genes(
     hspace=None,
     alpha=None,
     use_raw=False,
+    **others,
 ):
     df = pd.DataFrame(
         data.obsm["X_" + basis][:, 0:2], columns=[basis + c for c in ["1", "2"]]
@@ -589,6 +597,7 @@ def plot_scatter_gene_groups(
     hspace=None,
     alpha=None,
     use_raw=False,
+    **others,
 ):
     df = pd.DataFrame(
         data.obsm["X_" + basis][:, 0:2], columns=[basis + c for c in ["1", "2"]]
