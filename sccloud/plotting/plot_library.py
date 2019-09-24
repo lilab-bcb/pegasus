@@ -368,7 +368,7 @@ def plot_scatter(
                     labels = as_category(labels)
                     label_size = labels.categories.size
 
-                    if "palettes" in others:
+                    if others["palettes"] is not None:
                         palettes = np.array(others["palettes"].split(","))
                     else:
                         palettes = get_palettes(
