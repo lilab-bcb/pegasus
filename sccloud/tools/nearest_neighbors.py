@@ -207,6 +207,8 @@ def neighbors(
 ) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
+    The kNN calculation uses hnswlib introduced by [Malkov16]_.
+
     Parameters
     ----------
 
