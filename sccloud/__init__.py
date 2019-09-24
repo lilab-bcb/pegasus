@@ -7,6 +7,7 @@ except NameError:
 
 import sys
 import logging
+import warnings
 
 logger = logging.getLogger("sccloud")
 logger.setLevel(logging.DEBUG)
@@ -16,6 +17,7 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+warnings.filterwarnings("ignore", category=UserWarning,  module='lightgbm')
 
 from .io import infer_file_format, read_input, write_output
 from .tools import (
