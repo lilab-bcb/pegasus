@@ -13,12 +13,12 @@ def convert_to_parquet(data, output_name, nthreads):
     whitelist_3d = ['X_diffmap_pca']
     for key in data.obsm.keys():
         if key in whitelist:
-            df["{}_0".format(key)] = data.obsm[key][:, 0]
-            df["{}_1".format(key)] = data.obsm[key][:, 1]
+            df["{}_1".format(key)] = data.obsm[key][:, 0]
+            df["{}_2".format(key)] = data.obsm[key][:, 1]
         elif key in whitelist_3d:
-            df["{}_0".format(key)] = data.obsm[key][:, 0]
-            df["{}_1".format(key)] = data.obsm[key][:, 1]
-            df["{}_2".format(key)] = data.obsm[key][:, 2]
+            df["{}_1".format(key)] = data.obsm[key][:, 0]
+            df["{}_2".format(key)] = data.obsm[key][:, 1]
+            df["{}_3".format(key)] = data.obsm[key][:, 2]
 
     metadata_table = pa.Table.from_pandas(df, nthreads=nthreads)
 
