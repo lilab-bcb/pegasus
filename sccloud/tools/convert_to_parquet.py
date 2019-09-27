@@ -1,45 +1,25 @@
+import time
+
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import time
-
 from sccloud.io import read_input
 
 
 def convert_to_parquet(data, output_name, nthreads):
     data.obs.index.name = "sccloud.cell.barcode"
     df = data.obs.reset_index()
-    if "X_pca" in data.obsm.keys():
-        df["PCA_X"] = data.obsm["X_pca"][:, 0]
-        df["PCA_Y"] = data.obsm["X_pca"][:, 1]
-    if "X_rpca" in data.obsm.keys():
-        df["RPCA_X"] = data.obsm["X_rpca"][:, 0]
-        df["RPCA_Y"] = data.obsm["X_rpca"][:, 1]
-    if "X_tsne" in data.obsm.keys():
-        df["TSNE_X"] = data.obsm["X_tsne"][:, 0]
-        df["TSNE_Y"] = data.obsm["X_tsne"][:, 1]
-    if "X_fitsne" in data.obsm.keys():
-        df["FITSNE_X"] = data.obsm["X_fitsne"][:, 0]
-        df["FITSNE_Y"] = data.obsm["X_fitsne"][:, 1]
-    if "X_umap" in data.obsm.keys():
-        df["UMAP_X"] = data.obsm["X_umap"][:, 0]
-        df["UMAP_Y"] = data.obsm["X_umap"][:, 1]
-    if "X_fle" in data.obsm.keys():
-        df["FLE_X"] = data.obsm["X_fle"][:, 0]
-        df["FLE_Y"] = data.obsm["X_fle"][:, 1]
-    if "X_diffmap_pca" in data.obsm.keys():
-        df["DIFFMAP_X"] = data.obsm["X_diffmap_pca"][:, 0]
-        df["DIFFMAP_Y"] = data.obsm["X_diffmap_pca"][:, 1]
-        df["DIFFMAP_Z"] = data.obsm["X_diffmap_pca"][:, 2]
-    if "X_net_tsne" in data.obsm.keys():
-        df["NET_TSNE_X"] = data.obsm["X_net_tsne"][:, 0]
-        df["NET_TSNE_Y"] = data.obsm["X_net_tsne"][:, 1]
-    if "X_net_umap" in data.obsm.keys():
-        df["NET_UMAP_X"] = data.obsm["X_net_umap"][:, 0]
-        df["NET_UMAP_Y"] = data.obsm["X_net_umap"][:, 1]
-    if "X_net_fle" in data.obsm.keys():
-        df["NET_FLE_X"] = data.obsm["X_net_fle"][:, 0]
-        df["NET_FLE_Y"] = data.obsm["X_net_fle"][:, 1]
+    whitelist = ['X_pca', 'X_rpca', 'X_tsne', 'X_fitsne', 'X_umap', 'X_fle', 'X_net_tsne', 'X_net_umap', 'X_net_fle']
+    whitelist_3d = ['X_diffmap_pca']
+    for key in data.obsm.keys():
+        if key in whitelist:
+            df["{}_0".format(key)] = data.obsm[key][:, 0]
+            df["{}_1".format(key)] = data.obsm[key][:, 1]
+        elif key in whitelist_3d:
+            df["{}_0".format(key)] = data.obsm[key][:, 0]
+            df["{}_1".format(key)] = data.obsm[key][:, 1]
+            df["{}_2".format(key)] = data.obsm[key][:, 2]
+
     metadata_table = pa.Table.from_pandas(df, nthreads=nthreads)
 
     df_expr = pd.DataFrame(data=data.X.toarray(), columns=data.var_names)
