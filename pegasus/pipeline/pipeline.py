@@ -358,7 +358,15 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["seurat_compatible"]:
         seurat_data = adata.copy()
         seurat_data.raw = raw_data
-        seurat_data.uns["scale.data"] = adata.uns["fmat_highly_variable_features"]
+        dtypes = seurat_data.obs.dtypes
+        for name, dtype in dtypes.items():
+            if dtype.name == "category":
+                seurat_data.obs[name] = seurat_data.obs[name].astype(str)
+        dtypes = seurat_data.var.dtypes
+        for name, dtype in dtypes.items():
+            if dtype.name == "category":
+                seurat_data.var[name] = seurat_data.var[name].astype(str)
+        seurat_data.uns["scale.data"] = adata.uns["fmat_highly_variable_features"] # assign by reference
         seurat_data.uns["scale.data.rownames"] = adata.var_names[
             adata.var["highly_variable_features"]
         ].values
