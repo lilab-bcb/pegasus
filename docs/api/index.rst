@@ -1,12 +1,12 @@
-.. automodule:: sccloud
+.. automodule:: pegasus
     :noindex:
 
 API
 ===
 
-``sccloud`` can also be used as a python package. Import ``sccloud`` by::
+*Pegasus* can also be used as a python package. Import pegasus by::
 
-	import sccloud as scc
+	import pegasus as pg
 
 Analysis Tools
 --------------
