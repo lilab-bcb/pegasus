@@ -14,15 +14,15 @@ class TestAggregate(unittest.TestCase):
 
     def test_aggregate_10x_matrices(self):
         m1 = pg.read_input(
-            "tests/scCloud-test-data/input/heart_1k_v3/filtered_feature_bc_matrix.h5",
+            "tests/pegasus-test-data/input/heart_1k_v3/filtered_feature_bc_matrix.h5",
             genome="mm10",
         )
         m2 = pg.read_input(
-            "tests/scCloud-test-data/input/heart_1k_v2/filtered_gene_bc_matrices_h5.h5",
+            "tests/pegasus-test-data/input/heart_1k_v2/filtered_gene_bc_matrices_h5.h5",
             genome="mm10",
         )
         pg.aggregate_matrices(
-            "tests/scCloud-test-data/input/aggregate_test.csv",
+            "tests/pegasus-test-data/input/aggregate_test.csv",
             restrictions=[],
             attributes=["Version"],
             what_to_return="aggregate_test",
@@ -51,7 +51,7 @@ class TestAggregate(unittest.TestCase):
 
     def test_multi_genome(self):
         pg.aggregate_matrices(
-            "tests/scCloud-test-data/input/aggregate_multi_genome.csv",
+            "tests/pegasus-test-data/input/aggregate_multi_genome.csv",
             restrictions=[],
             attributes=None,
             what_to_return="aggregate_test",
