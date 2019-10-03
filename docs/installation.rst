@@ -12,7 +12,7 @@ This installation instruction has been tested on Linux (Ubuntu Linux 18.04 and 1
 Python
 ######
 
-sccloud works with Python 3 (Python 3.5 or greater) only. 
+pegasus works with Python 3 (Python 3.5 or greater) only. 
 
 For Ubuntu, install Python 3 by::
 
@@ -39,30 +39,30 @@ Install via PyPI
 Linux
 #####
 
-Assuming Python 3 is installed on your OS. Then install ``pip`` for Python 3, along with some extra libraries for building sccloud::
+Assuming Python 3 is installed on your OS. Then install ``pip`` for Python 3, along with some extra libraries for building pegasus::
 
 	sudo apt install python3-pip
 
 
-Now install sccloud via ``pip``::
+Now install pegasus via ``pip``::
 
-	pip3 install sccloud
+	pip3 install pegasus
 
 Alternatively, if you want to use ``mkl`` package for speed improvement, type::
 
-	pip3 install sccloud[mkl]
+	pip3 install pegasus[mkl]
 
-If you want to use sccloud's FIt-SNE feature. First, install ``fftw`` library::
+If you want to use pegasus's FIt-SNE feature. First, install ``fftw`` library::
 
 	sudo apt install libfftw3-dev
 
 Then type::
 
-	pip3 install sccloud[fitsne]
+	pip3 install pegasus[fitsne]
 
 Or if you want both extra features, type::
 
-	pip3 install sccloud[mkl,fitsne]
+	pip3 install pegasus[mkl,fitsne]
 
 .. _below: ./installation.html#install-via-miniconda
 
@@ -83,7 +83,7 @@ macOS
 Install via Miniconda
 ^^^^^^^^^^^^^^^^^^^^^
 
-You can also choose to install sccloud in a dedicated Conda environment without affecting your OS.
+You can also choose to install pegasus in a dedicated Conda environment without affecting your OS.
 
 
 Package Manager
@@ -114,63 +114,63 @@ Use the following commands::
 
 Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
-Install sccloud
+Install pegasus
 ###############
 
 Both Linux and macOS share this installation step.
 
-1. Create a conda environment for sccloud. Let ``sccloud`` be its name, but you are free to choose your own::
+1. Create a conda environment for pegasus. Let ``pegasus`` be its name, but you are free to choose your own::
 
-	conda create -n sccloud -y pip
+	conda create -n pegasus -y pip
 
 For macOS, you may need to do the following extra commands after creation::
 
-	mkdir -p $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/activate.d
-	mkdir -p $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/deactivate.d
-	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/activate.d/env_vars.sh
-	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/sccloud/etc/conda/deactivate.d/env_vars.sh
+	mkdir -p $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/activate.d
+	mkdir -p $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/deactivate.d
+	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/activate.d/env_vars.sh
+	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/deactivate.d/env_vars.sh
 
 where ``$CONDA_PATH`` is set in the previous step.
 
 2. Enter conda environment by activating::
 
-	conda activate sccloud
+	conda activate pegasus
 
 or::
 
-	source activate sccloud
+	source activate pegasus
 
 3. (Optional) If you want to use the Intel ``mkl`` package for speed improvement, type::
 
 	conda install -y -c anaconda numpy
 
-Also, if you want to use sccloud's FIt-SNE feature, which depends on ``fftw`` package, type::
+Also, if you want to use pegasus's FIt-SNE feature, which depends on ``fftw`` package, type::
 
 	conda install -y -c conda-forge fftw
 
-4. Install sccloud::
+4. Install pegasus::
 
-	pip install sccloud
+	pip install pegasus
 
-If you want to use sccloud's FIt-SNE feature, type::
+If you want to use pegasus's FIt-SNE feature, type::
 
-	pip install sccloud[fitsne]
+	pip install pegasus[fitsne]
 
 -----------------------------------
 
-Use **sccloud** in UGER
+Use **pegasus** in UGER
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 First, you need to request a RedHat7 server::
 
 	qrsh -q interactive -l h_vmem=4g -l os=RedHat7 -P regevlab
 
-Then, if you have installed **sccloud**, you could activate the virtual environment::
+Then, if you have installed **pegasus**, you could activate the virtual environment::
 
-	source activate sccloud
+	source activate pegasus
 
 Or, you can use an installed version by typing::
 
-	source /ahg/regevdata/users/libo/miniconda3/bin/activate sccloud
+	source /ahg/regevdata/users/libo/miniconda3/bin/activate pegasus
 
 .. _Miniconda: http://conda.pydata.org/miniconda.html

@@ -15,7 +15,7 @@ Create a VM instance with a docker image
 
 4. In the form, fill the **Name** field with the name of your choice, such as ``container``. Under **Machine type**, choose the number of CPUs and RAMs you want to use , e.g. *64 vCPUs*.
 
-5. Click *Deploy a container image to this VM instance* under **Container**. Then fill in the docker image. For images deposited to Docker Hub, the image name is the same as what you will use in ``docker pull`` command. For example, fill in ``regevlab/sccloud-0.6.0`` to install scCloud image. 
+5. Click *Deploy a container image to this VM instance* under **Container**. Then fill in the docker image. For images deposited to Docker Hub, the image name is the same as what you will use in ``docker pull`` command. For example, fill in ``sccloud/sccloud:0.9.1`` to install pegasus image. 
 
 6. Click **Advanced container options**. Change *Restart policy* to *On failure* and check *Allocate a buffer for STDIN* and *Allocate a pseudo-TTY*.
 
@@ -34,7 +34,7 @@ Run the created VM
 
 2. Check if the docker image is successfully installed. If so, you should be able to see a welcome message (in organce color) telling you that you need to use ``docker attach`` to access your containers. If you cannot find the welcome message, it is possible that the cloud engine is still working on deploying the docker image. Wait for one minute and proceed to the next step.
 
-3. Type ``docker ps`` several times until you see your docker image appears (e.g. regevlab/sccloud-0.6.0 under the IMAGE column). Copy the corresponding container name under the NAMES column (e.g. klt-instance-3-uwtu).
+3. Type ``docker ps`` several times until you see your docker image appears (e.g. sccloud/sccloud:0.9.1 under the IMAGE column). Copy the corresponding container name under the NAMES column (e.g. klt-instance-3-uwtu).
 
 4. Attach to the container using the following command::
 

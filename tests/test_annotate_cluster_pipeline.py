@@ -1,7 +1,7 @@
 import unittest
 import os
 
-import sccloud.commands
+import pegasus.commands
 
 
 class TestAnnotateClusterPipeline(unittest.TestCase):
@@ -9,19 +9,19 @@ class TestAnnotateClusterPipeline(unittest.TestCase):
         os.path.exists("annotate_output.txt") and os.remove("annotate_output.txt")
 
     def test_annotate(self):
-        cmd = sccloud.commands.annotate_cluster(
+        cmd = pegasus.commands.annotate_cluster(
             [
                 "annotate_cluster",
                 "--marker-file",
-                os.path.join("tests", "scCloud-test-data", "input", "markers.json"),
+                os.path.join("tests", "pegasus-test-data", "input", "markers.json"),
                 "--de-test", "fisher",
-                os.path.join("tests", "scCloud-test-data", "output", "test_de.h5ad"),
+                os.path.join("tests", "pegasus-test-data", "output", "test_de.h5ad"),
                 "annotate_output.txt"
             ]
         )
         cmd.execute()
         with open(
-            os.path.join("tests", "scCloud-test-data", "output", "annotate_output.txt")
+            os.path.join("tests", "pegasus-test-data", "output", "annotate_output.txt")
         ) as f:
             data = f.readlines()
         with open("annotate_output.txt") as f:

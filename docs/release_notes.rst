@@ -1,3 +1,13 @@
+Version 0.15.0 `September 27, 2019`
+-----------------------------------
+
+Rename package to *PegasusPy*, with module name *pegasus*.
+
+Version 0.14.0 `September 17, 2019`
+-----------------------------------
+
+Provide Python API for interactive analysis.
+
 Version 0.10.0 `January 31, 2019`
 ---------------------------------
 

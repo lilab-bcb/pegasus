@@ -42,12 +42,12 @@ requires = [
 ]
 
 setup(
-    name="sccloud",
+    name="pegasuspy",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="scRNA-Seq analysis tools that scale to millions of cells",
     long_description=long_description,
-    url="https://github.com/klarman-cell-observatory/scCloudPy",
+    url="https://github.com/klarman-cell-observatory/pegasus",
     author="Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova",
     author_email="sccloud@googlegroups.com, sccloud@broadinstitute.org",
     classifiers=[  # https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -72,13 +72,13 @@ setup(
     extras_require=dict(fitsne=["fitsne"], mkl=["mkl"]),
     python_requires="~=3.5",
     package_data={
-        "sccloud.annotate_cluster": [
+        "pegasus.annotate_cluster": [
             "human_immune_cell_markers.json",
             "mouse_immune_cell_markers.json",
             "mouse_brain_cell_markers.json",
             "human_brain_cell_markers.json",
         ],
-        "scCloud.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
+        "pegasus.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
     },
-    entry_points={"console_scripts": ["sccloud=sccloud.__main__:main"]},
+    entry_points={"console_scripts": ["pegasus=pegasus.__main__:main"]},
 )

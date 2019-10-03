@@ -18,11 +18,11 @@ import sys
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
-import sccloud
+import pegasus
 
 # -- Project information -----------------------------------------------------
 
-project = "scCloud"
+project = "Pegasus"
 copyright = "2019, Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
 author = (
     "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
@@ -132,7 +132,7 @@ html_static_path = ["_static"]
 html_context = dict(
     display_github=True,  # Integrate GitHub
     github_user="klarman-cell-observatory",  # Username
-    github_repo="scCloudPy",  # Repo name
+    github_repo="pegasus",  # Repo name
     github_version="master",  # Version
     conf_py_path="/docs/",  # Path in the checkout to the docs root
 )
@@ -141,7 +141,7 @@ html_context = dict(
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "scCloud_doc"
+htmlhelp_basename = "pegasus_doc"
 
 
 def setup(app):
@@ -171,8 +171,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "sccloud.tex",
-        "scCloud Documentation",
+        "pegasus.tex",
+        "Pegasus Documentation",
         "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al.",
         "manual",
     )
@@ -183,7 +183,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "scCloud", "scCloud Documentation", [author], 1)]
+man_pages = [(master_doc, "pegasus", "Pegasus Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -194,10 +194,10 @@ man_pages = [(master_doc, "scCloud", "scCloud Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "scCloud",
-        "scCloud Documentation",
+        "pegasus",
+        "Pegasus Documentation",
         author,
-        "scCloud",
+        "pegasus",
         "One line description of project.",
         "Miscellaneous",
     )

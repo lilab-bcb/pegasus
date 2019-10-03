@@ -1,7 +1,7 @@
 import unittest
 import os
 import shutil
-import sccloud.commands
+import pegasus.commands
 from .test_util import assert_excel_equal
 
 
@@ -13,10 +13,10 @@ class TestDePipeline(unittest.TestCase):
     def test_de_analysis(self):
         # de_analysis modifies h5ad file
         shutil.copy(
-            os.path.join("tests", "scCloud-test-data", "output", "test_cluster.h5ad"),
+            os.path.join("tests", "pegasus-test-data", "output", "test_cluster.h5ad"),
             "test_de.h5ad",
         )
-        cmd = sccloud.commands.de_analysis(
+        cmd = pegasus.commands.de_analysis(
             [
                 "de_analysis",
                 "test_de.h5ad",
@@ -32,7 +32,7 @@ class TestDePipeline(unittest.TestCase):
         cmd.execute()
         assert_excel_equal(
             self,
-            os.path.join("tests", "scCloud-test-data", "output", "test_de.xlsx"),
+            os.path.join("tests", "pegasus-test-data", "output", "test_de.xlsx"),
             "test_de.xlsx",
         )
 

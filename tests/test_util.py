@@ -1,7 +1,7 @@
 import pandas as pd
 import scipy
 import numpy as np
-import sccloud as sc
+import pegasus as pg
 import subprocess
 import os
 
@@ -110,8 +110,8 @@ def assert_adata_files_equal(
     obsm_blacklist=None,
     varm_blacklist=None,
 ):
-    test_data = sc.io.read_input(test_path)
-    data = sc.io.read_input(path)
+    test_data = pg.io.read_input(test_path)
+    data = pg.io.read_input(path)
     assert_adata_equal(
         test_case,
         data,

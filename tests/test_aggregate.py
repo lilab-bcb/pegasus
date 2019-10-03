@@ -3,7 +3,7 @@ import unittest
 
 import h5py
 
-import sccloud as scc
+import pegasus as pg
 
 
 class TestAggregate(unittest.TestCase):
@@ -13,15 +13,15 @@ class TestAggregate(unittest.TestCase):
         )
 
     def test_aggregate_10x_matrices(self):
-        m1 = scc.read_input(
+        m1 = pg.read_input(
             "tests/scCloud-test-data/input/heart_1k_v3/filtered_feature_bc_matrix.h5",
             genome="mm10",
         )
-        m2 = scc.read_input(
+        m2 = pg.read_input(
             "tests/scCloud-test-data/input/heart_1k_v2/filtered_gene_bc_matrices_h5.h5",
             genome="mm10",
         )
-        scc.aggregate_matrices(
+        pg.aggregate_matrices(
             "tests/scCloud-test-data/input/aggregate_test.csv",
             restrictions=[],
             attributes=["Version"],
@@ -31,7 +31,7 @@ class TestAggregate(unittest.TestCase):
             ngene=None,
         )
 
-        result = scc.read_input("aggregate_test.h5sc", genome="mm10")
+        result = pg.read_input("aggregate_test.h5sc", genome="mm10")
         self.assertEqual(
             m1.shape[0] + m2.shape[0], result.shape[0], "Cell dimension is incorrect"
         )
@@ -50,7 +50,7 @@ class TestAggregate(unittest.TestCase):
         )
 
     def test_multi_genome(self):
-        scc.aggregate_matrices(
+        pg.aggregate_matrices(
             "tests/scCloud-test-data/input/aggregate_multi_genome.csv",
             restrictions=[],
             attributes=None,
