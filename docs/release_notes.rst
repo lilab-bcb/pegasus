@@ -1,4 +1,4 @@
-Version 0.15.0 `September 27, 2019`
+Version 0.15.0 `October 2, 2019`
 -----------------------------------
 
 Rename package to *PegasusPy*, with module name *pegasus*.
