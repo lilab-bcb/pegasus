@@ -12,7 +12,7 @@ class TestFindMarkersPipeline(unittest.TestCase):
         command = pegasus.commands.find_markers(
             [
                 "find_markers",
-                os.path.join("tests", "scCloud-test-data", "output", "test_de.h5ad"),
+                os.path.join("tests", "pegasus-test-data", "output", "test_de.h5ad"),
                 "test.markers.xlsx",
                 "--labels",
                 "leiden_labels",
@@ -22,7 +22,7 @@ class TestFindMarkersPipeline(unittest.TestCase):
         command.execute()
         assert_excel_equal(
             self,
-            os.path.join("tests", "scCloud-test-data", "output", "test.markers.xlsx"),
+            os.path.join("tests", "pegasus-test-data", "output", "test.markers.xlsx"),
             "test.markers.xlsx",
         )
 

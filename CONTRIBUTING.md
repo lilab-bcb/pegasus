@@ -7,7 +7,7 @@ discussion, so please feel free to open a pull request even if you are new to su
 ## Issues
 
 The easiest contribution to make is to [file an issue](https://github.com/klarman-cell-observatory/pegasus/issues/new).
-It is beneficial if you check [scCloud Google Groups](https://groups.google.com/forum/#!forum/sccloud), 
+It is beneficial if you check [Cumulus Google Groups](https://groups.google.com/a/broadinstitute.org/forum/#!forum/cumulus), 
 and do a cursory search of [existing issues](https://github.com/klarman-cell-observatory/pegasus/issues).
 It is also helpful, if you can provide clear instruction for 
 how to reproduce a problem. If you have resolved an issue yourself please consider
