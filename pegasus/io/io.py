@@ -766,9 +766,9 @@ def write_output(
     if file_name == "":
         file_name = output_file
         suffix = "h5sc" if isinstance(data, MemData) else "h5ad"
-    if isinstance(data, MemData) and suffix != "h5sc":
+    if isinstance(data, MemData) and suffix != "h5sc" and suffix != "h5":
         logging.warning(
-            "Detected file suffix for this MemData object is not .h5sc. We will assume output_file is a file name and append .h5sc suffix."
+            "Detected file suffix for this MemData object is neither .h5sc nor .h5. We will assume output_file is a file name and append .h5sc suffix."
         )
         file_name = output_file
         suffix = "h5sc"
@@ -788,7 +788,7 @@ def write_output(
                 data.uns.pop(keyword)
 
     # Write outputs
-    if suffix == "h5sc":
+    if suffix == "h5sc" or suffix == "h5":
         data.write_h5_file(output_file)
     elif suffix == "loom":
         data.write_loom(output_file, write_obsm_varm=True)

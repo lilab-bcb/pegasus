@@ -13,3 +13,4 @@ from .CITESeq import CITESeq as merge_rna_adt
 from .CheckSampleIndexes import CheckSampleIndexes as check_indexes
 from .FindMarkers import FindMarkers as find_markers
 from .DownSample import DownSample as down_sample
+from .ConvertH5SC import ConvertH5SC as convert_h5sc
