@@ -95,6 +95,7 @@ def calc_basic_stat(
             "mean_logExpr:{0}".format(clust_id): mean1,
             "mean_logExpr_other:{0}".format(clust_id): mean2,
             "log_fold_change:{0}".format(clust_id): log_fold_change,
+            "fold_change:{0}".format(clust_id): np.exp(log_fold_change),
             "percentage:{0}".format(clust_id): percents,
             "percentage_other:{0}".format(clust_id): percents_other,
             "percentage_fold_change:{0}".format(clust_id): percent_fold_change,
@@ -275,6 +276,7 @@ def calc_t(
     # recover sparse matrix
     mat = csr_matrix((data, indices, indptr), shape=shape)
     pvals = np.full(shape[1], 1.0)
+    tscores = np.full(shape[1], 0)
     mask = cluster_labels == clust_id
     mat_clust = mat[mask]
 
@@ -322,13 +324,14 @@ def calc_t(
                 (s1sqr[idx] / n1) ** 2 / (n1 - 1) + (s2sqr[idx] / n2) ** 2 / (n2 - 1)
             )
             pvals[idx] = ss.t.sf(np.fabs(tscore), v) * 2.0  # two-sided
-
+            tscores[idx] = tscore
     passed, qvals = fdr(pvals)
 
     df = pd.DataFrame(
         {
             "t_pval:{0}".format(clust_id): pvals.astype(np.float32),
             "t_qval:{0}".format(clust_id): qvals.astype(np.float32),
+            "t_score:{0}".format(clust_id): tscores.astype(np.float32),
         },
         index=gene_names,
     )
@@ -887,7 +890,7 @@ def write_results_to_excel(
     results: Dict[str, Dict[str, pd.DataFrame]], output_file: str, ndigits: int = 3
 ) -> None:
     """ Write results into Excel workbook.
-    
+
     Parameters
     ----------
     results: ``Dict[str, Dict[str, pd.DataFrame]]``
