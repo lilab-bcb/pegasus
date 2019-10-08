@@ -46,11 +46,11 @@ Assuming Python 3 is installed on your OS. Then install ``pip`` for Python 3, al
 
 Now install pegasus via ``pip``::
 
-	pip3 install pegasus
+	pip3 install pegasuspy
 
 Alternatively, if you want to use ``mkl`` package for speed improvement, type::
 
-	pip3 install pegasus[mkl]
+	pip3 install pegasuspy[mkl]
 
 If you want to use pegasus's FIt-SNE feature. First, install ``fftw`` library::
 
@@ -58,11 +58,11 @@ If you want to use pegasus's FIt-SNE feature. First, install ``fftw`` library::
 
 Then type::
 
-	pip3 install pegasus[fitsne]
+	pip3 install pegasuspy[fitsne]
 
 Or if you want both extra features, type::
 
-	pip3 install pegasus[mkl,fitsne]
+	pip3 install pegasuspy[mkl,fitsne]
 
 .. _below: ./installation.html#install-via-miniconda
 
@@ -119,26 +119,26 @@ Install pegasus
 
 Both Linux and macOS share this installation step.
 
-1. Create a conda environment for pegasus. Let ``pegasus`` be its name, but you are free to choose your own::
+1. Create a conda environment for pegasus. Let ``pegasuspy`` be its name, but you are free to choose your own::
 
-	conda create -n pegasus -y pip
+	conda create -n pegasuspy -y pip
 
 For macOS, you may need to do the following extra commands after creation::
 
-	mkdir -p $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/activate.d
-	mkdir -p $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/deactivate.d
-	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/activate.d/env_vars.sh
-	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/pegasus/etc/conda/deactivate.d/env_vars.sh
+	mkdir -p $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/activate.d
+	mkdir -p $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/deactivate.d
+	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/activate.d/env_vars.sh
+	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/deactivate.d/env_vars.sh
 
 where ``$CONDA_PATH`` is set in the previous step.
 
 2. Enter conda environment by activating::
 
-	conda activate pegasus
+	conda activate pegasuspy
 
 or::
 
-	source activate pegasus
+	source activate pegasuspy
 
 3. (Optional) If you want to use the Intel ``mkl`` package for speed improvement, type::
 
@@ -150,11 +150,11 @@ Also, if you want to use pegasus's FIt-SNE feature, which depends on ``fftw`` pa
 
 4. Install pegasus::
 
-	pip install pegasus
+	pip install pegasuspy
 
 If you want to use pegasus's FIt-SNE feature, type::
 
-	pip install pegasus[fitsne]
+	pip install pegasuspy[fitsne]
 
 -----------------------------------
 
