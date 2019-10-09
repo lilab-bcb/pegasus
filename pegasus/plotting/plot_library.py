@@ -719,20 +719,26 @@ def plot_heatmap(
 ###     cg = plot_violin_genes(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
 ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
 def plot_violin_genes(data, cluster, genes, subplot_size, ylab):
-    nrows = len(genes)
+    nrows, ncols = get_nrows_and_ncols(len(genes), None, None)
     fig, axes = get_subplot_layouts(
-        nrows=nrows, subplot_size=subplot_size, hspace=0.3, wspace=0.1
+        nrows=nrows, ncols=ncols, subplot_size=subplot_size, hspace=0.3, wspace=0.1, squeeze=False
     )
     expr_mat = data[:, genes].X.toarray()
     df = pd.DataFrame(data=expr_mat, columns=genes)
     df.insert(0, "label", data.obs[cluster].values)
     for i in range(nrows):
-        sns.violinplot(
-            x="label", y=genes[i], data=df, inner=None, linewidth=0, ax=axes[i], cut=0
-        )
-        sns.stripplot(x="label", y=genes[i], data=df, ax=axes[i], size=2, color="k")
-        axes[i].set_xlabel("")
-        axes[i].set_ylabel("")
-        axes[i].set_title(genes[i])
+        for j in range(ncols):
+            ax = axes[i, j]
+            idx = i * ncols + j
+            if idx < len(genes):
+                sns.violinplot(
+                    x="label", y=genes[idx], data=df, inner=None, linewidth=0, ax=ax, cut=0
+                )
+                sns.stripplot(x="label", y=genes[idx], data=df, ax=ax, size=2, color="k")
+                ax.set_xlabel("")
+                ax.set_ylabel("")
+                ax.set_title(genes[idx])
+            else:
+                ax.set_frame_on(False)
     plt.figtext(0.02, 0.5, ylab, rotation="vertical", fontsize="xx-large")
     return fig
