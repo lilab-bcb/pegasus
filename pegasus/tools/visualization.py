@@ -1233,7 +1233,8 @@ def net_fle(
     data.uns["X_" + out_basis + "_small"] = X_fle
     data.obs["ds_diffmap_selected"] = selected
 
-    Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
+    n_components = 2 if not is3d else 3
+    Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
     Y_init[selected, :] = X_fle
     Y_init[~selected, :] = net_train_and_predict(
         X, X_fle, X_full[~selected, :], net_alpha, random_state, verbose=True
