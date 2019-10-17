@@ -8,7 +8,9 @@ logger = logging.getLogger("pegasus")
 
 from pegasus.tools import estimate_feature_statistics, select_features
 
+from .. import decorators as pg_deco
 
+@pg_deco.TimeLogger()
 def set_group_attribute(data: AnnData, attribute_string: str) -> None:
     """Set group attributes used in batch correction.
 
@@ -69,7 +71,7 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
         assert attribute_string in data.obs.columns
         data.obs["Group"] = data.obs[attribute_string]
 
-
+@pg_deco.TimeLogger()
 def estimate_adjustment_matrices(data: AnnData) -> bool:
     """ Estimate adjustment matrices
     """
@@ -108,7 +110,7 @@ def estimate_adjustment_matrices(data: AnnData) -> bool:
 
     return True
 
-
+@pg_deco.TimeLogger()
 def correct_batch_effects(data: AnnData, keyword: str, features: str = None) -> None:
     """ Apply calculated plus and muls to correct batch effects for a dense matrix
     """
@@ -132,7 +134,7 @@ def correct_batch_effects(data: AnnData, keyword: str, features: str = None) -> 
         )
     # X[X < 0.0] = 0.0
 
-
+@pg_deco.TimeLogger()
 def correct_batch(data: AnnData, features: str = None) -> None:
     """Batch correction on data.
 
@@ -158,7 +160,6 @@ def correct_batch(data: AnnData, features: str = None) -> None:
     tot_seconds = 0.0
 
     # estimate adjustment parameters
-    start = time.time()
     can_correct = estimate_adjustment_matrices(data)
     end = time.time()
     tot_seconds += end - start
@@ -171,8 +172,3 @@ def correct_batch(data: AnnData, features: str = None) -> None:
     if can_correct:
         start = time.time()
         correct_batch_effects(data, keyword, features)
-        end = time.time()
-        tot_seconds += end - start
-        logger.info(
-            "Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds)
-        )

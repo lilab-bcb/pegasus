@@ -428,4 +428,4 @@ def annotate_anndata_object(input_file: str, annotation: str) -> None:
     anno_name, clust_name, anno_str = annotation.split(":")
     anno_dict = {str(i + 1): x for i, x in enumerate(anno_str.split(";"))}
     annotate(data, anno_name, clust_name, anno_dict)
-    write_output(data, input_file, whitelist = ["obs"])
+    write_output(data, input_file, whitelist = ["obs", "uns"])

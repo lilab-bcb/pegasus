@@ -150,7 +150,7 @@ class Array2D:
             for attr in attributes:
                 self.barcode_metadata[attr] = np.repeat(row[attr], nsample)
 
-    def write_to_hdf5(self, keyword: str, hd5_out: "File") -> None:
+    def write_to_hdf5(self, keyword: str, hd5_out: "File", is_h5sc: bool) -> None:
         """ Write Array2D content into hdf5 file
         """
         out_group = hd5_out.create_group("/", keyword)
@@ -163,7 +163,11 @@ class Array2D:
             out_group, "shape", obj=(N, M)
         )  # store as feature by barcode instead
         # write barcode_metadata
-        outgb = hd5_out.create_group("/" + keyword, "_barcodes")
+        outgb = hd5_out.create_group("/" + keyword, "_barcodes") if is_h5sc else out_group
+        if not is_h5sc:
+            self.barcode_metadata.index.name = "barcodes"
+            self.feature_metadata.index.name = "genes"
+            self.feature_metadata.rename(columns = {"featurename" : "gene_names"}, inplace = True)
         hd5_out.create_carray(
             outgb,
             self.barcode_metadata.index.name,
@@ -178,7 +182,7 @@ class Array2D:
             else:
                 hd5_out.create_carray(outgb, col, obj=self.barcode_metadata[col].values)
         # write feature_metadata
-        outgb = hd5_out.create_group("/" + keyword, "_features")
+        outgb = hd5_out.create_group("/" + keyword, "_features") if is_h5sc else out_group
         hd5_out.create_carray(
             outgb,
             self.feature_metadata.index.name,
@@ -439,7 +443,7 @@ class MemData:
         ----------
 
         output_h5 : `str`
-            The output file name.
+            The output file name. If ends with .h5sc, output h5sc format; if ends with .h5, output 10x V2 h5 format.
 
         Returns
         -------
@@ -451,8 +455,10 @@ class MemData:
         >>> MemData.write_h5_file('example_10x.h5')
         """
 
+        is_h5sc = output_h5.endswith(".h5sc")
         with tables.open_file(
             output_h5, mode="w", title=output_h5, filters=tables.Filters(complevel=1)
         ) as hd5_out:
             for keyword, array2d in self.data.items():
-                array2d.write_to_hdf5(keyword, hd5_out)
+                array2d.write_to_hdf5(keyword, hd5_out, is_h5sc)
+

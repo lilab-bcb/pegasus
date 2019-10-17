@@ -11,6 +11,7 @@ from joblib import effective_n_jobs
 from typing import List, Tuple
 
 from pegasus.tools import update_rep, X_from_rep, knn_is_cached
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
@@ -80,7 +81,8 @@ def calculate_nearest_neighbors(
 
     return indices, distances
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def get_neighbors(
     data: AnnData,
     K: int = 100,
@@ -196,7 +198,8 @@ def calculate_affinity_matrix(
 
     return W
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def neighbors(
     data: AnnData,
     K: int = 100,
@@ -246,7 +249,6 @@ def neighbors(
     """
 
     # calculate kNN
-    start = time.time()
     rep = update_rep(rep)
     indices, distances = get_neighbors(
         data,
@@ -257,17 +259,12 @@ def neighbors(
         full_speed=full_speed,
     )
     end = time.time()
-    logger.info("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
-
+ 
     # calculate affinity matrix
     start = time.time()
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W
-    end = time.time()
-    logger.info(
-        "Affinity matrix calculation is finished in {:.2f}s".format(end - start)
-    )
-
+ 
 
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
     dof = ideal_dist.size - 1
@@ -291,7 +288,8 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
 
     return results
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def calc_kBET(
     data: AnnData,
     attr: str,
@@ -395,7 +393,8 @@ def calc_kBET(
 
     return (stat_mean, pvalue_mean, accept_rate)
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def calc_kSIM(
     data: AnnData,
     attr: str,

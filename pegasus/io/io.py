@@ -15,9 +15,12 @@ from . import Array2D, MemData
 import anndata
 import logging
 
+from .. import decorators as pg_deco
+
 logger = logging.getLogger("pegasus")
 
 
+@pg_deco.TimeLogger()
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v2 format matrix from hdf5 file
 
@@ -70,6 +73,7 @@ def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
     return data
 
 
+@pg_deco.TimeLogger()
 def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v3 format matrix from hdf5 file
 
@@ -123,6 +127,7 @@ def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
     return data
 
 
+@pg_deco.TimeLogger()
 def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     """Load 10x format matrix (either v2 or v3) from hdf5 file
 
@@ -174,6 +179,7 @@ def determine_file_name(
     raise ValueError(errmsg)
 
 
+@pg_deco.TimeLogger()
 def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array2D":
     """Load one gene-count matrix in mtx format into an Array2D object
     """
@@ -264,7 +270,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
 
     return array2d
 
-
+@pg_deco.TimeLogger()
 def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData":
     """Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
 
@@ -318,7 +324,7 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
 
     return data
 
-
+@pg_deco.TimeLogger()
 def load_csv_file(
     input_csv: str, genome: str, sep: str = ",", ngene: int = None
 ) -> "MemData":
@@ -402,7 +408,7 @@ def load_csv_file(
 
     return data
 
-
+@pg_deco.TimeLogger()
 def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData":
     """Load count matrix from a LOOM file. Currently only support HCA DCP Loom spec.
 
@@ -448,7 +454,7 @@ def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData"
 
     return data
 
-
+@pg_deco.TimeLogger()
 def load_pegasus_h5_file(
     input_h5: str, ngene: int = None, select_singlets: bool = False
 ) -> "MemData":
@@ -577,7 +583,7 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
 
     return file_format, copy_path, copy_type
 
-
+@pg_deco.TimeLogger()
 def read_input(
     input_file: str,
     genome: str = None,
@@ -627,8 +633,6 @@ def read_input(
     >>> adata = pg.read_input('example_ADT.csv')
     """
 
-    start = time.time()
-
     input_file = os.path.expanduser(os.path.expandvars(input_file))
     file_format, _, _ = infer_file_format(input_file)
 
@@ -659,9 +663,6 @@ def read_input(
             data = data.convert_to_anndata(concat_matrices=concat_matrices, channel_attr=channel_attr, black_list=black_list)
     else:
         assert (return_type == "AnnData") and (channel_attr is None) and (black_list == [])
-
-    end = time.time()
-    logger.info("Read input is finished. Time spent = {:.2f}s.".format(end - start))
 
     return data
 
@@ -729,7 +730,7 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
                             value = value.astype(new_dtype)
                     group.create_dataset(key, data=value, compression="gzip")
 
-
+@pg_deco.TimeLogger()
 def write_output(
     data: "MemData or AnnData", output_file: str, whitelist: List = ["obs", "obsm", "uns", "var", "varm"]
 ) -> None:
@@ -756,8 +757,6 @@ def write_output(
     >>> pg.write_output(adata, 'test.h5ad')
     """
 
-    start = time.time()
-
     if (not isinstance(data, MemData)) and (not isinstance(data, anndata.AnnData)):
         raise ValueError("data is neither an MemData nor AnnData object!")
 
@@ -766,9 +765,9 @@ def write_output(
     if file_name == "":
         file_name = output_file
         suffix = "h5sc" if isinstance(data, MemData) else "h5ad"
-    if isinstance(data, MemData) and suffix != "h5sc":
+    if isinstance(data, MemData) and suffix != "h5sc" and suffix != "h5":
         logging.warning(
-            "Detected file suffix for this MemData object is not .h5sc. We will assume output_file is a file name and append .h5sc suffix."
+            "Detected file suffix for this MemData object is neither .h5sc nor .h5. We will assume output_file is a file name and append .h5sc suffix."
         )
         file_name = output_file
         suffix = "h5sc"
@@ -788,7 +787,7 @@ def write_output(
                 data.uns.pop(keyword)
 
     # Write outputs
-    if suffix == "h5sc":
+    if suffix == "h5sc" or suffix == "h5":
         data.write_h5_file(output_file)
     elif suffix == "loom":
         data.write_loom(output_file, write_obsm_varm=True)
@@ -809,6 +808,3 @@ def write_output(
             h5_file, data._to_dict_fixed_width_arrays(), _parse_whitelist(whitelist)
         )
         h5_file.close()
-
-    end = time.time()
-    logger.info("Write output is finished. Time spent = {:.2f}s.".format(end - start))

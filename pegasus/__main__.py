@@ -1,5 +1,5 @@
 """
-Single-cell cloud-based RNA-Seq tools.
+Pegasus is a tool for analyzing transcriptomes of millions of single cells. It is a command line tool, a python package and a base for Cloud-based analysis workflows.
 
 Usage:
   pegasus <command> [<args>...]
@@ -30,6 +30,7 @@ Sub-commands:
   MISC:
     check_indexes           Check CITE-Seq/hashing indexes to avoid index collision.
     down_sample             Down sample molecule_info to get raw_feature matrix.
+    convert_h5sc            Convert h5sc files into 10x genomics V2 HDF5 file.
 
 Options:
   -h, --help          Show help information.
