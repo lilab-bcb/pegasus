@@ -259,8 +259,7 @@ def neighbors(
         full_speed=full_speed,
     )
     end = time.time()
-    logger.info("Nearest neighbor search is finished in {:.2f}s.".format(end - start))
-
+ 
     # calculate affinity matrix
     start = time.time()
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])

@@ -12,7 +12,10 @@ import logging
 
 logger = logging.getLogger("pegasus")
 
+from .. import decorators as pg_deco
 
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def qc_metrics(
     data: AnnData,
     mito_prefix: str = "MT-",
@@ -188,7 +191,8 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     return df_cells, df_genes
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def filter_data(data: AnnData) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
@@ -217,7 +221,7 @@ def filter_data(data: AnnData) -> None:
         )
     )
 
-
+@pg_deco.TimeLogger()
 def generate_filter_plots(
     data: AnnData, plot_filt: str, plot_filt_figsize: str = None
 ) -> None:
@@ -278,9 +282,8 @@ def generate_filter_plots(
         figsize=figsize,
     )
 
-    logger.info("Filtration plots are generated.")
-
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def run_filter_data(
     data: AnnData,
     output_filt: str = None,
@@ -296,8 +299,6 @@ def run_filter_data(
 ) -> None:
     """ This function is for command line use.
     """
-
-    start = time.time()
 
     qc_metrics(
         data,
@@ -323,10 +324,8 @@ def run_filter_data(
 
     filter_data(data)
 
-    end = time.time()
-    logger.info("filter_data is finished. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
@@ -360,7 +359,8 @@ def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     end = time.time()
     logger.info("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def select_features(data: AnnData, features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
 
@@ -401,7 +401,8 @@ def select_features(data: AnnData, features: str = None) -> str:
 
     return keyword
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def pca(
     data: AnnData,
     n_components: int = 50,
@@ -458,8 +459,6 @@ def pca(
 
     keyword = select_features(data, features)
 
-    start = time.time()
-
     X = data.uns[keyword]
 
     if standardize:
@@ -486,6 +485,3 @@ def pca(
     data.uns["pca"] = {}
     data.uns["pca"]["variance"] = pca.explained_variance_
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
-
-    end = time.time()
-    logger.info("PCA is done. Time spent = {:.2f}s.".format(end - start))
