@@ -24,6 +24,7 @@ from pegasus.tools import (
     calculate_affinity_matrix,
     construct_graph,
 )
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
@@ -241,7 +242,8 @@ def calc_force_directed_layout(
         init=init,
     )
 
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def tsne(
     data: AnnData,
     rep: str = "pca",
@@ -297,7 +299,7 @@ def tsne(
     --------
     >>> pg.tsne(adata)
     """
-    start = time.time()
+    
     rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -311,10 +313,9 @@ def tsne(
         random_state,
     )
 
-    end = time.time()
-    logger.info("t-SNE is calculated. Time spent = {:.2f}s.".format(end - start))
 
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def fitsne(
     data: AnnData,
     rep: str = "pca",
@@ -370,7 +371,6 @@ def fitsne(
     --------
     >>> pg.fitsne(adata)
     """
-    start = time.time()
 
     rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
@@ -385,10 +385,8 @@ def fitsne(
         random_state,
     )
 
-    end = time.time()
-    logger.info("FIt-SNE is calculated. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def umap(
     data: AnnData,
     rep: str = "pca",
@@ -470,7 +468,8 @@ def umap(
     end = time.time()
     logger.info("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def fle(
     data: AnnData,
     file_name: str = None,
@@ -540,8 +539,7 @@ def fle(
     --------
     >>> pg.fle(adata)
     """
-    start = time.time()
-
+    
     if file_name is None:
         import tempfile
 
@@ -569,11 +567,6 @@ def fle(
         is3d,
         memory,
         random_state,
-    )
-
-    end = time.time()
-    logger.info(
-        "Force-directed layout is calculated. Time spent = {:.2f}s.".format(end - start)
     )
 
 
@@ -616,7 +609,8 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
 
     return selected
 
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def net_tsne(
     data: AnnData,
     rep: str = "pca",
@@ -701,7 +695,6 @@ def net_tsne(
     --------
     >>> pg.net_tsne(adata)
     """
-    start = time.time()
 
     rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
@@ -757,10 +750,8 @@ def net_tsne(
         n_iter_early_exag=0,
     )
 
-    end = time.time()
-    logger.info("Net tSNE is calculated. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def net_fitsne(
     data: AnnData,
     rep: str = "pca",
@@ -845,7 +836,6 @@ def net_fitsne(
     --------
     >>> pg.net_fitsne(adata)
     """
-    start = time.time()
 
     rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
@@ -901,10 +891,8 @@ def net_fitsne(
         mom_switch_iter=0,
     )
 
-    end = time.time()
-    logger.info("Net FItSNE is calculated. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def net_umap(
     data: AnnData,
     rep: str = "pca",
@@ -991,8 +979,7 @@ def net_umap(
     --------
     >>> pg.net_umap(adata)
     """
-    start = time.time()
-
+    
     rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
@@ -1074,10 +1061,8 @@ def net_umap(
         knn_dists=knn_dists,
     )
 
-    end = time.time()
-    logger.info("Net UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def net_fle(
     data: AnnData,
     file_name: str = None,
@@ -1171,7 +1156,6 @@ def net_fle(
     --------
     >>> pg.net_fle(adata)
     """
-    start = time.time()
 
     if file_name is None:
         if file_name is None:
@@ -1253,6 +1237,3 @@ def net_fle(
         random_state,
         init=Y_init,
     )
-
-    end = time.time()
-    logger.info("Net FLE is calculated. Time spent = {:.2f}s.".format(end - start))

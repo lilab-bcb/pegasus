@@ -20,11 +20,15 @@ from sklearn.cluster import KMeans
 from typing import List
 
 from pegasus.tools import construct_graph
+from .. import decorators as pg_deco
+
 import logging
 
 logger = logging.getLogger("pegasus")
 
 
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def louvain(
     data: AnnData,
     rep: str = "pca",
@@ -63,8 +67,6 @@ def louvain(
     >>> pg.louvain(adata)
     """
 
-    start = time.time()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -81,10 +83,8 @@ def louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.time()
-    logger.info("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def leiden(
     data: AnnData,
     rep: str = "pca",
@@ -127,8 +127,6 @@ def leiden(
     >>> pg.leiden(adata)
     """
 
-    start = time.time()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -149,14 +147,9 @@ def leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.time()
-    logger.info("Leiden clustering is done. Time spent = {:.2f}s.".format(end - start))
-
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: int, n_clusters2: int, n_init: int, random_state: int) -> List[int]:
-    start = time.time()
-
     n_jobs = effective_n_jobs(n_jobs)
 
     rep_key = "X_" + rep
@@ -177,13 +170,11 @@ def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: 
         labels[idx] = base_sum + km.labels_
         base_sum += nc
 
-    end = time.time()
-    logger.info("partition_cells_by_kmeans finished in {:.2f}s.".format(end - start))
-
     return labels
 
 
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def spectral_louvain(
     data: AnnData,
     rep: str = "pca",
@@ -242,8 +233,6 @@ def spectral_louvain(
     >>> pg.spectral_louvain(adata)
     """
 
-    start = time.time()
-
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
         rep_kmeans = "pca"
@@ -274,12 +263,8 @@ def spectral_louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.time()
-    logger.info(
-        "Spectral Louvain clustering is done. Time spent = {:.2f}s.".format(end - start)
-    )
-
-
+@pg_deco.TimeLogger()
+@pc_deco.GCCollect()
 def spectral_leiden(
     data: AnnData,
     rep: str = "pca",
@@ -341,8 +326,6 @@ def spectral_leiden(
     >>> pg.spectral_leiden(adata)
     """
 
-    start = time.time()
-
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
         rep_kmeans = "pca"
@@ -373,9 +356,3 @@ def spectral_leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.time()
-    logger.info(
-        "Spectral Leiden clustering is done. Time spent = {:.2f}s.".format(
-            end - start
-        )
-    )
