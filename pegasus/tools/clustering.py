@@ -28,7 +28,7 @@ logger = logging.getLogger("pegasus")
 
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def louvain(
     data: AnnData,
     rep: str = "pca",
@@ -84,7 +84,7 @@ def louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def leiden(
     data: AnnData,
     rep: str = "pca",
@@ -148,7 +148,7 @@ def leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: int, n_clusters2: int, n_init: int, random_state: int) -> List[int]:
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -174,7 +174,7 @@ def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: 
 
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def spectral_louvain(
     data: AnnData,
     rep: str = "pca",
@@ -264,7 +264,7 @@ def spectral_louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def spectral_leiden(
     data: AnnData,
     rep: str = "pca",

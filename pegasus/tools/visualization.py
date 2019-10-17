@@ -243,7 +243,7 @@ def calc_force_directed_layout(
     )
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def tsne(
     data: AnnData,
     rep: str = "pca",
@@ -315,7 +315,7 @@ def tsne(
 
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def fitsne(
     data: AnnData,
     rep: str = "pca",
@@ -386,7 +386,7 @@ def fitsne(
     )
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def umap(
     data: AnnData,
     rep: str = "pca",
@@ -469,7 +469,7 @@ def umap(
     logger.info("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def fle(
     data: AnnData,
     file_name: str = None,
@@ -610,7 +610,7 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     return selected
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def net_tsne(
     data: AnnData,
     rep: str = "pca",
@@ -751,7 +751,7 @@ def net_tsne(
     )
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def net_fitsne(
     data: AnnData,
     rep: str = "pca",
@@ -892,7 +892,7 @@ def net_fitsne(
     )
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def net_umap(
     data: AnnData,
     rep: str = "pca",
@@ -1062,7 +1062,7 @@ def net_umap(
     )
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def net_fle(
     data: AnnData,
     file_name: str = None,

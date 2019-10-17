@@ -82,7 +82,7 @@ def calculate_nearest_neighbors(
     return indices, distances
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def get_neighbors(
     data: AnnData,
     K: int = 100,
@@ -199,7 +199,7 @@ def calculate_affinity_matrix(
     return W
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def neighbors(
     data: AnnData,
     K: int = 100,
@@ -290,7 +290,7 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
     return results
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def calc_kBET(
     data: AnnData,
     attr: str,
@@ -395,7 +395,7 @@ def calc_kBET(
     return (stat_mean, pvalue_mean, accept_rate)
 
 @pg_deco.TimeLogger()
-@pc_deco.GCCollect()
+@pg_deco.GCCollect()
 def calc_kSIM(
     data: AnnData,
     attr: str,
