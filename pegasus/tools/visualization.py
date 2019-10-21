@@ -252,6 +252,7 @@ def tsne(
     perplexity: float = 30,
     early_exaggeration: int = 12,
     learning_rate: float = 1000,
+    n_iter: int = 1000,
     random_state: int = 0,
     out_basis: str = "tsne",
 ) -> None:
@@ -282,6 +283,9 @@ def tsne(
     learning_rate: ``float``, optional, default: ``1000``
         The learning rate can be a critical parameter, which should be between 100 and 1000.
 
+    n_iter: ``float``, optional, default: ``1000``
+        Number of iterrations.
+
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
 
@@ -311,6 +315,7 @@ def tsne(
         early_exaggeration,
         learning_rate,
         random_state,
+        n_iter=n_iter
     )
 
 
