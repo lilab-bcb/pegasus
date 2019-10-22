@@ -10,7 +10,7 @@ import pegasus as pg
 
 class TestAggregate(unittest.TestCase):
     def tearDown(self):
-        for file in ["aggregate_test.h5sc", "test1_dge.txt.gz", "test2_dge.txt.gz", "aggregate_test"]:
+        for file in ["aggregate_test.h5sc", "test1_dge.txt.gz", "test2_dge.txt.gz", "aggregate_test.csv"]:
             os.path.exists(file) and os.remove(file)
 
     def test_aggregate_union(self):
