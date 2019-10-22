@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
-import time
-import numpy as np
-import pandas as pd
-import os.path
-from scipy.io import mmread
-from scipy.sparse import csr_matrix, issparse
-import tables
 import gzip
-
+import logging
+import os.path
+import time
 from typing import List, Tuple
-from . import Array2D, MemData
 
 import anndata
-import logging
+import numpy as np
+import pandas as pd
+import tables
+from scipy.io import mmread
+from scipy.sparse import csr_matrix, issparse
+
+from . import Array2D, MemData
 
 logger = logging.getLogger("pegasus")
 
@@ -705,7 +705,7 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
                 )
             else:
                 if key in group.keys():
-                    del group[key] 
+                    del group[key]
                 if issparse(value):
                     sparse_mat = group.create_group(key)
                     sparse_mat.attrs["h5sparse_format"] = value.format
@@ -792,7 +792,8 @@ def write_output(
         data.write_h5_file(output_file)
     elif suffix == "loom":
         data.write_loom(output_file, write_obsm_varm=True)
-    elif not data.isbacked or (data.isbacked and data.file._file.h5f.mode != "r+"):
+    elif not data.isbacked or (data.isbacked and data.file._file.h5f.mode != "r+") or not hasattr(data,
+        '_to_dict_fixed_width_arrays'):  # check for old version of anndata
         data.write(output_file, compression="gzip")
     else:
         assert data.file._file.h5f.mode == "r+"
