@@ -2,7 +2,6 @@ import os
 import unittest
 
 import h5py
-
 import pegasus as pg
 
 
@@ -23,20 +22,14 @@ class TestAggregate(unittest.TestCase):
         )
         pg.aggregate_matrices(
             "tests/pegasus-test-data/input/aggregate_test.csv",
-            restrictions=[],
-            attributes=["Version"],
-            what_to_return="aggregate_test",
-            google_cloud=False,
-            select_singlets=False,
-            ngene=None,
+            what_to_return='aggregate_test',
         )
 
         result = pg.read_input("aggregate_test.h5sc", genome="mm10")
         self.assertEqual(
             m1.shape[0] + m2.shape[0], result.shape[0], "Cell dimension is incorrect"
         )
-        self.assertEqual(m1.shape[1], result.shape[1], "Gene dimension is incorrect")
-        self.assertTrue(result.obs.get("Version") is not None, "Version not added")
+        self.assertEqual(m1.shape[1], result.shape[1], "Feature dimension is incorrect")
 
         m1_result = result[list(range(m1.shape[0])), :]
         m2_result = result[list(range(m1.shape[0], m1.shape[0] + m2.shape[0])), :]
@@ -52,12 +45,7 @@ class TestAggregate(unittest.TestCase):
     def test_multi_genome(self):
         pg.aggregate_matrices(
             "tests/pegasus-test-data/input/aggregate_multi_genome.csv",
-            restrictions=[],
-            attributes=None,
-            what_to_return="aggregate_test",
-            google_cloud=False,
-            select_singlets=False,
-            ngene=None,
+            what_to_return='aggregate_test',
         )
 
         f = h5py.File("aggregate_test.h5sc", "r")

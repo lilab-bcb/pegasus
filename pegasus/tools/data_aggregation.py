@@ -42,7 +42,7 @@ def parse_restriction_string(rstr):
 
 def aggregate_matrices(
     csv_file: str,
-    what_to_return: str = AnnData,
+    what_to_return: str = 'AnnData',
     restrictions: List[str] = [],
     attributes: List[str] = [],
     google_cloud: bool = False,
