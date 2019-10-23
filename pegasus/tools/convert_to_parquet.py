@@ -7,8 +7,7 @@ from pegasus.io import read_input
 
 
 def convert_to_parquet(data, output_name, nthreads):
-    data.obs.index.name = "pegasus.cell.barcode"
-    df = data.obs.reset_index()
+    df = pd.DataFrame(index=data.obs.index, data=data.X.toarray(), columns=data.var_names)
     whitelist = ['X_pca', 'X_rpca', 'X_tsne', 'X_fitsne', 'X_umap', 'X_fle', 'X_net_tsne', 'X_net_umap', 'X_net_fle']
     whitelist_3d = ['X_diffmap_pca']
     for key in data.obsm.keys():
@@ -19,19 +18,11 @@ def convert_to_parquet(data, output_name, nthreads):
             df["{}_1".format(key)] = data.obsm[key][:, 0]
             df["{}_2".format(key)] = data.obsm[key][:, 1]
             df["{}_3".format(key)] = data.obsm[key][:, 2]
-
-    metadata_table = pa.Table.from_pandas(df, nthreads=nthreads)
-
-    df_expr = pd.DataFrame(data=data.X.toarray(), columns=data.var_names)
-    parquet_table = pa.Table.from_pandas(df_expr, nthreads=nthreads)
-
-    for i in range(metadata_table.num_columns - 1, 0, -1):
-        column = metadata_table[i]
-        if column.name != "__index_level_0__":
-            parquet_table = parquet_table.add_column(0, column)
-
+    for c in data.obs:
+        df[c] = data.obs[c]
+    table = pa.Table.from_pandas(df, nthreads=nthreads)
     output_file = output_name + ".parquet"
-    pq.write_table(parquet_table, output_file)
+    pq.write_table(table, output_file)
     print(output_file + " is written!")
 
 
