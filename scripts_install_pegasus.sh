@@ -11,6 +11,6 @@ pip3 install Cython
 pip3 install --upgrade numpy
 pip3 install --upgrade pandas
 pip3 install MulticoreTSNE-modified==0.1.post2
-pip3 install sccloud[fitsne]==0.14.0
+pip3 install pegasus[fitsne]==0.15.0
 
 echo "pegasus done"
