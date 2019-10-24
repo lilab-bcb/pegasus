@@ -1,7 +1,3 @@
-import matplotlib as mpl
-
-mpl.use("Agg")
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
