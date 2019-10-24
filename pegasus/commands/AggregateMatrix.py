@@ -11,7 +11,7 @@ Usage:
   pegasus aggregate_matrix -h
 
 Arguments:
-  csv_file          Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x v2/v3, DGE, mtx, csv or loom format. If matrix is in DGE, mtx or csv format, an addition Reference column is required.
+  csv_file          Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns - Sample, sample name and Location, location of the channel-specific count matrix in either 10x v2/v3, DGE, mtx, csv or loom format. If matrix is in DGE, mtx or csv format, an additional Reference column is required. Additionally an optional RenamedReference column can be used to rename a reference.
   output_name       The output file name.
 
 Options:

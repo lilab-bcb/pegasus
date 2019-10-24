@@ -13,7 +13,36 @@ class TestAggregate(unittest.TestCase):
         for file in ["aggregate_test.h5sc", "test1_dge.txt.gz", "test2_dge.txt.gz", "aggregate_test.csv"]:
             os.path.exists(file) and os.remove(file)
 
-    def test_aggregate_union(self):
+    def diff_m1_m2(self, result, m1, m2):
+        self.assertEqual(result.shape[0], 2)
+        self.assertEqual(result.shape[1], 5)
+        # check that missing genes are 0 in aggregated result
+        self.assertEqual(result['s1-c1'][:, ['d', 'e']].X.sum(), 0)
+        self.assertEqual(result['s2-c1'][:, ['a', 'c']].X.sum(), 0)
+        # check that genes maintain their original value
+        self.assertEqual((result['s1-c1'][:, m1.var_names].X != m1.X).sum(), 0, "Values differ")
+        self.assertEqual((result['s2-c1'][:, m2.var_names].X != m2.X).sum(), 0, "Values differ")
+
+    def test_rename_reference(self):
+        m1 = anndata.AnnData(X=np.random.random((1, 3)), var=pd.DataFrame(index=['a', 'b', 'c']),
+            obs=pd.DataFrame(index=['c1']))
+        pd.DataFrame(columns=m1.obs.index, index=m1.var.index, data=m1.X.T).to_csv('test1_dge.txt.gz', index_label='id',
+            sep='\t')
+        m2 = anndata.AnnData(X=np.random.random((1, 3)), var=pd.DataFrame(index=['b', 'd', 'e']),
+            obs=pd.DataFrame(index=['c1']))
+        pd.DataFrame(columns=m2.obs.index, index=m2.var.index, data=m2.X.T).to_csv('test2_dge.txt.gz', index_label='id',
+            sep='\t')
+        pd.DataFrame(
+            data=dict(Sample=['s1', 's2'], Location=['test1_dge.txt.gz', 'test2_dge.txt.gz'],
+                Reference=['b', 'c'], RenamedReference=['a', 'a'])).to_csv(
+            'aggregate_test.csv', index=False)
+        result = pg.aggregate_matrices(
+            "aggregate_test.csv",
+            what_to_return="AnnData"
+        )
+        self.diff_m1_m2(result, m1, m2)
+
+    def test_union(self):
         m1 = anndata.AnnData(X=np.random.random((1, 3)), var=pd.DataFrame(index=['a', 'b', 'c']),
             obs=pd.DataFrame(index=['c1']))
         pd.DataFrame(columns=m1.obs.index, index=m1.var.index, data=m1.X.T).to_csv('test1_dge.txt.gz', index_label='id',
@@ -30,14 +59,8 @@ class TestAggregate(unittest.TestCase):
             "aggregate_test.csv",
             what_to_return="AnnData"
         )
-        self.assertEqual(result.shape[0], 2)
-        self.assertEqual(result.shape[1], 5)
-        # check that missing genes are 0 in aggregated result
-        self.assertEqual(result['s1-c1'][:, ['d', 'e']].X.sum(), 0)
-        self.assertEqual(result['s2-c1'][:, ['a', 'c']].X.sum(), 0)
-        # check that genes maintain their original value
-        self.assertEqual((result['s1-c1'][:, m1.var_names].X != m1.X).sum(), 0, "Values differ")
-        self.assertEqual((result['s2-c1'][:, m2.var_names].X != m2.X).sum(), 0, "Values differ")
+        self.diff_m1_m2(result, m1, m2)
+
 
     def test_aggregate_10x_matrices(self):
         m1 = pg.read_input(

@@ -25,7 +25,7 @@ def parse_restriction_string(rstr):
         isin = False
         pos += 1
     content = set()
-    for item in rstr[pos + 1 :].split(","):
+    for item in rstr[pos + 1:].split(","):
         values = item.split("-")
         if len(values) == 1:
             content.add(values[0])
@@ -141,6 +141,12 @@ def aggregate_matrices(
             ngene=ngene,
             select_singlets=select_singlets,
         )
+        if "RenamedReference" in row:
+            renamed_reference = row["RenamedReference"]
+            if renamed_reference != '' and not pd.isna(renamed_reference) and renamed_reference != _genome:
+                data.data[renamed_reference] = data.data[_genome]
+                del data.data[_genome]
+
         data.update_barcode_metadata_info(sample_name, row, attributes)
         aggrData.addAggrData(data)
 
