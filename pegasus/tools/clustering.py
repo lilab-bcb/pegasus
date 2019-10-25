@@ -8,14 +8,6 @@ from natsort import natsorted
 import ctypes
 import ctypes.util
 
-try:
-    import louvain as louvain_module
-except ImportError:
-    print("Need louvain!")
-try:
-    import leidenalg
-except ImportError:
-    print("Need leidenalg!")
 from sklearn.cluster import KMeans
 from typing import List
 
@@ -62,6 +54,11 @@ def louvain(
     --------
     >>> pg.louvain(adata)
     """
+
+    try:
+        import louvain as louvain_module
+    except ImportError:
+        print("Need louvain!")
 
     start = time.time()
 
@@ -126,6 +123,11 @@ def leiden(
     --------
     >>> pg.leiden(adata)
     """
+
+    try:
+        import leidenalg
+    except ImportError:
+        print("Need leidenalg!")
 
     start = time.time()
 
@@ -242,6 +244,11 @@ def spectral_louvain(
     >>> pg.spectral_louvain(adata)
     """
 
+    try:
+        import louvain as louvain_module
+    except ImportError:
+        print("Need louvain!")
+
     start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
@@ -340,6 +347,11 @@ def spectral_leiden(
     --------
     >>> pg.spectral_leiden(adata)
     """
+
+    try:
+        import leidenalg
+    except ImportError:
+        print("Need leidenalg!")
 
     start = time.time()
 
