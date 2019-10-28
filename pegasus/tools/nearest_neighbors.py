@@ -146,8 +146,10 @@ def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
     sym_mat = csr_mat + tp_mat
     sym_mat.sort_indices()
 
-    idx_mat = (csr_mat != 0).astype(int) + (tp_mat != 0).astype(int)
-    idx_mat.sort_indices()
+    # idx_mat = (csr_mat != 0).astype(int) + (tp_mat != 0).astype(int)
+    idx_mat = csr_mat.indptr & tp_mat.indptr
+    # idx_mat.sort_indices()
+    idx_mat.sort()
     idx = idx_mat.data == 2
 
     sym_mat.data[idx] /= 2.0
