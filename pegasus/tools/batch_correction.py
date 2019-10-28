@@ -42,7 +42,7 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
 
         Update ``data.obs``:
         
-        * ``data.obs["Group"]``: Group ID for each cell.
+        * ``data.obs["group"]``: group ID for each cell.
 
     Examples
     --------
@@ -51,25 +51,25 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
 
     >>> pg.set_group_attribute(adata, attr_string = "Individual+assignment")
 
-    >>> pg.set_group_attribute(adata, attr_string = "Channel=1,3,5;2,4,6,8")    
+    >>> pg.set_group_attribute(adata, attr_string = "channel=1,3,5;2,4,6,8")    
     """
     
     if attribute_string.find("=") >= 0:
         attr, value_str = attribute_string.split("=")
         assert attr in data.obs.columns
         values = value_str.split(";")
-        data.obs["Group"] = "0"
+        data.obs["group"] = "0"
         for group_id, value in enumerate(values):
             vals = value.split(",")
             idx = np.isin(data.obs[attr], vals)
-            data.obs.loc[idx, "Group"] = str(group_id + 1)
+            data.obs.loc[idx, "group"] = str(group_id + 1)
     elif attribute_string.find("+") >= 0:
         attrs = attribute_string.split("+")
         assert np.isin(attrs, data.obs.columns).sum() == len(attrs)
-        data.obs["Group"] = data.obs[attrs].apply(lambda x: "+".join(x), axis=1)
+        data.obs["group"] = data.obs[attrs].apply(lambda x: "+".join(x), axis=1)
     else:
         assert attribute_string in data.obs.columns
-        data.obs["Group"] = data.obs[attribute_string]
+        data.obs["group"] = data.obs[attribute_string]
 
 @pg_deco.TimeLogger()
 def estimate_adjustment_matrices(data: AnnData) -> bool:
@@ -79,13 +79,13 @@ def estimate_adjustment_matrices(data: AnnData) -> bool:
     if ("gmeans" not in data.varm) or ("gstds" not in data.varm):
         estimate_feature_statistics(data, True)
 
-    if data.uns["Channels"].size == 1:
+    if data.uns["channels"].size == 1:
         logger.warning(
             "Warning: data only contains 1 channel. Batch correction disabled!"
         )
         return False
 
-    nchannel = data.uns["Channels"].size
+    nchannel = data.uns["channels"].size
 
     plus = np.zeros((data.shape[1], nchannel))
     muls = np.zeros((data.shape[1], nchannel))
@@ -96,7 +96,7 @@ def estimate_adjustment_matrices(data: AnnData) -> bool:
     gmeans = data.varm["gmeans"]
     gstds = data.varm["gstds"]
     c2gid = data.uns["c2gid"]
-    for i in range(data.uns["Channels"].size):
+    for i in range(data.uns["channels"].size):
         if ncells[i] > 1:
             muls[:, i] = (partial_sum[:, i] / (ncells[i] - 1.0)) ** 0.5
         outliers = muls[:, i] < 1e-6
@@ -125,8 +125,8 @@ def correct_batch_effects(data: AnnData, keyword: str, features: str = None) -> 
         plus = data.varm["plus"]
         muls = data.varm["muls"]
 
-    for i, channel in enumerate(data.uns["Channels"]):
-        idx = np.isin(data.obs["Channel"], channel)
+    for i, channel in enumerate(data.uns["channels"]):
+        idx = np.isin(data.obs["channel"], channel)
         if idx.sum() == 0:
             continue
         X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(

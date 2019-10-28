@@ -20,17 +20,17 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
 
     if consider_batch:
         start = time.time()
-        if "Channels" not in data.uns:
-            data.uns["Channels"] = data.obs["Channel"].unique()
+        if "channels" not in data.uns:
+            data.uns["channels"] = data.obs["channel"].unique()
 
-        if "Group" not in data.obs:
-            data.obs["Group"] = "one_group"
+        if "group" not in data.obs:
+            data.obs["group"] = "one_group"
 
-        if "Groups" not in data.uns:
-            data.uns["Groups"] = data.obs["Group"].unique()
+        if "groups" not in data.uns:
+            data.uns["groups"] = data.obs["group"].unique()
 
-        channels = data.uns["Channels"]
-        groups = data.uns["Groups"]
+        channels = data.uns["channels"]
+        groups = data.uns["groups"]
 
         ncells = np.zeros(channels.size)
         means = np.zeros((data.shape[1], channels.size))
@@ -38,7 +38,7 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
 
         group_dict = defaultdict(list)
         for i, channel in enumerate(channels):
-            idx = np.isin(data.obs["Channel"], channel)
+            idx = np.isin(data.obs["channel"], channel)
             mat = data.X[idx].astype(np.float64)
             ncells[i] = mat.shape[0]
 
@@ -52,7 +52,7 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
                 m2 = mat.power(2).sum(axis=0).A1
                 partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
 
-            group = data.obs["Group"][idx.nonzero()[0][0]]
+            group = data.obs["group"][idx.nonzero()[0][0]]
             group_dict[group].append(i)
 
         partial_sum[partial_sum < 1e-6] = 0.0
@@ -258,8 +258,8 @@ def select_hvf_seurat(
     hvf_rank = (
         select_hvf_seurat_multi(
             X,
-            data.uns["Channels"],
-            data.obs["Channel"],
+            data.uns["channels"],
+            data.obs["channel"],
             n_top,
             n_jobs=n_jobs,
             min_disp=min_disp,
@@ -342,12 +342,12 @@ def highly_variable_features(
 
     start = time.time()
 
-    if "Channels" not in data.uns:
-        if "Channel" not in data.obs:
-            data.obs["Channel"] = ""
-        data.uns["Channels"] = data.obs["Channel"].unique()
+    if "channels" not in data.uns:
+        if "channel" not in data.obs:
+            data.obs["channel"] = ""
+        data.uns["channels"] = data.obs["channel"].unique()
 
-    if data.uns["Channels"].size == 1 and consider_batch:
+    if data.uns["channels"].size == 1 and consider_batch:
         consider_batch = False
         logger.warning(
             "Warning: only contains one channel, no need to consider batch for selecting highly variable features."

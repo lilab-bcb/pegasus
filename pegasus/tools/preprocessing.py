@@ -134,7 +134,7 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
 
     # cell stats
-    gb1 = data.obs.groupby("Channel")
+    gb1 = data.obs.groupby("channel")
     df_before = gb1.median()
     df_before = df_before.assign(total=gb1.size())
     df_before.rename(
@@ -148,7 +148,7 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     data = data[data.obs["passed_qc"]]  # focusing only on filtered cells
 
-    gb2 = data.obs.groupby("Channel")
+    gb2 = data.obs.groupby("channel")
     df_after = gb2.median()
     df_after = df_after.assign(kept=gb2.size())
     df_after.rename(
@@ -228,13 +228,13 @@ def generate_filter_plots(
     """ This function generates filtration plots, only used in command line.
     """
 
-    df_plot_before = data.obs[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
+    df_plot_before = data.obs[["channel", "n_genes", "n_counts", "percent_mito"]].copy()
     df_plot_before.reset_index(drop=True, inplace=True)
     df_plot_before["status"] = "original"
 
     data = data[data.obs["passed_qc"]]  # focusing only on filtered cells
 
-    df_plot_after = data.obs[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
+    df_plot_after = data.obs[["channel", "n_genes", "n_counts", "percent_mito"]].copy()
     df_plot_after.reset_index(drop=True, inplace=True)
     df_plot_after["status"] = "filtered"
     df_plot = pd.concat((df_plot_before, df_plot_after), axis=0)
@@ -250,9 +250,9 @@ def generate_filter_plots(
         df_plot,
         "count",
         plot_filt + ".filt.UMI.pdf",
-        xattr="Channel",
+        xattr="channel",
         hue="status",
-        xlabel="Channel",
+        xlabel="channel",
         split=True,
         linewidth=0,
         figsize=figsize,
@@ -262,9 +262,9 @@ def generate_filter_plots(
         df_plot,
         "gene",
         plot_filt + ".filt.gene.pdf",
-        xattr="Channel",
+        xattr="channel",
         hue="status",
-        xlabel="Channel",
+        xlabel="channel",
         split=True,
         linewidth=0,
         figsize=figsize,
@@ -274,9 +274,9 @@ def generate_filter_plots(
         df_plot,
         "mito",
         plot_filt + ".filt.mito.pdf",
-        xattr="Channel",
+        xattr="channel",
         hue="status",
-        xlabel="Channel",
+        xlabel="channel",
         split=True,
         linewidth=0,
         figsize=figsize,

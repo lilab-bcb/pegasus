@@ -49,10 +49,10 @@ def get_anndata_for_subclustering(data: "AnnData", subset_selections: List[str])
         "robust"
     ]  # default all robust genes are "highly" variable
 
-    if "Channels" in data.uns:
-        newdata.uns["Channels"] = data.uns["Channels"]
-    if "Groups" in data.uns:
-        newdata.uns["Groups"] = data.uns["Groups"]
+    if "channels" in data.uns:
+        newdata.uns["channels"] = data.uns["channels"]
+    if "groups" in data.uns:
+        newdata.uns["groups"] = data.uns["groups"]
     if "plus" in data.varm.keys():
         newdata.varm["means"] = data.varm["plus"]
     if "muls" in data.varm.keys():
