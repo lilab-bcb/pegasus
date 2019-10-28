@@ -326,7 +326,7 @@ def run_filter_data(
 
 @pg_deco.TimeLogger()
 @pg_deco.GCCollect()
-def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
+def log_norm(data: AnnData, norm_count: int = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
     Parameters
@@ -348,16 +348,11 @@ def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     >>> pg.log_norm(adata)
     """
 
-    start = time.time()
-
     assert issparse(data.X)
     mat = data.X[:, data.var["robust"].values]
     scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X = data.X.log1p()
-
-    end = time.time()
-    logger.info("Normalization is finished. Time spent = {:.2f}s.".format(end - start))
 
 @pg_deco.TimeLogger()
 @pg_deco.GCCollect()
@@ -457,6 +452,17 @@ def pca(
     >>> pg.pca(adata)
     """
 
+    @pg_deco.GCCollect()
+    def _pca(sparse_X):
+        if issparse(sparse_X):
+            X = sparse_X.todense()
+        else :
+            X = sparse_X
+
+        pca = PCA(n_components=n_components, random_state=random_state)
+        X_pca = pca.fit_transform(X)
+        return X_pca, pca
+
     keyword = select_features(data, features)
 
     X = data.uns[keyword]
@@ -475,8 +481,7 @@ def pca(
         X[X > max_value] = max_value
         X[X < -max_value] = -max_value
 
-    pca = PCA(n_components=n_components, random_state=random_state)
-    X_pca = pca.fit_transform(X)
+    X_pca, pca = _pca(X)
 
     data.obsm["X_pca"] = X_pca
     data.uns[
