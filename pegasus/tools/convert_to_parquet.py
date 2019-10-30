@@ -97,7 +97,7 @@ def to_df(data):
     return df
 
 
-def convert_to_parquet(data, output_name, nthreads=None, row_group_size=100000):
+def convert_to_parquet(data, output_name, nthreads, row_group_size):
     if not output_name.endswith(".pq") and not output_name.endswith(".parquet"):
         output_name = output_name + '.pq'
     schema = create_schema(data)
@@ -121,6 +121,6 @@ def run_conversion(input_h5ad_file, output_name, nthreads, row_group_size):
     )
 
     start = time.time()
-    convert_to_parquet(data, output_name, nthreads)
+    convert_to_parquet(data, output_name, nthreads, row_group_size)
     end = time.time()
     print("Time spent on generating the PARQUET file is {:.2f}s.".format(end - start))
