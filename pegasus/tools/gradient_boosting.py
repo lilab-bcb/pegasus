@@ -16,10 +16,12 @@ from lightgbm import LGBMClassifier
 from pegasus.io import read_input
 
 import logging
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
 
+@pg_deco.TimeLogger()
 def find_markers(
     data: AnnData,
     label_attr: str,
@@ -63,7 +65,6 @@ def find_markers(
     --------
     >>> marker_dict = pg.find_markers(adata, label_attr = 'leiden_labels')
     """
-    start = time.time()
 
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -126,9 +127,6 @@ def find_markers(
                     markers[clust_label][titles[i][1]].append(
                         "{:.2f}".format(lgb.feature_importances_[gene_id])
                     )
-
-    end = time.time()
-    logger.info("find_markers took {:.2f}s to finish.".format(end - start))
 
     return markers
 

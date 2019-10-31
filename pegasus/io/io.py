@@ -20,7 +20,6 @@ from .. import decorators as pg_deco
 logger = logging.getLogger("pegasus")
 
 
-@pg_deco.TimeLogger()
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v2 format matrix from hdf5 file
 
@@ -73,7 +72,6 @@ def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
     return data
 
 
-@pg_deco.TimeLogger()
 def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
     """Load 10x v3 format matrix from hdf5 file
 
@@ -127,7 +125,6 @@ def load_10x_h5_file_v3(h5_in: "tables.File", fn: str, ngene: int = None) -> "Me
     return data
 
 
-@pg_deco.TimeLogger()
 def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     """Load 10x format matrix (either v2 or v3) from hdf5 file
 
@@ -179,7 +176,6 @@ def determine_file_name(
     raise ValueError(errmsg)
 
 
-@pg_deco.TimeLogger()
 def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array2D":
     """Load one gene-count matrix in mtx format into an Array2D object
     """
@@ -270,7 +266,6 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
 
     return array2d
 
-@pg_deco.TimeLogger()
 def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData":
     """Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
 
@@ -324,7 +319,6 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
 
     return data
 
-@pg_deco.TimeLogger()
 def load_csv_file(
     input_csv: str, genome: str, sep: str = ",", ngene: int = None
 ) -> "MemData":
@@ -408,7 +402,6 @@ def load_csv_file(
 
     return data
 
-@pg_deco.TimeLogger()
 def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData":
     """Load count matrix from a LOOM file. Currently only support HCA DCP Loom spec.
 
@@ -454,7 +447,6 @@ def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData"
 
     return data
 
-@pg_deco.TimeLogger()
 def load_pegasus_h5_file(
     input_h5: str, ngene: int = None, select_singlets: bool = False
 ) -> "MemData":

@@ -6,6 +6,7 @@ from scipy.sparse import csr_matrix, hstack, vstack
 import tables
 
 from typing import List
+from .. import decorators as pg_deco
 
 import anndata
 
@@ -264,6 +265,7 @@ class MemData:
             else:
                 self.data[keyword] = [array2d]
 
+    @pg_deco.TimeLogger()
     def aggregate(self) -> None:
         """ Merge aggregated count matrices
         """

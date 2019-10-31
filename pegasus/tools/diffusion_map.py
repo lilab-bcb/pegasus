@@ -12,6 +12,7 @@ from typing import List, Tuple
 from anndata import AnnData
 
 from pegasus.tools import update_rep, W_from_rep
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
@@ -102,6 +103,8 @@ def calculate_diffusion_map(
     return Phi_pt, Lambda, Phi  # , U_df, W_norm
 
 
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def diffmap(
     data: AnnData,
     n_components: int = 100,
@@ -149,7 +152,6 @@ def diffmap(
     >>> pg.diffmap(adata)
     """
 
-    start = time.time()
     rep = update_rep(rep)
     Phi_pt, Lambda, Phi = calculate_diffusion_map(
         W_from_rep(data, rep),
@@ -165,10 +167,8 @@ def diffmap(
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 
-    end = time.time()
-    logger.info("diffmap finished. Time spent = {:.2f}s.".format(end - start))
-
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
     """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
 
@@ -192,7 +192,6 @@ def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
     --------
     >>> pg.reduce_diffmap_to_3d(adata)
     """
-    start = time.time()
 
     if "X_diffmap" not in data.obsm.keys():
         raise ValueError("Please run diffmap first!")
@@ -200,7 +199,3 @@ def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
     pca = PCA(n_components=3, random_state=random_state)
     data.obsm["X_diffmap_pca"] = pca.fit_transform(data.obsm["X_diffmap"])
 
-    end = time.time()
-    logger.info(
-        "Reduce diffmap to 3D is done. Time spent = {:.2f}s.".format(end - start)
-    )

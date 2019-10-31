@@ -158,10 +158,7 @@ def aggregate_matrices(
         check_call(["rm", "-rf", dest_path])
 
     # Merge channels
-    t1 = time.time()
     aggrData.aggregate()
-    t2 = time.time()
-    print("Data aggregation is finished in {:.2f}s.".format(t2 - t1))
 
     if what_to_return == "AnnData":
         aggrData = aggrData.convert_to_anndata(concat_matrices)

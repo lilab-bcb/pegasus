@@ -149,9 +149,9 @@ def run_scp_output(
     >>> pg.run_scp_output("result.h5ad", output_name = "scp_result")
     """
     adata = read_input(input_h5ad_file, h5ad_mode="a")
-    start = time.time()
+    start = time.perf_counter()
     scp_write_coords(adata, output_name)
     scp_write_metadata(adata, output_name)
     scp_write_expression(adata, output_name, is_sparse, round_to)
-    end = time.time()
+    end = time.perf_counter()
     print("Time spent for generating SCP outputs is {:.2f}s.".format(end - start))

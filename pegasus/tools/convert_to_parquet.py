@@ -9,6 +9,8 @@ import pyarrow.parquet as pq
 import scipy.sparse
 from pegasus.io import read_input
 
+from .. import decorators as pg_deco
+
 obsm_whitelist = ['X_pca', 'X_rpca', 'X_tsne', 'X_fitsne', 'X_umap', 'X_fle', 'X_net_tsne', 'X_net_umap', 'X_net_fle']
 obsm_whitelist_3d = ['X_diffmap_pca']
 
@@ -64,7 +66,8 @@ def to_df(data):
     df = df.join(data.obs)
     return df
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def convert_to_parquet(data, output_name, nthreads, row_group_size):
     if not output_name.endswith(".pq") and not output_name.endswith(".parquet"):
         output_name = output_name + '.pq'
@@ -81,14 +84,5 @@ def convert_to_parquet(data, output_name, nthreads, row_group_size):
 
 
 def run_conversion(input_h5ad_file, output_name, nthreads, row_group_size):
-    start = time.time()
     data = read_input(input_h5ad_file)
-    end = time.time()
-    print(
-        "Time spent for loading the expression matrix is {:.2f}s.".format(end - start)
-    )
-
-    start = time.time()
     convert_to_parquet(data, output_name, nthreads, row_group_size)
-    end = time.time()
-    print("Time spent on generating the PARQUET file is {:.2f}s.".format(end - start))

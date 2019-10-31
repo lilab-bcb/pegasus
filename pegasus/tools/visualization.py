@@ -569,13 +569,11 @@ def fle(
         random_state,
     )
 
-
+@pg_deco.TimeLogger()
 def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     """
     TODO: documentation (not user API)
     """
-
-    start_time = time.time()
 
     nsample = distances.shape[0]
 
@@ -601,11 +599,6 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     selected[
         np.random.choice(nsample, size=int(nsample * frac), replace=False, p=probs)
     ] = True
-
-    end_time = time.time()
-    logger.info(
-        "select_cells finished. Time spent = {:.2}s.".format(end_time - start_time)
-    )
 
     return selected
 

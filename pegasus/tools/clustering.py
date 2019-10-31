@@ -64,8 +64,6 @@ def louvain(
     except ImportError:
         print("Need louvain!")
 
-    start = time.time()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -131,8 +129,6 @@ def leiden(
     except ImportError:
         print("Need leidenalg!")
 
-    start = time.time()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -154,7 +150,6 @@ def leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: int, n_clusters2: int, n_init: int, random_state: int) -> List[int]:
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -244,7 +239,6 @@ def spectral_louvain(
     except ImportError:
         print("Need louvain!")
 
-    start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
@@ -344,7 +338,6 @@ def spectral_leiden(
     except ImportError:
         print("Need leidenalg!")
 
-    start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))

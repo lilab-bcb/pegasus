@@ -11,6 +11,7 @@ from anndata import AnnData
 import logging
 
 logger = logging.getLogger("pegasus")
+from .. import decorators as pg_deco
 
 
 def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
@@ -19,7 +20,7 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
     assert issparse(data.X)
 
     if consider_batch:
-        start = time.time()
+        start = time.perf_counter()
         if "Channels" not in data.uns:
             data.uns["Channels"] = data.obs["Channel"].unique()
 
@@ -91,7 +92,7 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
         data.var["var"] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
             data.shape[0] - 1.0
         )
-        end = time.time()
+        end = time.perf_counter()
         logger.info(
             "Estimation on feature statistics per channel is finished. Time spent = {:.2f}s.".format(
                 end - start
@@ -285,7 +286,8 @@ def select_hvf_seurat(
     data.var["highly_variable_features"] = False
     data.var.loc[robust_idx, "highly_variable_features"] = hvf_index
 
-
+@pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def highly_variable_features(
     data: AnnData,
     consider_batch: bool,
@@ -340,8 +342,6 @@ def highly_variable_features(
     >>> pg.highly_variable_features(adata, consider_batch = False)
     """
 
-    start = time.time()
-
     if "Channels" not in data.uns:
         if "Channel" not in data.obs:
             data.obs["Channel"] = ""
@@ -368,9 +368,8 @@ def highly_variable_features(
             n_jobs=n_jobs,
         )
 
-    end = time.time()
     logger.info(
-        "{tot} highly variable features have been selected. Time spent = {time:.2f}s.".format(
-            tot=data.var["highly_variable_features"].sum(), time=end - start
+        "{} highly variable features have been selected.".format(
+            data.var["highly_variable_features"].sum()
         )
     )

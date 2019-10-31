@@ -10,10 +10,11 @@ from collections import deque
 from typing import List
 from anndata import AnnData
 import logging
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
-
+@pg_deco.TimeLogger()
 def calc_pseudotime(data: AnnData, roots: List[str]) -> None:
     """Calculate Pseudotime based on Diffusion Map.
 
@@ -36,7 +37,6 @@ def calc_pseudotime(data: AnnData, roots: List[str]) -> None:
     --------
     >>> pg.calc_pseudotime(adata, roots = list(adata.obs_names[0:100]))
     """
-    start = time.time()
 
     if not isinstance(roots, list):
         roots = [roots]
@@ -53,9 +53,6 @@ def calc_pseudotime(data: AnnData, roots: List[str]) -> None:
     dmin = distances.min()
     dmax = distances.max()
     data.obs["pseudotime"] = (distances - dmin) / (dmax - dmin)
-
-    end = time.time()
-    logger.info("calc_pseudotime finished. Time spent = {:.2f}s".format(end - start))
 
 
 

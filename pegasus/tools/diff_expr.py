@@ -9,6 +9,7 @@ from collections import defaultdict
 
 from typing import List, Tuple, Dict
 import logging
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
@@ -121,7 +122,7 @@ def collect_basic_statistics(
 ) -> List[pd.DataFrame]:
     """ Collect basic statistics, triggering calc_basic_stat in parallel
     """
-    start = time.time()
+    start = time.perf_counter()
 
     sum_vec = cnt_vec = None
     if cond_labels is None:
@@ -145,7 +146,7 @@ def collect_basic_statistics(
         for clust_id in cluster_labels.categories
     )
 
-    end = time.time()
+    end = time.perf_counter()
     if verbose:
         logger.info(
             "Collecting basic statistics is done. Time spent = {:.2f}s.".format(
@@ -231,7 +232,7 @@ def calculate_auc_values(
 ) -> List[pd.DataFrame]:
     """ Calculate AUROC values, triggering calc_auc in parallel
     """
-    start = time.time()
+    start = time.perf_counter()
 
     result_list = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
         delayed(calc_auc)(
@@ -248,7 +249,7 @@ def calculate_auc_values(
         for clust_id in cluster_labels.categories
     )
 
-    end = time.time()
+    end = time.perf_counter()
     if verbose:
         logger.info(
             "AUROC values are calculated. Time spent = {:.2f}s.".format(end - start)
@@ -353,7 +354,7 @@ def t_test(
 ) -> List[pd.DataFrame]:
     """ Run Welch's t-test, triggering calc_t in parallel
     """
-    start = time.time()
+    start = time.perf_counter()
 
     sum_vec = sum2_vec = None
     if cond_labels is None:
@@ -377,7 +378,7 @@ def t_test(
         for clust_id in cluster_labels.categories
     )
 
-    end = time.time()
+    end = time.perf_counter()
     if verbose:
         logger.info("Welch's t-test is done. Time spent = {:.2f}s.".format(end - start))
 
@@ -456,7 +457,7 @@ def fisher_test(
 ) -> List[pd.DataFrame]:
     """ Run Fisher's exact test, triggering calc_fisher in parallel
     """
-    start = time.time()
+    start = time.perf_counter()
 
     cnt_vec = None
     if cond_labels is None:
@@ -478,7 +479,7 @@ def fisher_test(
         for clust_id in cluster_labels.categories
     )
 
-    end = time.time()
+    end = time.perf_counter()
     if verbose:
         logger.info(
             "Fisher's exact test is done. Time spent = {:.2f}s.".format(end - start)
@@ -569,7 +570,7 @@ def mwu_test(
 ) -> List[pd.DataFrame]:
     """ Run Mann-Whitney U test, triggering calc_mwu in parallel
     """
-    start = time.time()
+    start = time.perf_counter()
 
     result_list = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
         delayed(calc_mwu)(
@@ -586,7 +587,7 @@ def mwu_test(
         for clust_id in cluster_labels.categories
     )
 
-    end = time.time()
+    end = time.perf_counter()
     if verbose:
         logger.info(
             "Mann-Whitney U test is done. Time spent = {:.2f}s.".format(end - start)
@@ -677,7 +678,7 @@ def de_analysis(
 
     subset: a comma-separated list of cluster labels. Then de will be performed only on these subsets.
     """
-    start = time.time()
+    start = time.perf_counter()
 
     if cluster not in data.obs:
         raise ValueError("Cannot find cluster label!")
@@ -727,12 +728,12 @@ def de_analysis(
 
     Xc = None
     if auc or mwu:
-        t1 = time.time()
+        t1 = time.perf_counter()
         Xc = X.tocsc()
         if verbose:
             logger.info(
                 "Converting X to csc_matrix is done. Time spent = {:.2f}s.".format(
-                    time.time() - t1
+                    time.perf_counter() - t1
                 )
             )
 
@@ -779,7 +780,7 @@ def de_analysis(
     df = organize_results(results)
     data.varm[result_key] = df.to_records(index=False)
 
-    end = time.time()
+    end = time.perf_counter()
     logger.info(
         "Differential expression analysis is finished. Time spent = {:.2f}s.".format(
             end - start
@@ -912,7 +913,7 @@ def write_results_to_excel(
     --------
     >>> pg.write_results_to_excel(marker_dict, "result.de.xlsx")
     """
-    start = time.time()
+    start = time.perf_counter()
 
     import xlsxwriter
     from natsort import natsorted
@@ -967,12 +968,12 @@ def write_results_to_excel(
 
     workbook.close()
 
-    end = time.time()
+    end = time.perf_counter()
     logger.info(
         "Excel spreadsheet is written. Time spent = {:.2f}s.".format(end - start)
     )
 
-
+@pg_deco.TimeLogger()
 def run_de_analysis(
     input_file: str,
     output_excel_file: str,
@@ -990,7 +991,6 @@ def run_de_analysis(
 ) -> None:
     """ For command line only
     """
-    start = time.time()
 
     from pegasus.io import read_input, write_output
 
@@ -1019,6 +1019,3 @@ def run_de_analysis(
     results = markers(data, de_key=result_key, alpha=alpha)
 
     write_results_to_excel(results, output_excel_file, ndigits=ndigits)
-
-    end = time.time()
-    logger.info("run_de_analysis is finished in {:.2f}s.".format(end - start))
