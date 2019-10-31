@@ -36,7 +36,6 @@ requires = [
     "hnswlib",
     "fisher-modified",
     "louvain-github",
-    "leidenalg",
     "forceatlas2-python",
     "scplot"
 ]
@@ -69,7 +68,11 @@ setup(
     keywords="single cell/nucleus genomics analysis",
     packages=find_packages(),
     install_requires=requires,
-    extras_require=dict(fitsne=["fitsne"], mkl=["mkl"]),
+    extras_require=dict(
+        fitsne=["fitsne"],
+        leiden=['leidenalg'],
+        mkl=["mkl"]
+    ),
     python_requires="~=3.5",
     package_data={
         "pegasus.annotate_cluster": [

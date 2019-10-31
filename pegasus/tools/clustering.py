@@ -8,14 +8,6 @@ from natsort import natsorted
 import ctypes
 import ctypes.util
 
-try:
-    import louvain as louvain_module
-except ImportError:
-    print("Need louvain!")
-try:
-    import leidenalg
-except ImportError:
-    print("Need leidenalg!")
 from sklearn.cluster import KMeans
 from typing import List
 
@@ -66,6 +58,13 @@ def louvain(
     --------
     >>> pg.louvain(adata)
     """
+
+    try:
+        import louvain as louvain_module
+    except ImportError:
+        print("Need louvain!")
+
+    start = time.time()
 
     rep_key = "W_" + rep
     if rep_key not in data.uns:
@@ -126,6 +125,13 @@ def leiden(
     --------
     >>> pg.leiden(adata)
     """
+
+    try:
+        import leidenalg
+    except ImportError:
+        print("Need leidenalg!")
+
+    start = time.time()
 
     rep_key = "W_" + rep
     if rep_key not in data.uns:
@@ -233,6 +239,13 @@ def spectral_louvain(
     >>> pg.spectral_louvain(adata)
     """
 
+    try:
+        import louvain as louvain_module
+    except ImportError:
+        print("Need louvain!")
+
+    start = time.time()
+
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
         rep_kmeans = "pca"
@@ -325,6 +338,13 @@ def spectral_leiden(
     --------
     >>> pg.spectral_leiden(adata)
     """
+
+    try:
+        import leidenalg
+    except ImportError:
+        print("Need leidenalg!")
+
+    start = time.time()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
