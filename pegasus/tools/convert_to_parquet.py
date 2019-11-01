@@ -67,7 +67,6 @@ def to_df(data):
     return df
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def convert_to_parquet(data, output_name, nthreads, row_group_size):
     if not output_name.endswith(".pq") and not output_name.endswith(".parquet"):
         output_name = output_name + '.pq'

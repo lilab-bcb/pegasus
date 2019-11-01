@@ -287,7 +287,6 @@ def select_hvf_seurat(
     data.var.loc[robust_idx, "highly_variable_features"] = hvf_index
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def highly_variable_features(
     data: AnnData,
     consider_batch: bool,

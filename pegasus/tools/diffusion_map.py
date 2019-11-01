@@ -104,7 +104,6 @@ def calculate_diffusion_map(
 
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def diffmap(
     data: AnnData,
     n_components: int = 100,
@@ -168,7 +167,6 @@ def diffmap(
     # data.obsm['X_dmnorm'] = U_df
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
     """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
 

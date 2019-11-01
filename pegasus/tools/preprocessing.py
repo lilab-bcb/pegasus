@@ -280,7 +280,6 @@ def generate_filter_plots(
     logger.info("Filtration plots are generated.")
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def run_filter_data(
     data: AnnData,
     output_filt: str = None,
@@ -322,7 +321,6 @@ def run_filter_data(
     filter_data(data)
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
@@ -392,7 +390,7 @@ def select_features(data: AnnData, features: str = None) -> str:
 
     return keyword
 
-@pg_deco.GCCollect()
+
 def pca(
     data: AnnData,
     n_components: int = 50,

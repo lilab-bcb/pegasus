@@ -190,7 +190,6 @@ def calculate_affinity_matrix(
 
     return W
 
-@pg_deco.GCCollect()
 def neighbors(
     data: AnnData,
     K: int = 100,
