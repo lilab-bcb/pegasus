@@ -14,6 +14,7 @@ logger = logging.getLogger("pegasus")
 
 from .. import decorators as pg_deco
 
+@pg_deco.GCCollect()
 def qc_metrics(
     data: AnnData,
     mito_prefix: str = "MT-",
@@ -321,6 +322,7 @@ def run_filter_data(
     filter_data(data)
 
 @pg_deco.TimeLogger()
+@pg_deco.GCCollect()
 def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
@@ -390,7 +392,7 @@ def select_features(data: AnnData, features: str = None) -> str:
 
     return keyword
 
-
+@pg_deco.GCCollect()
 def pca(
     data: AnnData,
     n_components: int = 50,
