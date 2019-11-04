@@ -14,5 +14,5 @@
    installation
    usage
    api/index
-   acknowledgment
+   contributors
    references

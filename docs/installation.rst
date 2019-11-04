@@ -1,98 +1,57 @@
 Installation
 ------------
 
-Prerequisites
-^^^^^^^^^^^^^
-
-Platform
-########
-
-This installation instruction has been tested on Linux (Ubuntu Linux 18.04 and 19.04) and macOS (macOS 10.14 Mojave).
-
-Python
-######
-
-pegasus works with Python 3 (Python 3.5 or greater) only. 
-
-For Ubuntu, install Python 3 by::
-
-	sudo apt install python
-
-For macOS, Python 3 can be installed by either Miniconda package manger (see below_), Homebrew_, or the `Python website`_.
-
-Others
-######
-
-For Ubuntu, install the following packages::
-
-	sudo apt install build-essential cmake libxml2-dev wget
-
-For macOS, install by::
-
-	brew install cmake libxml2 curl
-
-------------------
-
-Install via PyPI
-^^^^^^^^^^^^^^^^
+Pegasus works with Python 3 only. **Note:** Pegasus doesn't work with Python 3.8 yet, because Cython has not been updated for this Python version.
 
 Linux
-#####
+^^^^^
 
-Assuming Python 3 is installed on your OS. Then install ``pip`` for Python 3, along with some extra libraries for building pegasus::
+The installation has been tested on Ubuntu (18.04 and 19.04).
 
-	sudo apt install python3-pip
+Prerequisites
+#############
 
+First, install the following dependencies by::
 
-Now install pegasus via ``pip``::
+	sudo apt install build-essential cmake libxml2-dev zlib1g-dev wget
+
+Next, you can install Pegasus system-wide by PyPI (see `Linux Install via PyPI`_), or within a Miniconda environment (see `Linux Install via Miniconda`_).
+
+.. _Linux Install via PyPI: ./installation.html#install-via-pypi
+.. _Linux Install via Miniconda: ./installation.html#install-via-miniconda
+
+Install via PyPI
+################
+
+First, install Python 3 and *pip* tool for Python 3::
+
+	sudo apt install python3 python3-pip
+
+Now install Pegasus via *pip*::
 
 	pip3 install pegasuspy
 
-Alternatively, if you want to use ``mkl`` package for speed improvement, type::
+There are optional packages that you can install:
 
-	pip3 install pegasuspy[mkl]
+- **mkl**: This package improves math routines for science and engineering applications::
 
-If you want to use pegasus's FIt-SNE feature. First, install ``fftw`` library::
+	pip3 install mkl
+
+- **fitsne**: This package is to calculate t-SNE plots using a faster algorithm FIt-SNE::
 
 	sudo apt install libfftw3-dev
+	pip3 install fitsne
 
-Then type::
+- **leiden**: This package provides Leiden clustering algorithm, besides the default Louvain algorithm in Pegasus::
 
-	pip3 install pegasuspy[fitsne]
-
-Or if you want both extra features, type::
-
-	pip3 install pegasuspy[mkl,fitsne]
-
-.. _below: ./installation.html#install-via-miniconda
-
-.. _Homebrew: https://brew.sh
-
-.. _Python website: https://www.python.org/downloads/mac-osx/
-
-
-macOS
-######
-
-``pip3`` is already installed. Follow the same steps as above for Linux, except that when installing ``fftw``, you have to go to its website_ for instruction.
-
-.. _website: http://www.fftw.org/
-
-------------------------
+	pip3 install leidenalg
 
 Install via Miniconda
-^^^^^^^^^^^^^^^^^^^^^
+#####################
 
-You can also choose to install pegasus in a dedicated Conda environment without affecting your OS.
+You can also choose to install pegasus in a dedicated Conda environment without affecting your OS settings.
 
-
-Package Manager
-###############
-
-Linux
-*****
-
-Use the following commands to install a Miniconda on your system::
+1. Use the following commands to install a Miniconda on your system::
 
 	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh .
 	export CONDA_PATH=/home/foo
@@ -102,10 +61,92 @@ Use the following commands to install a Miniconda on your system::
 
 Feel free to change ``/home/foo`` to your own directory on handling Miniconda.
 
-macOS
-*****
+In addition, remember to type ``yes`` when asked if you wish the installer to initialize Miniconda3 by running conda init.
 
-Use the following commands::
+2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
+
+	conda create -n pegasus -y python=3.7
+
+3. Enter ``pegasus`` environment by activating::
+
+	source activate pegasus
+
+4. (Optional) Install the following dependency if you want *mkl* to for optimized math routines::
+
+	conda install -y -c anaconda numpy
+
+5. Install pegasus::
+
+	pip install pegasuspy
+
+6. (Optional) You can install the following optional features:
+
+	- **fitsne**: Generate t-SNE plot by a faster algorithm FIt-SNE::
+
+		sudo apt install libfftw3-dev
+		pip install fitsne
+
+	- **leiden**: Leiden clustering algorithm::
+
+		pip install leidenalg
+
+---------------
+
+macOS
+^^^^^
+
+Prerequisites
+#############
+
+First, install Homebrew by following the instruction on its website: https://brew.sh/. Then install the following dependencies::
+
+	brew install cmake libxml2 curl libomp
+
+Next, you can install Pegasus system-wide by PyPI (see `macOS Installation via PyPI`_), or within a Miniconda environment (see `macOS Installation via Miniconda`_).
+
+.. _macOS Installation via PyPI: ./installation.html#id2
+.. _macOS Installation via Miniconda: ./installation.html#id3
+
+Install via PyPI
+################
+
+1. You need to install Python first::
+
+	brew install python3
+
+2. Starting from macOS Mojave (i.e. 10.14), *python-igraph*, one of the dependencies of Pegasus, needs to set the following environment variable before installation::
+
+	export MACOSX_DEPLOYMENT_TARGET=10.14
+	pip3 install python-igraph
+
+You should change ``10.14`` to your macOS version number. For example, ``10.15`` is the number for Catalina.
+
+3. Now install Pegasus::
+
+	pip3 install pegasuspy
+
+There are optional packages that you can install:
+
+- **mkl**: This package improves math routines for science and engineering applications::
+
+	pip3 install mkl
+
+- **fitsne**: This package is to calculate t-SNE plots using a faster algorithm FIt-SNE. First, you need to install its dependency *fftw*::
+
+	brew install fftw
+
+Then install *fitsne* by::
+
+	pip3 install fitsne
+
+- **leiden**: This package provides Leiden clustering algorithm, besides the default Louvain algorithm in Pegasus::
+
+	pip3 install leidenalg
+
+Install via Miniconda
+#####################
+
+1. Use the following commands to install a Miniconda on your system::
 
 	curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 	export CONDA_PATH=/Users/foo
@@ -114,63 +155,36 @@ Use the following commands::
 
 Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
-Install pegasus
-###############
 
-Both Linux and macOS share this installation step.
+2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-1. Create a conda environment for pegasus. Let ``pegasuspy`` be its name, but you are free to choose your own::
+	conda create -n pegasus -y python=3.7
 
-	conda create -n pegasuspy -y pip
+3. Enter ``pegasus`` environment by activating::
 
-For macOS, you may need to do the following extra commands after creation::
+	conda activate pegasus
 
-	mkdir -p $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/activate.d
-	mkdir -p $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/deactivate.d
-	printf '#!/bin/sh\n\nexport KMP_DUPLICATE_LIB_OK=true\n' > $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/activate.d/env_vars.sh
-	printf '#!/bin/sh\n\nunset KMP_DUPLICATE_LIB_OK' > $CONDA_PATH/miniconda3/envs/pegasuspy/etc/conda/deactivate.d/env_vars.sh
-
-where ``$CONDA_PATH`` is set in the previous step.
-
-2. Enter conda environment by activating::
-
-	conda activate pegasuspy
-
-or::
-
-	source activate pegasuspy
-
-3. (Optional) If you want to use the Intel ``mkl`` package for speed improvement, type::
+4. (Optional) Install the following dependency if you want *mkl* to for optimized math routines::
 
 	conda install -y -c anaconda numpy
 
-Also, if you want to use pegasus's FIt-SNE feature, which depends on ``fftw`` package, type::
+5. **For macOS 10.14 or later:** for these macOS versions, you need to set the following environment variable before installing Pegasus::
 
-	conda install -y -c conda-forge fftw
+	export MACOSX_DEPLOYMENT_TARGET=10.14
 
-4. Install pegasus::
+where ``10.14`` is the version number for macOS Mojave. You should change it to your own OS version. For example, ``10.15`` is for macOS Catalina.
+
+5. Install pegasus::
 
 	pip install pegasuspy
 
-If you want to use pegasus's FIt-SNE feature, type::
+6. (Optional) You can install the following optional features:
 
-	pip install pegasuspy[fitsne]
+	- **fitsne**: Generate t-SNE plot by a faster algorithm FIt-SNE::
 
------------------------------------
+		conda install -y -c conda-forge fftw
+		pip install fitsne
 
-Use **pegasus** in UGER
-^^^^^^^^^^^^^^^^^^^^^^^
+	- **leiden**: Leiden clustering algorithm::
 
-First, you need to request a RedHat7 server::
-
-	qrsh -q interactive -l h_vmem=4g -l os=RedHat7 -P regevlab
-
-Then, if you have installed **pegasus**, you could activate the virtual environment::
-
-	source activate pegasus
-
-Or, you can use an installed version by typing::
-
-	source /ahg/regevdata/users/libo/miniconda3/bin/activate pegasus
-
-.. _Miniconda: http://conda.pydata.org/miniconda.html
+		pip install leidenalg
