@@ -11,24 +11,15 @@ from pegasus.io import read_input
 
 from .. import decorators as pg_deco
 
-<<<<<<< HEAD
-def convert_to_parquet(data, output_name, nthreads):
-    df = pd.DataFrame(index=data.obs.index, data=data.X.toarray(), columns=data.var_names)
-    for c in data.obs:
-        df[c] = data.obs[c]
-    whitelist = ['X_pca', 'X_rpca', 'X_tsne', 'X_fitsne', 'X_umap', 'X_fle', 'X_net_tsne', 'X_net_umap', 'X_net_fle']
-    whitelist_3d = ['X_diffmap_pca']
-=======
+
 obsm_whitelist = ['X_pca', 'X_rpca', 'X_tsne', 'X_fitsne', 'X_umap', 'X_fle', 'X_net_tsne', 'X_net_umap', 'X_net_fle']
 obsm_whitelist_3d = ['X_diffmap_pca']
-
 
 def create_schema(data):
     df = data.obs.iloc[[0, 1]].copy()
     obs_coords = []
     columns_to_add = []
     obsm = []
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
     for key in data.obsm.keys():
         ndim = None
         if key in obsm_whitelist:
@@ -48,18 +39,11 @@ def create_schema(data):
     table = pa.Table.from_pandas(df)
     schema = table.schema
 
-<<<<<<< HEAD
-    table = pa.Table.from_pandas(df, nthreads=nthreads)
-    output_file = output_name + ".parquet"
-    pq.write_table(table, output_file)
-    print(output_file + " is written!")
-=======
     schema = schema.with_metadata(
         {b'pegasus': json.dumps(
             {'obsm': obsm, 'var': data.var.index.values.tolist(), 'obs': data.obs.columns.values.tolist()}).encode(
             'utf8')})
     return schema
-
 
 def to_df(data):
     X = data.X
@@ -95,8 +79,6 @@ def convert_to_parquet(data, output_name, nthreads, row_group_size):
             writer.write_table(table)
             gc.collect()
     print(output_name + " is written!")
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
-
 
 def run_conversion(input_h5ad_file, output_name, nthreads, row_group_size):
     data = read_input(input_h5ad_file)

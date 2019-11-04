@@ -20,15 +20,9 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
     assert issparse(data.X)
 
     if consider_batch:
-<<<<<<< HEAD
         start = time.time()
         if "channels" not in data.uns:
             data.uns["channels"] = data.obs["channel"].unique()
-=======
-        start = time.perf_counter()
-        if "Channels" not in data.uns:
-            data.uns["Channels"] = data.obs["Channel"].unique()
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
 
         if "group" not in data.obs:
             data.obs["group"] = "one_group"
@@ -347,19 +341,12 @@ def highly_variable_features(
     >>> pg.highly_variable_features(adata, consider_batch = False)
     """
 
-<<<<<<< HEAD
     start = time.time()
 
     if "channels" not in data.uns:
         if "channel" not in data.obs:
             data.obs["channel"] = ""
         data.uns["channels"] = data.obs["channel"].unique()
-=======
-    if "Channels" not in data.uns:
-        if "Channel" not in data.obs:
-            data.obs["Channel"] = ""
-        data.uns["Channels"] = data.obs["Channel"].unique()
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
 
     if data.uns["channels"].size == 1 and consider_batch:
         consider_batch = False

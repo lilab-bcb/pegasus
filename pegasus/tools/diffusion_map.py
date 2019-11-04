@@ -102,13 +102,7 @@ def calculate_diffusion_map(
 
     return Phi_pt, Lambda, Phi  # , U_df, W_norm
 
-<<<<<<< HEAD
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
-=======
-
-@pg_deco.TimeLogger()
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
 def diffmap(
     data: AnnData,
     n_components: int = 100,
@@ -171,11 +165,7 @@ def diffmap(
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 
-<<<<<<< HEAD
-
-=======
 @pg_deco.TimeLogger()
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
 def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
     """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
 

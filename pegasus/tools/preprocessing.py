@@ -351,12 +351,7 @@ def log_norm(data: AnnData, norm_count: int = 1e5) -> None:
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X = data.X.log1p()
 
-<<<<<<< HEAD
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
-=======
-
->>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
 def select_features(data: AnnData, features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
 
