@@ -36,7 +36,7 @@ class MaxStdScaler(BaseEstimator, TransformerMixin):
 
 
 def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose=False):
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     scaler_x = MaxStdScaler()
     X_train = scaler_x.fit_transform(X_train)
@@ -58,7 +58,7 @@ def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose
         regressor.predict(scaler_x.transform(X_pred)), copy=False
     )
 
-    end_time = time.time()
+    end_time = time.perf_counter()
 
     if verbose:
         logger.info(

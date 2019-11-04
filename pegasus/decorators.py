@@ -19,7 +19,7 @@ class TimeLogger:
 
     """
     
-    def __init__(self, custom_message:str=None, custom_message_type:str="debug", verbose=True):
+    def __init__(self, custom_message:str=None, custom_message_type:str="debug", verbose=False):
         super(TimeLogger, self).__init__()
         self.custom_message = custom_message
         self.custom_message_type = custom_message_type

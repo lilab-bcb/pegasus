@@ -14,7 +14,6 @@ logger = logging.getLogger("pegasus")
 
 from .. import decorators as pg_deco
 
-@pg_deco.TimeLogger()
 @pg_deco.GCCollect()
 def qc_metrics(
     data: AnnData,
@@ -191,8 +190,6 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     return df_cells, df_genes
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def filter_data(data: AnnData) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
@@ -221,7 +218,6 @@ def filter_data(data: AnnData) -> None:
         )
     )
 
-@pg_deco.TimeLogger()
 def generate_filter_plots(
     data: AnnData, plot_filt: str, plot_filt_figsize: str = None
 ) -> None:
@@ -282,8 +278,9 @@ def generate_filter_plots(
         figsize=figsize,
     )
 
+    logger.info("Filtration plots are generated.")
+
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def run_filter_data(
     data: AnnData,
     output_filt: str = None,
@@ -354,8 +351,12 @@ def log_norm(data: AnnData, norm_count: int = 1e5) -> None:
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X = data.X.log1p()
 
+<<<<<<< HEAD
 @pg_deco.TimeLogger()
 @pg_deco.GCCollect()
+=======
+
+>>>>>>> 342f8a1afad7822eb9f8a78ae5708316cfde7c3f
 def select_features(data: AnnData, features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
 
@@ -396,7 +397,6 @@ def select_features(data: AnnData, features: str = None) -> str:
 
     return keyword
 
-@pg_deco.TimeLogger()
 @pg_deco.GCCollect()
 def pca(
     data: AnnData,
@@ -465,6 +465,8 @@ def pca(
 
     keyword = select_features(data, features)
 
+    start = time.perf_counter()
+
     X = data.uns[keyword]
 
     if standardize:
@@ -490,3 +492,6 @@ def pca(
     data.uns["pca"] = {}
     data.uns["pca"]["variance"] = pca.explained_variance_
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
+
+    end = time.perf_counter()
+    logger.info("PCA is done. Time spent = {:.2f}s.".format(end - start))

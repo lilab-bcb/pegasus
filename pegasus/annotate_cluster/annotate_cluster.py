@@ -10,6 +10,8 @@ from anndata import AnnData
 
 logger = logging.getLogger("pegasus")
 
+from .. import decorators as pg_deco
+
 
 class CellType:
     def __init__(self, name: str, ignore_nonde: bool = False):
@@ -385,7 +387,7 @@ def annotate(
     """
     data.obs[name] = [anno_dict[x] for x in data.obs[based_on]]
 
-
+@pg_deco.TimeLogger()
 def run_annotate_cluster(
     input_file: str,
     output_file: str,
@@ -398,10 +400,8 @@ def run_annotate_cluster(
 ) -> None:
     """ For command line use.
     """
-    import time
     from pegasus.io import read_input
 
-    start = time.time()
     data = read_input(input_file, h5ad_mode="r")
     infer_cell_types(
         data,
@@ -414,8 +414,6 @@ def run_annotate_cluster(
         output_file=output_file,
     )
     data.file.close()
-    end = time.time()
-    logger.info("Time spent for annotating clusters is {:.2f}s.".format(end - start))
 
 
 def annotate_anndata_object(input_file: str, annotation: str) -> None:

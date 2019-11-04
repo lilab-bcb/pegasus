@@ -82,7 +82,6 @@ def calculate_nearest_neighbors(
     return indices, distances
 
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def get_neighbors(
     data: AnnData,
     K: int = 100,
@@ -157,10 +156,10 @@ def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
 
 
 # We should not modify distances array!
+@pg_deco.TimeLogger()
 def calculate_affinity_matrix(
     indices: List[int], distances: List[float]
 ) -> "csr_matrix":
-    start = time.time()
 
     nsample = indices.shape[0]
     K = indices.shape[1]
@@ -191,17 +190,8 @@ def calculate_affinity_matrix(
     W = W.tocsr()
     W.eliminate_zeros()
 
-    end = time.time()
-    logger.info(
-        "Constructing affinity matrix is done. Time spent = {:.2f}s.".format(
-            end - start
-        )
-    )
-
     return W
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def neighbors(
     data: AnnData,
     K: int = 100,
@@ -260,10 +250,8 @@ def neighbors(
         random_state=random_state,
         full_speed=full_speed,
     )
-    end = time.time()
  
     # calculate affinity matrix
-    start = time.time()
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W
  
@@ -290,8 +278,6 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
 
     return results
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def calc_kBET(
     data: AnnData,
     attr: str,
@@ -395,8 +381,6 @@ def calc_kBET(
 
     return (stat_mean, pvalue_mean, accept_rate)
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def calc_kSIM(
     data: AnnData,
     attr: str,

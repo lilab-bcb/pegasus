@@ -6,15 +6,14 @@ try:
 except ImportError:
     print("Need python-igraph!")
 import logging
+from .. import decorators as pg_deco
 
 logger = logging.getLogger("pegasus")
 
-
+@pg_deco.TimeLogger()
 def construct_graph(
     W: "csr_matrix", directed: bool = False, adjust_weights: bool = True
 ) -> "igraph":
-
-    start = time.time()
 
     assert issparse(W)
 
@@ -41,8 +40,5 @@ def construct_graph(
     G.add_vertices(W.shape[0])
     G.add_edges(zip(s, t))
     G.es["weight"] = w
-
-    end = time.time()
-    logger.info("Graph is constructed. Time spent = {:.2f}s.".format(end - start))
 
     return G

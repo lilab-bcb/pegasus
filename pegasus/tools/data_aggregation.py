@@ -1,12 +1,10 @@
-import numpy as np
-import pandas as pd
 import os
 import time
 from subprocess import check_call
-
 from typing import List
-from anndata import AnnData
 
+import pandas as pd
+from anndata import AnnData
 from pegasus.io import infer_file_format, read_input, write_output, MemData
 
 
@@ -27,7 +25,7 @@ def parse_restriction_string(rstr):
         isin = False
         pos += 1
     content = set()
-    for item in rstr[pos + 1 :].split(","):
+    for item in rstr[pos + 1:].split(","):
         values = item.split("-")
         if len(values) == 1:
             content.add(values[0])
@@ -42,10 +40,10 @@ def parse_restriction_string(rstr):
 
 def aggregate_matrices(
     csv_file: str,
-    what_to_return: str = AnnData,
+    what_to_return: str = 'AnnData',
     restrictions: List[str] = [],
     attributes: List[str] = [],
-    google_cloud: bool = False,
+    genome: str = None,
     select_singlets: bool = False,
     ngene: int = None,
     concat_matrices: bool = False,
@@ -65,8 +63,8 @@ def aggregate_matrices(
         A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
     attributes : `list[str]`, optional (default: [])
         A list of attributes need to be incorporated into the output count matrix.
-    google_cloud : `bool`, optional (default: False)
-        If the channel-specific count matrices are stored in a google bucket.
+    genome : `str`, optional (default: None)
+        Default genome to use.
     select_singlets : `bool`, optional (default: False)
         If we have demultiplexed data, turning on this option will make pegasus only include barcodes that are predicted as singlets.
     ngene : `int`, optional (default: None)
@@ -112,34 +110,43 @@ def aggregate_matrices(
             os.path.expandvars(row["Location"].rstrip(os.sep))
         )
         file_format, copy_path, copy_type = infer_file_format(input_file)
-        if google_cloud:
+        if row["Location"].lower().startswith('gs://'):
             base_name = os.path.basename(copy_path)
             dest_path = sample_name + "_tmp_" + base_name
-
-            if copy_type == "directory":
-                check_call(["mkdir", "-p", dest_path])
-                call_args = ["gsutil", "-m", "cp", "-r", copy_path, dest_path]
-            else:
-                call_args = ["gsutil", "-m", "cp", copy_path, dest_path]
-            check_call(call_args)
+            if not os.path.exists(dest_path):  # localize data
+                if copy_type == "directory":
+                    check_call(["mkdir", "-p", dest_path])
+                    call_args = ["gsutil", "-mq", "cp", "-r", copy_path, dest_path]
+                else:
+                    call_args = ["gsutil", "-mq", "cp", copy_path, dest_path]
+                check_call(call_args)
             dest_paths.append(dest_path)
 
             input_file = dest_path
             if file_format == "csv" and copy_type == "directory":
                 input_file = os.path.join(dest_path, os.path.basename(input_file))
 
-        genome = None
-        if file_format in ["dge", "csv", "mtx", "loom"]:
-            assert "Reference" in row
-            genome = row["Reference"]
+        _genome = genome
+        if _genome is None and file_format in ["dge", "csv", "mtx", "loom"]:
+            if "Reference" not in row:
+                raise ValueError('Please provide a Reference column')
+            _genome = row["Reference"]
+            if _genome == '' or pd.isna(_genome):
+                raise ValueError('Please provide a reference value for sample {}'.format(sample_name))
 
         data = read_input(
             input_file,
-            genome=genome,
+            genome=_genome,
             return_type="MemData",
             ngene=ngene,
             select_singlets=select_singlets,
         )
+        if "RenamedReference" in row:
+            renamed_reference = row["RenamedReference"]
+            if renamed_reference != '' and not pd.isna(renamed_reference) and renamed_reference != _genome:
+                data.data[renamed_reference] = data.data[_genome]
+                del data.data[_genome]
+
         data.update_barcode_metadata_info(sample_name, row, attributes)
         aggrData.addAggrData(data)
 
@@ -151,10 +158,7 @@ def aggregate_matrices(
         check_call(["rm", "-rf", dest_path])
 
     # Merge channels
-    t1 = time.time()
     aggrData.aggregate()
-    t2 = time.time()
-    print("Data aggregation is finished in {:.2f}s.".format(t2 - t1))
 
     if what_to_return == "AnnData":
         aggrData = aggrData.convert_to_anndata(concat_matrices)

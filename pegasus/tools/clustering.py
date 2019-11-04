@@ -8,14 +8,6 @@ from natsort import natsorted
 import ctypes
 import ctypes.util
 
-try:
-    import louvain as louvain_module
-except ImportError:
-    print("Need louvain!")
-try:
-    import leidenalg
-except ImportError:
-    print("Need leidenalg!")
 from sklearn.cluster import KMeans
 from typing import List
 
@@ -27,8 +19,6 @@ import logging
 logger = logging.getLogger("pegasus")
 
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def louvain(
     data: AnnData,
     rep: str = "pca",
@@ -67,6 +57,13 @@ def louvain(
     >>> pg.louvain(adata)
     """
 
+    try:
+        import louvain as louvain_module
+    except ImportError:
+        print("Need louvain! Try 'pip install louvain-github'.")
+
+    start = time.perf_counter()
+
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -83,8 +80,9 @@ def louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
+    end = time.perf_counter()
+    logger.info("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
+
 def leiden(
     data: AnnData,
     rep: str = "pca",
@@ -127,6 +125,13 @@ def leiden(
     >>> pg.leiden(adata)
     """
 
+    try:
+        import leidenalg
+    except ImportError:
+        print("Need leidenalg! Try 'pip install leidenalg'.")
+
+    start = time.perf_counter()
+
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -147,8 +152,11 @@ def leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
+    end = time.perf_counter()
+    logger.info("Leiden clustering is done. Time spent = {:.2f}s.".format(end - start))
+
+
 @pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: int, n_clusters2: int, n_init: int, random_state: int) -> List[int]:
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -173,8 +181,6 @@ def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: 
     return labels
 
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
 def spectral_louvain(
     data: AnnData,
     rep: str = "pca",
@@ -233,6 +239,13 @@ def spectral_louvain(
     >>> pg.spectral_louvain(adata)
     """
 
+    try:
+        import louvain as louvain_module
+    except ImportError:
+        print("Need louvain! Try 'pip install louvain-github'.")
+
+    start = time.perf_counter()
+
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
         rep_kmeans = "pca"
@@ -263,8 +276,11 @@ def spectral_louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
+    end = time.perf_counter()
+    logger.info(
+        "Spectral Louvain clustering is done. Time spent = {:.2f}s.".format(end - start)
+    )
+
 def spectral_leiden(
     data: AnnData,
     rep: str = "pca",
@@ -326,6 +342,13 @@ def spectral_leiden(
     >>> pg.spectral_leiden(adata)
     """
 
+    try:
+        import leidenalg
+    except ImportError:
+        print("Need leidenalg! Try 'pip install leidenalg'.")
+
+    start = time.perf_counter()
+
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
         rep_kmeans = "pca"
@@ -355,4 +378,9 @@ def spectral_leiden(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+
+    end = time.perf_counter()
+    logger.info(
+        "Spectral Leiden clustering is done. Time spent = {:.2f}s.".format(end - start)
+    )
 

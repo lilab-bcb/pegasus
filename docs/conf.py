@@ -57,6 +57,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
+    "nbsphinx",
 ]
 
 autodoc_default_options = {
@@ -88,7 +89,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -147,6 +148,14 @@ htmlhelp_basename = "pegasus_doc"
 def setup(app):
     app.add_stylesheet("css/custom.css")
 
+# -- Strip output ----------------------------------------------
+
+import nbclean, glob
+
+for filename in glob.glob('**/*.ipynb', recursive=True):
+    ntbk = nbclean.NotebookCleaner(filename)
+    ntbk.clear('stderr')
+    ntbk.save(filename)
 
 # -- Options for LaTeX output ------------------------------------------------
 
