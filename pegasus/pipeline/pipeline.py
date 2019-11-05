@@ -156,8 +156,9 @@ def run_pipeline(input_file, output_name, **kwargs):
 
     # clustering
     if kwargs["spectral_louvain"]:
-        tools.spectral_louvain(
+        tools.cluster(
             adata,
+            algo="spectral_louvain",
             rep="pca",
             resolution=kwargs["spectral_louvain_resolution"],
             rep_kmeans=kwargs["spectral_louvain_basis"],
@@ -170,8 +171,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     if kwargs["spectral_leiden"]:
-        tools.spectral_leiden(
+        tools.cluster(
             adata,
+            algo="spectral_leiden",
             rep="pca",
             resolution=kwargs["spectral_leiden_resolution"],
             rep_kmeans=kwargs["spectral_leiden_basis"],
@@ -184,8 +186,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     if kwargs["louvain"]:
-        tools.louvain(
+        tools.cluster(
             adata,
+            algo="louvain",
             rep="pca",
             resolution=kwargs["louvain_resolution"],
             random_state=kwargs["random_state"],
@@ -193,8 +196,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         )
 
     if kwargs["leiden"]:
-        tools.leiden(
+        tools.cluster(
             adata,
+            algo="leiden",
             rep="pca",
             resolution=kwargs["leiden_resolution"],
             n_iter=kwargs["leiden_niter"],

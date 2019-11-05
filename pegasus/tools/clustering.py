@@ -281,6 +281,7 @@ def spectral_louvain(
         "Spectral Louvain clustering is done. Time spent = {:.2f}s.".format(end - start)
     )
 
+
 def spectral_leiden(
     data: AnnData,
     rep: str = "pca",
@@ -323,9 +324,6 @@ def spectral_leiden(
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
-
-    temp_folder: ``str``, optional, default: ``None``
-        Temporary folder name for joblib to use during the computation.
 
     class_label: ``str``, optional, default: ``"spectral_leiden_labels"``
         Key name for storing cluster labels in ``data.obs``.
@@ -384,3 +382,94 @@ def spectral_leiden(
         "Spectral Leiden clustering is done. Time spent = {:.2f}s.".format(end - start)
     )
 
+
+def cluster(
+    data: AnnData,
+    algo: str = "louvain",
+    rep: str = "pca",
+    resolution: int = 1.3,
+    random_state: int = 0,
+    class_label: str = None,
+    n_iter: int = -1,
+    rep_kmeans: str = "diffmap",
+    n_clusters: int = 30,
+    n_clusters2: int = 50,
+    n_init: int = 10,
+    n_jobs: int = -1,
+) -> None:
+    """Cluster the data using the chosen algorithm. Candidates are louvain, leiden, spectral_louvain and spectral_leiden. If data have < 1000 cells and there are clusters with sizes of 1, resolution is automatically reduced until no cluster of size 1 appears.
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    algo: ``str``, optional, default: ``"louvain"``
+        Which clustering algorithm to use. Choices are louvain, leiden, spectral_louvain, spectral_leiden
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    resolution: ``int``, optional, default: ``1.3``
+        Resolution factor. Higher resolution tends to find more clusters.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for reproducing results.
+
+    class_label: ``str``, optional, default: None
+        Key name for storing cluster labels in ``data.obs``. If None, use 'algo_labels'.
+
+    n_iter: ``int``, optional, default: ``-1``
+        Number of iterations that Leiden algorithm runs. If ``-1``, run the algorithm until reaching its optimal clustering.
+
+    rep_kmeans: ``str``, optional, default: ``"diffmap"``
+        The embedding representation on which the KMeans runs. Keyword must exist in ``data.obsm``. By default, use Diffusion Map coordinates. If diffmap is not calculated, use PCA coordinates instead.
+
+    n_clusters: ``int``, optional, default: ``30``
+        The number of first level clusters.
+
+    n_clusters2: ``int``, optional, default: ``50``
+        The number of second level clusters.
+
+    n_init: ``int``, optional, default: ``10``
+        Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all available threads.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[class_label]``: Cluster labels of cells as categorical data.
+
+    Examples
+    --------
+    >>> pg.cluster(adata, algo = 'leiden')
+    """
+
+    if algo not in {'louvain', 'leiden', 'spectral_louvain', 'spectral_leiden'}:
+        raise ValueError("Unknown clustering algorithm {}.".format(algo))
+
+    if class_label is None:
+        class_label = algo + '_labels'
+
+    kwargs = {'data' : data, 'rep' : rep, 'resolution' : resolution, 'random_state' : random_state, 'class_label': class_label}
+    if algo == 'leiden':
+        kwargs['n_iter'] = n_iter
+    if algo in ['spectral_louvain', 'spectral_leiden']:
+        kwargs.update({'rep_kmeans': rep_kmeans, 'n_clusters': n_clusters, 'n_clusters2': n_clusters2, 'n_init': n_init, 'n_jobs': n_jobs})
+
+    cluster_func = globals()[algo]
+
+    cluster_func(**kwargs) # clustering
+    if data.shape[0] < 100000 and data.obs[class_label].value_counts().min() == 1:
+        new_resol = resolution
+        while new_resol > 0.0:
+            new_resol -= 0.1
+            kwargs['resolution'] = new_resol
+            cluster_func(**kwargs)
+            if data.obs[class_label].value_counts().min() > 1:
+                break
+        logger.warning("Reduced resolution from {:.2f} to {:.2f} to avoid clusters of size 1.".format(resolution, new_resol))
