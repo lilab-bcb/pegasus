@@ -17,7 +17,7 @@ Arguments:
 
 Options:
   -p <number>, --threads <number>           Number of threads used to generate the PARQUET file. [default: 1]
-  -r <number>, --row_group_size <number>    Parquet file row group size. [default: 100000]
+  -r <number>, --row_groups <number>        Number of parquet file row groups.
   -h, --help                                Print out help information.
 
 Outputs:
@@ -32,5 +32,5 @@ Examples:
             self.args["<input_h5ad_file>"],
             self.args["<output_name>"],
             nthreads=int(self.args["--threads"]),
-            row_group_size=int(self.args["--row_group_size"])
+            n_row_groups=int(self.args["--row_groups"]) if self.args.get("--row_groups", None) is not None else None
         )
