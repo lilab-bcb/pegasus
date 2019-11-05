@@ -9,8 +9,7 @@ from typing import List, Dict, Union
 from anndata import AnnData
 
 logger = logging.getLogger("pegasus")
-
-from .. import decorators as pg_deco
+from pegasus.utils import decorators as pg_deco
 
 
 class CellType:

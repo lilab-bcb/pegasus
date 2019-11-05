@@ -214,4 +214,12 @@ Examples:
             "net_fle_basis": self.args["--net-fle-out-basis"],
         }
 
+        import logging
+        logger = logging.getLogger("pegasus")
+        fh = logging.FileHandler("{}.log".format(self.args["<output_name>"]))
+        fh.setLevel(logging.INFO)
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
         run_pipeline(self.args["<input_file>"], self.args["<output_name>"], **kwargs)

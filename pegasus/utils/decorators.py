@@ -1,5 +1,3 @@
-import numpy as np
-
 import functools
 import time
 import gc
@@ -59,15 +57,9 @@ class TimeLogger:
 
 class GCCollect:
     """
-    Force the collection garbage according to a binomial distribution.
     Python's garbage collection is not that automatic. This decorator is
     especially useful for freeing memory after functions that call on modules
     that create a lot intermediary objects.
-
-    Garbage collection is not time consuming. However sometimes you might want to
-    decrease the probability of the collection happening when decorating a very
-    (very) fast function.
-    In most cases the default probability of 1 should be used. 
 
     Example:
     -------
@@ -77,9 +69,8 @@ class GCCollect:
         print("Hello World")
 
     """
-    def __init__(self, collection_proba:float=1):
+    def __init__(self):
         super(GCCollect, self).__init__()
-        self.collection_proba = collection_proba
     
     def __call__(self, function):
         if hasattr(function, "_pg_wrapped") :
@@ -88,9 +79,7 @@ class GCCollect:
         @functools.wraps(function)
         def _do(*args, **kwargs):
             res = function(*args, **kwargs)
-            sample = np.random.binomial(1, self.collection_proba, 1)[0]
-            if sample > 0:
-                gc.collect()
+            gc.collect()
 
             return res
 

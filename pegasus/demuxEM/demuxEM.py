@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 from typing import List
 from anndata import AnnData
 
-from .. import decorators as pg_deco
+from pegasus.utils import decorators as pg_deco
 
 
 def estimate_background_probs(adt: AnnData, random_state: int = 0):

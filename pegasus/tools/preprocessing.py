@@ -8,11 +8,11 @@ from sklearn.decomposition import PCA
 
 from typing import Tuple
 from anndata import AnnData
+
 import logging
-
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
-from .. import decorators as pg_deco
 
 @pg_deco.GCCollect()
 def qc_metrics(

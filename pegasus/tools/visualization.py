@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import scipy
-import logging
 import umap as umap_module
 import forceatlas2 as fa2
 import uuid
@@ -24,9 +23,10 @@ from pegasus.tools import (
     calculate_affinity_matrix,
     construct_graph,
 )
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 def calc_tsne(

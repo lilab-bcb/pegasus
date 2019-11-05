@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix, hstack, vstack
 import tables
 
 from typing import List
-from .. import decorators as pg_deco
+from pegasus.utils import decorators as pg_deco
 
 import anndata
 

@@ -8,10 +8,10 @@ from statsmodels.stats.multitest import fdrcorrection as fdr
 from collections import defaultdict
 
 from typing import List, Tuple, Dict
-import logging
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 def calc_basic_stat(

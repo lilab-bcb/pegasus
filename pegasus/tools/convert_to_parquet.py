@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 import scipy.sparse
 from pegasus.io import read_input
 
-from .. import decorators as pg_deco
+from pegasus.utils import decorators as pg_deco
 
 obsm_whitelist = ['X_pca', 'X_rpca', 'X_tsne', 'X_fitsne', 'X_umap', 'X_fle', 'X_net_tsne', 'X_net_umap', 'X_net_fle']
 obsm_whitelist_3d = ['X_diffmap_pca']

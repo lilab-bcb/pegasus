@@ -4,11 +4,12 @@ from scipy.sparse import issparse
 from anndata import AnnData
 import logging
 
-logger = logging.getLogger("pegasus")
-
 from pegasus.tools import estimate_feature_statistics, select_features
 
-from .. import decorators as pg_deco
+logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
+
+
 
 def set_group_attribute(data: AnnData, attribute_string: str) -> None:
     """Set group attributes used in batch correction.

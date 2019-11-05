@@ -15,9 +15,9 @@ from scipy.sparse import csr_matrix, issparse
 
 from . import Array2D, MemData
 
-from .. import decorators as pg_deco
-
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
+
 
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":

@@ -16,9 +16,8 @@ from lightgbm import LGBMClassifier
 from pegasus.io import read_input
 
 import logging
-from .. import decorators as pg_deco
-
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 @pg_deco.TimeLogger()

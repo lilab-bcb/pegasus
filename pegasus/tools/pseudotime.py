@@ -9,10 +9,11 @@ from collections import deque
 
 from typing import List
 from anndata import AnnData
-import logging
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
+
 
 @pg_deco.TimeLogger()
 def calc_pseudotime(data: AnnData, roots: List[str]) -> None:

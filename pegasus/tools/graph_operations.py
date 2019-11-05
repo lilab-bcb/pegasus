@@ -5,10 +5,11 @@ try:
     import igraph
 except ImportError:
     print("Need python-igraph!")
-import logging
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
+
 
 @pg_deco.TimeLogger()
 def construct_graph(

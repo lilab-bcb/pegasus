@@ -1,6 +1,5 @@
 import time
 import numpy as np
-import logging
 
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import connected_components
@@ -12,9 +11,10 @@ from typing import List, Tuple
 from anndata import AnnData
 
 from pegasus.tools import update_rep, W_from_rep
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 def calculate_normalized_affinity(

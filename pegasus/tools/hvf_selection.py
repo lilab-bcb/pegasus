@@ -8,10 +8,10 @@ from joblib import Parallel, delayed
 import skmisc.loess as sl
 from typing import List
 from anndata import AnnData
-import logging
 
+import logging
 logger = logging.getLogger("pegasus")
-from .. import decorators as pg_deco
+from pegasus.utils import decorators as pg_deco
 
 
 def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
