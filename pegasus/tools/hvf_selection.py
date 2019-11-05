@@ -107,6 +107,15 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
         data.var["var"] = var
 
 
+def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> object:
+    try:
+        lobj = sl.loess(x, y, span=span, degree=2)
+        lobj.fit()
+        return lobj
+    except ValueError:
+        return None
+
+
 def select_hvf_pegasus(
     data: AnnData, consider_batch: bool, n_top: int = 2000, span: float = 0.02
 ) -> None:
@@ -123,8 +132,14 @@ def select_hvf_pegasus(
     mean = data.var.loc[robust_idx, "mean"]
     var = data.var.loc[robust_idx, "var"]
 
-    lobj = sl.loess(mean, var, span=span, degree=2)
-    lobj.fit()
+    span_value = span
+    while True:
+        lobj = fit_loess(mean, var, span = span_value, degree = 2)
+        if lobj is not None:
+            break
+        span_value += 0.01
+    if span_value > span:
+        logger.warning("Leoss span is adjusted from {:.2f} to {:.2f} to avoid fitting errors.".format(span, span_value))
 
     rank1 = np.zeros(hvf_index.size, dtype=int)
     rank2 = np.zeros(hvf_index.size, dtype=int)

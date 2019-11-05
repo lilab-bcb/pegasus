@@ -37,6 +37,7 @@ from .tools import (
     diffmap,
     reduce_diffmap_to_3d,
     calc_pseudotime,
+    cluster,
     louvain,
     leiden,
     spectral_louvain,
