@@ -30,9 +30,9 @@ Preprocess
 	qc_metrics
 	get_filter_stats
 	filter_data
-	select_features
 	log_norm
 	highly_variable_features
+	select_features
 	pca
 
 
@@ -73,6 +73,7 @@ Cluster algorithms
 .. autosummary::
 	:toctree: .
 
+	cluster
 	louvain
 	leiden
 	spectral_louvain
@@ -101,8 +102,15 @@ Differential Expression Analysis
 
 	de_analysis
 	markers
-	find_markers
 	write_results_to_excel
+
+Marker Detection based on Gradient Boost Machine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+	:toctree: .
+
+	find_markers
 
 Annotate clusters:
 ------------------
