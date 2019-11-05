@@ -464,7 +464,7 @@ def cluster(
     cluster_func = globals()[algo]
 
     cluster_func(**kwargs) # clustering
-    if data.shape[0] < 1000 and data.obs[class_label].value_counts().min() == 1:
+    if data.shape[0] < 100000 and data.obs[class_label].value_counts().min() == 1:
         new_resol = resolution
         while new_resol > 0.0:
             new_resol -= 0.1
