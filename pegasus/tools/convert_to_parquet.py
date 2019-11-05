@@ -1,6 +1,6 @@
 import gc
 import json
-import time
+import math
 
 import numpy as np
 import pandas as pd
@@ -66,22 +66,27 @@ def to_df(data):
     df = df.join(data.obs)
     return df
 
+
 @pg_deco.TimeLogger()
 def convert_to_parquet(data, output_name, nthreads, row_group_size):
     if not output_name.endswith(".pq") and not output_name.endswith(".parquet"):
-        output_name = output_name + '.pq'
+        output_name = output_name + '.parquet'
     schema = create_schema(data)
     with pq.ParquetWriter(output_name, schema) as writer:
         for i in range(0, data.shape[0], row_group_size):
             end = i + row_group_size
             end = min(end, data.shape[0])
             df = to_df(data[i:end])
+            print('{}-{}'.format(i, end))
             table = pa.Table.from_pandas(df, schema=schema, nthreads=nthreads)
             writer.write_table(table)
             gc.collect()
     print(output_name + " is written!")
 
 
-def run_conversion(input_h5ad_file, output_name, nthreads, row_group_size):
+def run_conversion(input_h5ad_file, output_name, nthreads, n_row_groups=None):
     data = read_input(input_h5ad_file)
+    if n_row_groups is None:
+        n_row_groups = min(1, math.ceil(data.shape[0] / 1000000))
+    row_group_size = math.ceil(data.shape[0] / n_row_groups)
     convert_to_parquet(data, output_name, nthreads, row_group_size)
