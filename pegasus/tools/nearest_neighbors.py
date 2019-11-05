@@ -69,7 +69,7 @@ def calculate_nearest_neighbors(
             if indices[i, 0] != i:
                 indices[i, 1:] = indices[i, 0:-1]
                 distances[i, 1:] = distances[i, 0:-1]
-        indices = indices[:, 1:].astype("uint8")
+        indices = indices[:, 1:].astype("uint16")
         distances = np.sqrt(distances[:, 1:])
     else:
         assert method == "sklearn"
@@ -145,7 +145,7 @@ def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
     sym_mat = csr_mat + tp_mat
     sym_mat.sort_indices()
 
-    idx_mat = (csr_mat != 0).astype("uint8") + (tp_mat != 0).astype("uint8")
+    idx_mat = (csr_mat != 0).astype("uint16") + (tp_mat != 0).astype("uint16")
     idx_mat.sort_indices()
     # idx_mat = csr_mat.indices & tp_mat.indices
     # idx_mat.sort()
