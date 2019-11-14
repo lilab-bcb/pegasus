@@ -18,6 +18,7 @@ Arguments:
 Options:
   -p <number>, --threads <number>           Number of threads used to generate the PARQUET file. [default: 1]
   -r <number>, --row_groups <number>        Number of parquet file row groups.
+  -b, --backed                              Load h5ad file in backed mode instead of fully loading it into memory.
   -h, --help                                Print out help information.
 
 Outputs:
@@ -32,5 +33,6 @@ Examples:
             self.args["<input_h5ad_file>"],
             self.args["<output_name>"],
             nthreads=int(self.args["--threads"]),
+            backed=self.args['--backed'],
             n_row_groups=int(self.args["--row_groups"]) if self.args.get("--row_groups", None) is not None else None
         )
