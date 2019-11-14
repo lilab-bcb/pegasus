@@ -242,8 +242,8 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         elif format_type == "scumi":
             values = (
                 pd.read_csv(feature_file, sep="\t", header=None)
-                .iloc[:, 0]
-                .values.astype(str)
+                    .iloc[:, 0]
+                    .values.astype(str)
             )
             arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
             feature_metadata = pd.DataFrame(
@@ -321,14 +321,14 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
 
 def _load_csv_file_sparse(input_csv, genome, sep, dtype, ngene=None, chunk_size=1000):
     """
-     Read a csv style in chunks
+     Read a csv file in chunks
     """
 
     import scipy.sparse
-
     features = []
     dense_arrays = []
     sparse_arrays = []
+
     if chunk_size <= 0:
         raise ValueError("Chunk size must be greater than zero")
 
@@ -350,6 +350,7 @@ def _load_csv_file_sparse(input_csv, genome, sep, dtype, ngene=None, chunk_size=
 
     if len(dense_arrays) > 0:
         sparse_arrays.append(scipy.sparse.csr_matrix(np.stack(dense_arrays, axis=0)))
+        dense_arrays = None
     mat = scipy.sparse.vstack(sparse_arrays)
     barcode_metadata = {"barcodekey": barcodes}
     feature_metadata = {"featurekey": features, "featurename": features}
@@ -399,6 +400,14 @@ def load_csv_file(
 
     if sep == "\t":
         # DGE, columns are cells, which is around thousands and we can use pandas.read_csv
+        if chunk_size is not None:
+            return _load_csv_file_sparse(
+                input_csv,
+                genome,
+                sep,
+                "float32" if base.startswith("expression") else "int",
+                ngene=ngene,
+                chunk_size=chunk_size)
         df = pd.read_csv(input_csv, header=0, index_col=0, sep=sep)
         mat = csr_matrix(df.values.T)
         barcode_metadata = {"barcodekey": df.columns.values}
@@ -625,8 +634,11 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
     elif input_file.endswith(".csv") or input_file.endswith(".csv.gz"):
         file_format = "csv"
         if os.path.basename(input_file) == "expression.csv":
-            copy_type = os.path.dirname(input_file)
+            copy_path = os.path.dirname(input_file)
             copy_type = "directory"
+    elif input_file.endswith(".txt") or input_file.endswith(".tsv") or input_file.endswith(
+        ".txt.gz") or input_file.endswith(".tsv.gz"):
+        file_format = "tsv"
     else:
         raise ValueError("Unrecognized file type for file {}!".format(input_file))
 
@@ -707,11 +719,11 @@ def read_input(
         assert genome is not None
         data = load_loom_file(input_file, genome, ngene=ngene)
     else:
-        assert (file_format == "dge" or file_format == "csv") and (genome is not None)
+        assert (file_format == "dge" or file_format == "csv" or file_format == "tsv") and (genome is not None)
         data = load_csv_file(
             input_file,
             genome,
-            sep=("\t" if file_format == "dge" else ","),
+            sep=("\t" if file_format == "dge" or file_format == "tsv" else ","),
             ngene=ngene,
             chunk_size=chunk_size,
         )
