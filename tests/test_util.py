@@ -1,9 +1,10 @@
-import pandas as pd
-import scipy
-import numpy as np
-import pegasus as pg
-import subprocess
 import os
+import subprocess
+
+import numpy as np
+import pandas as pd
+import pegasus as pg
+import scipy
 
 
 def is_running_in_docker():
@@ -145,7 +146,7 @@ def assert_adata_equal(
         data2.X = data2.X.toarray()
     errors = []
     try:
-        np.testing.assert_array_almost_equal(data1.X, data2.X, err_msg="X not equal")
+        np.testing.assert_array_equal(data1.X, data2.X, err_msg="X not equal")
     except AssertionError as ex:
         errors.append(str(ex))
     if obs_blacklist is not None:
