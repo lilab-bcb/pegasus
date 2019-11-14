@@ -97,6 +97,6 @@ def run_conversion(input_h5ad_file, output_name, nthreads, backed: bool = False,
     data = read_input(input_h5ad_file, h5ad_mode='r' if backed else 'a')
     fix_categorical_dtypes(data.obs)
     if n_row_groups is None:
-        n_row_groups = min(1, math.ceil(data.shape[0] / 100000))
+        n_row_groups = max(1, math.ceil(data.shape[0] / 100000))
     row_group_size = math.ceil(data.shape[0] / n_row_groups)
     convert_to_parquet(data, output_name, nthreads, row_group_size)
