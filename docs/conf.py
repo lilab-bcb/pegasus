@@ -23,13 +23,13 @@ import pegasus
 # -- Project information -----------------------------------------------------
 
 project = "Pegasus"
-copyright = "2019, Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
+copyright = "2019 The Broad Institute, Inc. and The General Hospital Corporation. All rights reserved."
 author = (
-    "Bo Li, Joshua Gould, Yiming Yang, Siranush Sarkizova, et al."
+    "Yiming Yang, Joshua Gould and Bo Li"
 )
 
 # The short X.Y version
-version = "0.14.0"
+version = "0.15.0"
 # The full version, including alpha/beta/rc tags
 release = "0.14.0.rc3"
 

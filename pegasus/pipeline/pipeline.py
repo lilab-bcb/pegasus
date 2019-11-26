@@ -1,6 +1,7 @@
-import numpy as np
 import anndata
-from scipy.sparse import csr_matrix, hstack
+import numpy as np
+from scipy.sparse import csr_matrix, hstack, isspmatrix_csc
+
 from pegasus import io, tools, cite_seq
 
 
@@ -23,6 +24,8 @@ def run_pipeline(input_file, output_name, **kwargs):
         ),
     )
 
+    if isspmatrix_csc(adata.X):
+        adata.X = adata.X.tocsr()
     if not kwargs["cite_seq"]:
         if is_raw:
             values = adata.X.getnnz(axis=1)
@@ -362,7 +365,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["seurat_compatible"]:
         seurat_data = adata.copy()
         seurat_data.raw = raw_data
-        seurat_data.uns["scale.data"] = adata.uns["fmat_highly_variable_features"] # assign by reference
+        seurat_data.uns["scale.data"] = adata.uns["fmat_highly_variable_features"]  # assign by reference
         seurat_data.uns["scale.data.rownames"] = adata.var_names[
             adata.var["highly_variable_features"]
         ].values

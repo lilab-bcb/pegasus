@@ -1,18 +1,18 @@
+import os
+import shutil
 import unittest
 
+import numpy as np
+import pandas as pd
 import pegasus as pg
-from .test_util import assert_adata_equal
 
-import shutil
-import os
+from .test_util import assert_adata_equal
 
 
 class TestRead(unittest.TestCase):
     def tearDown(self):
-        os.path.exists("test.h5ad") and os.remove("test.h5ad")
-        os.path.exists("test_obsm_compound.h5ad") and os.remove(
-            "test_obsm_compound.h5ad"
-        )
+        for f in ["test.csv", "test.h5ad", "test_obsm_compound.h5ad"]:
+            os.path.exists(f) and os.remove(f)
 
     def test_mtx_v2(self):
         adata = pg.read_input(
@@ -38,6 +38,20 @@ class TestRead(unittest.TestCase):
         )
         self.assertEqual(adata.shape[0], 1046)
 
+    def test_csv(self):
+        df = pd.DataFrame(index=["a", "b", "c"], data=dict(a=[1, 2, 3], b=[4, 5, 6]))
+        df.to_csv("test.csv")
+        adata = pg.read_input("test.csv", genome="test").T
+        np.testing.assert_array_equal(df.values, adata.X.toarray())
+        np.testing.assert_array_equal(df.index.values, adata.obs.index.values)
+        np.testing.assert_array_equal(df.columns.values, adata.var.index.values)
+
+        for chunk_size in [1, 2, 3, 4]:
+            adata_chunks = pg.read_input(
+                "test.csv", genome="test", chunk_size=chunk_size
+            ).T
+            assert_adata_equal(self, adata, adata_chunks)
+
     def test_read_write_h5ad(self):
         adata = pg.read_input(
             "tests/pegasus-test-data/input/hgmm_1k_v3_filtered_feature_bc_matrix/"
@@ -47,9 +61,7 @@ class TestRead(unittest.TestCase):
         assert_adata_equal(self, adata, adata2)
 
     def test_read_write_old_5ad(self):
-        adata = pg.read_input(
-            "tests/pegasus-test-data/input/test_obsm_compound.h5ad"
-        )
+        adata = pg.read_input("tests/pegasus-test-data/input/test_obsm_compound.h5ad")
         pg.write_output(adata, "test.h5ad")
         adata2 = pg.read_input("test.h5ad")
         assert_adata_equal(self, adata, adata2)
@@ -70,7 +82,7 @@ class TestRead(unittest.TestCase):
             "test_obsm_compound.h5ad",
         )
         adata = pg.read_input("test_obsm_compound.h5ad", h5ad_mode="r+")
-        pg.write_output(adata, "test_obsm_compound.h5ad", whitelist=['obs'])
+        pg.write_output(adata, "test_obsm_compound.h5ad", whitelist=["obs"])
         adata2 = pg.read_input("test_obsm_compound.h5ad")
         assert_adata_equal(self, adata, adata2)
 

@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import pandas as pd
-import logging
 
 from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
@@ -11,9 +10,11 @@ from joblib import effective_n_jobs
 from typing import List, Tuple
 
 from pegasus.tools import update_rep, X_from_rep, knn_is_cached
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
+
 
 
 def calculate_nearest_neighbors(

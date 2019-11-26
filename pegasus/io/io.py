@@ -3,7 +3,6 @@
 import gzip
 import logging
 import os.path
-import time
 from typing import List, Tuple
 
 import anndata
@@ -15,9 +14,8 @@ from scipy.sparse import csr_matrix, issparse
 
 from . import Array2D, MemData
 
-from .. import decorators as pg_deco
-
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
@@ -244,8 +242,8 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         elif format_type == "scumi":
             values = (
                 pd.read_csv(feature_file, sep="\t", header=None)
-                .iloc[:, 0]
-                .values.astype(str)
+                    .iloc[:, 0]
+                    .values.astype(str)
             )
             arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
             feature_metadata = pd.DataFrame(
@@ -265,6 +263,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         array2d.separate_channels("")  # fn == '' refers to 10x mtx format
 
     return array2d
+
 
 def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData":
     """Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
@@ -319,33 +318,81 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
 
     return data
 
+
+def _load_csv_file_sparse(input_csv, genome, sep, dtype, ngene=None, chunk_size=1000):
+    """
+     Read a csv file in chunks
+    """
+
+    import scipy.sparse
+    features = []
+    dense_arrays = []
+    sparse_arrays = []
+
+    if chunk_size <= 0:
+        raise ValueError("Chunk size must be greater than zero")
+
+    with (
+        gzip.open(input_csv, mode="rt")
+        if input_csv.endswith(".gz")
+        else open(input_csv)
+    ) as fin:
+        barcodes = next(fin).strip().split(sep)[1:]
+        for line in fin:
+            fields = line.strip().split(sep)
+            features.append(fields[0])
+            dense_arrays.append(np.array(fields[1:], dtype=dtype))
+            if len(dense_arrays) == chunk_size:
+                sparse_arrays.append(
+                    scipy.sparse.csr_matrix(np.stack(dense_arrays, axis=0))
+                )
+                dense_arrays = []
+
+    if len(dense_arrays) > 0:
+        sparse_arrays.append(scipy.sparse.csr_matrix(np.stack(dense_arrays, axis=0)))
+        dense_arrays = None
+    mat = scipy.sparse.vstack(sparse_arrays)
+    barcode_metadata = {"barcodekey": barcodes}
+    feature_metadata = {"featurekey": features, "featurename": features}
+    data = MemData()
+    array2d = Array2D(barcode_metadata, feature_metadata, mat.T)
+    array2d.filter(ngene=ngene)
+    data.addData(genome, array2d)
+    return data
+
+
 def load_csv_file(
-    input_csv: str, genome: str, sep: str = ",", ngene: int = None
+    input_csv: str,
+    genome: str,
+    sep: str = ",",
+    ngene: int = None,
+    chunk_size: int = None,
 ) -> "MemData":
     """Load count matrix from a CSV-style file, such as CSV file or DGE style tsv file.
 
-    Parameters
-    ----------
+     Parameters
+     ----------
 
-    input_csv : `str`
-        The CSV file, gzipped or not, containing the count matrix.
-    genome : `str`
-        The genome reference.
-    sep: `str`, optional (default: ',')
-        Separator between fields, either ',' or '\t'.
-    ngene : `int`, optional (default: None)
-        Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+     input_csv : `str`
+         The CSV file, gzipped or not, containing the count matrix.
+     genome : `str`
+         The genome reference.
+     sep: `str`, optional (default: ',')
+         Separator between fields, either ',' or '\t'.
+     ngene : `int`, optional (default: None)
+         Minimum number of genes to keep a barcode. Default is to keep all barcodes.
+     chunk_size: `int`, optional (default: None)
+        Chunk size for reading dense matrices as sparse
+     Returns
+     -------
 
-    Returns
-    -------
+     An MemData object containing a genome-Array2D pair.
 
-    An MemData object containing a genome-Array2D pair.
-
-    Examples
-    --------
-    >>> io.load_csv_file('example_ADT.csv', genome = 'GRCh38')
-    >>> io.load_csv_file('example.umi.dge.txt.gz', genome = 'GRCh38', sep = '\t')
-    """
+     Examples
+     --------
+     >>> io.load_csv_file('example_ADT.csv', genome = 'GRCh38')
+     >>> io.load_csv_file('example.umi.dge.txt.gz', genome = 'GRCh38', sep = '\t')
+     """
 
     path = os.path.dirname(input_csv)
     base = os.path.basename(input_csv)
@@ -353,6 +400,14 @@ def load_csv_file(
 
     if sep == "\t":
         # DGE, columns are cells, which is around thousands and we can use pandas.read_csv
+        if chunk_size is not None:
+            return _load_csv_file_sparse(
+                input_csv,
+                genome,
+                sep,
+                "float32" if base.startswith("expression") else "int",
+                ngene=ngene,
+                chunk_size=chunk_size)
         df = pd.read_csv(input_csv, header=0, index_col=0, sep=sep)
         mat = csr_matrix(df.values.T)
         barcode_metadata = {"barcodekey": df.columns.values}
@@ -361,6 +416,15 @@ def load_csv_file(
             "featurename": df.index.values,
         }
     else:
+        if chunk_size is not None and not is_hca_csv:
+            return _load_csv_file_sparse(
+                input_csv,
+                genome,
+                sep,
+                "float32" if base.startswith("expression") else "int",
+                ngene=ngene,
+                chunk_size=chunk_size,
+            )
         # For CSV files, wide columns prevent fast pd.read_csv loading
         converter = (
             float if base.startswith("expression") else int
@@ -401,6 +465,7 @@ def load_csv_file(
     data.addData(genome, array2d)
 
     return data
+
 
 def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData":
     """Load count matrix from a LOOM file. Currently only support HCA DCP Loom spec.
@@ -446,6 +511,7 @@ def load_loom_file(input_loom: str, genome: str, ngene: int = None) -> "MemData"
     data.addData(genome, array2d)
 
     return data
+
 
 def load_pegasus_h5_file(
     input_h5: str, ngene: int = None, select_singlets: bool = False
@@ -568,12 +634,16 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
     elif input_file.endswith(".csv") or input_file.endswith(".csv.gz"):
         file_format = "csv"
         if os.path.basename(input_file) == "expression.csv":
-            copy_type = os.path.dirname(input_file)
+            copy_path = os.path.dirname(input_file)
             copy_type = "directory"
+    elif input_file.endswith(".txt") or input_file.endswith(".tsv") or input_file.endswith(
+        ".txt.gz") or input_file.endswith(".tsv.gz"):
+        file_format = "tsv"
     else:
         raise ValueError("Unrecognized file type for file {}!".format(input_file))
 
     return file_format, copy_path, copy_type
+
 
 @pg_deco.TimeLogger()
 def read_input(
@@ -585,6 +655,7 @@ def read_input(
     ngene: int = None,
     select_singlets: bool = False,
     channel_attr: str = None,
+    chunk_size: int = None,
     black_list: List[str] = [],
 ) -> "MemData or AnnData or List[AnnData]":
     """Load data into memory.
@@ -610,6 +681,8 @@ def read_input(
         If this option is on, only keep DemuxEM-predicted singlets when loading data.
     channel_attr : `str`, optional (default: None)
         Use channel_attr to represent different samples. This will set a 'Channel' column field with channel_attr.
+    chunk_size: `int`, optional (default: None)
+        Chunk size for reading dense matrices as sparse
     black_list : `List[str]`, optional (default: [])
         Attributes in black list will be poped out.
 
@@ -636,7 +709,9 @@ def read_input(
         data = load_10x_h5_file(input_file, ngene=ngene)
     elif file_format == "h5ad":
         data = anndata.read_h5ad(
-            input_file, backed=(None if h5ad_mode == "a" else h5ad_mode)
+            input_file,
+            chunk_size=chunk_size,
+            backed=(None if h5ad_mode == "a" else h5ad_mode),
         )
     elif file_format == "mtx":
         data = load_mtx_file(input_file, genome, ngene=ngene)
@@ -644,17 +719,27 @@ def read_input(
         assert genome is not None
         data = load_loom_file(input_file, genome, ngene=ngene)
     else:
-        assert (file_format == "dge" or file_format == "csv") and (genome is not None)
+        assert (file_format == "dge" or file_format == "csv" or file_format == "tsv") and (genome is not None)
         data = load_csv_file(
-            input_file, genome, sep=("\t" if file_format == "dge" else ","), ngene=ngene
+            input_file,
+            genome,
+            sep=("\t" if file_format == "dge" or file_format == "tsv" else ","),
+            ngene=ngene,
+            chunk_size=chunk_size,
         )
 
     if file_format != "h5ad":
         data.restrain_keywords(genome)
         if return_type == "AnnData":
-            data = data.convert_to_anndata(concat_matrices=concat_matrices, channel_attr=channel_attr, black_list=black_list)
+            data = data.convert_to_anndata(
+                concat_matrices=concat_matrices,
+                channel_attr=channel_attr,
+                black_list=black_list,
+            )
     else:
-        assert (return_type == "AnnData") and (channel_attr is None) and (black_list == [])
+        assert (
+            (return_type == "AnnData") and (channel_attr is None) and (black_list == [])
+        )
 
     return data
 
@@ -703,13 +788,19 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
                     sparse_mat = group.create_group(key)
                     sparse_mat.attrs["h5sparse_format"] = value.format
                     sparse_mat.attrs["h5sparse_shape"] = np.array(value.shape)
-                    sparse_mat.create_dataset("data", data=value.data, compression="gzip")
-                    sparse_mat.create_dataset("indices", data=value.indices, compression="gzip")
-                    sparse_mat.create_dataset("indptr", data=value.indptr, compression="gzip")
+                    sparse_mat.create_dataset(
+                        "data", data=value.data, compression="gzip"
+                    )
+                    sparse_mat.create_dataset(
+                        "indices", data=value.indices, compression="gzip"
+                    )
+                    sparse_mat.create_dataset(
+                        "indptr", data=value.indptr, compression="gzip"
+                    )
                 else:
                     value = np.array(value) if np.ndim(value) > 0 else np.array([value])
                     sdt = h5py.special_dtype(vlen=str)
-                    if value.dtype.kind in {"U", "O"} :
+                    if value.dtype.kind in {"U", "O"}:
                         value = value.astype(sdt)
                     if value.dtype.names is not None:
                         new_dtype = value.dtype.descr
@@ -722,9 +813,12 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
                             value = value.astype(new_dtype)
                     group.create_dataset(key, data=value, compression="gzip")
 
+
 @pg_deco.TimeLogger()
 def write_output(
-    data: "MemData or AnnData", output_file: str, whitelist: List = ["obs", "obsm", "uns", "var", "varm"]
+    data: "MemData or AnnData",
+    output_file: str,
+    whitelist: List = ["obs", "obsm", "uns", "var", "varm"],
 ) -> None:
     """ Write data back to disk.
 
@@ -783,8 +877,11 @@ def write_output(
         data.write_h5_file(output_file)
     elif suffix == "loom":
         data.write_loom(output_file, write_obsm_varm=True)
-    elif not data.isbacked or (data.isbacked and data.file._file.h5f.mode != "r+") or not hasattr(data,
-        '_to_dict_fixed_width_arrays'):  # check for old version of anndata
+    elif (
+        not data.isbacked
+        or (data.isbacked and data.file._file.h5f.mode != "r+")
+        or not hasattr(data, "_to_dict_fixed_width_arrays")
+    ):  # check for old version of anndata
         data.write(output_file, compression="gzip")
     else:
         assert data.file._file.h5f.mode == "r+"

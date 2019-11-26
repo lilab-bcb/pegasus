@@ -12,11 +12,10 @@ from sklearn.cluster import KMeans
 from typing import List
 
 from pegasus.tools import construct_graph
-from .. import decorators as pg_deco
 
 import logging
-
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 def louvain(

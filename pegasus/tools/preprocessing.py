@@ -8,11 +8,12 @@ from sklearn.decomposition import PCA
 
 from typing import Tuple
 from anndata import AnnData
+
 import logging
 
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
-from .. import decorators as pg_deco
 
 @pg_deco.GCCollect()
 def qc_metrics(
@@ -83,9 +84,10 @@ def qc_metrics(
         return False
 
     mito_genes = data.var_names.map(startswith).values.nonzero()[0]
-    data.obs["percent_mito"] = (data.X[:, mito_genes].sum(axis=1).A1 / np.maximum(
-        data.obs["n_counts"].values, 1.0
-    )) * 100
+    data.obs["percent_mito"] = (
+        data.X[:, mito_genes].sum(axis=1).A1
+        / np.maximum(data.obs["n_counts"].values, 1.0)
+    ) * 100
 
     # Assign passed_qc
     filters = [
@@ -190,6 +192,7 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     return df_cells, df_genes
 
+
 def filter_data(data: AnnData) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
@@ -210,13 +213,19 @@ def filter_data(data: AnnData) -> None:
     """
 
     assert "passed_qc" in data.obs
+    prior_shape = data.shape
     data._inplace_subset_obs(data.obs["passed_qc"].values)
     data._inplace_subset_var((data.var["n_cells"] > 0).values)
     logger.info(
-        "After filteration, {nc} cells and {ng} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(
-            nc=data.shape[0], ng=data.shape[1], nrb=data.var["robust"].sum()
+        "After filteration, {nc}/{ncp} cells and {ng}/{ngp} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(
+            nc=data.shape[0],
+            ng=data.shape[1],
+            ncp=prior_shape[0],
+            ngp=prior_shape[1],
+            nrb=data.var["robust"].sum(),
         )
     )
+
 
 def generate_filter_plots(
     data: AnnData, plot_filt: str, plot_filt_figsize: str = None
@@ -280,6 +289,7 @@ def generate_filter_plots(
 
     logger.info("Filtration plots are generated.")
 
+
 @pg_deco.TimeLogger()
 def run_filter_data(
     data: AnnData,
@@ -320,6 +330,7 @@ def run_filter_data(
         generate_filter_plots(data, plot_filt, plot_filt_figsize)
 
     filter_data(data)
+
 
 @pg_deco.TimeLogger()
 @pg_deco.GCCollect()
@@ -391,6 +402,7 @@ def select_features(data: AnnData, features: str = None) -> str:
             data.uns[keyword] = fmat.copy()
 
     return keyword
+
 
 @pg_deco.GCCollect()
 def pca(

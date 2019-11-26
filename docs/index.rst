@@ -15,5 +15,6 @@
    usage
    tutorials/index
    api/index
-   contributors
    references
+   contributors
+   contact

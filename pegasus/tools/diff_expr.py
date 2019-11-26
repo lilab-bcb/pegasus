@@ -8,10 +8,10 @@ from statsmodels.stats.multitest import fdrcorrection as fdr
 from collections import defaultdict
 
 from typing import List, Tuple, Dict
-import logging
-from .. import decorators as pg_deco
 
+import logging
 logger = logging.getLogger("pegasus")
+from pegasus.utils import decorators as pg_deco
 
 
 def calc_basic_stat(
@@ -942,22 +942,22 @@ def write_results_to_excel(
         df.reset_index(inplace=True)
         worksheet = workbook.add_worksheet(name=sheet_name)
 
-        worksheet.add_table(
-            0,
-            0,
-            df.index.size,
-            df.columns.size - 1,
-            {
-                "data": df.to_numpy(),
-                "style": "Table Style Light 1",
-                "first_column": True,
-                "header_row": True,
-                "columns": [{"header": x} for x in df.columns.values],
-            },
-        )
-        # if df.shape[0] > 0:
-        # else:
-        #     worksheet.write_row(0, 0, df.columns.values)
+        if df.shape[0] > 0:
+            worksheet.add_table(
+                0,
+                0,
+                df.index.size,
+                df.columns.size - 1,
+                {
+                    "data": df.to_numpy(),
+                    "style": "Table Style Light 1",
+                    "first_column": True,
+                    "header_row": True,
+                    "columns": [{"header": x} for x in df.columns.values],
+                },
+            )
+        else:
+            worksheet.write_row(0, 0, df.columns.values)
 
     workbook = xlsxwriter.Workbook(output_file, {"nan_inf_to_errors": True})
     workbook.formats[0].set_font_size(9)
