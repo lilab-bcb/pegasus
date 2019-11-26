@@ -14,5 +14,6 @@
    installation
    usage
    api/index
-   contributors
    references
+   contributors
+   contact
