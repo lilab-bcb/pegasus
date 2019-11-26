@@ -13,7 +13,7 @@
 
    installation
    usage
-   tutorials/index
+   tutorials
    api/index
    references
    contributors
