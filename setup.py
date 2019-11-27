@@ -11,7 +11,7 @@ requires = [
     "anndata",
     "Cython",
     "docopt",
-    "fisher-modified",
+    "fisher>=0.1.9",
     "forceatlas2-python",
     "hnswlib",
     "joblib",
