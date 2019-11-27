@@ -13,6 +13,7 @@
 
    installation
    usage
+   tutorials
    api/index
    references
    contributors
