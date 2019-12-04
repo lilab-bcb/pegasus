@@ -1,3 +1,12 @@
+Version 0.16.0 `December 3, 2019`
+-----------------------------------
+
+Change options in 'aggregate_matrix' command: remove '--google-cloud', add '--default-reference'.
+
+Fix bug in '--annotation' option of 'annotate_cluster' command.
+
+Fix bug in 'net_fle' function with 3-dimension coordinates.
+
 Version 0.15.0 `October 2, 2019`
 -----------------------------------
 
