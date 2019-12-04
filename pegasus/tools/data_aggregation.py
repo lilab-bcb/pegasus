@@ -7,6 +7,9 @@ import pandas as pd
 from anndata import AnnData
 from pegasus.io import infer_file_format, read_input, write_output, MemData
 
+import logging
+logger = logging.getLogger("pegasus")
+
 
 def find_digits(value):
     pos = len(value) - 1
@@ -133,7 +136,7 @@ def aggregate_matrices(
             elif default_ref is not None:
                 genome = default_ref
             else:
-                raise ValueError('Please provide a reference value for sample {}'.format(sample_name))                
+                raise ValueError('Please provide a reference value for {}'.format(sample_name))
 
         data = read_input(
             input_file,
@@ -143,7 +146,7 @@ def aggregate_matrices(
             select_singlets=select_singlets,
         )
 
-        if file_format in ["10x"] and "Reference" in row:
+        if (file_format in ["10x", "pegasus"]) and ("Reference" in row):
             keys = list(data.data.keys())
             if len(keys) == 1:
                 cur_ref = keys[0]
@@ -152,7 +155,7 @@ def aggregate_matrices(
                     data.data[new_ref] = data.data[cur_ref]
                     data.data.pop(cur_ref)
             else:
-                print("Warning: {} contains more than one references and thus we do not check for renaming.".format(sample_name))
+                logger.warning("{} contains more than one references and thus we do not check for renaming.".format(sample_name))
 
         data.update_barcode_metadata_info(sample_name, row, attributes)
         aggrData.addAggrData(data)

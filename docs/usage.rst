@@ -17,7 +17,7 @@ to see the help information::
 * Preprocessing:
 
 	aggregate_matrix
-		Aggregate cellranger-outputted channel-specific count matrices into a single count matrix. It also enables users to import metadata into the count matrix.
+		Aggregate sample count matrices into a single count matrix. It also enables users to import metadata into the count matrix.
 
 * Demultiplexing:
 
@@ -118,13 +118,13 @@ Type::
 to see the usage information::
 
 	Usage:
-		pegasus aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --google-cloud --select-only-singlets --minimum-number-of-genes <ngene>]
+		pegasus aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --default-reference <reference> --select-only-singlets --minimum-number-of-genes <ngene>]
 		pegasus aggregate_matrix -h
 
 * Arguments:
 
 	csv_file
-		Input csv-formatted file containing information of each scRNA-Seq run. Each row must contain at least 2 columns --- Sample, sample name and Location, location of the channel-specific count matrix in either 10x v2/v3, DGE, mtx, csv or loom format. If matrix is in DGE, mtx or csv format, an addition Reference column is required. See below for an example csv::
+		Input csv-formatted file containing information of each sc/snRNA-seq sample. This file must contain at least 2 columns - Sample, sample name and Location, location of the sample count matrix in either 10x v2/v3, DGE, mtx, csv, tsv or loom format. Additionally, an optional Reference column can be used to select samples generated from a same reference (e.g. mm10). If the count matrix is in either DGE, mtx, csv, tsv, or loom format, the value in this column will be used as the reference since the count matrix file does not contain reference name information. In addition, the Reference column can be used to aggregate count matrices generated from different genome versions or gene annotations together under a unified reference. For example, if we have one matrix generated from mm9 and the other one generated from mm10, we can write mm9_10 for these two matrices in their Reference column. Pegasus will change their references to 'mm9_10' and use the union of gene symbols from the two matrices as the gene symbols of the aggregated matrix. For HDF5 files (e.g. 10x v2/v3), the reference name contained in the file does not need to match the value in this column. In fact, we use this column to rename references in HDF5 files. For example, if we have two HDF files, one generated from mm9 and the other generated from mm10. We can set these two files' Reference column value to 'mm9_10', which will rename their reference names into mm9_10 and the aggregated matrix will contain all genes from either mm9 or mm10. This renaming feature does not work if one HDF5 file contain multiple references (e.g. mm10 and GRCh38). See below for an example csv::
 
 			Sample,Source,Platform,Donor,Reference,Location
  			sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/filtered_gene_bc_matrices_h5.h5
@@ -143,8 +143,8 @@ to see the usage information::
 	-\\-attributes <attributes>
 		Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file.
 
-	-\\-google-cloud
-		If files are stored in google cloud. Assuming google cloud sdk is installed.
+	-\\-default-reference <reference>
+		If sample count matrix is in either DGE, mtx, csv, tsv or loom format and there is no Reference column in the csv_file, use <reference> as the reference.
 
 	-\\-select-only-singlets
 		If we have demultiplexed data, turning on this option will make pegasus only include barcodes that are predicted as singlets.
@@ -291,8 +291,14 @@ to see the usage information::
 	-\\-processed
 		Input file is processed and thus no PCA & diffmap will be run.
 
-	-\\-genome <genome>
-		A string contains comma-separated genome names. pegasus will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
+	-\\-considered-refs <ref_list>
+		A string contains comma-separated reference(e.g. genome) names. pegasus will read all groups associated with reference names in the list from the input file. If <ref_list> is None, all groups will be considered.
+  
+  	-\\-channel <channel_attr>
+		Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
+
+	-\\-black-list <black_list>
+		Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
 	-\\-min-genes-on-raw <number>
 		If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]

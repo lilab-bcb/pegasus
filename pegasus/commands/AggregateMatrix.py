@@ -4,10 +4,10 @@ from pegasus.tools import aggregate_matrices
 
 class AggregateMatrix(Base):
     """
-Aggregate 10x matrices from each channel into one big matrix.
+Aggregate sample count matrices from each channel into one big matrix.
 
 Usage:
-  pegasus aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --genome <genome> --select-only-singlets --minimum-number-of-genes <ngene>]
+  pegasus aggregate_matrix <csv_file> <output_name> [--restriction <restriction>... --attributes <attributes> --default-reference <reference> --select-only-singlets --minimum-number-of-genes <ngene>]
   pegasus aggregate_matrix -h
 
 Arguments:
