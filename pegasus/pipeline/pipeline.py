@@ -1,6 +1,6 @@
 import anndata
 import numpy as np
-from scipy.sparse import csr_matrix, hstack, isspmatrix_csc
+from scipy.sparse import csr_matrix, hstack
 
 from pegasus import io, tools, cite_seq
 
@@ -24,8 +24,6 @@ def run_pipeline(input_file, output_name, **kwargs):
         ),
     )
 
-    if isspmatrix_csc(adata.X):
-        adata.X = adata.X.tocsr()
     if not kwargs["cite_seq"]:
         if is_raw:
             values = adata.X.getnnz(axis=1)
