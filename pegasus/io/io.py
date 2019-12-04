@@ -601,7 +601,7 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
     Returns
     -------
     `str`
-        File format, choosing from 'pegasus', '10x', 'h5ad', 'mtx', 'dge', and 'csv'.
+        File format, choosing from '10x', 'pegasus', 'h5ad', 'loom', 'mtx', 'dge', 'csv' and 'tsv'.
     `str`
         The path covering all input files. Most time this is the same as input_file. But for HCA mtx and csv, this should be parent directory.
     `str`

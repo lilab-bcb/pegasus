@@ -43,7 +43,7 @@ def aggregate_matrices(
     what_to_return: str = 'AnnData',
     restrictions: List[str] = [],
     attributes: List[str] = [],
-    genome: str = None,
+    default_ref: str = None,
     select_singlets: bool = False,
     ngene: int = None,
     concat_matrices: bool = False,
@@ -63,8 +63,8 @@ def aggregate_matrices(
         A list of restrictions used to select channels, each restriction takes the format of name:value,…,value or name:~value,..,value, where ~ refers to not.
     attributes : `list[str]`, optional (default: [])
         A list of attributes need to be incorporated into the output count matrix.
-    genome : `str`, optional (default: None)
-        Default genome to use.
+    default_ref : `str`, optional (default: None)
+        Default reference name to use. If sample count matrix is in either DGE, mtx, csv or tsv format and there is no Reference column in the csv_file, default_ref will be used as the reference.
     select_singlets : `bool`, optional (default: False)
         If we have demultiplexed data, turning on this option will make pegasus only include barcodes that are predicted as singlets.
     ngene : `int`, optional (default: None)
@@ -116,9 +116,9 @@ def aggregate_matrices(
             if not os.path.exists(dest_path):  # localize data
                 if copy_type == "directory":
                     check_call(["mkdir", "-p", dest_path])
-                    call_args = ["gsutil", "-mq", "cp", "-r", copy_path, dest_path]
+                    call_args = ["gsutil", "-m", "cp", "-r", copy_path, dest_path]
                 else:
-                    call_args = ["gsutil", "-mq", "cp", copy_path, dest_path]
+                    call_args = ["gsutil", "-m", "cp", copy_path, dest_path]
                 check_call(call_args)
             dest_paths.append(dest_path)
 
@@ -126,26 +126,33 @@ def aggregate_matrices(
             if file_format == "csv" and copy_type == "directory":
                 input_file = os.path.join(dest_path, os.path.basename(input_file))
 
-        _genome = genome
-        if _genome is None and file_format in ["dge", "csv", "mtx", "loom"]:
-            if "Reference" not in row:
-                raise ValueError('Please provide a Reference column')
-            _genome = row["Reference"]
-            if _genome == '' or pd.isna(_genome):
-                raise ValueError('Please provide a reference value for sample {}'.format(sample_name))
+        genome = None
+        if file_format in ["dge", "mtx", "csv", "tsv", "loom"]:
+            if "Reference" in row:
+                genome = row["Reference"]
+            elif default_ref is not None:
+                genome = default_ref
+            else:
+                raise ValueError('Please provide a reference value for sample {}'.format(sample_name))                
 
         data = read_input(
             input_file,
-            genome=_genome,
+            genome=genome,
             return_type="MemData",
             ngene=ngene,
             select_singlets=select_singlets,
         )
-        if "RenamedReference" in row:
-            renamed_reference = row["RenamedReference"]
-            if renamed_reference != '' and not pd.isna(renamed_reference) and renamed_reference != _genome:
-                data.data[renamed_reference] = data.data[_genome]
-                del data.data[_genome]
+
+        if file_format in ["10x"] and "Reference" in row:
+            keys = list(data.data.keys())
+            if len(keys) == 1:
+                cur_ref = keys[0]
+                new_ref = row["Reference"]
+                if cur_ref != new_ref:
+                    data.data[new_ref] = data.data[cur_ref]
+                    data.data.pop(cur_ref)
+            else:
+                print("Warning: {} contains more than one references and thus we do not check for renaming.".format(sample_name))
 
         data.update_barcode_metadata_info(sample_name, row, attributes)
         aggrData.addAggrData(data)

@@ -18,8 +18,8 @@ Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
-  --genome <genome>                                A string contains comma-separated genome names. pegasus will read all groups associated with genome names in the list from the hdf5 file. If genome is None, all groups will be considered.
-  --channel <channel_attr>                         Use <channel_attr> to represent different samples. This will set a 'Channel' column field with <channel_attr>.
+  --considered-refs <ref_list>                     A string contains comma-separated reference(e.g. genome) names. pegasus will read all groups associated with reference names in the list from the input file. If <ref_list> is None, all groups will be considered.
+  --channel <channel_attr>                         Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
   --black-list <black_list>                        Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
   --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
@@ -151,7 +151,7 @@ Examples:
         kwargs = {
             "n_jobs": int(self.args["--threads"]),
             "processed": self.args["--processed"],
-            "genome": self.args["--genome"],
+            "genome": self.args["--considered-refs"],
             "channel_attr": self.args["--channel"],
             "black_list": self.args["--black-list"],
             "subcluster": False,
