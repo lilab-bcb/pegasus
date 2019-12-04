@@ -1,3 +1,8 @@
+Version 0.16.1 `December 4, 2019`
+-----------------------------------
+
+Fix one bug in clustering pipeline.
+
 Version 0.16.0 `December 3, 2019`
 -----------------------------------
 
