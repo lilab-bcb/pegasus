@@ -814,6 +814,40 @@ def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
                     group.create_dataset(key, data=value, compression="gzip")
 
 
+def _write_mtx(data: "AnnData", output_file: str):
+    import scipy.io
+    import gzip
+    import shutil
+    output_dir = os.path.dirname(os.path.abspath(output_file))
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    mtx_file = os.path.join(output_dir, 'matrix.mtx')
+    scipy.io.mmwrite(mtx_file, data.X.T)
+    mtx_file_gz = "%s.gz" % mtx_file
+
+    with open(mtx_file, 'rb') as f_in:
+        with gzip.open(mtx_file_gz, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    os.remove(mtx_file)
+
+    data.obs.to_csv(os.path.join(output_dir, 'barcodes.tsv.gz'), header=None, columns=[])
+    features_df = pd.DataFrame()
+    if 'gene_ids' in data.var:
+        features_df['gene_ids'] = data.var['gene_ids']
+        features_df['gene_names'] = data.var.index
+    else:
+        features_df['gene_ids'] = data.var.index
+        features_df['gene_names'] = data.var.index
+    features_df['type'] = 'Gene Expression'
+    features_df.to_csv(os.path.join(output_dir, 'features.tsv.gz'), header=None, sep='\t')
+    data.obs.to_csv(os.path.join(output_dir, 'obs.csv.gz'), index_label='id')
+    var_columns = list(data.var.columns)
+    if 'gene_ids' in data.var:
+        var_columns.remove('gene_ids')
+    if len(var_columns) > 0:
+        data.var.to_csv(os.path.join(output_dir, 'var.csv.gz'), index_label='id', columns=var_columns)
+
+
 @pg_deco.TimeLogger()
 def write_output(
     data: "MemData or AnnData",
@@ -830,7 +864,7 @@ def write_output(
     data : `MemData` or `AnnData`
         data to write back, can be either an MemData or AnnData object.
     output_file : `str`
-        output file name. If data is MemData, output_file should ends with suffix '.h5sc'. Otherwise, output_file can end with either '.h5ad' or '.loom'. If output_file ends with '.loom', a LOOM file will be generated. If no suffix is detected, an appropriate one will be appended.
+        output file name. If data is MemData, output_file should ends with suffix '.h5sc'. Otherwise, output_file can end with either '.h5ad', '.loom', or '.mtx.gz'. If output_file ends with '.loom', a LOOM file will be generated. If no suffix is detected, an appropriate one will be appended.
     whitelist : `list`, optional, default = ["obs", "obsm", "uns", "var", "varm"]
         List that indicates changed fields when writing h5ad file in backed mode. For example, ['uns/Groups', 'obsm/PCA'] will only write Groups in uns, and PCA in obsm; the rest of the fields will be unchanged.
 
@@ -848,6 +882,8 @@ def write_output(
 
     # Identify and correct file suffix
     file_name, _, suffix = output_file.rpartition(".")
+    if suffix == 'gz' and file_name.endswith('.mtx'):
+        suffix = 'mtx.gz'
     if file_name == "":
         file_name = output_file
         suffix = "h5sc" if isinstance(data, MemData) else "h5ad"
@@ -857,7 +893,7 @@ def write_output(
         )
         file_name = output_file
         suffix = "h5sc"
-    if isinstance(data, anndata.AnnData) and (suffix not in ["h5ad", "loom"]):
+    if isinstance(data, anndata.AnnData) and (suffix not in ["h5ad", "loom", "mtx.gz"]):
         logging.warning(
             "Detected file suffix for this AnnData object is neither .h5ad or .loom. We will assume output_file is a file name and append .h5ad suffix."
         )
@@ -873,7 +909,9 @@ def write_output(
                 data.uns.pop(keyword)
 
     # Write outputs
-    if suffix == "h5sc" or suffix == "h5":
+    if suffix == "mtx.gz":
+        _write_mtx(data, output_file)
+    elif suffix == "h5sc" or suffix == "h5":
         data.write_h5_file(output_file)
     elif suffix == "loom":
         data.write_loom(output_file, write_obsm_varm=True)
