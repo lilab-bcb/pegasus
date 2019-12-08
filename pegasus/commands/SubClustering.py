@@ -164,6 +164,9 @@ Examples:
             "spectral_louvain_nclusters": int(
                 self.args["--spectral-louvain-nclusters"]
             ),
+            "spectral_louvain_nclusters2": int(
+                self.args["--spectral-louvain-nclusters2"]
+            ),
             "spectral_louvain_ninit": int(self.args["--spectral-louvain-ninit"]),
             "spectral_louvain_resolution": float(
                 self.args["--spectral-louvain-resolution"]
@@ -172,6 +175,7 @@ Examples:
             "spectral_leiden": self.args["--spectral-leiden"],
             "spectral_leiden_basis": self.args["--spectral-leiden-basis"],
             "spectral_leiden_nclusters": int(self.args["--spectral-leiden-nclusters"]),
+            "spectral_leiden_nclusters2": int(self.args["--spectral-leiden-nclusters2"]),
             "spectral_leiden_ninit": int(self.args["--spectral-leiden-ninit"]),
             "spectral_leiden_resolution": float(
                 self.args["--spectral-leiden-resolution"]
