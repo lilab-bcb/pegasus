@@ -4,8 +4,8 @@ import unittest
 
 import numpy as np
 import pandas as pd
-import pegasus as pg
 
+import pegasus as pg
 from .test_util import assert_adata_equal
 
 
@@ -13,6 +13,7 @@ class TestRead(unittest.TestCase):
     def tearDown(self):
         for f in ["test.csv", "test.h5ad", "test_obsm_compound.h5ad"]:
             os.path.exists(f) and os.remove(f)
+        os.path.exists('test_mtx') and shutil.rmtree('test_mtx')
 
     def test_mtx_v2(self):
         adata = pg.read_input(
@@ -31,6 +32,21 @@ class TestRead(unittest.TestCase):
             "tests/pegasus-test-data/input/hgmm_1k_filtered_gene_bc_matrices/hg19/"
         )
         self.assertEqual(adata.shape[0], 504)
+
+    def test_write_mtx(self):
+        adata = pg.read_input(
+            "tests/pegasus-test-data/input/heart_1k_v3/filtered_feature_bc_matrix.h5"
+        )
+        adata.var['test'] = 1.0
+        adata.obs['test'] = 1.0
+        output_dir = 'test_mtx/mm10'
+        pg.write_output(adata, os.path.join(output_dir, 'matrix.mtx.gz'))
+        adata2 = pg.read_input(output_dir)
+        del adata2.obs['Channel']  # get channel from csv
+        adata2.obs = adata2.obs.join(pd.read_csv(os.path.join(output_dir, 'obs.csv.gz'), index_col=0))
+        adata2.var = adata2.var.join(pd.read_csv(os.path.join(output_dir, 'var.csv.gz'), index_col=0))
+        del adata2.var['featuretype']
+        assert_adata_equal(self, adata, adata2, obs_blacklist=['Channel'])
 
     def test_mtx_v3_dir(self):
         adata = pg.read_input(

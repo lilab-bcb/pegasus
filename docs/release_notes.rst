@@ -1,3 +1,8 @@
+Version 0.16.2 `December 8, 2019`
+-----------------------------------
+
+Fix bug in 'subcluster' command.
+
 Version 0.16.1 `December 4, 2019`
 -----------------------------------
 
