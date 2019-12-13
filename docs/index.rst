@@ -13,6 +13,7 @@
 
    installation
    usage
+   terra_notebook
    tutorials
    api/index
    references
