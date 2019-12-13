@@ -14,7 +14,7 @@ On top-right panel of your workspace, click the following button within red circ
    :scale: 60 %
    :align: center
 
-In the pop-out dialog (see image below), select ``CUSTOM ENVIRONMENT`` tab. Then in ``Container image`` field, choose one of Docker images from `Here <https://hub.docker.com/repository/docker/cumulusprod/pegasus-terra>`_. All the tags are for different versions of ``Pegasus``. For example, if you want to use Pegasus version ``0.16.1``, you should type ``cumulusprod/pegasus-terra:0.16.1``:
+In the pop-out dialog (see image below), select ``CUSTOM ENVIRONMENT`` tab. Then in ``Container image`` field, choose one of Docker images from `Here <https://hub.docker.com/repository/docker/cumulusprod/pegasus-terra>`_. All the tags are for different versions of Pegasus. For example, if you want to use Pegasus version ``0.16.1``, you should type ``cumulusprod/pegasus-terra:0.16.1``:
 
 .. image:: images/runtime_setting.png
    :scale: 50 %
@@ -24,7 +24,7 @@ After that, set the computing resources you want to use in the new runtime envir
 
 After waiting for 1-2 minutes, your runtime environment should be ready. In the pop-up dialog, click ``APPLY`` button to start.
 
-This runtime environment is associated with your workspace, not just the current workspace. Therefore, after creation, you can start the same environment in your workspace by clicking the following button within red circle on top-right panel:
+This runtime environment is associated with your workspace. Therefore, after creation, you can start the same environment in your workspace by clicking the following button within red circle on top-right panel:
 
 .. image:: images/start_runtime.png
    :scale: 80 %
@@ -36,7 +36,7 @@ This runtime environment is associated with your workspace, not just the current
 
 In ``NOTEBOOKS`` tab of your workspace, you can either create a blank notebook, or upload your local notebook. After creation, click ``EDIT`` button to enter the edit mode, and Terra will automatically start your notebook runtime.
 
-When the start-up is done, you can type the following code to check if ``pegasus`` can be loaded and if it's the correct version you want to use::
+When the start-up is done, you can type the following code in notebook to check if ``pegasus`` can be loaded and if it's the correct version you want to use::
 
 	import pegasus as pg
 	pg.__version__
@@ -45,11 +45,11 @@ When the start-up is done, you can type the following code to check if ``pegasus
 3. Load Data into Runtime
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To use your data on cloud (i.e. in the Google Bucket of your workspace), you should copy it into your notebook runtime with Google Cloud SDK::
+To use your data on cloud (i.e. in the Google Bucket of your workspace), you should copy it into your notebook runtime by Google Cloud SDK::
 
-	!gsutil -m cp gs://link-to-h5-file .
+	!gsutil -m cp gs://link-to-count-matrix .
 
-where ``gs://link-to-h5-file`` is the Google Bucket URL to your count matrix data file. 
+where ``gs://link-to-count-matrix`` is the Google Bucket URL to your count matrix data file. 
 
 After that, you can use Pegasus function to load it into memory.
 
