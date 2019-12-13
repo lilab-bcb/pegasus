@@ -33,7 +33,7 @@ Outputs:
 
 Examples:
   pegasus annotate_cluster manton_bm.h5ad manton_bm.anno.txt
-  pegasus annotate_cluster --annotation "anno:T cells;B cells;NK cells;Monocytes" manton_bm.h5ad
+  pegasus annotate_cluster --annotation "anno:louvain_labels:T cells;B cells;NK cells;Monocytes" manton_bm.h5ad
     """
 
     def execute(self):
