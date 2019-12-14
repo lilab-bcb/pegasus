@@ -1,7 +1,9 @@
 Version 0.16.2 `December 8, 2019`
 -----------------------------------
 
-Fix bug in 'subcluster' command.
+* Fix bug in 'subcluster' command.
+
+* Use **fisher** package version 0.1.9 or above, as modifications in our forked **fisher-modified** package has been merged into it.
 
 Version 0.16.1 `December 4, 2019`
 -----------------------------------
