@@ -188,3 +188,22 @@ where ``10.14`` is the version number for macOS Mojave. You should change it to 
 	- **leiden**: Leiden clustering algorithm::
 
 		pip install leidenalg
+
+---------------
+
+Development Version
+^^^^^^^^^^^^^^^^^^^^^^
+
+To install Pegasus development version directly from `its GitHub respository <https://github.com/klarman-cell-observatory/pegasus>`_, please do the following steps:
+
+1. Install prerequisite libraries as mentioned in above sections. 
+
+2. Install Git. See `here <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ for how to install Git.
+
+3. Use git to fetch repository source code, and install from it::
+
+	git clone https://github.com/klarman-cell-observatory/pegasus.git
+	cd pegasus
+	pip install -e .
+
+where ``-e`` option of ``pip`` means to install in editing mode, so that your Pegasus installation will be automatically updated upon modifications in source code.
