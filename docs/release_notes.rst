@@ -1,9 +1,7 @@
 Version 0.16.2 `December 8, 2019`
 -----------------------------------
 
-* Fix bug in 'subcluster' command.
-
-* Use **fisher** package version 0.1.9 or above, as modifications in our forked **fisher-modified** package has been merged into it.
+Fix bug in 'subcluster' command.
 
 Version 0.16.1 `December 4, 2019`
 -----------------------------------
@@ -13,11 +11,13 @@ Fix one bug in clustering pipeline.
 Version 0.16.0 `December 3, 2019`
 -----------------------------------
 
-Change options in 'aggregate_matrix' command: remove '--google-cloud', add '--default-reference'.
+* Change options in 'aggregate_matrix' command: remove '--google-cloud', add '--default-reference'.
 
-Fix bug in '--annotation' option of 'annotate_cluster' command.
+* Fix bug in '--annotation' option of 'annotate_cluster' command.
 
-Fix bug in 'net_fle' function with 3-dimension coordinates.
+* Fix bug in 'net_fle' function with 3-dimension coordinates.
+
+* Use **fisher** package version 0.1.9 or above, as modifications in our forked **fisher-modified** package has been merged into it.
 
 Version 0.15.0 `October 2, 2019`
 -----------------------------------
