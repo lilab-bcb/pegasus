@@ -6,6 +6,7 @@ from scipy.sparse import csr_matrix, csc_matrix
 from joblib import Parallel, delayed, effective_n_jobs
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from collections import defaultdict
+from scipy.stats import rankdata
 
 from typing import List, Tuple, Dict
 
@@ -157,97 +158,53 @@ def collect_basic_statistics(
     return result_list
 
 
-def calc_auc(
-    clust_id: str,
-    data: List[float],
-    indices: List[int],
-    indptr: List[int],
-    shape: Tuple[int, int],
-    cluster_labels: List[str],
-    cond_labels: List[str],
-    gene_names: List[str],
-    verbose: bool,
-) -> pd.DataFrame:
-    """ Calculate AUROC for one cluster
-    """
-    import sklearn.metrics as sm
-
-    csc_mat = csc_matrix((data, indices, indptr), shape=shape)
-    mask = cluster_labels == clust_id
-
-    auroc = np.zeros(shape[1], dtype=np.float32)
-    # aupr = np.zeros(shape[1], dtype = np.float32)
-
-    if cond_labels is None:
-        exprs = np.zeros(shape[0])
-        y_true = mask
-        n1 = mask.sum()
-        n2 = shape[0] - n1
-    else:
-        exprs = None
-        cond1 = cond_labels.categories[0]
-        cond_labs = cond_labels[mask]
-        y_true = cond_labs == cond1
-        n1 = y_true.sum()
-        n2 = mask.sum() - n1
-
-    if n1 > 0 and n2 > 0:
-        for i in range(shape[1]):
-            if cond_labels is None:
-                exprs[:] = 0.0
-                exprs[
-                    csc_mat.indices[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
-                ] = csc_mat.data[csc_mat.indptr[i] : csc_mat.indptr[i + 1]]
-            else:
-                exprs = csc_mat[mask, i].toarray()[:, 0]
-
-            fpr, tpr, thresholds = sm.roc_curve(y_true, exprs)
-            auroc[i] = sm.auc(fpr, tpr)
-
-            # precision, recall, thresholds = sm.precision_recall_curve(y_true, exprs)
-            # aupr[i] = sm.auc(recall, precision)
-
-    df = pd.DataFrame(
-        {
-            "auroc:{0}".format(clust_id): auroc,
-            # "aupr:{0}".format(clust_id): aupr,
-        },
-        index=gene_names,
-    )
-
-    if verbose:
-        logger.info("calc_auc finished for cluster {0}.".format(clust_id))
-
-    return df
-
-
 def calculate_auc_values(
     Xc: csc_matrix,
     cluster_labels: List[str],
     cond_labels: List[str],
     gene_names: List[str],
-    n_jobs: int,
-    temp_folder: str,
     verbose: bool,
 ) -> List[pd.DataFrame]:
-    """ Calculate AUROC values, triggering calc_auc in parallel
+    """ Calculate AUROC values
     """
     start = time.perf_counter()
 
-    result_list = Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
-        delayed(calc_auc)(
-            clust_id,
-            Xc.data,
-            Xc.indices,
-            Xc.indptr,
-            Xc.shape,
-            cluster_labels,
-            cond_labels,
-            gene_names,
-            verbose,
+    n_clusters = len(cluster_labels.categories)
+    cluster_mask = np.full((n_clusters, Xc.shape[0]), False)
+    auroc = np.full((n_clusters, Xc.shape[1]), 0, dtype = np.float32)
+    for j, clust_id in enumerate(cluster_labels.categories):
+        cluster_mask[j,] = cluster_labels == clust_id
+
+    n1 = (~cluster_mask).sum(axis = 1)
+    n2 = cluster_mask.sum(axis = 1)
+
+    if cond_labels is None:
+
+        exprs = np.zeros(Xc.shape[0])
+
+        for i in range(Xc.shape[1]):
+            if verbose and i % 1000 == 0:
+                logger.info(
+                    "AUROC finished for gene {} of {}".format(i, Xc.shape[1])
+                )
+            exprs[:] = 0.0
+            exprs[
+                Xc.indices[Xc.indptr[i] : Xc.indptr[i + 1]]
+            ] = Xc.data[Xc.indptr[i] : Xc.indptr[i + 1]]
+            rank = rankdata(exprs)
+            for j, clust_id in enumerate(cluster_labels.categories):
+                U = rank[~cluster_mask[j,]].sum() - n1[j] * (n1[j] + 1) / 2
+                auroc[j,i] = 1 - U / n1[j] / n2[j]
+
+    result_list = []
+    for j, clust_id in enumerate(cluster_labels.categories):
+        df = pd.DataFrame(
+            {
+                "auroc:{0}".format(clust_id): auroc[j,:],
+            },
+            index = gene_names,
         )
-        for clust_id in cluster_labels.categories
-    )
+        result_list.append(df)
 
     end = time.perf_counter()
     if verbose:
@@ -744,8 +701,6 @@ def de_analysis(
                 cluster_labels,
                 cond_labels,
                 gene_names,
-                n_jobs,
-                temp_folder,
                 verbose,
             )
         )
