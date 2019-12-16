@@ -169,31 +169,47 @@ def calculate_auc_values(
     """
     start = time.perf_counter()
 
+    n_cells = Xc.shape[0]
+    n_genes = Xc.shape[1]
     n_clusters = len(cluster_labels.categories)
-    cluster_mask = np.full((n_clusters, Xc.shape[0]), False)
-    auroc = np.full((n_clusters, Xc.shape[1]), 0, dtype = np.float32)
+    cluster_mask = np.full((n_clusters, n_cells), False)
+    cluster_ind  = []
+    auroc = np.full((n_clusters, n_genes), 0, dtype = np.float32)
     for j, clust_id in enumerate(cluster_labels.categories):
         cluster_mask[j,] = cluster_labels == clust_id
+        cluster_ind.append(
+            np.argwhere(~cluster_mask[j,]).flatten()
+        )
 
     n1 = (~cluster_mask).sum(axis = 1)
     n2 = cluster_mask.sum(axis = 1)
 
+    Xr = Xc.copy()
+
     if cond_labels is None:
 
-        exprs = np.zeros(Xc.shape[0])
+        exprs = np.zeros(n_cells)
+        rank = np.zeros(n_cells)
 
-        for i in range(Xc.shape[1]):
+        for i in range(n_genes):
+        # for i in range(1000):
             if verbose and i % 1000 == 0:
                 logger.info(
-                    "AUROC finished for gene {} of {}".format(i, Xc.shape[1])
+                    "AUROC finished for gene {} of {}".format(i, n_genes)
                 )
+            # Most expression values are zero, some are not.
+            i_l = Xc.indptr[i]
+            i_r = Xc.indptr[i + 1]
+            i_nz = Xc.indices[i_l:i_r]
             exprs[:] = 0.0
-            exprs[
-                Xc.indices[Xc.indptr[i] : Xc.indptr[i + 1]]
-            ] = Xc.data[Xc.indptr[i] : Xc.indptr[i + 1]]
-            rank = rankdata(exprs)
+            exprs[i_nz] = Xc.data[i_l:i_r]
+            # The number of zeros determines the rank for the zeros.
+            n_zero = n_cells - i_r + i_l
+            rank_zero = n_zero / 2.0
+            rank[:] = rank_zero + 0.5
+            rank[i_nz] = rankdata(exprs[i_nz]) + n_zero
             for j, clust_id in enumerate(cluster_labels.categories):
-                U = rank[~cluster_mask[j,]].sum() - n1[j] * (n1[j] + 1) / 2
+                U = rank[cluster_ind[j]].sum() - n1[j] * (n1[j] + 1) / 2
                 auroc[j,i] = 1 - U / n1[j] / n2[j]
 
     result_list = []
