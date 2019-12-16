@@ -173,50 +173,49 @@ def calculate_auc_values(
     n_genes = Xc.shape[1]
     n_clusters = len(cluster_labels.categories)
     cluster_mask = np.full((n_clusters, n_cells), False)
-    cluster_ind  = []
-    auroc = np.full((n_clusters, n_genes), 0, dtype = np.float32)
     for j, clust_id in enumerate(cluster_labels.categories):
         cluster_mask[j,] = cluster_labels == clust_id
-        cluster_ind.append(
-            np.argwhere(~cluster_mask[j,]).flatten()
-        )
 
-    n1 = (~cluster_mask).sum(axis = 1)
-    n2 = cluster_mask.sum(axis = 1)
+    group_size = cluster_mask.sum(axis = 1)[:,np.newaxis]
 
     Xr = Xc.copy()
+    n_nzero = np.zeros((n_clusters, n_genes))
 
-    if cond_labels is None:
+    for i in range(n_genes):
+        if verbose and i % 1000 == 0:
+            logger.info(
+                "AUROC finished for gene {} of {}".format(i, n_genes)
+            )
+        # Most expression values are zero, some are not.
+        i_l = Xc.indptr[i]
+        i_r = Xc.indptr[i + 1]
+        i_nz = Xc.indices[i_l:i_r]
+        n_zero = n_cells - i_r + i_l
+        Xr.data[i_l:i_r] = rankdata(Xc.data[i_l:i_r]) + n_zero
+        for j in range(n_clusters):
+            n_nzero[j,i] = cluster_mask[j,i_nz].sum()
 
-        exprs = np.zeros(n_cells)
-        rank = np.zeros(n_cells)
+    gnz = group_size - n_nzero
 
-        for i in range(n_genes):
-        # for i in range(1000):
-            if verbose and i % 1000 == 0:
-                logger.info(
-                    "AUROC finished for gene {} of {}".format(i, n_genes)
-                )
-            # Most expression values are zero, some are not.
-            i_l = Xc.indptr[i]
-            i_r = Xc.indptr[i + 1]
-            i_nz = Xc.indices[i_l:i_r]
-            exprs[:] = 0.0
-            exprs[i_nz] = Xc.data[i_l:i_r]
-            # The number of zeros determines the rank for the zeros.
-            n_zero = n_cells - i_r + i_l
-            rank_zero = n_zero / 2.0
-            rank[:] = rank_zero + 0.5
-            rank[i_nz] = rankdata(exprs[i_nz]) + n_zero
-            for j, clust_id in enumerate(cluster_labels.categories):
-                U = rank[cluster_ind[j]].sum() - n1[j] * (n1[j] + 1) / 2
-                auroc[j,i] = 1 - U / n1[j] / n2[j]
+    zero_ranks = (n_cells - np.diff(Xr.indptr) + 1) / 2.0
 
+    m = csc_matrix(cluster_mask.astype(int))
+
+    grs = ((Xr.T) * m.T).T
+
+    ustat = (gnz * zero_ranks) + grs - group_size * (group_size + 1) / 2
+
+    n1n2 = group_size * (n_cells - group_size)
+
+    auc = ustat / n1n2
+
+    auc = np.squeeze(np.asarray(auc))
+    
     result_list = []
     for j, clust_id in enumerate(cluster_labels.categories):
         df = pd.DataFrame(
             {
-                "auroc:{0}".format(clust_id): auroc[j,:],
+                "auroc:{0}".format(clust_id): auc[j,:],
             },
             index = gene_names,
         )
