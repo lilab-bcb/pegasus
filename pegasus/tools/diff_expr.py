@@ -167,68 +167,94 @@ def calculate_auc_values(
 ) -> List[pd.DataFrame]:
     """ Calculate AUROC values
     """
-    start = time.perf_counter()
-
-    n_cells = Xc.shape[0]
-    n_genes = Xc.shape[1]
-    n_clusters = len(cluster_labels.categories)
-    cluster_mask = np.full((n_clusters, n_cells), False)
-    for j, clust_id in enumerate(cluster_labels.categories):
-        cluster_mask[j,] = cluster_labels == clust_id
-
-    group_size = cluster_mask.sum(axis = 1)[:,np.newaxis]
-
-    Xr = Xc.copy()
-    n_nzero = np.zeros((n_clusters, n_genes))
-
-    for i in range(n_genes):
-        if verbose and i % 1000 == 0:
-            logger.info(
-                "AUROC finished for gene {} of {}".format(i, n_genes)
+    if cond_labels is None:
+        start = time.perf_counter()
+        auroc = calc_auroc(Xc, cluster_labels)
+        result_list = []
+        for j, this_cluster in enumerate(cluster_labels.categories):
+            df = pd.DataFrame(
+                {
+                    "auroc:{0}".format(this_cluster): auroc[j,:],
+                },
+                index = gene_names,
             )
+            result_list.append(df)
+        if verbose:
+            end = time.perf_counter()
+            logger.info(
+                "AUROC values are calculated. Time spent = {:.2f}s.".format(end - start)
+            )
+        return result_list
+    # For each cluster, test a binary mutually exclusive condition
+    result_list = []
+    for j, this_cluster in enumerate(cluster_labels.categories):
+        start = time.perf_counter()
+        ix = cluster_labels == this_cluster
+        auroc = calc_auroc(Xc[ix,:], cond_labels[ix])
+        df = pd.DataFrame(
+            {
+                "auroc:{0}".format(this_cluster): auroc,
+            },
+            index = gene_names,
+        )
+        result_list.append(df)
+        if verbose:
+            end = time.perf_counter()
+            logger.info(
+                "Conditional AUROC values for cluster {}/{} calculated."\
+                " Time spent = {:.2f}s."\
+                .format(j, len(cluster_labels.categories), end - start)
+            )
+    return result_list
+
+
+def calc_auroc(
+    Xc: csc_matrix,
+    group_labels: List[str],
+) -> np.array:
+    """ Calculate AUROC values for each row in the sparse matrix as a predictor
+    of belonging to each group.
+    """
+    n_cells = Xc.shape[0]
+    assert n_cells == len(group_labels)
+    n_genes = Xc.shape[1]
+    n_groups = len(group_labels.categories)
+    # For two mutually exclusive categories, it is enough to test one of them.
+    if n_groups == 2 and group_labels.value_counts().sum() == n_cells:
+        n_groups = 1
+    group_mask = np.full((n_groups, n_cells), False)
+    for j in range(n_groups):
+        group_mask[j,] = group_labels == group_labels.categories[j]
+    # Number of cells per group
+    group_size = group_mask.sum(axis = 1)[:,np.newaxis]
+    # Convert expression values to ranks
+    Xr = Xc.copy()
+    # Count nonzero cells per group
+    n_nzero = np.zeros((n_groups, n_genes))
+    for i in range(n_genes):
         # Most expression values are zero, some are not.
         i_l = Xc.indptr[i]
         i_r = Xc.indptr[i + 1]
         i_nz = Xc.indices[i_l:i_r]
         n_zero = n_cells - i_r + i_l
         Xr.data[i_l:i_r] = rankdata(Xc.data[i_l:i_r]) + n_zero
-        for j in range(n_clusters):
-            n_nzero[j,i] = cluster_mask[j,i_nz].sum()
-
+        for j in range(n_groups):
+            n_nzero[j,i] = group_mask[j,i_nz].sum()
+    # Number of nonzero cells per group
     gnz = group_size - n_nzero
-
+    # Ranks for the zero cells
     zero_ranks = (n_cells - np.diff(Xr.indptr) + 1) / 2.0
-
-    m = csc_matrix(cluster_mask.astype(int))
-
+    # Group-wise rank sums
+    m = csc_matrix(group_mask.astype(int))
     grs = ((Xr.T) * m.T).T
-
+    del Xr
+    # Mann-Whitney U statistics
     ustat = (gnz * zero_ranks) + grs - group_size * (group_size + 1) / 2
-
     n1n2 = group_size * (n_cells - group_size)
-
-    auc = ustat / n1n2
-
-    auc = np.squeeze(np.asarray(auc))
+    auroc = ustat / n1n2
+    auroc = np.squeeze(np.asarray(auroc))
+    return auroc
     
-    result_list = []
-    for j, clust_id in enumerate(cluster_labels.categories):
-        df = pd.DataFrame(
-            {
-                "auroc:{0}".format(clust_id): auc[j,:],
-            },
-            index = gene_names,
-        )
-        result_list.append(df)
-
-    end = time.perf_counter()
-    if verbose:
-        logger.info(
-            "AUROC values are calculated. Time spent = {:.2f}s.".format(end - start)
-        )
-
-    return result_list
-
 
 def calc_t(
     clust_id: str,
