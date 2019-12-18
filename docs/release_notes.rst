@@ -1,3 +1,8 @@
+Version 0.16.3 `December 17, 2019`
+-----------------------------------
+
+Add support for loading mtx files generated from BUStools.
+
 Version 0.16.2 `December 8, 2019`
 -----------------------------------
 
