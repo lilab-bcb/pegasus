@@ -184,14 +184,14 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         fname=fname,
         exts=[".mtx"],
     )
-    mat = csr_matrix(mmread(mtx_file).T)
+    mat = mmread(mtx_file)
 
     barcode_file = determine_file_name(
         path,
         ["cells.tsv.gz", "barcodes.tsv.gz", "barcodes.tsv"],
         "Barcode metadata information is not found",
         fname=fname,
-        exts=["_barcode.tsv", ".cells.tsv"],
+        exts=["_barcode.tsv", ".cells.tsv", ".barcodes.txt"],
     )
 
     feature_file = determine_file_name(
@@ -199,7 +199,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         ["genes.tsv.gz", "features.tsv.gz", "genes.tsv"],
         "Feature metadata information is not found",
         fname=fname,
-        exts=["_gene.tsv", ".genes.tsv"],
+        exts=["_gene.tsv", ".genes.tsv", ".genes.txt"],
     )
 
     barcode_base = os.path.basename(barcode_file)
@@ -215,8 +215,13 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         format_type = "scumi"
     elif barcode_base.endswith(".cells.tsv") and feature_base.endswith(".genes.tsv"):
         format_type = "dropEst"
+    elif barcode_base.endswith(".barcodes.txt") and feature_base.endswith(".genes.txt"):
+        format_type = "BUStools"
     else:
         raise ValueError("Unknown format type")
+
+    logger.info("Detected mtx file in {} format.".format(format_type))
+    
     if format_type == "HCA DCP":
         barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=0)
         assert "cellkey" in barcode_metadata
@@ -249,7 +254,7 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
             feature_metadata = pd.DataFrame(
                 data={"featurekey": arr[:, 0], "featurename": arr[:, 1]}
             )
-        elif format_type == "dropEst":
+        elif format_type == "dropEst" or format_type == "BUStools":
             feature_metadata = pd.read_csv(
                 feature_file, sep="\t", header=None, names=["featurekey"]
             )
@@ -257,7 +262,10 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
         else:
             raise ValueError("Unknown format type")
 
-    array2d = Array2D(barcode_metadata, feature_metadata, mat)
+    if mat.shape[1] == barcode_metadata.shape[0]: # Column is barcode, transpose the matrix
+        mat = mat.T
+
+    array2d = Array2D(barcode_metadata, feature_metadata, csr_matrix(mat))
     array2d.filter(ngene=ngene)
     if format_type == "10x v3" or format_type == "10x v2":
         array2d.separate_channels("")  # fn == '' refers to 10x mtx format
