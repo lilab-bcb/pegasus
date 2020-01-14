@@ -2,9 +2,10 @@ import time
 import numpy as np
 from scipy.sparse import issparse
 from anndata import AnnData
+from harmony-pytorch import harmonize
 import logging
 
-from pegasus.tools import estimate_feature_statistics, select_features
+from pegasus.tools import estimate_feature_statistics, select_features, X_from_rep
 
 logger = logging.getLogger("pegasus")
 from pegasus.utils import decorators as pg_deco
@@ -74,6 +75,11 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
 def estimate_adjustment_matrices(data: AnnData) -> bool:
     """ Estimate adjustment matrices
     """
+
+    if "plus" in data.varm.keys() or "muls" in data.varm.keys():
+        # This only happens if this is for subclustering. Thus do not calculate factors, using factors calculated from parent for batch correction.
+        assert "plus" in data.varm.keys() and "muls" in data.varm.keys()
+        return True
 
     if ("gmeans" not in data.varm) or ("gstds" not in data.varm):
         estimate_feature_statistics(data, True)
@@ -175,3 +181,41 @@ def correct_batch(data: AnnData, features: str = None) -> None:
         logger.info(
             "Batch correction is finished. Time spent = {:.2f}s.".format(tot_seconds)
         )
+
+
+
+@pg_deco.TimeLogger()
+def run_harmony(data: AnnData, rep: str = 'pca', n_jobs: int = -1, n_clusters: int = None, random_state: int = 0) -> str:
+    """Batch correction PCs using Harmony
+
+    Parameters
+    ----------
+    data: ``anndata.AnnData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    rep: `str`, optional, default: ``pca``
+        Which representation to use as input of Harmony, default is PCA.
+
+    n_jobs : `int`, optional, default: -1
+        Number of threads to use for the KMeans clustering used in Harmony. -1 refers to all available threads.
+
+    n_clusters: `int`, optional, default: None
+        Number of Harmony clusters. Default is None, which asks Harmony to estimate this number from the data.
+
+    random_state: `int`, optional, default: 0
+        Seed for random number generator
+
+    Returns
+    -------
+    The representation that harmonized components are stored (i.e. rep_harmony)
+
+    Added corrected components to data.obsm as 'X_rep_harmony'.
+
+    Examples
+    --------
+    >>> pg.harmonize(adata, rep = "pca", n_jobs = 10, random_state = 25)
+    """    
+
+    out_rep = rep + '_harmony'
+    data.obsm[out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
+    return out_rep

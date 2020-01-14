@@ -50,7 +50,9 @@ Options:
   --plot-hvf                                       Plot highly variable feature selection.
 
   --correct-batch-effect                           Correct for batch effects.
-  --batch-group-by <expression>                    Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+  --correction-method <method>                     Batch correction method, can be either 'L/S' for location/scale adjustment algorithm (Li and Wong. The analysis of Gene Expression Data 2003) or 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019). [default: harmony]
+  --batch-group-by <expression>                    Only valid if correction method is L/S. Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
+  --harmony-nclusters <nclusters>                  Number of clusters used for Harmony batch correction.
 
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
@@ -183,7 +185,9 @@ Examples:
             else None,
             "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
             "batch_correction": self.args["--correct-batch-effect"],
+            "correction_method": self.args["--correction-method"],
             "group_attribute": self.args["--batch-group-by"],
+            "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
             "nPC": int(self.args["--nPC"]),

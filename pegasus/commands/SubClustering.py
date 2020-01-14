@@ -28,6 +28,10 @@ Options:
   --no-select-hvf                                  Do not select highly variable features.
   --plot-hvf                                       Plot highly variable feature selection.
 
+  --correct-batch-effect                           Correct for batch effects.
+  --correction-method <method>                     Batch correction method, can be either 'L/S' for location/scale adjustment algorithm (Li and Wong. The analysis of Gene Expression Data 2003) or 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019). For L/S method, we directly use correction factors from the parent study. [default: harmony]
+  --harmony-nclusters <nclusters>                  Number of clusters used for Harmony batch correction.
+
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
@@ -137,6 +141,9 @@ Examples:
             if self.args["--select-hvf-ngenes"] != "None"
             else None,
             "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
+            "batch_correction": self.args["--correct-batch-effect"],
+            "correction_method": self.args["--correction-method"],
+            "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
             "nPC": int(self.args["--nPC"]),

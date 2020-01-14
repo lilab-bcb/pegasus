@@ -54,7 +54,7 @@ def get_anndata_for_subclustering(data: "AnnData", subset_selections: List[str])
     if "Groups" in data.uns:
         newdata.uns["Groups"] = data.uns["Groups"]
     if "plus" in data.varm.keys():
-        newdata.varm["means"] = data.varm["plus"]
+        newdata.varm["plus"] = data.varm["plus"]
     if "muls" in data.varm.keys():
         newdata.varm["muls"] = data.varm["muls"]
 
