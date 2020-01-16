@@ -97,8 +97,8 @@ def run_pipeline(input_file, output_name, **kwargs):
                         kwargs["plot_hvf"] + ".hvf.pdf",
                     )
 
-        # batch correction
-        if kwargs["batch_correction"]:
+        # batch correction: L/S
+        if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
             tools.correct_batch(adata, features="highly_variable_features")
 
         # PCA
@@ -109,11 +109,16 @@ def run_pipeline(input_file, output_name, **kwargs):
             random_state=kwargs["random_state"],
         )
 
+        pca_key = "pca"
+        # batch correction: Harmony
+        if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
+            pca_key = tools.run_harmony(adata, rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
+
         # Find K neighbors
         tools.neighbors(
             adata,
             K=kwargs["K"],
-            rep="pca",
+            rep=pca_key,
             n_jobs=kwargs["n_jobs"],
             random_state=kwargs["random_state"],
             full_speed=kwargs["full_speed"],
@@ -132,7 +137,7 @@ def run_pipeline(input_file, output_name, **kwargs):
             tools.diffmap(
                 adata,
                 n_components=kwargs["diffmap_ndc"],
-                rep="pca",
+                rep=pca_key,
                 solver=kwargs["diffmap_solver"],
                 random_state=kwargs["random_state"],
                 max_t=kwargs["diffmap_maxt"],
@@ -145,9 +150,11 @@ def run_pipeline(input_file, output_name, **kwargs):
         stat_mean, pvalue_mean, accept_rate = tools.calc_kBET(
             adata,
             kwargs["kBET_batch"],
+            rep=pca_key,
             K=kwargs["kBET_K"],
             alpha=kwargs["kBET_alpha"],
             n_jobs=kwargs["n_jobs"],
+            random_state=kwargs["random_state"]
         )
         print(
             "kBET stat_mean = {:.2f}, pvalue_mean = {:.4f}, accept_rate = {:.2%}.".format(
@@ -160,7 +167,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         tools.cluster(
             adata,
             algo="spectral_louvain",
-            rep="pca",
+            rep=pca_key,
             resolution=kwargs["spectral_louvain_resolution"],
             rep_kmeans=kwargs["spectral_louvain_basis"],
             n_clusters=kwargs["spectral_louvain_nclusters"],
@@ -175,7 +182,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         tools.cluster(
             adata,
             algo="spectral_leiden",
-            rep="pca",
+            rep=pca_key,
             resolution=kwargs["spectral_leiden_resolution"],
             rep_kmeans=kwargs["spectral_leiden_basis"],
             n_clusters=kwargs["spectral_leiden_nclusters"],
@@ -190,7 +197,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         tools.cluster(
             adata,
             algo="louvain",
-            rep="pca",
+            rep=pca_key,
             resolution=kwargs["louvain_resolution"],
             random_state=kwargs["random_state"],
             class_label=kwargs["louvain_class_label"],
@@ -200,7 +207,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         tools.cluster(
             adata,
             algo="leiden",
-            rep="pca",
+            rep=pca_key,
             resolution=kwargs["leiden_resolution"],
             n_iter=kwargs["leiden_niter"],
             random_state=kwargs["random_state"],
@@ -211,7 +218,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["net_tsne"]:
         tools.net_tsne(
             adata,
-            rep="pca",
+            rep=pca_key,
             n_jobs=kwargs["n_jobs"],
             perplexity=kwargs["tsne_perplexity"],
             random_state=kwargs["random_state"],
@@ -227,7 +234,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["net_umap"]:
         tools.net_umap(
             adata,
-            rep="pca",
+            rep=pca_key,
             n_jobs=kwargs["n_jobs"],
             n_neighbors=kwargs["umap_K"],
             min_dist=kwargs["umap_min_dist"],
@@ -266,7 +273,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["tsne"]:
         tools.tsne(
             adata,
-            rep="pca",
+            rep=pca_key,
             n_jobs=kwargs["n_jobs"],
             perplexity=kwargs["tsne_perplexity"],
             random_state=kwargs["random_state"],
@@ -275,7 +282,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["fitsne"]:
         tools.fitsne(
             adata,
-            rep="pca",
+            rep=pca_key,
             n_jobs=kwargs["n_jobs"],
             perplexity=kwargs["tsne_perplexity"],
             random_state=kwargs["random_state"],
@@ -284,7 +291,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     if kwargs["umap"]:
         tools.umap(
             adata,
-            rep="pca",
+            rep=pca_key,
             n_neighbors=kwargs["umap_K"],
             min_dist=kwargs["umap_min_dist"],
             spread=kwargs["umap_spread"],
