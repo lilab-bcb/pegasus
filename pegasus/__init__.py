@@ -31,6 +31,7 @@ from .tools import (
     highly_variable_features,
     set_group_attribute,
     correct_batch,
+    run_harmony,
     neighbors,
     calc_kBET,
     calc_kSIM,
