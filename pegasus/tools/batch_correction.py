@@ -2,7 +2,7 @@ import time
 import numpy as np
 from scipy.sparse import issparse
 from anndata import AnnData
-from harmony-pytorch import harmonize
+from harmony import harmonize
 import logging
 
 from pegasus.tools import estimate_feature_statistics, select_features, X_from_rep
@@ -213,9 +213,9 @@ def run_harmony(data: AnnData, rep: str = 'pca', n_jobs: int = -1, n_clusters: i
 
     Examples
     --------
-    >>> pg.harmonize(adata, rep = "pca", n_jobs = 10, random_state = 25)
+    >>> pg.run_harmony(adata, rep = "pca", n_jobs_kmeans = 10, random_state = 25)
     """    
 
     out_rep = rep + '_harmony'
-    data.obsm[out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
+    data.obsm[out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
     return out_rep
