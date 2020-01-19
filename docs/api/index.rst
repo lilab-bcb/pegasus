@@ -44,6 +44,7 @@ Batch Correction
 
 	set_group_attribute
 	correct_batch
+	run_harmony
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~

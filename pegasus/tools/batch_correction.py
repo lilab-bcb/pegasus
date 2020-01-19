@@ -2,7 +2,6 @@ import time
 import numpy as np
 from scipy.sparse import issparse
 from anndata import AnnData
-from harmony-pytorch import harmonize
 import logging
 
 from pegasus.tools import estimate_feature_statistics, select_features, X_from_rep
@@ -185,37 +184,49 @@ def correct_batch(data: AnnData, features: str = None) -> None:
 
 
 @pg_deco.TimeLogger()
-def run_harmony(data: AnnData, rep: str = 'pca', n_jobs: int = -1, n_clusters: int = None, random_state: int = 0) -> str:
+def run_harmony(
+    data: AnnData,
+    rep: str = 'pca',
+    n_jobs: int = -1,
+    n_clusters: int = None,
+    random_state: int = 0,
+) -> str:
     """Batch correction PCs using Harmony
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``anndata.AnnData``.
         Annotated data matrix with rows for cells and columns for genes.
 
-    rep: `str`, optional, default: ``pca``
+    rep: ``str``, optional, default: ``"pca"``.
         Which representation to use as input of Harmony, default is PCA.
 
-    n_jobs : `int`, optional, default: -1
-        Number of threads to use for the KMeans clustering used in Harmony. -1 refers to all available threads.
+    n_jobs : ``int``, optional, default: ``-1``.
+        Number of threads to use for the KMeans clustering used in Harmony. ``-1`` refers to using all available threads.
 
-    n_clusters: `int`, optional, default: None
-        Number of Harmony clusters. Default is None, which asks Harmony to estimate this number from the data.
+    n_clusters: ``int``, optional, default: ``None``.
+        Number of Harmony clusters. Default is ``None``, which asks Harmony to estimate this number from the data.
 
-    random_state: `int`, optional, default: 0
+    random_state: ``int``, optional, default: ``0``.
         Seed for random number generator
 
     Returns
     -------
-    The representation that harmonized components are stored (i.e. rep_harmony)
+    out_rep: ``str``
+        The keyword in ``data.obsm`` referring to the embedding calculated by Harmony algorithm.
 
-    Added corrected components to data.obsm as 'X_rep_harmony'.
+    Update ``data.obsm``:
+        * ``data.obsm['X_' + out_rep]``: The embedding calculated by Harmony algorithm.
 
     Examples
     --------
-    >>> pg.harmonize(adata, rep = "pca", n_jobs = 10, random_state = 25)
-    """    
-
+    >>> pg.run_harmony(adata, rep = "pca", n_jobs = 10, random_state = 25)
+    """
+    try:
+        from harmony import harmonize
+    except ImportError:
+        print("Need harmony! Try 'pip install harmony-pytorch'.")
+        
     out_rep = rep + '_harmony'
-    data.obsm[out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
+    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
     return out_rep
