@@ -189,6 +189,7 @@ def run_harmony(data: AnnData, rep: str = 'pca', n_jobs: int = -1, n_clusters: i
     """Batch correction PCs using Harmony
 
     Parameters
+
     ----------
     data: ``anndata.AnnData``
         Annotated data matrix with rows for cells and columns for genes.
@@ -213,9 +214,9 @@ def run_harmony(data: AnnData, rep: str = 'pca', n_jobs: int = -1, n_clusters: i
 
     Examples
     --------
-    >>> pg.run_harmony(adata, rep = "pca", n_jobs_kmeans = 10, random_state = 25)
+    >>> pg.run_harmony(adata, rep = "pca", n_jobs = 10, random_state = 25)
     """    
 
     out_rep = rep + '_harmony'
-    data.obsm[out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
+    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
     return out_rep
