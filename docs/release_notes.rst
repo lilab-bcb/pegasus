@@ -1,4 +1,4 @@
-Version 0.16.4 `January 23, 2020`
+Version 0.16.5 `January 23, 2020`
 -----------------------------------
 
 Add Harmony algorithm for data integration.

@@ -10,9 +10,6 @@ from anndata import AnnData
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 
-# from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-
 from pegasus.io import read_input
 
 import logging
@@ -90,6 +87,11 @@ def find_markers(
     # end = time.time()
     # print("XGBoost used {:.2f}s to train.".format(end - start))
 
+    # from xgboost import XGBClassifier
+    try:
+        from lightgbm import LGBMClassifier 
+    except ImportError:
+        print("Need lightgbm! Try 'pip install lightgbm'.")
     start_lgb = time.time()
     lgb = LGBMClassifier(n_jobs=n_jobs, metric="multi_error", importance_type="gain")
     lgb.fit(
