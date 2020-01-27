@@ -3,7 +3,8 @@
 import gzip
 import logging
 import os.path
-from typing import List, Tuple
+import re
+from typing import List, Tuple, Dict
 
 import anndata
 import numpy as np
@@ -157,111 +158,109 @@ def load_10x_h5_file(input_h5: str, ngene: int = None) -> "MemData":
     return data
 
 
-def determine_file_name(
-    path: str, names: List[str], errmsg: str, fname: str = None, exts: List[str] = None
-) -> str:
-    """ Try several file name options and determine which one is correct.
+def _enumerate_files(path: str, parts: List[str], repl_list1: List[str], repl_list2: List[str] = None) -> str:
+    """ Enumerate all possible file names """
+    if len(parts) <= 2:
+        for token in repl_list1:
+            parts[-1] = token
+            candidate = os.path.join(path, ''.join(parts))
+            if os.path.isfile(candidate):
+                return candidate
+    else:
+        assert len(parts) == 4
+        for p2 in repl_list1:
+            parts[1] = p2
+            for p4 in repl_list2:
+                parts[3] = p4
+                candidate = os.path.join(path, ''.join(parts))
+                if os.path.isfile(candidate):
+                    return candidate
+    return None
+
+
+def _locate_barcode_and_feature_files(path: str, fname: str) -> Tuple[str, str]:
+    """ Locate barcode and feature files (with path) based on mtx file name (no suffix)
     """
-    for name in names:
-        file_name = os.path.join(path, name)
-        if os.path.isfile(file_name):
-            return file_name
-    if fname is not None:
-        for ext in exts:
-            file_name = fname + ext
-            if os.path.isfile(file_name):
-                return file_name
-    raise ValueError(errmsg)
+    barcode_file = feature_file = None
+    if fname == "matrix":
+        barcode_file = _enumerate_files(path, [''], ["cells.tsv.gz", "cells.tsv", "barcodes.tsv.gz", "barcodes.tsv"])
+        feature_file = _enumerate_files(path, [''], ["genes.tsv.gz", "genes.tsv", "features.tsv.gz", "features.tsv"])
+    else:
+        p1, p2, p3 = fname.partition("matrix")
+        if p2 == '' and p3 == '':
+            barcode_file = _enumerate_files(path, [p1, ''], [".barcodes.tsv.gz", ".barcodes.tsv", ".cells.tsv.gz", ".cells.tsv", "_barcode.tsv", ".barcodes.txt"])
+            feature_file = _enumerate_files(path, [p1, ''], [".genes.tsv.gz", ".genes.tsv", ".features.tsv.gz", ".features.tsv", "_gene.tsv", ".genes.txt"])
+        else:
+            barcode_file = _enumerate_files(path, [p1, '', p3, ''], ["barcodes", "cells"], [".tsv.gz", ".tsv"])
+            feature_file = _enumerate_files(path, [p1, '', p3, ''], ["genes", "features"], [".tsv.gz", ".tsv"])
+
+    if barcode_file is None:
+        raise ValueError("Cannot find barcode file!")
+    if feature_file is None:
+        raise ValueError("Cannot find feature file!")
+
+    return barcode_file, feature_file
 
 
-def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array2D":
+def _load_barcode_metadata(barcode_file: str) -> "pd.DataFrame":
+    """ Load cell barcode information """
+    barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=None)
+    if "cellkey" in barcode_metadata.iloc[0].values:
+        # HCA DCP format
+        barcode_metadata = pd.DataFrame(data = barcode_metadata.iloc[1:].values, columns = barcode_metadata.iloc[0])
+        barcode_metadata.rename(columns={"cellkey": "barcodekey"}, inplace=True)
+    else:
+        # Other format, only one column containing the barcode is expected
+        barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=None, names=["barcodekey"])
+
+    return barcode_metadata
+
+
+def _load_feature_metadata(feature_file: str) -> Tuple["pd.DataFrame", str]:
+    """ Load feature information """
+    feature_metadata = pd.read_csv(feature_file, sep="\t", header=None)
+    format_type = ""
+    if "featurekey" in feature_metadata.iloc[0].values:
+        # HCA DCP format genes.tsv.gz
+        feature_metadata = pd.DataFrame(data = feature_metadata.iloc[1:].values, columns = feature_metadata.iloc[0])
+        format_type = "HCA DCP"
+    else:
+        assert feature_metadata.shape[1] <= 3
+        col_names = ["featurekey", "featurename", "featuretype"]
+        # shape[1] = 3 -> 10x v3, 2 -> 10x v2, 1 -> scumi, dropEst, BUStools
+        feature_metadata.columns = col_names[:feature_metadata.shape[1]]
+        if feature_metadata.shape[1] == 3:
+            format_type = "10x v3"
+        elif feature_metadata.shape[1] == 2:
+            format_type = "10x v2"
+        else:
+            assert feature_metadata.shape[1] == 1
+            # Test if in scumi format
+            if feature_metadata.iloc[0, 0].find('_') >= 0:
+                format_type = "scumi"
+                values = feature_metadata.values[:, 0].astype(str)
+                arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
+                feature_metadata = pd.DataFrame(data={"featurekey": arr[:, 0], "featurename": arr[:, 1]})
+            else:
+                format_type = "dropEst or BUStools"
+                feature_metadata["featurename"] = feature_metadata["featurekey"]            
+
+    return feature_metadata, format_type
+
+
+def load_one_mtx_file(path: str, file_name: str, ngene: int = None) -> "Array2D":
     """Load one gene-count matrix in mtx format into an Array2D object
     """
-    mtx_file = determine_file_name(
-        path,
-        ["matrix.mtx.gz", "matrix.mtx"],
-        "Expression matrix in mtx format is not found",
-        fname=fname,
-        exts=[".mtx"],
-    )
+    mtx_file = os.path.join(path, file_name)
     mat = mmread(mtx_file)
 
-    barcode_file = determine_file_name(
-        path,
-        ["cells.tsv.gz", "barcodes.tsv.gz", "barcodes.tsv"],
-        "Barcode metadata information is not found",
-        fname=fname,
-        exts=["_barcode.tsv", ".cells.tsv", ".barcodes.txt"],
-    )
+    fname = re.sub('(.mtx|.mtx.gz)$', '', file_name)
+    barcode_file, feature_file = _locate_barcode_and_feature_files(path, fname)
 
-    feature_file = determine_file_name(
-        path,
-        ["genes.tsv.gz", "features.tsv.gz", "genes.tsv"],
-        "Feature metadata information is not found",
-        fname=fname,
-        exts=["_gene.tsv", ".genes.tsv", ".genes.txt"],
-    )
-
-    barcode_base = os.path.basename(barcode_file)
-    feature_base = os.path.basename(feature_file)
-
-    if barcode_base == "cells.tsv.gz" and feature_base == "genes.tsv.gz":
-        format_type = "HCA DCP"
-    elif barcode_base == "barcodes.tsv.gz" and feature_base == "features.tsv.gz":
-        format_type = "10x v3"
-    elif barcode_base == "barcodes.tsv" and feature_base == "genes.tsv":
-        format_type = "10x v2"
-    elif barcode_base.endswith("_barcode.tsv") and feature_base.endswith("_gene.tsv"):
-        format_type = "scumi"
-    elif barcode_base.endswith(".cells.tsv") and feature_base.endswith(".genes.tsv"):
-        format_type = "dropEst"
-    elif barcode_base.endswith(".barcodes.txt") and feature_base.endswith(".genes.txt"):
-        format_type = "BUStools"
-    else:
-        raise ValueError("Unknown format type")
-
+    barcode_metadata = _load_barcode_metadata(barcode_file)
+    feature_metadata, format_type = _load_feature_metadata(feature_file)
     logger.info("Detected mtx file in {} format.".format(format_type))
     
-    if format_type == "HCA DCP":
-        barcode_metadata = pd.read_csv(barcode_file, sep="\t", header=0)
-        assert "cellkey" in barcode_metadata
-        barcode_metadata.rename(columns={"cellkey": "barcodekey"}, inplace=True)
-
-        feature_metadata = pd.read_csv(feature_file, sep="\t", header=0)
-    else:
-        barcode_metadata = pd.read_csv(
-            barcode_file, sep="\t", header=None, names=["barcodekey"]
-        )
-
-        if format_type == "10x v3":
-            feature_metadata = pd.read_csv(
-                feature_file,
-                sep="\t",
-                header=None,
-                names=["featurekey", "featurename", "featuretype"],
-            )
-        elif format_type == "10x v2":
-            feature_metadata = pd.read_csv(
-                feature_file, sep="\t", header=None, names=["featurekey", "featurename"]
-            )
-        elif format_type == "scumi":
-            values = (
-                pd.read_csv(feature_file, sep="\t", header=None)
-                    .iloc[:, 0]
-                    .values.astype(str)
-            )
-            arr = np.array(np.char.split(values, sep="_", maxsplit=1).tolist())
-            feature_metadata = pd.DataFrame(
-                data={"featurekey": arr[:, 0], "featurename": arr[:, 1]}
-            )
-        elif format_type == "dropEst" or format_type == "BUStools":
-            feature_metadata = pd.read_csv(
-                feature_file, sep="\t", header=None, names=["featurekey"]
-            )
-            feature_metadata["featurename"] = feature_metadata["featurekey"]
-        else:
-            raise ValueError("Unknown format type")
-
     if mat.shape[1] == barcode_metadata.shape[0]: # Column is barcode, transpose the matrix
         mat = mat.T
 
@@ -273,6 +272,16 @@ def load_one_mtx_file(path: str, ngene: int = None, fname: str = None) -> "Array
     return array2d
 
 
+def _locate_mtx_file(path: str) -> str:
+    """ Locate one mtx file in the path directory """
+    with os.scandir(path) as dir_iter:
+        for dir_entry in dir_iter:
+            file_name = dir_entry.name
+            if file_name.endswith('.mtx.gz') or file_name.endswith('.mtx'):
+                return file_name
+    return None
+
+
 def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData":
     """Load gene-count matrix from Market Matrix files (10x v2, v3 and HCA DCP formats)
 
@@ -280,7 +289,7 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
     ----------
 
     path : `str`
-        Path to mtx files. The directory impiled by path should either contain matrix, feature and barcode information, or folders containg these information.
+        Path to mtx files. The directory implied by path should either contain matrix, feature and barcode information, or folders containing these information.
     genome : `str`, optional (default: None)
         Genome name of the matrix. If None, genome will be inferred from path.
     ngene : `int`, optional (default: None)
@@ -293,36 +302,38 @@ def load_mtx_file(path: str, genome: str = None, ngene: int = None) -> "MemData"
 
     Examples
     --------
-    >>> io.load_10x_h5_file('example_10x.h5')
+    >>> io.load_mtx_file('example.mtx.gz', genome = 'mm10')
     """
 
-    orig_file = None
-    if not os.path.isdir(path):
-        orig_file = path
-        path = os.path.dirname(path)
+    orig_file = path
+    if os.path.isdir(orig_file):
+        path = orig_file.rstrip('/')
+        file_name = _locate_mtx_file(path)
+    else:
+        if (not orig_file.endswith(".mtx")) and (not orig_file.endswith(".mtx.gz")):
+            raise ValueError("File {} does not end with suffix .mtx or .mtx.gz!".format(orig_file))
+        path, file_name = os.path.split(orig_file)
 
     data = MemData()
-    if (
-        os.path.isfile(os.path.join(path, "matrix.mtx.gz"))
-        or os.path.isfile(os.path.join(path, "matrix.mtx"))
-        or (orig_file is not None and os.path.isfile(orig_file))
-    ):
+
+    if file_name is not None:
         if genome is None:
             genome = os.path.basename(path)
         data.addData(
             genome,
             load_one_mtx_file(
                 path,
+                file_name,
                 ngene=ngene,
-                fname=None if orig_file is None else os.path.splitext(orig_file)[0],
             ),
         )
     else:
         for dir_entry in os.scandir(path):
             if dir_entry.is_dir():
-                data.addData(
-                    dir_entry.name, load_one_mtx_file(dir_entry.path, ngene=ngene)
-                )
+                file_name = _locate_mtx_file(dir_entry.path)
+                if file_name is None:
+                    raise ValueError("Folder {} does not contain a mtx file!".format(dir_entry.path))
+                data.addData(dir_entry.name, load_one_mtx_file(dir_entry.path, file_name, ngene=ngene))
 
     return data
 
