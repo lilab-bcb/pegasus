@@ -1,3 +1,8 @@
+Version 0.16.6 `January 26, 2020`
+-----------------------------------
+
+Allow input ``mtx`` files of more filename formats.
+
 Version 0.16.5 `January 23, 2020`
 -----------------------------------
 
