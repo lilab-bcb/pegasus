@@ -119,7 +119,7 @@ def aggregate_matrices(
             if not os.path.exists(dest_path):  # localize data
                 if copy_type == "directory":
                     check_call(["mkdir", "-p", dest_path])
-                    call_args = ["gsutil", "-m", "cp", "-r", copy_path, dest_path]
+                    call_args = ["gsutil", "-m", "rsync", "-r", copy_path, dest_path]
                 else:
                     call_args = ["gsutil", "-m", "cp", copy_path, dest_path]
                 check_call(call_args)
