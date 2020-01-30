@@ -18,7 +18,7 @@ Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
-  --considered-refs <ref_list>                     A string contains comma-separated reference(e.g. genome) names. pegasus will read all groups associated with reference names in the list from the input file. If <ref_list> is None, all groups will be considered.
+  --considered-refs <ref_list>                     A string contains comma-separated reference(e.g. genome) names. pegasus will read all groups associated with reference names in the list from the input file. If <ref_list> is None, all groups will be considered. For formats like loom, mtx, dge, csv and tsv, <ref_list> is used to provide genome name. In this case if <ref_list> is None, except mtx format, '' is used as the genome name instead.
   --channel <channel_attr>                         Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
   --black-list <black_list>                        Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
