@@ -1,3 +1,8 @@
+Version 0.16.8 `January 30, 2020`
+-----------------------------------
+
+Allow input annotated ``loom`` file.
+
 Version 0.16.7 `January 28, 2020`
 -----------------------------------
 
