@@ -14,15 +14,17 @@ On top-right panel of your workspace, click the following button within red circ
    :scale: 60 %
    :align: center
 
-In the pop-out dialog (see image below), select ``CUSTOM ENVIRONMENT`` tab. Then in ``Container image`` field, choose one of Docker images from `Here <https://hub.docker.com/repository/docker/cumulusprod/pegasus-terra>`_. All the tags are for different versions of Pegasus. For example, if you want to use Pegasus version ``0.16.1``, you should type ``cumulusprod/pegasus-terra:0.16.1``:
+In the pop-out dialog (see image below), select **CUSTOM ENVIRONMENT** tab. Then in **Container image** field, type ``cumulusprod/pegasus-terra:<version>``, where ``<version>`` should be chosen from `this list <https://github.com/klarman-cell-observatory/cumulus/blob/master/docker/pegasus-terra/CHANGELOG.md>`_. All the tags are for different versions of Pegasus. For example, if you want to use Pegasus version ``0.16.1``, you should type ``cumulusprod/pegasus-terra:0.16.1``:
 
 .. image:: images/runtime_setting.png
    :scale: 50 %
    :align: center
 
-After that, set the computing resources you want to use in the new runtime environment within ``COMPUTE POWER`` field. And click ``REPLACE`` button, then ``CREATE`` button.
+Sometimes DockerHub server may go down. In this situation, we also provide backup docker images on RedHat docker registry. Simply type ``quay.io/cumulus/pegasus-terra:<version>`` in **Container image** field.
 
-After waiting for 1-2 minutes, your runtime environment should be ready. In the pop-up dialog, click ``APPLY`` button to start.
+After that, set the computing resources you want to use in the new runtime environment within **COMPUTE POWER** field. And click **REPLACE** button, then **CREATE** button.
+
+After waiting for 1-2 minutes, your runtime environment should be ready. In the pop-up dialog, click **APPLY** button to start.
 
 This runtime environment is associated with your workspace. Therefore, after creation, you can start the same environment in your workspace by clicking the following button within red circle on top-right panel:
 
@@ -34,9 +36,9 @@ This runtime environment is associated with your workspace. Therefore, after cre
 2. Create Your Terra Notebook
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In ``NOTEBOOKS`` tab of your workspace, you can either create a blank notebook, or upload your local notebook. After creation, click ``EDIT`` button to enter the edit mode, and Terra will automatically start your notebook runtime.
+In **NOTEBOOKS** tab of your workspace, you can either create a blank notebook, or upload your local notebook. After creation, click **EDIT** button to enter the edit mode, and Terra will automatically start your notebook runtime.
 
-When the start-up is done, you can type the following code in notebook to check if ``pegasus`` can be loaded and if it's the correct version you want to use::
+When the start-up is done, you can type the following code in notebook to check if *Pegasus* can be loaded and if it's the correct version you want to use::
 
 	import pegasus as pg
 	pg.__version__
