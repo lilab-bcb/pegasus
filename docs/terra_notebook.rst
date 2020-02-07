@@ -1,4 +1,4 @@
-Use ``pegasus`` on Terra Notebook
+Use Pegasus on Terra Notebook
 ----------------------------------
 
 You need to first have a `Terra <https://app.terra.bio/>`_ account.
