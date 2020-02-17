@@ -1,3 +1,8 @@
+Version 0.16.9 `February 17, 2020`
+-----------------------------------
+
+Allow reading ``h5ad`` file with user-specified batch key.
+
 Version 0.16.8 `January 30, 2020`
 -----------------------------------
 
