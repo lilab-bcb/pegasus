@@ -740,6 +740,11 @@ def read_input(
             chunk_size=chunk_size,
             backed=(None if h5ad_mode == "a" else h5ad_mode),
         )
+        if channel_attr is not None:
+            data.obs["Channel"] = data.obs[channel_attr]
+        for attr in black_list:
+            if attr in data.obs:
+                data.obs.drop(columns = attr, inplace = True)
     elif file_format == "mtx":
         data = load_mtx_file(input_file, genome, ngene=ngene)
     elif file_format == "loom":
@@ -769,9 +774,7 @@ def read_input(
                 black_list=black_list,
             )
     else:
-        assert (
-            (return_type == "AnnData") and (channel_attr is None) and (black_list == [])
-        )
+        assert return_type == "AnnData"
 
     return data
 
