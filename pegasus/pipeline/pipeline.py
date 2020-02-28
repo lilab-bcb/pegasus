@@ -2,7 +2,7 @@ import anndata
 import numpy as np
 from scipy.sparse import csr_matrix, hstack
 
-from pegasus import io, tools, cite_seq
+from pegasus import io, tools, cite_seq, misc
 
 
 def run_pipeline(input_file, output_name, **kwargs):
@@ -29,6 +29,10 @@ def run_pipeline(input_file, output_name, **kwargs):
             values = adata.X.getnnz(axis=1)
             if values.min() == 0:  # 10x raw data
                 adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
+            if kwargs['remap_singlets'] is not None:
+                misc.remap_singlets(adata, kwargs['remap_singlets'])
+            if kwargs['subset_singlets'] is not None:
+                misc.subset_singlets(adata, kwargs['subset_singlets'])
     else:
         data_list = adata
         assert len(data_list) == 2

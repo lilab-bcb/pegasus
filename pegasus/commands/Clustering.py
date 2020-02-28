@@ -24,6 +24,8 @@ Options:
 
   --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
   --select-singlets                                Only select DemuxEM-predicted singlets for analysis.
+  --remap-singlets <remap_string>                  Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2".
+  --subset-singlets <subset_string>                If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
 
   --cite-seq                                       Data are CITE-Seq data. pegasus will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
   --cite-seq-capping <percentile>                  For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
@@ -159,6 +161,8 @@ Examples:
             "subcluster": False,
             "min_genes_on_raw": int(self.args["--min-genes-on-raw"]),
             "select_singlets": self.args["--select-singlets"],
+            "remap_singlets": self.args["--remap-singlets"],
+            "subset_singlets": self.args["--subset-singlets"],
             "cite_seq": self.args["--cite-seq"],
             "cite_seq_capping": float(self.args["--cite-seq-capping"]),
             "output_filt": self.args["<output_name>"]
