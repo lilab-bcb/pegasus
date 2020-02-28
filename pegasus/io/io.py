@@ -753,6 +753,11 @@ def read_input(
         data = load_loom_file(input_file, genome, ngene=ngene)
         if isinstance(data, anndata.AnnData):
             file_format = "h5ad"
+            if channel_attr is not None:
+                data.obs["Channel"] = data.obs[channel_attr]
+            for attr in black_list:
+                if attr in data.obs:
+                    data.obs.drop(columns = attr, inplace = True)
     else:
         assert file_format == "dge" or file_format == "csv" or file_format == "tsv"
         if genome is None:
