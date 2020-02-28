@@ -1,4 +1,4 @@
-Version 0.16.10 `February 27, 2020`
+Version 0.16.11 `February 28, 2020`
 ------------------------------------
 
 * Add ``--remap-singlets`` and ``--subset-singlets`` options to 'cluster' command.
