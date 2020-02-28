@@ -1,3 +1,10 @@
+Version 0.16.10 `February 27, 2020`
+------------------------------------
+
+* Add ``--remap-singlets`` and ``--subset-singlets`` options to 'cluster' command.
+
+* Allow reading ``loom`` file with user-specified batch key and black list.
+
 Version 0.16.9 `February 17, 2020`
 -----------------------------------
 
