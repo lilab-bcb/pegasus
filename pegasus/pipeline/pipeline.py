@@ -24,16 +24,7 @@ def run_pipeline(input_file, output_name, **kwargs):
         ),
     )
 
-    if not kwargs["cite_seq"]:
-        if is_raw:
-            values = adata.X.getnnz(axis=1)
-            if values.min() == 0:  # 10x raw data
-                adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
-            if kwargs['remap_singlets'] is not None:
-                misc.remap_singlets(adata, kwargs['remap_singlets'])
-            if kwargs['subset_singlets'] is not None:
-                misc.subset_singlets(adata, kwargs['subset_singlets'])
-    else:
+    if kwargs["cite_seq"]:
         data_list = adata
         assert len(data_list) == 2
         adata = cdata = None
@@ -43,6 +34,16 @@ def run_pipeline(input_file, output_name, **kwargs):
             else:
                 adata = data_list[i]
         assert adata is not None and cdata is not None
+
+    if is_raw:
+        values = adata.X.getnnz(axis=1)
+        if values.min() == 0:  # 10x raw data
+            adata._inplace_subset_obs(values >= kwargs["min_genes_on_raw"])
+        if kwargs['remap_singlets'] is not None:
+            misc.remap_singlets(adata, kwargs['remap_singlets'])
+        if kwargs['subset_singlets'] is not None:
+            misc.subset_singlets(adata, kwargs['subset_singlets'])
+
     print("Inputs are loaded.")
 
     if kwargs["seurat_compatible"]:
