@@ -3,6 +3,9 @@ import pandas as pd
 from typing import List
 from anndata import AnnData
 
+import logging
+logger = logging.getLogger("pegasus")
+
 from pegasus.io import read_input
 
 
@@ -302,3 +305,33 @@ def perform_oneway_anova(
             data.obs.loc[idx, res_key] = group_names[i]
 
     return results
+
+
+
+def remap_singlets(data: AnnData, remap_string: str) -> None:
+    """ Remap demuxEM identified singlets. For example cell1_tag1, cell1_tag2 can be mapped all to cell1.
+    """
+    if 'assignment' not in data.obs:
+        raise ValueError("No assignment field detected!")
+    data.obs['assignment.orig'] = data.obs['assignment']
+    remap = {}
+    tokens = remap_string.split(';')
+    for token in tokens:
+        new_key, old_str = token.split(':')
+        old_keys = old_str.split(',')
+        for key in old_keys:
+            remap[key] = new_key
+    data.obs['assignment'] = pd.Categorical(data.obs['assignment'].apply(lambda x: remap[x] if x in remap else x))
+    logger.info("Singlets are remapped.")
+
+
+def subset_singlets(data: AnnData, subset_string: str) -> None:
+    """ Select subset of singlets.
+    """
+    if 'assignment' not in data.obs:
+        raise ValueError("No assignment field detected!")
+    subset = np.array(subset_string.split(','))
+    idx = np.isin(data.obs['assignment'], subset)
+    n_before = data.shape[0]
+    data._inplace_subset_obs(idx)
+    logger.info("Singlets are subsetted. {0} singlets are selected from {1} cells.".format(idx.sum(), n_before))

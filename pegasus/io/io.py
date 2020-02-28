@@ -775,6 +775,9 @@ def read_input(
             )
     else:
         assert return_type == "AnnData"
+        if select_singlets:
+            assert 'demux_type' in data.obs
+            data._inplace_subset_obs((data.obs['demux_type'] == 'singlet').values)
 
     return data
 
