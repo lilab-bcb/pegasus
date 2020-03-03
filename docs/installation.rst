@@ -102,6 +102,10 @@ First, install Homebrew by following the instruction on its website: https://bre
 
 	brew install cmake libxml2 curl libomp
 
+And install macOS command line tools::
+
+	xcode-select --install
+
 Next, you can install Pegasus system-wide by PyPI (see `macOS Installation via PyPI`_), or within a Miniconda environment (see `macOS Installation via Miniconda`_).
 
 .. _macOS Installation via PyPI: ./installation.html#id2
