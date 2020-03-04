@@ -385,6 +385,28 @@
 					"comment" : "important markers"
 				}
 			]
-		}				
+		},
+
+		{
+			"name" : "Macrophage",
+			"markers" : [
+				{
+					"genes" : ["MRC1+", "CD163+", "ITGAM+", "RBPJ+", "MS4A4A+", "MS4A6A+", "LYZ+", "C1QA+", "MSR1+"],
+					"weight" : 1.0,
+					"comment" : "Markers from HTAPP paper"
+				}
+			]
+		},
+
+		{
+			"name" : "Mast cell",
+			"markers" : [
+				{
+					"genes" : ["TPSAB1+", "TPSB2+", "CPA3+", "KIT+", "FCER1G+"],
+					"weight" : 1.0,
+					"comment" : "Markers from HTAPP paper"
+				}
+			]
+		}
 	]
 }
