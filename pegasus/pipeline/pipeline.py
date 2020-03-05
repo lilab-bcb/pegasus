@@ -385,6 +385,7 @@ def run_pipeline(input_file, output_name, **kwargs):
     io.write_output(adata, output_name + ".h5ad")
 
     if kwargs["output_loom"]:
+        adata.varm = {}
         io.write_output(adata, output_name + ".loom")
 
     print("Results are written.")
