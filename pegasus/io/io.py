@@ -891,6 +891,26 @@ def _write_mtx(data: "AnnData", output_file: str):
         data.var.to_csv(os.path.join(output_dir, 'var.csv.gz'), index_label='id', columns=var_columns)
 
 
+def _write_loom(data: "AnnData", output_file: str):
+    
+    def _process_attrs(key_name: str, attrs: pd.DataFrame, attrs_multi: 'anndata.core.alignedmapping.AxisArrays') -> Dict[str, object]:
+        res_dict = {key_name: attrs.index.values}
+        for key in attrs.columns:
+            res_dict[key] = np.array(attrs[key].values)
+        for key in attrs_multi.keys():
+            value = attrs_multi[key]
+            if value.ndim > 1:
+                res_dict[key] = value if value.shape[1] > 1 else value[:, 0]
+        return res_dict
+
+    row_attrs = _process_attrs('var_names', data.var, data.varm)
+    col_attrs = _process_attrs('obs_names', data.obs, data.obsm)
+
+    import loompy
+    loompy.create(output_file, data.X.T, row_attrs = row_attrs, col_attrs = col_attrs)
+    logger.info('{0} is written.'.format(output_file))
+
+
 @pg_deco.TimeLogger()
 def write_output(
     data: "MemData or AnnData",
@@ -957,7 +977,7 @@ def write_output(
     elif suffix == "h5sc" or suffix == "h5":
         data.write_h5_file(output_file)
     elif suffix == "loom":
-        data.write_loom(output_file, write_obsm_varm=True)
+        _write_loom(data, output_file)
     elif (
         not data.isbacked
         or (data.isbacked and data.file._file.h5f.mode != "r+")
