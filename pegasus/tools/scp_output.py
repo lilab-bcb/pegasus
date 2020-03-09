@@ -1,9 +1,9 @@
+import time
+
 import numpy as np
 import pandas as pd
-import time
-from scipy.sparse import issparse
-
 from pegasus.io import read_input
+from scipy.sparse import issparse
 
 
 def scp_write_coords(data, output_name):
@@ -17,24 +17,23 @@ def scp_write_coords(data, output_name):
         clu_str = "".join(["\t" + x for x in cluster_labels])
         group_str = "".join(["\tgroup"] * len(cluster_labels))
 
-    basis_set = set(data.obsm_keys())
-    for basis in ["X_tsne", "X_fitsne", "X_umap", "X_diffmap_pca", "X_fle", "X_net_tsne", "X_net_umap", "X_net_fle"]:
-        if basis in basis_set:
-            coords = ["X", "Y"] if basis != "X_diffmap_pca" else ["X", "Y", "Z"]
-            coo_str = "\t".join(coords)
-            num_str = "\t".join(["numeric"] * len(coords))
-            coord_file = "{}.scp.{}.coords.txt".format(output_name, basis)
-            with open(coord_file, "w") as fout:
-                fout.write("NAME\t{coo}{clu}\n".format(coo=coo_str, clu=clu_str))
-                fout.write("TYPE\t{coo}{clu}\n".format(coo=num_str, clu=group_str))
-            df_out = pd.DataFrame(
-                data.obsm[basis][:, 0 : len(coords)],
-                columns=coords,
-                index=data.obs_names,
-            )
-            df_out = pd.concat([df_out, df_labels], axis=1)
-            df_out.to_csv(coord_file, sep="\t", header=False, mode="a")
-            print("Coordinate file {} is written.".format(coord_file))
+    for basis in data.obsm_keys():
+        basis_X = data.obsm[basis]
+        coords = ["X", "Y"] if basis_X.shape[1] == 2 else ["X", "Y", "Z"]
+        coo_str = "\t".join(coords)
+        num_str = "\t".join(["numeric"] * len(coords))
+        coord_file = "{}.scp.{}.coords.txt".format(output_name, basis)
+        with open(coord_file, "w") as fout:
+            fout.write("NAME\t{coo}{clu}\n".format(coo=coo_str, clu=clu_str))
+            fout.write("TYPE\t{coo}{clu}\n".format(coo=num_str, clu=group_str))
+        df_out = pd.DataFrame(
+            basis_X[:, 0: len(coords)],
+            columns=coords,
+            index=data.obs_names,
+        )
+        df_out = pd.concat([df_out, df_labels], axis=1)
+        df_out.to_csv(coord_file, sep="\t", header=False, mode="a")
+        print("Coordinate file {} is written.".format(coord_file))
 
 
 def scp_write_metadata(data, output_name):
@@ -137,11 +136,11 @@ def run_scp_output(
         * ``output_name.scp.basis.coords.txt``, where ``basis`` is for each key in ``adata.obsm`` field.
         * ``output_name.scp.metadata.txt``.
         * Gene expression files:
-            * If in sparse format: 
+            * If in sparse format:
                 * ``output_name.scp.features.tsv``, information on genes;
                 * ``output_name.scp.barcodes.tsv``, information on cell barcodes;
                 * ``output_name.scp.matrix.mtx``, count matrix.
-            * If not in sparse: 
+            * If not in sparse:
                 * ``output_name.scp.expr.txt``.
 
     Examples
