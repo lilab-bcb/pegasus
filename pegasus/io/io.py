@@ -14,6 +14,7 @@ from scipy.io import mmread
 from scipy.sparse import csr_matrix, issparse
 
 from . import Array2D, MemData
+from .anndata_legacy import _to_dict_fixed_width_arrays, _parse_whitelist, _update_backed_h5ad
 
 logger = logging.getLogger("pegasus")
 from pegasus.utils import decorators as pg_deco
@@ -787,76 +788,6 @@ def read_input(
     return data
 
 
-def _parse_whitelist(whitelist: List[str]):
-    parse_results = {}
-    for value in whitelist:
-        tokens = value.split("/")
-        curr_dict = parse_results
-        for i in range(len(tokens) - 1):
-            if tokens[i] not in curr_dict:
-                curr_dict[tokens[i]] = dict()
-            curr_dict = curr_dict[tokens[i]]
-            if curr_dict is None:
-                break
-        if curr_dict is not None:
-            curr_dict[tokens[-1]] = None
-    return parse_results
-
-
-def _update_backed_h5ad(group: "hdf5 group", dat: dict, whitelist: dict):
-    import h5py
-    from collections.abc import Mapping
-
-    for key, value in dat.items():
-        if not isinstance(key, str):
-            logging.warning(
-                "Dictionary key {} is transformed to str upon writing to h5,"
-                "using string keys is recommended".format(key)
-            )
-            key = str(key)
-
-        if whitelist is None or key in whitelist:
-            if isinstance(value, Mapping):
-                subgroup = (
-                    group[key] if key in group.keys() else group.create_group(key)
-                )
-                assert isinstance(subgroup, h5py.Group)
-                _update_backed_h5ad(
-                    subgroup, value, whitelist[key] if whitelist is not None else None
-                )
-            else:
-                if key in group.keys():
-                    del group[key]
-                if issparse(value):
-                    sparse_mat = group.create_group(key)
-                    sparse_mat.attrs["h5sparse_format"] = value.format
-                    sparse_mat.attrs["h5sparse_shape"] = np.array(value.shape)
-                    sparse_mat.create_dataset(
-                        "data", data=value.data, compression="gzip"
-                    )
-                    sparse_mat.create_dataset(
-                        "indices", data=value.indices, compression="gzip"
-                    )
-                    sparse_mat.create_dataset(
-                        "indptr", data=value.indptr, compression="gzip"
-                    )
-                else:
-                    value = np.array(value) if np.ndim(value) > 0 else np.array([value])
-                    sdt = h5py.special_dtype(vlen=str)
-                    if value.dtype.kind in {"U", "O"}:
-                        value = value.astype(sdt)
-                    if value.dtype.names is not None:
-                        new_dtype = value.dtype.descr
-                        convert_type = False
-                        for i in range(len(value.dtype)):
-                            if value.dtype[i].kind in {"U", "O"}:
-                                new_dtype[i] = (new_dtype[i][0], sdt)
-                                convert_type = True
-                        if convert_type:
-                            value = value.astype(new_dtype)
-                    group.create_dataset(key, data=value, compression="gzip")
-
-
 def _write_mtx(data: "AnnData", output_file: str):
     import scipy.io
     import gzip
@@ -893,7 +824,7 @@ def _write_mtx(data: "AnnData", output_file: str):
 
 def _write_loom(data: "AnnData", output_file: str):
     
-    def _process_attrs(key_name: str, attrs: pd.DataFrame, attrs_multi: 'anndata.core.alignedmapping.AxisArrays') -> Dict[str, object]:
+    def _process_attrs(key_name: str, attrs: pd.DataFrame, attrs_multi: 'anndata._core.aligned_mapping.AxisArrays') -> Dict[str, object]:
         res_dict = {key_name: attrs.index.values}
         for key in attrs.columns:
             res_dict[key] = np.array(attrs[key].values)
@@ -980,15 +911,14 @@ def write_output(
         _write_loom(data, output_file)
     elif (
         not data.isbacked
-        or (data.isbacked and data.file._file.h5f.mode != "r+")
-        or not hasattr(data, "_to_dict_fixed_width_arrays")
-    ):  # check for old version of anndata
+        or (data.isbacked and data.file._file.mode != "r+")
+    ):
         data.write(output_file, compression="gzip")
     else:
-        assert data.file._file.h5f.mode == "r+"
+        assert data.file._file.mode == "r+"
         import h5py
 
-        h5_file = data.file._file.h5f
+        h5_file = data.file._file
         # Fix old h5ad files in which obsm/varm were stored as compound datasets
         for key in ["obsm", "varm"]:
             if key in h5_file.keys() and isinstance(h5_file[key], h5py.Dataset):
@@ -996,6 +926,6 @@ def write_output(
                 whitelist.append(key)
 
         _update_backed_h5ad(
-            h5_file, data._to_dict_fixed_width_arrays(), _parse_whitelist(whitelist)
+            h5_file, _to_dict_fixed_width_arrays(data), _parse_whitelist(whitelist)
         )
         h5_file.close()
