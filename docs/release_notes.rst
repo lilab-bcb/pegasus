@@ -1,3 +1,16 @@
+Version 0.17.0 `March 10, 2020`
+--------------------------------
+
+* Support *anndata* 0.7 and *pandas* 1.0.
+
+* Better ``loom`` format output writing function.
+
+* Bug fix on ``mtx`` format output writing function.
+
+* Update human immune cell markers.
+
+* Improve ``pegasus scp_output`` command.
+
 Version 0.16.11 `February 28, 2020`
 ------------------------------------
 
