@@ -813,7 +813,7 @@ def _write_mtx(data: "AnnData", output_file: str):
         features_df['gene_ids'] = data.var.index
         features_df['gene_names'] = data.var.index
     features_df['type'] = 'Gene Expression'
-    features_df.to_csv(os.path.join(output_dir, 'features.tsv.gz'), header=None, sep='\t')
+    features_df.to_csv(os.path.join(output_dir, 'features.tsv.gz'), header=None, sep='\t', index=False)
     data.obs.to_csv(os.path.join(output_dir, 'obs.csv.gz'), index_label='id')
     var_columns = list(data.var.columns)
     if 'gene_ids' in data.var:
