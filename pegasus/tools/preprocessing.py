@@ -147,9 +147,8 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
         inplace=True,
     )
 
-    data = data[data.obs["passed_qc"]]  # focusing only on filtered cells
-
-    gb2 = data.obs.groupby("Channel")
+    # focusing only on filtered cells
+    gb2 = data.obs[data.obs["passed_qc"]].groupby("Channel")
     df_after = gb2.median()
     df_after = df_after.assign(kept=gb2.size())
     df_after.rename(

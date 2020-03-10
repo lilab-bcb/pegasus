@@ -8,7 +8,7 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 requires = [
-    "anndata",
+    "anndata>=0.7.1",
     "Cython",
     "docopt",
     "fisher>=0.1.9",
@@ -31,7 +31,7 @@ requires = [
     "python-igraph",
     "scikit-learn>=0.21.3",
     "scikit-misc",
-    "scipy<1.3",
+    "scipy",
     "scplot",
     "seaborn",
     "setuptools",
