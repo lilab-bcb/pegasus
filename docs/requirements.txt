@@ -4,7 +4,7 @@ sphinx-autodoc-typehints
 anndata
 pandas>=0.21
 matplotlib>=2.0.0
-scipy<1.3
+scipy
 seaborn
 tables
 statsmodels
@@ -17,4 +17,5 @@ importlib_metadata; python_version < '3.8'
 umap-learn>=0.3.9
 forceatlas2-python
 pyarrow
+bokeh<=1.4.0
 scplot
