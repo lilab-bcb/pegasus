@@ -14,6 +14,7 @@ from typing import List
 from pegasus.tools import construct_graph
 
 import logging
+
 logger = logging.getLogger("pegasus")
 from pegasus.utils import decorators as pg_deco
 
@@ -80,7 +81,13 @@ def louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.perf_counter()
-    logger.info("Louvain clustering is done. Time spent = {:.2f}s.".format(end - start))
+    n_clusters = data.obs[class_label].cat.categories.size
+    logger.info(
+        "Louvain clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
+            cluster=n_clusters, duration=end - start
+        )
+    )
+
 
 def leiden(
     data: AnnData,
@@ -152,28 +159,43 @@ def leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.perf_counter()
-    logger.info("Leiden clustering is done. Time spent = {:.2f}s.".format(end - start))
+    n_clusters = data.obs[class_label].cat.categories.size
+    logger.info(
+        "Leiden clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
+            cluster=n_clusters, duration=end - start
+        )
+    )
 
 
 @pg_deco.TimeLogger()
-def partition_cells_by_kmeans(data: AnnData, rep: str, n_jobs: int, n_clusters: int, n_clusters2: int, n_init: int, random_state: int) -> List[int]:
+def partition_cells_by_kmeans(
+    data: AnnData,
+    rep: str,
+    n_jobs: int,
+    n_clusters: int,
+    n_clusters2: int,
+    n_init: int,
+    random_state: int,
+) -> List[int]:
     n_jobs = effective_n_jobs(n_jobs)
 
     rep_key = "X_" + rep
     X = data.obsm[rep_key].astype("float64")
 
-    km = KMeans(n_clusters=n_clusters, n_jobs=n_jobs, n_init = n_init, random_state=random_state)
+    km = KMeans(
+        n_clusters=n_clusters, n_jobs=n_jobs, n_init=n_init, random_state=random_state
+    )
     km.fit(X)
     coarse = km.labels_.copy()
 
-    km.set_params(n_init = 1)
+    km.set_params(n_init=1)
     labels = coarse.copy()
     base_sum = 0
     for i in range(n_clusters):
         idx = coarse == i
         nc = min(n_clusters2, idx.sum())
         km.set_params(n_clusters=nc)
-        km.fit(X[idx,:])
+        km.fit(X[idx, :])
         labels[idx] = base_sum + km.labels_
         base_sum += nc
 
@@ -246,7 +268,9 @@ def spectral_louvain(
     start = time.perf_counter()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
-        logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
+        logger.warning(
+            "{} is not calculated, switch to pca instead.".format(rep_kmeans)
+        )
         rep_kmeans = "pca"
         if "X_" + rep_kmeans not in data.obsm.keys():
             raise ValueError("Please run {} first!".format(rep_kmeans))
@@ -276,8 +300,11 @@ def spectral_louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.perf_counter()
+    n_clusters = data.obs[class_label].cat.categories.size
     logger.info(
-        "Spectral Louvain clustering is done. Time spent = {:.2f}s.".format(end - start)
+        "Spectral Louvain clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
+            cluster=n_clusters, duration=end - start
+        )
     )
 
 
@@ -347,7 +374,9 @@ def spectral_leiden(
     start = time.perf_counter()
 
     if "X_" + rep_kmeans not in data.obsm.keys():
-        logger.warning("{} is not calculated, switch to pca instead.".format(rep_kmeans))
+        logger.warning(
+            "{} is not calculated, switch to pca instead.".format(rep_kmeans)
+        )
         rep_kmeans = "pca"
         if "X_" + rep_kmeans not in data.obsm.keys():
             raise ValueError("Please run {} first!".format(rep_kmeans))
@@ -377,8 +406,11 @@ def spectral_leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     end = time.perf_counter()
+    n_clusters = data.obs[class_label].cat.categories.size
     logger.info(
-        "Spectral Leiden clustering is done. Time spent = {:.2f}s.".format(end - start)
+        "Spectral Leiden clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
+            cluster=n_clusters, duration=end - start
+        )
     )
 
 
@@ -448,27 +480,45 @@ def cluster(
     >>> pg.cluster(adata, algo = 'leiden')
     """
 
-    if algo not in {'louvain', 'leiden', 'spectral_louvain', 'spectral_leiden'}:
+    if algo not in {"louvain", "leiden", "spectral_louvain", "spectral_leiden"}:
         raise ValueError("Unknown clustering algorithm {}.".format(algo))
 
     if class_label is None:
-        class_label = algo + '_labels'
+        class_label = algo + "_labels"
 
-    kwargs = {'data' : data, 'rep' : rep, 'resolution' : resolution, 'random_state' : random_state, 'class_label': class_label}
-    if algo == 'leiden':
-        kwargs['n_iter'] = n_iter
-    if algo in ['spectral_louvain', 'spectral_leiden']:
-        kwargs.update({'rep_kmeans': rep_kmeans, 'n_clusters': n_clusters, 'n_clusters2': n_clusters2, 'n_init': n_init, 'n_jobs': n_jobs})
+    kwargs = {
+        "data": data,
+        "rep": rep,
+        "resolution": resolution,
+        "random_state": random_state,
+        "class_label": class_label,
+    }
+    if algo == "leiden":
+        kwargs["n_iter"] = n_iter
+    if algo in ["spectral_louvain", "spectral_leiden"]:
+        kwargs.update(
+            {
+                "rep_kmeans": rep_kmeans,
+                "n_clusters": n_clusters,
+                "n_clusters2": n_clusters2,
+                "n_init": n_init,
+                "n_jobs": n_jobs,
+            }
+        )
 
     cluster_func = globals()[algo]
 
-    cluster_func(**kwargs) # clustering
+    cluster_func(**kwargs)  # clustering
     if data.shape[0] < 100000 and data.obs[class_label].value_counts().min() == 1:
         new_resol = resolution
         while new_resol > 0.0:
             new_resol -= 0.1
-            kwargs['resolution'] = new_resol
+            kwargs["resolution"] = new_resol
             cluster_func(**kwargs)
             if data.obs[class_label].value_counts().min() > 1:
                 break
-        logger.warning("Reduced resolution from {:.2f} to {:.2f} to avoid clusters of size 1.".format(resolution, new_resol))
+        logger.warning(
+            "Reduced resolution from {:.2f} to {:.2f} to avoid clusters of size 1.".format(
+                resolution, new_resol
+            )
+        )
