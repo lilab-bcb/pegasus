@@ -18,6 +18,8 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 warnings.filterwarnings("ignore", category=UserWarning,  module='lightgbm')
+warnings.filterwarnings("ignore", category=FutureWarning, module='anndata')
+
 
 from .io import infer_file_format, read_input, write_output
 from .tools import (
