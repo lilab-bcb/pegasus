@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_categorical_dtype
 
 from scipy.sparse import issparse
 from collections import defaultdict
@@ -21,14 +22,21 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
 
     if consider_batch:
         start = time.perf_counter()
-        if "Channels" not in data.uns:
-            data.uns["Channels"] = data.obs["Channel"].unique()
+        # The reason that we test if 'Channel' and 'Channels' exist in addition to the highly_variable_features function is for the case that we do not perform feature selection but do batch correction
+        if "Channel" not in data.obs:
+            data.obs["Channel"] = ""
 
+        if "Channels" not in data.uns:
+            data.uns["Channels"] = data.obs["Channel"].cat.categories.values if is_categorical_dtype(data.obs["Channel"]) else data.obs["Channel"].unique()
+
+        if data.uns["Channels"].size == 1:
+            return None
+        
         if "Group" not in data.obs:
             data.obs["Group"] = "one_group"
 
         if "Groups" not in data.uns:
-            data.uns["Groups"] = data.obs["Group"].unique()
+            data.uns["Groups"] = data.obs["Group"].cat.categories.values if is_categorical_dtype(data.obs["Group"]) else data.obs["Group"].unique()
 
         channels = data.uns["Channels"]
         groups = data.uns["Groups"]
@@ -355,11 +363,10 @@ def highly_variable_features(
     --------
     >>> pg.highly_variable_features(adata, consider_batch = False)
     """
-
     if "Channels" not in data.uns:
         if "Channel" not in data.obs:
             data.obs["Channel"] = ""
-        data.uns["Channels"] = data.obs["Channel"].unique()
+        data.uns["Channels"] = data.obs["Channel"].cat.categories.values if is_categorical_dtype(data.obs["Channel"]) else data.obs["Channel"].unique()
 
     if data.uns["Channels"].size == 1 and consider_batch:
         consider_batch = False
