@@ -685,14 +685,12 @@ def plot_heatmap(
 
     cg = sns.clustermap(
         data=df,
-        cmap="RdBu_r",
         row_colors=row_colors,
         row_cluster=False,
         col_cluster=True,
         linewidths=0,
         yticklabels=[],
-        xticklabels=genes,
-        **kwargs
+        xticklabels=genes
     )
     cg.ax_heatmap.set_ylabel("")
     # move the colorbar
