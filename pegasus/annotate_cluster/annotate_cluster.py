@@ -294,8 +294,9 @@ def infer_cell_types(
     predefined_markers = dict(
         human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
-        mouse_brain="mouse_brain_cell_markers.json",
         human_brain="human_brain_cell_markers.json",
+        mouse_brain="mouse_brain_cell_markers.json",
+        human_lung="human_lung_cell_markers.json",
     )
 
     if markers in predefined_markers:

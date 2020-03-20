@@ -82,6 +82,7 @@ setup(
             "mouse_immune_cell_markers.json",
             "mouse_brain_cell_markers.json",
             "human_brain_cell_markers.json",
+            "human_lung_cell_markers.json",
         ],
         "pegasus.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
     },

@@ -17,7 +17,7 @@ Arguments:
   output_file            Output annotation file.
 
 Options:
-  --marker-file <file>                    JSON file for markers. Could also be human_immune/mouse_immune/mouse_brain/human_brain, which triggers pegasus to markers included in the package. [default: human_immune]
+  --marker-file <file>                    JSON file for markers. Could also be human_immune/mouse_immune/human_brain/mouse_brain/human_lung, which triggers pegasus to markers included in the package. [default: human_immune]
   --de-test <test>                        DE test to use to infer cell types. [default: t]
   --de-alpha <alpha>                      False discovery rate to control family-wise error rate. [default: 0.05]
   --de-key <key>                          Keyword where the DE results store in varm. [default: de_res]
