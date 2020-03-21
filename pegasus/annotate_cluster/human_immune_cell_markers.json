@@ -330,7 +330,7 @@
 		},
 
 		{
-			"name" : "Erythrocyte",
+			"name" : "Erythroid cells",
 			"markers" : [
 				{
 					"genes" : ["GYPA+"], 
@@ -391,11 +391,36 @@
 			"name" : "Macrophage",
 			"markers" : [
 				{
-					"genes" : ["MRC1+", "CD163+", "ITGAM+", "RBPJ+", "MS4A4A+", "MS4A6A+", "LYZ+", "C1QA+", "MSR1+"],
+					"genes" : ["MRC1+", "CD68+", "CD163+", "ITGAM+", "RBPJ+", "MS4A4A+", "MS4A6A+", "LYZ+", "C1QA+", "MSR1+"],
 					"weight" : 1.0,
 					"comment" : "Markers from HTAPP paper"
 				}
-			]
+			],
+			"subtypes" : {
+				"title" : "Macrophage subtype markers",
+				"cell_types" : [
+					{
+						"name" : "M1 macrophage",
+						"markers" : [
+							{
+								"genes" : ["FCGR2+", "FCGR1A+", "CD80+", "CD86+", "CXCL10+"],
+								"weight" : 1.0,
+								"comment" : "Markers from https://www.cusabio.com/c-20938.html and CellMarker"
+ 							}
+						]
+					},
+					{
+						"name" : "M2 macrophage",
+						"markers" : [
+							{
+								"genes" : ["CD163+", "MRC1+"],
+								"weight" : 1.0,
+								"comment" : "Markers from https://www.cusabio.com/c-20938.html"
+ 							}
+						]
+					}
+				]
+			}
 		},
 
 		{
