@@ -213,7 +213,9 @@ def run_harmony(
     Returns
     -------
     out_rep: ``str``
-        The keyword in ``data.obsm`` referring to the embedding calculated by Harmony algorithm.
+        The keyword in ``data.obsm`` referring to the embedding calculated by Harmony algorithm. 
+
+        This keyword is ``rep + '_harmony'``, where ``rep`` is the input parameter above.
 
     Update ``data.obsm``:
         * ``data.obsm['X_' + out_rep]``: The embedding calculated by Harmony algorithm.
