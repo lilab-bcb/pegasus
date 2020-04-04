@@ -216,7 +216,7 @@ def filter_data(data: AnnData) -> None:
     data._inplace_subset_obs(data.obs["passed_qc"].values)
     data._inplace_subset_var((data.var["n_cells"] > 0).values)
     logger.info(
-        "After filteration, {nc}/{ncp} cells and {ng}/{ngp} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(
+        "After filtration, {nc}/{ncp} cells and {ng}/{ngp} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(
             nc=data.shape[0],
             ng=data.shape[1],
             ncp=prior_shape[0],
