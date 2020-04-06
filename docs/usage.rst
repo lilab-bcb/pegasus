@@ -384,8 +384,11 @@ to see the usage information::
 	-\\-temp-folder <temp_folder>
 		Joblib temporary folder for memmapping numpy arrays.
   
-	-\\-nPC <number>
+	-\\-pca-n <number>
 		Number of principal components. [default: 50]
+
+	-\\-pca-robust
+		Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
 
 	-\\-knn-K <number>
 		Number of nearest neighbors for building kNN graph. [default: 100]
@@ -1091,8 +1094,11 @@ to see the usage information::
 	-\\-temp-folder <temp_folder>
 		Joblib temporary folder for memmapping numpy arrays.
   
-	-\\-nPC <number>
+	-\\-pca-n <number>
 		Number of principal components. [default: 50]
+
+	-\\-pca-robust
+		Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
 
 	-\\-knn-K <number>
 		Number of nearest neighbors for building kNN graph. [default: 100]
