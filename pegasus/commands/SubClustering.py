@@ -35,7 +35,9 @@ Options:
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
-  --nPC <number>                                   Number of principal components. [default: 50]
+  --pca-n <number>                                 Number of principal components. [default: 50]
+  --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable. 
+
   --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
   --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
@@ -146,7 +148,8 @@ Examples:
             "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
-            "nPC": int(self.args["--nPC"]),
+            "pca_n": int(self.args["--pca-n"]),
+            "pca_robust": self.args["--pca-robust"],
             "K": int(self.args["--knn-K"]),
             "full_speed": self.args["--knn-full-speed"],
             "kBET": self.args["--kBET"],
