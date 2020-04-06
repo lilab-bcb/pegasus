@@ -46,3 +46,4 @@ from .scp_output import (
 )
 from .down_sampling import down_sample
 from .subcluster_utils import get_anndata_for_subclustering
+from .signature_score import calc_signature_score
