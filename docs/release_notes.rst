@@ -1,3 +1,13 @@
+Version 0.17.1 `April 6, 2020`
+--------------------------------
+
+* Improve pegasus command-line tool log.
+* Add human lung markers.
+* Improve log-normalization speed.
+* Provide robust version of PCA calculation as an option.
+* Add signature score calculation API.
+* Fix bugs.
+
 Version 0.17.0 `March 10, 2020`
 --------------------------------
 
