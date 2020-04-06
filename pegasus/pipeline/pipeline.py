@@ -109,8 +109,9 @@ def run_pipeline(input_file, output_name, **kwargs):
         # PCA
         tools.pca(
             adata,
-            n_components=kwargs["nPC"],
+            n_components=kwargs["pca_n"],
             features="highly_variable_features",
+            robust=kwargs["pca_robust"],
             random_state=kwargs["random_state"],
         )
 

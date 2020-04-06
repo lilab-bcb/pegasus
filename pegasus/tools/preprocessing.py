@@ -359,7 +359,7 @@ def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
     mat = data.X[:, data.var["robust"].values]
     scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
-    data.X = data.X.log1p()
+    data.X.data = np.log1p(data.X.data) # faster than data.X.log1p()
 
 
 def select_features(data: AnnData, features: str = None) -> str:
@@ -410,6 +410,7 @@ def pca(
     features: str = "highly_variable_features",
     standardize: bool = True,
     max_value: float = 10,
+    robust: bool = False,
     random_state: int = 0,
 ) -> None:
     """Perform Principle Component Analysis (PCA) to the data.
@@ -432,6 +433,9 @@ def pca(
 
     max_value: ``float``, optional, default: ``10``.
         The threshold to truncate data after scaling. If ``None``, do not truncate.
+
+    robust: ``bool``, optional, default: ``False``.
+        If true, use 'arpack' instead of 'randomized' for large sparse matrices (i.e. max(X.shape) > 500 and n_components < 0.8 * min(X.shape))
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -479,6 +483,10 @@ def pca(
         X[X < -max_value] = -max_value
 
     pca = PCA(n_components=n_components, random_state=random_state)
+    if robust:
+        svd_solver = "arpack" if max(X.shape) > 500 and n_components < 0.8 * min(X.shape) else "full"
+        pca = PCA(n_components=n_components, random_state=random_state, svd_solver=svd_solver)
+
     X_pca = pca.fit_transform(X)
 
     data.obsm["X_pca"] = X_pca

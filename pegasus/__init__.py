@@ -58,6 +58,7 @@ from .tools import (
     write_results_to_excel,
     find_markers,
     infer_path,
+    calc_signature_score,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .demuxEM import estimate_background_probs, demultiplex
