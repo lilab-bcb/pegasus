@@ -349,10 +349,10 @@ def plot_scatter(
                         marker=".",
                         alpha=alpha_value,
                         edgecolors="none",
-                        cmap="viridis",
+                        cmap="YlOrRd",
                         rasterized=True,
                     )
-                    img.set_clim(vmin, vmax)
+                    #img.set_clim(vmin, vmax)
                     left, bottom, width, height = ax.get_position().bounds
                     rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
                     ax_colorbar = fig.add_axes(rect)
@@ -560,7 +560,7 @@ def plot_scatter_genes(
                     marker=".",
                     alpha=alpha,
                     edgecolors="none",
-                    cmap="viridis",
+                    cmap="YlOrRd",
                     rasterized=True,
                 )
 
@@ -637,7 +637,7 @@ def plot_scatter_gene_groups(
                     marker=".",
                     alpha=alpha,
                     edgecolors="none",
-                    cmap="viridis",
+                    cmap="YlOrRd",
                     vmin=0.0,
                     vmax=vmax,
                     rasterized=True,
