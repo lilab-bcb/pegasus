@@ -13,6 +13,7 @@ requires = [
     "docopt",
     "fisher>=0.1.9",
     "forceatlas2-python",
+    "gprofiler-official",
     "harmony-pytorch",
     "hnswlib",
     "joblib",
@@ -39,6 +40,7 @@ requires = [
     "tables",
     "torch",
     "umap-learn>=0.3.9",
+    "xlrd",
     "xlsxwriter"
 ]
 
