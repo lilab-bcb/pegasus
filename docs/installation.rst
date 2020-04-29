@@ -1,7 +1,7 @@
 Installation
 ------------
 
-Pegasus works with Python 3 only. **Note:** Pegasus doesn't work with Python 3.8 yet, because Cython has not been updated for this Python version.
+Pegasus works with Python 3 only (Python 3.5 or above).
 
 Linux
 ^^^^^
@@ -65,7 +65,7 @@ In addition, remember to type ``yes`` when asked if you wish the installer to in
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-	conda create -n pegasus -y python=3.7
+	conda create -n pegasus -y pip
 
 3. Enter ``pegasus`` environment by activating::
 
@@ -162,7 +162,7 @@ Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-	conda create -n pegasus -y python=3.7
+	conda create -n pegasus -y pip
 
 3. Enter ``pegasus`` environment by activating::
 
@@ -174,9 +174,9 @@ Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
 5. **For macOS 10.14 or later:** for these macOS versions, you need to set the following environment variable before installing Pegasus::
 
-	export MACOSX_DEPLOYMENT_TARGET=10.14
+	export MACOSX_DEPLOYMENT_TARGET=10.15
 
-where ``10.14`` is the version number for macOS Mojave. You should change it to your own OS version. For example, ``10.15`` is for macOS Catalina.
+where ``10.14`` is the version number for macOS Catalina. You should change it to your own OS version. For example, ``10.14`` is for macOS Mojave.
 
 5. Install pegasus::
 
