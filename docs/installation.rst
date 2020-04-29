@@ -176,7 +176,7 @@ Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
 	export MACOSX_DEPLOYMENT_TARGET=10.15
 
-where ``10.14`` is the version number for macOS Catalina. You should change it to your own OS version. For example, ``10.14`` is for macOS Mojave.
+where ``10.15`` is the version number for macOS Catalina. You should change it to your own OS version. For example, ``10.14`` is for macOS Mojave.
 
 5. Install pegasus::
 
