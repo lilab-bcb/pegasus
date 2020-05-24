@@ -17,8 +17,13 @@ First, install the following dependencies by::
 
 Next, you can install Pegasus system-wide by PyPI (see `Linux Install via PyPI`_), or within a Miniconda environment (see `Linux Install via Miniconda`_).
 
+To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK which is included in Ubuntu official repository::
+
+	sudo apt install default-jdk
+
 .. _Linux Install via PyPI: ./installation.html#install-via-pypi
 .. _Linux Install via Miniconda: ./installation.html#install-via-miniconda
+.. _Oracle JDK: https://www.oracle.com/java/
 
 Install via PyPI
 ################
@@ -107,6 +112,10 @@ And install macOS command line tools::
 	xcode-select --install
 
 Next, you can install Pegasus system-wide by PyPI (see `macOS Installation via PyPI`_), or within a Miniconda environment (see `macOS Installation via Miniconda`_).
+
+To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK via Homebrew::
+
+	brew cast install java
 
 .. _macOS Installation via PyPI: ./installation.html#id2
 .. _macOS Installation via Miniconda: ./installation.html#id3
@@ -200,7 +209,7 @@ Development Version
 
 To install Pegasus development version directly from `its GitHub respository <https://github.com/klarman-cell-observatory/pegasus>`_, please do the following steps:
 
-1. Install prerequisite libraries as mentioned in above sections. 
+1. Install prerequisite libraries as mentioned in above sections.
 
 2. Install Git. See `here <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ for how to install Git.
 
