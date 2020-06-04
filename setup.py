@@ -1,4 +1,3 @@
-import versioneer
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -46,8 +45,6 @@ requires = [
 
 setup(
     name="pegasuspy",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
     description="Pegasus is a Python package for analyzing sc/snRNA-seq data of millions of cells",
     long_description=long_description,
     url="https://github.com/klarman-cell-observatory/pegasus",
@@ -73,6 +70,7 @@ setup(
     keywords="single cell/nucleus genomics analysis",
     packages=find_packages(),
     install_requires=requires,
+    setup_requires=['setuptools_scm'],
     extras_require=dict(
         fitsne=["fitsne"],
         leiden=['leidenalg'],
