@@ -15,6 +15,7 @@ requires = [
     "gprofiler-official",
     "harmony-pytorch",
     "hnswlib",
+    "importlib-metadata",
     "joblib",
     "lightgbm==2.2.1",
     "loompy",
