@@ -44,7 +44,6 @@ def make_static_plots(input_file, plot_type, output_file, dpi=500, **kwargs):
         fig.savefig(output_file, dpi=dpi)
 
     print(output_file + " is generated.")
-    #adata.file.close()
 
 
 def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
@@ -81,4 +80,3 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
         else:
             iplot_library.scatter_real(df, output_file, kwargs["log10"])
     print(output_file + " is generated.")
-    #adata.file.close()

@@ -356,7 +356,7 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     """
 
     assert issparse(data.X)
-    data.X.data = data.X.data.astype('float32')
+    data.as_float()
     mat = data.X[:, data.var["robust"].values]
     scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
