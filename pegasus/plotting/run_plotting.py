@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as pl
 
-from pegasus.io import read_input
+from pegasusio import read_input
 from .plot_utils import transform_basis
 from .plot_qc import plot_qc_violin
 from . import plot_library, iplot_library
@@ -10,7 +10,7 @@ from . import plot_library, iplot_library
 
 
 def make_static_plots(input_file, plot_type, output_file, dpi=500, **kwargs):
-    adata = read_input(input_file, h5ad_mode="r")
+    adata = read_input(input_file, mode="r")
 
     if plot_type == "qc_violin":
         if kwargs["attr"] is None:
@@ -44,11 +44,11 @@ def make_static_plots(input_file, plot_type, output_file, dpi=500, **kwargs):
         fig.savefig(output_file, dpi=dpi)
 
     print(output_file + " is generated.")
-    adata.file.close()
+    #adata.file.close()
 
 
 def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
-    adata = read_input(input_file, h5ad_mode="r")
+    adata = read_input(input_file, mode="r")
     basis = transform_basis(plot_type)
     if plot_type == "diffmap" or plot_type == "diffmap_pca":
         df = pd.DataFrame(
@@ -81,4 +81,4 @@ def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
         else:
             iplot_library.scatter_real(df, output_file, kwargs["log10"])
     print(output_file + " is generated.")
-    adata.file.close()
+    #adata.file.close()

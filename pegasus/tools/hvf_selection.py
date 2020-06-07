@@ -8,14 +8,14 @@ from collections import defaultdict
 from joblib import Parallel, delayed
 import skmisc.loess as sl
 from typing import List
-from anndata import AnnData
+from pegasusio import MultimodalData
 
 import logging
 logger = logging.getLogger("pegasus")
 from pegasus.utils import decorators as pg_deco
 
 
-def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
+def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
     assert issparse(data.X)
@@ -31,7 +31,7 @@ def estimate_feature_statistics(data: AnnData, consider_batch: bool) -> None:
 
         if data.uns["Channels"].size == 1:
             return None
-        
+
         if "Group" not in data.obs:
             data.obs["Group"] = "one_group"
 
@@ -125,7 +125,7 @@ def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> objec
 
 
 def select_hvf_pegasus(
-    data: AnnData, consider_batch: bool, n_top: int = 2000, span: float = 0.02
+    data: MultimodalData, consider_batch: bool, n_top: int = 2000, span: float = 0.02
 ) -> None:
     """ Select highly variable features using the pegasus method
     """
@@ -264,7 +264,7 @@ def select_hvf_seurat_multi(
 
 
 def select_hvf_seurat(
-    data: AnnData,
+    data: MultimodalData,
     consider_batch: bool,
     n_top: int,
     min_disp: float,
@@ -311,7 +311,7 @@ def select_hvf_seurat(
 
 @pg_deco.TimeLogger()
 def highly_variable_features(
-    data: AnnData,
+    data: MultimodalData,
     consider_batch: bool,
     flavor: str = "pegasus",
     n_top: int = 2000,
@@ -326,7 +326,7 @@ def highly_variable_features(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     consider_batch: ``bool``.
@@ -361,7 +361,7 @@ def highly_variable_features(
 
     Examples
     --------
-    >>> pg.highly_variable_features(adata, consider_batch = False)
+    >>> pg.highly_variable_features(data, consider_batch = False)
     """
     if "Channels" not in data.uns:
         if "Channel" not in data.obs:

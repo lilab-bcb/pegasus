@@ -8,12 +8,12 @@ class Plotting(Base):
 Generate cluster composition plots.
 
 Usage:
-  pegasus plot [options] [--restriction <restriction>...] <plot_type> <input_h5ad_file> <output_file>
+  pegasus plot [options] [--restriction <restriction>...] <plot_type> <input_zarr_file> <output_file>
   pegasus plot -h
 
 Arguments:
   plot_type              Only 2D plots, chosen from 'composition', 'scatter', 'scatter_groups', 'scatter_genes', 'scatter_gene_groups', 'heatmap', and 'qc_violin'.
-  input_h5ad_file        Single cell data in h5ad file format with clustering done by 'pegasus cluster'.
+  input_zarr_file        Single cell data in zarr.zip file format with clustering done by 'pegasus cluster'.
   output_file            Output image file.
 
 Options:
@@ -128,7 +128,7 @@ Examples:
                 kwargs["alpha"] = values
 
         make_static_plots(
-            self.args["<input_h5ad_file>"],
+            self.args["<input_zarr_file>"],
             self.args["<plot_type>"],
             self.args["<output_file>"],
             dpi=int(self.args["--dpi"]),

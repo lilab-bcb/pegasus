@@ -1,7 +1,7 @@
 import time
 import numpy as np
 from scipy.sparse import issparse
-from anndata import AnnData
+from pegasusio import MultimodalData
 import logging
 
 from pegasus.tools import estimate_feature_statistics, select_features, X_from_rep
@@ -11,14 +11,14 @@ from pegasus.utils import decorators as pg_deco
 
 
 
-def set_group_attribute(data: AnnData, attribute_string: str) -> None:
+def set_group_attribute(data: MultimodalData, attribute_string: str) -> None:
     """Set group attributes used in batch correction.
 
     Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, *pegasus* will only perform batch correction for channels within each group.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     attribute_string: ``str``
@@ -27,10 +27,10 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
         * ``None``
             Assume all channels are from one group.
 
-        * ``attr`` 
+        * ``attr``
             Define groups by sample attribute ``attr``, which is a keyword in ``data.obs``.
 
-        * ``att1+att2+...+attrn`` 
+        * ``att1+att2+...+attrn``
             Define groups by the Cartesian product of these *n* attributes, which are keywords in ``data.obs``.
 
         * ``attr=value_11,...value_1n_1;value_21,...value_2n_2;...;value_m1,...,value_mn_m``
@@ -41,19 +41,19 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
     None
 
         Update ``data.obs``:
-        
+
         * ``data.obs["Group"]``: Group ID for each cell.
 
     Examples
     --------
 
-    >>> pg.set_group_attribute(adata, attr_string = "Individual")
+    >>> pg.set_group_attribute(data, attr_string = "Individual")
 
-    >>> pg.set_group_attribute(adata, attr_string = "Individual+assignment")
+    >>> pg.set_group_attribute(data, attr_string = "Individual+assignment")
 
-    >>> pg.set_group_attribute(adata, attr_string = "Channel=1,3,5;2,4,6,8")    
+    >>> pg.set_group_attribute(data, attr_string = "Channel=1,3,5;2,4,6,8")
     """
-    
+
     if attribute_string.find("=") >= 0:
         attr, value_str = attribute_string.split("=")
         assert attr in data.obs.columns
@@ -71,7 +71,7 @@ def set_group_attribute(data: AnnData, attribute_string: str) -> None:
         assert attribute_string in data.obs.columns
         data.obs["Group"] = data.obs[attribute_string]
 
-def estimate_adjustment_matrices(data: AnnData) -> bool:
+def estimate_adjustment_matrices(data: MultimodalData) -> bool:
     """ Estimate adjustment matrices
     """
 
@@ -114,7 +114,7 @@ def estimate_adjustment_matrices(data: AnnData) -> bool:
 
     return True
 
-def correct_batch_effects(data: AnnData, keyword: str, features: str = None) -> None:
+def correct_batch_effects(data: MultimodalData, keyword: str, features: str = None) -> None:
     """ Apply calculated plus and muls to correct batch effects for a dense matrix
     """
     X = data.uns[keyword]
@@ -137,12 +137,12 @@ def correct_batch_effects(data: AnnData, keyword: str, features: str = None) -> 
         )
     # X[X < 0.0] = 0.0
 
-def correct_batch(data: AnnData, features: str = None) -> None:
+def correct_batch(data: MultimodalData, features: str = None) -> None:
     """Batch correction on data.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     features: `str`, optional, default: ``None``
@@ -156,7 +156,7 @@ def correct_batch(data: AnnData, features: str = None) -> None:
 
     Examples
     --------
-    >>> pg.correct_batch(adata, features = "highly_variable_features")
+    >>> pg.correct_batch(data, features = "highly_variable_features")
     """
 
     tot_seconds = 0.0
@@ -185,7 +185,7 @@ def correct_batch(data: AnnData, features: str = None) -> None:
 
 @pg_deco.TimeLogger()
 def run_harmony(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = 'pca',
     n_jobs: int = -1,
     n_clusters: int = None,
@@ -195,7 +195,7 @@ def run_harmony(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``.
+    data: ``MultimodalData``.
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``.
@@ -213,7 +213,7 @@ def run_harmony(
     Returns
     -------
     out_rep: ``str``
-        The keyword in ``data.obsm`` referring to the embedding calculated by Harmony algorithm. 
+        The keyword in ``data.obsm`` referring to the embedding calculated by Harmony algorithm.
 
         This keyword is ``rep + '_harmony'``, where ``rep`` is the input parameter above.
 
@@ -222,14 +222,14 @@ def run_harmony(
 
     Examples
     --------
-    >>> pg.run_harmony(adata, rep = "pca", n_jobs = 10, random_state = 25)
+    >>> pg.run_harmony(data, rep = "pca", n_jobs = 10, random_state = 25)
     """
     try:
         from harmony import harmonize
     except ImportError:
         print("Need harmony! Try 'pip install harmony-pytorch'.")
-    
-    logger.info("Start integration using Harmony.")    
+
+    logger.info("Start integration using Harmony.")
     out_rep = rep + '_harmony'
     data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
     return out_rep
