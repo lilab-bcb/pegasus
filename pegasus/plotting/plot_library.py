@@ -637,7 +637,7 @@ def plot_scatter_gene_groups(
                     marker=".",
                     alpha=alpha,
                     edgecolors="none",
-                    cmap="viridis",
+                    cmap="YlOrRd",
                     vmin=0.0,
                     vmax=vmax,
                     rasterized=True,
