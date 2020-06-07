@@ -7,7 +7,7 @@ from scipy.sparse import issparse
 from sklearn.decomposition import PCA
 
 from typing import Tuple
-from anndata import AnnData
+from pegasusio import MultimodalData
 
 import logging
 
@@ -17,7 +17,7 @@ from pegasus.utils import decorators as pg_deco
 
 @pg_deco.GCCollect()
 def qc_metrics(
-    data: AnnData,
+    data: MultimodalData,
     mito_prefix: str = "MT-",
     min_genes: int = 500,
     max_genes: int = 6000,
@@ -30,7 +30,7 @@ def qc_metrics(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
        Annotated data matrix with rows for cells and columns for genes.
     mito_prefix: ``str``, optional, default: ``"MT-"``
        Prefix for mitochondrial genes.
@@ -67,7 +67,7 @@ def qc_metrics(
 
     Examples
     --------
-    >>> pg.qcmetrics(adata)
+    >>> pg.qcmetrics(data)
     """
 
     data.obs["passed_qc"] = False
@@ -113,12 +113,12 @@ def qc_metrics(
     ]  # default all robust genes are "highly" variable
 
 
-def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_filter_stats(data: MultimodalData) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Calculate filtration stats on cell barcodes and genes, respectively.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     Returns
@@ -131,7 +131,7 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     Examples
     --------
-    >>> pg.get_filter_stats(adata)
+    >>> pg.get_filter_stats(data)
     """
 
     # cell stats
@@ -192,12 +192,12 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
     return df_cells, df_genes
 
 
-def filter_data(data: AnnData) -> None:
+def filter_data(data: MultimodalData) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     Returns
@@ -208,7 +208,7 @@ def filter_data(data: AnnData) -> None:
 
     Examples
     --------
-    >>> pg.filter_data(adata)
+    >>> pg.filter_data(data)
     """
 
     assert "passed_qc" in data.obs
@@ -227,7 +227,7 @@ def filter_data(data: AnnData) -> None:
 
 
 def generate_filter_plots(
-    data: AnnData, plot_filt: str, plot_filt_figsize: str = None
+    data: MultimodalData, plot_filt: str, plot_filt_figsize: str = None
 ) -> None:
     """ This function generates filtration plots, only used in command line.
     """
@@ -291,7 +291,7 @@ def generate_filter_plots(
 
 @pg_deco.TimeLogger()
 def run_filter_data(
-    data: AnnData,
+    data: MultimodalData,
     output_filt: str = None,
     plot_filt: str = None,
     plot_filt_figsize: Tuple[int, int] = None,
@@ -333,12 +333,12 @@ def run_filter_data(
 
 @pg_deco.TimeLogger()
 @pg_deco.GCCollect()
-def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
+def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     norm_count: ``int``, optional, default: ``1e5``.
@@ -352,22 +352,23 @@ def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
 
     Examples
     --------
-    >>> pg.log_norm(adata)
+    >>> pg.log_norm(data)
     """
 
     assert issparse(data.X)
+    data.as_float()
     mat = data.X[:, data.var["robust"].values]
     scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X.data = np.log1p(data.X.data) # faster than data.X.log1p()
 
 
-def select_features(data: AnnData, features: str = None) -> str:
+def select_features(data: MultimodalData, features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     features: ``str``, optional, default: ``None``.
@@ -384,7 +385,7 @@ def select_features(data: AnnData, features: str = None) -> str:
 
     Examples
     --------
-    >>> pg.select_features(adata)
+    >>> pg.select_features(data)
     """
     keyword = "fmat_" + str(features)  # fmat: feature matrix
 
@@ -405,7 +406,7 @@ def select_features(data: AnnData, features: str = None) -> str:
 
 @pg_deco.GCCollect()
 def pca(
-    data: AnnData,
+    data: MultimodalData,
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
@@ -419,7 +420,7 @@ def pca(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     n_components: ``int``, optional, default: ``50``.
@@ -459,7 +460,7 @@ def pca(
 
     Examples
     --------
-    >>> pg.pca(adata)
+    >>> pg.pca(data)
     """
 
     keyword = select_features(data, features)

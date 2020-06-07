@@ -35,6 +35,7 @@ Options:
   --plot-filtration-figsize <figsize>              Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
   --output-seurat-compatible                       Output seurat-compatible h5ad file. Caution: File size might be large, do not turn this option on for large data sets.
   --output-loom                                    Output loom-formatted file.
+  --output-h5ad                                    Output h5ad-formatted file.
 
   --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
@@ -60,7 +61,7 @@ Options:
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
   --pca-n <number>                                 Number of principal components. [default: 50]
-  --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable. 
+  --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
 
   --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
   --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
@@ -175,6 +176,7 @@ Examples:
             else None,
             "plot_filt_figsize": self.args["--plot-filtration-figsize"],
             "seurat_compatible": self.args["--output-seurat-compatible"],
+            "output_h5ad": self.args["--output-h5ad"],
             "output_loom": self.args["--output-loom"],
             "min_genes": int(self.args["--min-genes"]),
             "max_genes": int(self.args["--max-genes"]),

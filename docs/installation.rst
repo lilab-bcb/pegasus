@@ -1,7 +1,7 @@
 Installation
 ------------
 
-Pegasus works with Python 3 only. **Note:** Pegasus doesn't work with Python 3.8 yet, because Cython has not been updated for this Python version.
+Pegasus works with Python 3 only (Python 3.5 or above).
 
 Linux
 ^^^^^
@@ -17,8 +17,13 @@ First, install the following dependencies by::
 
 Next, you can install Pegasus system-wide by PyPI (see `Linux Install via PyPI`_), or within a Miniconda environment (see `Linux Install via Miniconda`_).
 
+To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK which is included in Ubuntu official repository::
+
+	sudo apt install default-jdk
+
 .. _Linux Install via PyPI: ./installation.html#install-via-pypi
 .. _Linux Install via Miniconda: ./installation.html#install-via-miniconda
+.. _Oracle JDK: https://www.oracle.com/java/
 
 Install via PyPI
 ################
@@ -65,7 +70,7 @@ In addition, remember to type ``yes`` when asked if you wish the installer to in
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-	conda create -n pegasus -y python=3.7
+	conda create -n pegasus -y pip
 
 3. Enter ``pegasus`` environment by activating::
 
@@ -107,6 +112,10 @@ And install macOS command line tools::
 	xcode-select --install
 
 Next, you can install Pegasus system-wide by PyPI (see `macOS Installation via PyPI`_), or within a Miniconda environment (see `macOS Installation via Miniconda`_).
+
+To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK via Homebrew::
+
+	brew cast install java
 
 .. _macOS Installation via PyPI: ./installation.html#id2
 .. _macOS Installation via Miniconda: ./installation.html#id3
@@ -162,7 +171,7 @@ Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-	conda create -n pegasus -y python=3.7
+	conda create -n pegasus -y pip
 
 3. Enter ``pegasus`` environment by activating::
 
@@ -174,9 +183,9 @@ Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
 5. **For macOS 10.14 or later:** for these macOS versions, you need to set the following environment variable before installing Pegasus::
 
-	export MACOSX_DEPLOYMENT_TARGET=10.14
+	export MACOSX_DEPLOYMENT_TARGET=10.15
 
-where ``10.14`` is the version number for macOS Mojave. You should change it to your own OS version. For example, ``10.15`` is for macOS Catalina.
+where ``10.15`` is the version number for macOS Catalina. You should change it to your own OS version. For example, ``10.14`` is for macOS Mojave.
 
 5. Install pegasus::
 
@@ -200,7 +209,7 @@ Development Version
 
 To install Pegasus development version directly from `its GitHub respository <https://github.com/klarman-cell-observatory/pegasus>`_, please do the following steps:
 
-1. Install prerequisite libraries as mentioned in above sections. 
+1. Install prerequisite libraries as mentioned in above sections.
 
 2. Install Git. See `here <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ for how to install Git.
 

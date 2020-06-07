@@ -1,4 +1,3 @@
-import versioneer
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -13,8 +12,10 @@ requires = [
     "docopt",
     "fisher>=0.1.9",
     "forceatlas2-python",
+    "gprofiler-official",
     "harmony-pytorch",
     "hnswlib",
+    "importlib-metadata",
     "joblib",
     "lightgbm==2.2.1",
     "loompy",
@@ -39,13 +40,12 @@ requires = [
     "tables",
     "torch",
     "umap-learn>=0.3.9",
+    "xlrd",
     "xlsxwriter"
 ]
 
 setup(
     name="pegasuspy",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
     description="Pegasus is a Python package for analyzing sc/snRNA-seq data of millions of cells",
     long_description=long_description,
     url="https://github.com/klarman-cell-observatory/pegasus",
@@ -61,6 +61,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Framework :: Jupyter",
         "Natural Language :: English",
         "Operating System :: MacOS :: MacOS X",
@@ -70,6 +71,7 @@ setup(
     keywords="single cell/nucleus genomics analysis",
     packages=find_packages(),
     install_requires=requires,
+    setup_requires=['setuptools_scm'],
     extras_require=dict(
         fitsne=["fitsne"],
         leiden=['leidenalg'],

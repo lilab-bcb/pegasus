@@ -1,8 +1,9 @@
 import anndata
 import numpy as np
+import pegasusio as io
 from scipy.sparse import csr_matrix, hstack
 
-from pegasus import io, tools, cite_seq, misc
+from pegasus import tools, cite_seq, misc
 
 
 def run_pipeline(input_file, output_name, **kwargs):
@@ -15,10 +16,10 @@ def run_pipeline(input_file, output_name, **kwargs):
     adata = io.read_input(
         input_file,
         genome=kwargs["genome"],
-        concat_matrices=False if kwargs["cite_seq"] else True,
-        h5ad_mode=("a" if (is_raw or kwargs["subcluster"]) else "r+"),
-        select_singlets=kwargs["select_singlets"],
-        channel_attr=kwargs["channel_attr"],
+        modality='citeseq' if kwargs["cite_seq"] else None,
+        mode=("a" if (is_raw or kwargs["subcluster"]) else "r+"),
+        #select_singlets=kwargs["select_singlets"],
+        #channel_attr=kwargs["channel_attr"],
         black_list=(
             kwargs["black_list"].split(",") if kwargs["black_list"] is not None else []
         ),
@@ -383,7 +384,10 @@ def run_pipeline(input_file, output_name, **kwargs):
         io.write_output(seurat_data, output_name + ".seurat.h5ad")
 
     # write out results
-    io.write_output(adata, output_name + ".h5ad")
+    io.write_output(adata, output_name + ".zarr.zip")
+
+    if kwargs["output_h5ad"]:
+        io.write_output(adata, output_name + ".h5ad")
 
     if kwargs["output_loom"]:
         io.write_output(adata, output_name + ".loom")

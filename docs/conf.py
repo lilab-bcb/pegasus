@@ -23,15 +23,15 @@ import pegasus
 # -- Project information -----------------------------------------------------
 
 project = "Pegasus"
-copyright = "2019 The Broad Institute, Inc. and The General Hospital Corporation. All rights reserved."
+copyright = "2020 The Broad Institute, Inc. and The General Hospital Corporation. All rights reserved."
 author = (
     "Yiming Yang, Joshua Gould and Bo Li"
 )
 
 # The short X.Y version
-version = "0.15.0"
+version = "0.17"
 # The full version, including alpha/beta/rc tags
-release = "0.15.0"
+release = "0.17.1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -210,5 +210,3 @@ texinfo_documents = [
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
-

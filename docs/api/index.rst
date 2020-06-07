@@ -163,5 +163,7 @@ Miscellaneous
 .. autosummary::
 	:toctree: .
 
+	calc_signature_score
 	search_genes
 	search_de_genes
+

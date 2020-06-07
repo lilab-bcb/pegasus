@@ -8,7 +8,7 @@ from scipy.stats import entropy
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
 from typing import List, Tuple
-from anndata import AnnData
+from pegasusio import MultimodalData
 
 from pegasus.tools import update_rep, W_from_rep
 
@@ -81,7 +81,7 @@ def calculate_diffusion_map(
         )
         signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
         Lambda = signs * S  # get eigenvalues
-        
+
     # remove the first eigen value and vector
     Lambda = Lambda[1:]
     U = U[:, 1:]
@@ -90,14 +90,14 @@ def calculate_diffusion_map(
     if max_t == -1:
         Lambda_new = Lambda / (1.0 - Lambda)
     else:
-        # Find the knee point 
+        # Find the knee point
         x = np.array(range(1, max_t + 1), dtype = float)
         y = np.array([calc_von_neumann_entropy(Lambda, t) for t in x])
         t = x[find_knee_point(x, y)]
         logger.info("Detected knee point at t = {:.0f}.".format(t))
 
         # U_df = U * Lambda #symmetric diffusion component
-        Lambda_new = Lambda * ((1.0 - Lambda ** t) / (1.0 - Lambda)) 
+        Lambda_new = Lambda * ((1.0 - Lambda ** t) / (1.0 - Lambda))
     Phi_pt = Phi * Lambda_new  # asym pseudo component
 
     return Phi_pt, Lambda, Phi  # , U_df, W_norm
@@ -105,7 +105,7 @@ def calculate_diffusion_map(
 
 @pg_deco.TimeLogger()
 def diffmap(
-    data: AnnData,
+    data: MultimodalData,
     n_components: int = 100,
     rep: str = "pca",
     solver: str = "eigsh",
@@ -116,7 +116,7 @@ def diffmap(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     n_components: ``int``, optional, default: ``100``
@@ -148,7 +148,7 @@ def diffmap(
 
     Examples
     --------
-    >>> pg.diffmap(adata)
+    >>> pg.diffmap(data)
     """
 
     rep = update_rep(rep)
@@ -167,12 +167,12 @@ def diffmap(
     # data.obsm['X_dmnorm'] = U_df
 
 @pg_deco.TimeLogger()
-def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
+def reduce_diffmap_to_3d(data: MultimodalData, random_state: int = 0) -> None:
     """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
 
@@ -188,7 +188,7 @@ def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
 
     Examples
     --------
-    >>> pg.reduce_diffmap_to_3d(adata)
+    >>> pg.reduce_diffmap_to_3d(data)
     """
 
     if "X_diffmap" not in data.obsm.keys():
@@ -196,4 +196,3 @@ def reduce_diffmap_to_3d(data: AnnData, random_state: int = 0) -> None:
 
     pca = PCA(n_components=3, random_state=random_state)
     data.obsm["X_diffmap_pca"] = pca.fit_transform(data.obsm["X_diffmap"])
-
