@@ -267,6 +267,11 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.calc_pseudotime(unidata, kwargs["pseudotime"])
 
 
+    if append_data is not None:
+        append_data.obs_names 
+        unidata.obs_names
+        
+
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
         adata.uns["scale.data"] = unidata.uns["fmat_highly_variable_features"]  # assign by reference

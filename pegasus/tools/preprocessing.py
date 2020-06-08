@@ -297,6 +297,17 @@ def _run_filter_data(
     if focus_list is None:
         focus_list = [data.current_key()]
 
+    mito_dict = {}
+    default_mito = None
+    if mito_prefix is not None:
+        fields = mito_prefix.split(',')
+        if len(fields) == 1 and fields[0].find(':') < 0:
+            default_mito = fields[0]
+        else:
+            for field in fields:
+                genome, mito_pref = field.split(':')
+                mito_dict[genome] = mito_pref
+
     for key in focus_list:
         unidata = data.get_data(key)
 
@@ -309,7 +320,7 @@ def _run_filter_data(
             max_genes,
             min_umis,
             max_umis,
-            mito_prefix,
+            mito_dict.get(unidata.get_genome(), default_mito),
             percent_mito,
         )
 
