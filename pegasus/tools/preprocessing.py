@@ -374,10 +374,10 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     data.X = data.get_matrix("X").astype(np.float32)
 
     mat = data.X[:, data.var["robust"].values]
-    data.obs["n_robust_counts"] = mat.sum(axis=1).A1
-    scale = norm_count / data.obs["n_robust_counts"].values
+    scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X.data = np.log1p(data.X.data) # faster than data.X.log1p()
+    data.obs["scale"] = scale
 
 
 def select_features(data: MultimodalData, features: str = None) -> str:

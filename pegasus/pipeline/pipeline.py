@@ -1,6 +1,6 @@
 import anndata
 import numpy as np
-from scipy.sparse import csr_matrix, hstack
+from scipy.sparse import csr_matrix, coo_matrix, hstack
 
 from pegasusio import UnimodalData, MultimodalData
 from pegasusio import read_input, write_output
@@ -267,26 +267,46 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.calc_pseudotime(unidata, kwargs["pseudotime"])
 
 
-    # if append_data is not None:
-    #     locs = unidata.obs_names.get_indexer(append_data.obs_names)
+    if append_data is not None:
+        locs = unidata.obs_names.get_indexer(append_data.obs_names)
+        idx = locs >= 0
+        locs = locs[idx]
+        Y = append_data.X[idx, :].tocoo(copy = False)
+        Z = coo_matrix((Y.data, (locs[Y.row], Y.col)), shape = (unidata.shape[0], append_data.shape[1])).tocsr()
 
+        rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
+        
+        Zt = Z.astype(np.float32)
+        Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
+        Zt.data = np.log1p(Zt.data)
 
-    #         genome = ",".join(genomes)
-    #         feature_metadata = pd.concat([unidata.feature_metadata for unidata in unidata_arr], axis = 0)
-    #         feature_metadata.reset_index(inplace = True)
-    #         feature_metadata.fillna(value = "N/A", inplace = True)
-    #         X = hstack([unidata.matrices["X"] for unidata in unidata_arr], format = "csr")
-    #         unidata = UnimodalData(unidata_arr[0].barcode_metadata, feature_metadata, {"X": X}, {"genome": genome, "modality": "rna"})
-    #         unikey = unidata.get_uid()
-    #         self.data[unikey] = unidata
-    #         del unidata_arr
-    #         gc.collect()
+        X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
 
-    #     self._selected = unikey
-    #     self._unidata = self.data[unikey]
+        genome = unidata.get_genome() + "," + append_data.get_genome()
 
+        feature_metadata = pd.concat([unidata.feature_metadata, append_data.feature_metadata], axis = 0)
+        feature_metadata.reset_index(inplace = True)
 
+        def _get_fillna_dict(df: pd.DataFrame) -> dict:
+            """ Generate a fillna dict for columns in a df """
+            fillna_dict = {}
+            for column in df:
+                if df[column].dtype.kind == "b":
+                    fillna_dict[column] = False
+                elif df[column].dtype.kind in {"i", "u", "f", "c"}:
+                    fillna_dict[column] = 0
+                elif df[column].dtype.kind == "S":
+                    fillna_dict[column] = b""
+                elif df[column].dtype.kind in {"O", "U"}:
+                    fillna_dict[column] = ""
+                else:
+                    raise ValueError(f"{column} has unsupported dtype {df[column].dtype}!")
+            return fillna_dict
 
+        feature_metadata.fillna(value = _get_fillna_dict(unidata.feature_metadata), inplace = True)
+
+        unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping)
+        unidata.uns["genome"] = genome
 
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
