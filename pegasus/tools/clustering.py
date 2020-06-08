@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
-from anndata import AnnData
+from pegasusio import MultimodalData
 from joblib import effective_n_jobs
 from natsort import natsorted
 
@@ -20,7 +20,7 @@ from pegasus.utils import decorators as pg_deco
 
 
 def louvain(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     resolution: int = 1.3,
     random_state: int = 0,
@@ -30,7 +30,7 @@ def louvain(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -54,7 +54,7 @@ def louvain(
 
     Examples
     --------
-    >>> pg.louvain(adata)
+    >>> pg.louvain(data)
     """
 
     try:
@@ -90,7 +90,7 @@ def louvain(
 
 
 def leiden(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     resolution: int = 1.3,
     n_iter: int = -1,
@@ -101,7 +101,7 @@ def leiden(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -128,7 +128,7 @@ def leiden(
 
     Examples
     --------
-    >>> pg.leiden(adata)
+    >>> pg.leiden(data)
     """
 
     try:
@@ -169,7 +169,7 @@ def leiden(
 
 @pg_deco.TimeLogger()
 def partition_cells_by_kmeans(
-    data: AnnData,
+    data: MultimodalData,
     rep: str,
     n_jobs: int,
     n_clusters: int,
@@ -203,7 +203,7 @@ def partition_cells_by_kmeans(
 
 
 def spectral_louvain(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     resolution: float = 1.3,
     rep_kmeans: str = "diffmap",
@@ -218,7 +218,7 @@ def spectral_louvain(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -257,7 +257,7 @@ def spectral_louvain(
 
     Examples
     --------
-    >>> pg.spectral_louvain(adata)
+    >>> pg.spectral_louvain(data)
     """
 
     try:
@@ -309,7 +309,7 @@ def spectral_louvain(
 
 
 def spectral_leiden(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     resolution: float = 1.3,
     rep_kmeans: str = "diffmap",
@@ -324,7 +324,7 @@ def spectral_leiden(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -363,7 +363,7 @@ def spectral_leiden(
 
     Examples
     --------
-    >>> pg.spectral_leiden(adata)
+    >>> pg.spectral_leiden(data)
     """
 
     try:
@@ -415,7 +415,7 @@ def spectral_leiden(
 
 
 def cluster(
-    data: AnnData,
+    data: MultimodalData,
     algo: str = "louvain",
     rep: str = "pca",
     resolution: int = 1.3,
@@ -432,7 +432,7 @@ def cluster(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     algo: ``str``, optional, default: ``"louvain"``
@@ -477,7 +477,7 @@ def cluster(
 
     Examples
     --------
-    >>> pg.cluster(adata, algo = 'leiden')
+    >>> pg.cluster(data, algo = 'leiden')
     """
 
     if algo not in {"louvain", "leiden", "spectral_louvain", "spectral_leiden"}:

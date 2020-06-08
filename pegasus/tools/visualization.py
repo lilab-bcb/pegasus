@@ -5,7 +5,7 @@ import umap as umap_module
 import forceatlas2 as fa2
 import uuid
 
-from anndata import AnnData
+from pegasusio import MultimodalData
 from joblib import effective_n_jobs
 try:
     from MulticoreTSNE import MulticoreTSNE as TSNE
@@ -244,7 +244,7 @@ def calc_force_directed_layout(
 
 @pg_deco.TimeLogger()
 def tsne(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -260,7 +260,7 @@ def tsne(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -296,9 +296,9 @@ def tsne(
 
     Examples
     --------
-    >>> pg.tsne(adata)
+    >>> pg.tsne(data)
     """
-    
+
     rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -315,7 +315,7 @@ def tsne(
 
 @pg_deco.TimeLogger()
 def fitsne(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -331,7 +331,7 @@ def fitsne(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -367,7 +367,7 @@ def fitsne(
 
     Examples
     --------
-    >>> pg.fitsne(adata)
+    >>> pg.fitsne(data)
     """
 
     rep = update_rep(rep)
@@ -385,7 +385,7 @@ def fitsne(
 
 @pg_deco.TimeLogger()
 def umap(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     n_components: int = 2,
     n_neighbors: int = 15,
@@ -400,7 +400,7 @@ def umap(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -433,7 +433,7 @@ def umap(
 
     Examples
     --------
-    >>> pg.umap(adata)
+    >>> pg.umap(data)
     """
     start = time.time()
 
@@ -467,7 +467,7 @@ def umap(
 
 @pg_deco.TimeLogger()
 def fle(
-    data: AnnData,
+    data: MultimodalData,
     file_name: str = None,
     n_jobs: int = -1,
     rep: str = "diffmap",
@@ -487,7 +487,7 @@ def fle(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     file_name: ``str``, optional, default: ``None``
@@ -533,9 +533,9 @@ def fle(
 
     Examples
     --------
-    >>> pg.fle(adata)
+    >>> pg.fle(data)
     """
-    
+
     if file_name is None:
         import tempfile
 
@@ -600,7 +600,7 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
 
 @pg_deco.TimeLogger()
 def net_tsne(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -624,7 +624,7 @@ def net_tsne(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells (``n_obs``) and columns for genes (``n_feature``).
 
     rep: ``str``, optional, default: ``"pca"``
@@ -681,7 +681,7 @@ def net_tsne(
 
     Examples
     --------
-    >>> pg.net_tsne(adata)
+    >>> pg.net_tsne(data)
     """
 
     rep = update_rep(rep)
@@ -740,7 +740,7 @@ def net_tsne(
 
 @pg_deco.TimeLogger()
 def net_fitsne(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -764,7 +764,7 @@ def net_fitsne(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells (``n_obs``) and columns for genes (``n_feature``).
 
     rep: ``str``, optional, default: ``"pca"``
@@ -821,7 +821,7 @@ def net_fitsne(
 
     Examples
     --------
-    >>> pg.net_fitsne(adata)
+    >>> pg.net_fitsne(data)
     """
 
     rep = update_rep(rep)
@@ -880,7 +880,7 @@ def net_fitsne(
 
 @pg_deco.TimeLogger()
 def net_umap(
-    data: AnnData,
+    data: MultimodalData,
     rep: str = "pca",
     n_jobs: int = -1,
     n_components: int = 2,
@@ -905,7 +905,7 @@ def net_umap(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
@@ -963,9 +963,9 @@ def net_umap(
 
     Examples
     --------
-    >>> pg.net_umap(adata)
+    >>> pg.net_umap(data)
     """
-    
+
     rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
@@ -1049,7 +1049,7 @@ def net_umap(
 
 @pg_deco.TimeLogger()
 def net_fle(
-    data: AnnData,
+    data: MultimodalData,
     file_name: str = None,
     n_jobs: int = -1,
     rep: str = "diffmap",
@@ -1075,7 +1075,7 @@ def net_fle(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     file_name: ``str``, optional, default: ``None``
@@ -1139,7 +1139,7 @@ def net_fle(
 
     Examples
     --------
-    >>> pg.net_fle(adata)
+    >>> pg.net_fle(data)
     """
 
     if file_name is None:

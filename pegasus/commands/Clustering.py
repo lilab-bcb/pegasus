@@ -11,38 +11,38 @@ Usage:
   pegasus cluster -h
 
 Arguments:
-  input_file       Input HDF5 file in 10x or pegasus format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a h5ad-formatted file.
+  input_file       Input file in either 'zarr', 'h5ad', 'loom', '10x', 'mtx', 'csv', 'tsv' or 'fcs' format. If first-pass analysis has been performed, but you want to run some additional analysis, you could also pass a zarr-formatted file.
   output_name      Output file name. All outputs will use it as the prefix.
 
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --processed                                      Input file is processed and thus no PCA & diffmap will be run.
 
-  --considered-refs <ref_list>                     A string contains comma-separated reference(e.g. genome) names. pegasus will read all groups associated with reference names in the list from the input file. If <ref_list> is None, all groups will be considered. For formats like loom, mtx, dge, csv and tsv, <ref_list> is used to provide genome name. In this case if <ref_list> is None, except mtx format, '' is used as the genome name instead.
   --channel <channel_attr>                         Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
   --black-list <black_list>                        Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
-  --min-genes-on-raw <number>                      If input are raw 10x matrix, which include all barcodes, perform a pre-filtration step to keep the data size small. In the pre-filtration step, only keep cells with at least <number> of genes. [default: 100]
   --select-singlets                                Only select DemuxEM-predicted singlets for analysis.
   --remap-singlets <remap_string>                  Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2". In this way, the new singlet names will be in metadata field with key 'assignment', while the old names will be kept in metadata field with key 'assignment.orig'.
   --subset-singlets <subset_string>                If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
 
-  --cite-seq                                       Data are CITE-Seq data. pegasus will perform analyses on RNA count matrix first. Then it will attach the ADT matrix to the RNA matrix with all antibody names changing to 'AD-' + antibody_name. Lastly, it will embed the antibody expression using FIt-SNE (the basis used for plotting is 'citeseq_fitsne').
-  --cite-seq-capping <percentile>                  For CITE-Seq surface protein expression, make all cells with expression > <percentile> to the value at <percentile> to smooth outlier. Set <percentile> to 100.0 to turn this option off. [default: 99.99]
+  --focus <keys>                                   Focus analysis on Unimodal data with <keys>. <keys> is a comma-separated list of keys. If None, the self._selected will be the focused one.
+  --append <key>                                   Append Unimodal data <key> to any <keys> in --focus.
+
+  --output-loom                                    Output loom-formatted file.
+  --output-h5ad                                    Output h5ad-formatted file.
+
+  --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
+  --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
+  --min-umis <number>                              Only keep cells with at least <number> of UMIs.
+  --max-umis <number>                              Only keep cells with less than <number> of UMIs.
+  --mito-prefix <prefix>                           Prefix for mitochondrial genes. Can provide multiple prefixes for multiple organisms (e.g. "GRCh38:MT-,mm10:mt-"). [default: GRCh38:MT-,mm10:mt-]
+  --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>%. [default: 20.0]
+  --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent>% of cells to select variable genes. [default: 0.05]
 
   --output-filtration-results                      Output filtration results as a spreadsheet.
   --plot-filtration-results                        Plot filtration results as PDF files.
   --plot-filtration-figsize <figsize>              Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
-  --output-seurat-compatible                       Output seurat-compatible h5ad file. Caution: File size might be large, do not turn this option on for large data sets.
-  --output-loom                                    Output loom-formatted file.
-
-  --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
-  --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
-  --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: 100]
-  --max-umis <number>                              Only keep cells with less than <number> of UMIs. [default: 600000]
-  --mito-prefix <prefix>                           Prefix for mitochondrial genes. If multiple prefixes are provided, separate them by comma (e.g. "MT-,mt-"). [default: MT-]
-  --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>%. [default: 10.0]
-  --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent>% of cells to select variable genes. [default: 0.05]
+  --min-genes-before-filtration <number>           If raw data matrix is input, empty barcodes will dominate pre-filtration statistics. To avoid this, for raw data matrix, only consider barcodes with at lease <number> genes for pre-filtration condition. [default: 100]
 
   --counts-per-cell-after <number>                 Total counts per cell after normalization. [default: 1e5]
 
@@ -60,7 +60,7 @@ Options:
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
   --pca-n <number>                                 Number of principal components. [default: 50]
-  --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable. 
+  --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
 
   --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
   --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
@@ -140,14 +140,14 @@ Options:
   -h, --help                                       Print out help information.
 
 Outputs:
-  output_name.h5ad                 Output file in h5ad format. To load this file in python, use ``import pegasus; data = pegasus.read_input('output_name.h5ad')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). If '--make-output-seurat-compatible' is on, this file can be loaded into R and converted into a Seurat object.
-  output_name.seurat.h5ad          Optional output. Only exists if '--output-seurat-compatible' is set. 'output_name.h5ad' in seurat-compatible manner. This file can be loaded into R and converted into a Seurat object.
-  output_name.filt.xlsx            Optional output. Only exists if '--output-filtration-results' is set. This file has two sheets --- Cell filtration stats and Gene filtration stats. The first sheet records cell filtering results and it has 10 columns: Channel, channel name; kept, number of cells kept; median_n_genes, median number of expressed genes in kept cells; median_n_umis, median number of UMIs in kept cells; median_percent_mito, median mitochondrial rate as UMIs between mitochondrial genes and all genes in kept cells; filt, number of cells filtered out; total, total number of cells before filtration, if the input contain all barcodes, this number is the cells left after '--min-genes-on-raw' filtration; median_n_genes_before, median expressed genes per cell before filtration; median_n_umis_before, median UMIs per cell before filtration; median_percent_mito_before, median mitochondrial rate per cell before filtration. The channels are sorted in ascending order with respect to the number of kept cells per channel. The second sheet records genes that failed to pass the filtering. This sheet has 3 columns: gene, gene name; n_cells, number of cells this gene is expressed; percent_cells, the fraction of cells this gene is expressed. Genes are ranked in ascending order according to number of cells the gene is expressed. Note that only genes not expressed in any cell are removed from the data. Other filtered genes are marked as non-robust and not used for TPM-like normalization.
-  output_name.filt.gene.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel.
-  output_name.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel.
-  output_name.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel.
-  output_name.hvf.pdf              Optional output. Only exists if '--plot-hvf' is set. This file contains a scatter plot describing the highly variable gene selection procedure.
-  output_name.loom                 Optional output. Only exists if '--output-loom' is set. 'output_name.h5ad' in loom format for visualization.
+  output_name.zarr.zip                     Output file in Zarr format. To load this file in python, use ``import pegasus; data = pegasus.read_input('output_name.zarr.zip')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). This file can be loaded into R and converted into a Seurat object.
+  output_name.<group>.h5ad                 Optional output. Only exists if '--output-h5ad' is set. Results in h5ad format per focused <group>. This file can be loaded into R and converted into a Seurat object.
+  output_name.<group>.loom                 Optional output. Only exists if '--output-loom' is set. Results in loom format per focused <group>.
+  output_name.<group>.filt.xlsx            Optional output. Only exists if '--output-filtration-results' is set. Filtration statistics per focused <group>. This file has two sheets --- Cell filtration stats and Gene filtration stats. The first sheet records cell filtering results and it has 10 columns: Channel, channel name; kept, number of cells kept; median_n_genes, median number of expressed genes in kept cells; median_n_umis, median number of UMIs in kept cells; median_percent_mito, median mitochondrial rate as UMIs between mitochondrial genes and all genes in kept cells; filt, number of cells filtered out; total, total number of cells before filtration, if the input contain all barcodes, this number is the cells left after '--min-genes-on-raw' filtration; median_n_genes_before, median expressed genes per cell before filtration; median_n_umis_before, median UMIs per cell before filtration; median_percent_mito_before, median mitochondrial rate per cell before filtration. The channels are sorted in ascending order with respect to the number of kept cells per channel. The second sheet records genes that failed to pass the filtering. This sheet has 3 columns: gene, gene name; n_cells, number of cells this gene is expressed; percent_cells, the fraction of cells this gene is expressed. Genes are ranked in ascending order according to number of cells the gene is expressed. Note that only genes not expressed in any cell are removed from the data. Other filtered genes are marked as non-robust and not used for TPM-like normalization.
+  output_name.<group>.filt.gene.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel per focused <group>.
+  output_name.<group>.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel per focused <group>.
+  output_name.<group>.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel per focused <group>.
+  output_name.<group>.hvf.pdf              Optional output. Only exists if '--plot-hvf' is set. This file contains a scatter plot describing the highly variable gene selection procedure per focused <group>.
 
 Examples:
   pegasus cluster -p 20 --correct-batch-effect --louvain --tsne manton_bm_10x.h5 manton_bm
@@ -157,16 +157,23 @@ Examples:
         kwargs = {
             "n_jobs": int(self.args["--threads"]),
             "processed": self.args["--processed"],
-            "genome": self.args["--considered-refs"],
             "channel_attr": self.args["--channel"],
             "black_list": self.args["--black-list"],
             "subcluster": False,
-            "min_genes_on_raw": int(self.args["--min-genes-on-raw"]),
             "select_singlets": self.args["--select-singlets"],
             "remap_singlets": self.args["--remap-singlets"],
             "subset_singlets": self.args["--subset-singlets"],
-            "cite_seq": self.args["--cite-seq"],
-            "cite_seq_capping": float(self.args["--cite-seq-capping"]),
+            "focus": self.split_string(self.args["--focus"]),
+            "append": self.args["--append"],
+            "output_h5ad": self.args["--output-h5ad"],
+            "output_loom": self.args["--output-loom"],
+            "min_genes": self.convert_to_int(self.args["--min-genes"]),
+            "max_genes": self.convert_to_int(self.args["--max-genes"]),
+            "min_umis": self.convert_to_int(self.args["--min-umis"]),
+            "max_umis": self.convert_to_int(self.args["--max-umis"]),
+            "mito_prefix": self.args["--mito-prefix"],
+            "percent_mito": self.convert_to_float(self.args["--percent-mito"]),
+            "percent_cells": float(self.args["--gene-percent-cells"]),
             "output_filt": self.args["<output_name>"]
             if self.args["--output-filtration-results"]
             else None,
@@ -174,15 +181,7 @@ Examples:
             if self.args["--plot-filtration-results"]
             else None,
             "plot_filt_figsize": self.args["--plot-filtration-figsize"],
-            "seurat_compatible": self.args["--output-seurat-compatible"],
-            "output_loom": self.args["--output-loom"],
-            "min_genes": int(self.args["--min-genes"]),
-            "max_genes": int(self.args["--max-genes"]),
-            "min_umis": int(self.args["--min-umis"]),
-            "max_umis": int(self.args["--max-umis"]),
-            "mito_prefix": self.args["--mito-prefix"],
-            "percent_mito": float(self.args["--percent-mito"]),
-            "percent_cells": float(self.args["--gene-percent-cells"]),
+            "min_genes_before_filt": int(self.args["--min-genes-before-filtration"]),
             "norm_count": float(self.args["--counts-per-cell-after"]),
             "select_hvf": not self.args["--no-select-hvf"],
             "hvf_flavor": self.args["--select-hvf-flavor"],

@@ -6,46 +6,52 @@ from scipy.sparse import issparse
 
 from sklearn.decomposition import PCA
 
-from typing import Tuple
-from anndata import AnnData
+from typing import List, Tuple
+from pegasusio import UnimodalData, MultimodalData, calc_qc_filters
 
 import logging
-
 logger = logging.getLogger("pegasus")
+
 from pegasus.utils import decorators as pg_deco
 
 
-@pg_deco.GCCollect()
+
 def qc_metrics(
-    data: AnnData,
-    mito_prefix: str = "MT-",
+    data: MultimodalData,
+    select_singlets: bool = False,
+    remap_string: str = None,
+    subset_string: str = None,
     min_genes: int = 500,
     max_genes: int = 6000,
-    min_umis: int = 100,
-    max_umis: int = 600000,
-    percent_mito: float = 10.0,
-    percent_cells: float = 0.05,
+    min_umis: int = None,
+    max_umis: int = None,
+    mito_prefix: str = "MT-",
+    percent_mito: float = 20.0,
 ) -> None:
-    """Generate Quality Control (QC) metrics on the dataset.
+    """Generate Quality Control (QC) metrics regarding cell barcodes on the dataset.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
-       Annotated data matrix with rows for cells and columns for genes.
-    mito_prefix: ``str``, optional, default: ``"MT-"``
-       Prefix for mitochondrial genes.
+    data: ``pegasusio.MultimodalData``
+       Use current selected modality in data, which should contain one RNA expression matrix.
+    select_singlets: ``bool``, optional, default ``False``
+        If select only singlets.
+    remap_string: ``str``, optional, default ``None``
+        Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2". In this way, the new singlet names will be in metadata field with key 'assignment', while the old names will be kept in metadata field with key 'assignment.orig'.
+    subset_string: ``str``, optional, default ``None``
+        If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
     min_genes: ``int``, optional, default: ``500``
        Only keep cells with at least ``min_genes`` genes.
     max_genes: ``int``, optional, default: ``6000``
        Only keep cells with less than ``max_genes`` genes.
-    min_umis: ``int``, optional, default: ``100``
+    min_umis: ``int``, optional, default: ``None``
        Only keep cells with at least ``min_umis`` UMIs.
-    max_umis: ``int``, optional, default: ``600,000``
+    max_umis: ``int``, optional, default: ``None``
        Only keep cells with less than ``max_umis`` UMIs.
-    percent_mito: ``float``, optional, default: ``10.0``
+    mito_prefix: ``str``, optional, default: ``MT-``
+       Prefix for mitochondrial genes.
+    percent_mito: ``float``, optional, default: ``20.0``
        Only keep cells with percent mitochondrial genes less than ``percent_mito`` % of total counts.
-    percent_cells: ``float``, optional, default: ``0.05``
-       Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
 
     Returns
     -------
@@ -57,85 +63,43 @@ def qc_metrics(
         * ``n_counts``: Total number of counts for each cell.
         * ``percent_mito``: Percent of mitochondrial genes for each cell.
         * ``passed_qc``: Boolean type indicating if a cell passes the QC process based on the QC metrics.
-
-    Update ``data.var``:
-
-        * ``n_cells``: Total number of cells in which each gene is measured.
-        * ``percent_cells``: Percent of cells in which each gene is measured.
-        * ``robust``: Boolean type indicating if a gene is robust based on the QC metrics.
-        * ``highly_variable_features``: Boolean type indicating if a gene is a highly variable feature. By default, set all robust genes as highly variable features.
+        * ``demux_type``: this column might be deleted if select_singlets is on.
 
     Examples
     --------
-    >>> pg.qcmetrics(adata)
+    >>> pg.qc_metrics(data)
     """
-
-    data.obs["passed_qc"] = False
-
-    data.obs["n_genes"] = data.X.getnnz(axis=1)
-    data.obs["n_counts"] = data.X.sum(axis=1).A1
-
-    mito_prefixes = mito_prefix.split(",")
-
-    def startswith(name):
-        for prefix in mito_prefixes:
-            if name.startswith(prefix):
-                return True
-        return False
-
-    mito_genes = data.var_names.map(startswith).values.nonzero()[0]
-    data.obs["percent_mito"] = (
-        data.X[:, mito_genes].sum(axis=1).A1
-        / np.maximum(data.obs["n_counts"].values, 1.0)
-    ) * 100
-
-    # Assign passed_qc
-    filters = [
-        data.obs["n_genes"] >= min_genes,
-        data.obs["n_genes"] < max_genes,
-        data.obs["n_counts"] >= min_umis,
-        data.obs["n_counts"] < max_umis,
-        data.obs["percent_mito"] < percent_mito,
-    ]
-
-    data.obs.loc[np.logical_and.reduce(filters), "passed_qc"] = True
-
-    var = data.var
-    data = data[
-        data.obs["passed_qc"]
-    ]  # compute gene stats in space of filtered cells only
-
-    var["n_cells"] = data.X.getnnz(axis=0)
-    var["percent_cells"] = (var["n_cells"] / data.shape[0]) * 100
-    var["robust"] = var["percent_cells"] >= percent_cells
-    var["highly_variable_features"] = var[
-        "robust"
-    ]  # default all robust genes are "highly" variable
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
+    calc_qc_filters(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
 
 
-def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Calculate filtration stats on cell barcodes and genes, respectively.
+def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> pd.DataFrame:
+    """Calculate filtration stats on cell barcodes.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
-        Annotated data matrix with rows for cells and columns for genes.
+    data: ``pegasusio.MultimodalData``
+        Use current selected modality in data, which should contain one RNA expression matrix.
+    min_genes_before_filt: ``int``, optional, default ``100``
+        If raw data matrix is input, empty barcodes will dominate pre-filtration statistics. To avoid this, for raw matrix, only consider barcodes with at least <number> genes for pre-filtration condition.
 
     Returns
     -------
     df_cells: ``pandas.DataFrame``
         Data frame of stats on cell filtration.
 
-    df_genes: ``pandas.DataFrame``
-        Data frame of stats on gene filtration.
-
     Examples
     --------
-    >>> pg.get_filter_stats(adata)
+    >>> df = pg.get_filter_stats(data)
     """
 
     # cell stats
-    gb1 = data.obs.groupby("Channel")
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
+
+    df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
+    gb1 = df.groupby("Channel")
     df_before = gb1.median()
     df_before = df_before.assign(total=gb1.size())
     df_before.rename(
@@ -178,69 +142,87 @@ def get_filter_stats(data: AnnData) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ]
     df_cells.sort_values("kept", inplace=True)
 
-    # gene stats
-    idx = data.var["robust"] == False
-    df_genes = pd.DataFrame(
-        {
-            "n_cells": data.var.loc[idx, "n_cells"],
-            "percent_cells": data.var.loc[idx, "percent_cells"],
-        }
-    )
-    df_genes.index.name = "gene"
-    df_genes.sort_values("n_cells", ascending=False, inplace=True)
-
-    return df_cells, df_genes
+    return df_cells
 
 
-def filter_data(data: AnnData) -> None:
+def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
-        Annotated data matrix with rows for cells and columns for genes.
+    data: ``pegasusio.MultimodalData``
+        Use current selected modality in data, which should contain one RNA expression matrix.
+    focus_list: ``List[str]``, optional, default None
+        UnimodalData objects with keys in focus_list were qc_metrics marked. Filter them and make sure other modalities' barcodes are consistent with filtered barcodes. If focus_list is None and self._selected's modality is "rna", focus_list = [self._selected]
 
     Returns
     -------
     ``None``
 
-    Update ``data`` with cells and genes after filtration.
+    Update ``data`` with cells after filtration.
 
     Examples
     --------
-    >>> pg.filter_data(adata)
+    >>> pg.filter_data(data)
     """
-
-    assert "passed_qc" in data.obs
-    prior_shape = data.shape
-    data._inplace_subset_obs(data.obs["passed_qc"].values)
-    data._inplace_subset_var((data.var["n_cells"] > 0).values)
-    logger.info(
-        "After filtration, {nc}/{ncp} cells and {ng}/{ngp} genes are kept. Among {ng} genes, {nrb} genes are robust.".format(
-            nc=data.shape[0],
-            ng=data.shape[1],
-            ncp=prior_shape[0],
-            ngp=prior_shape[1],
-            nrb=data.var["robust"].sum(),
-        )
-    )
+    data.filter_data(focus_list = focus_list)
 
 
-def generate_filter_plots(
-    data: AnnData, plot_filt: str, plot_filt_figsize: str = None
+def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> None:
+    """ Identify robust genes as candidates for HVG selection and remove genes that are not expressed in any cells.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Use current selected modality in data, which should contain one RNA expression matrix.
+    percent_cells: ``float``, optional, default: ``0.05``
+       Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.var``:
+
+        * ``n_cells``: Total number of cells in which each gene is measured.
+        * ``percent_cells``: Percent of cells in which each gene is measured.
+        * ``robust``: Boolean type indicating if a gene is robust based on the QC metrics.
+        * ``highly_variable_features``: Boolean type indicating if a gene is a highly variable feature. By default, set all robust genes as highly variable features.
+
+    Examples
+    --------
+    >>> pg.identify_robust_genes(data, percent_cells = 0.05)
+    """
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
+
+    data.var["n_cells"] = data.X.getnnz(axis=0)
+    data.var["percent_cells"] = (data.var["n_cells"] / data.shape[0]) * 100
+    data.var["robust"] = data.var["percent_cells"] >= percent_cells
+    data.var["highly_variable_features"] = data.var["robust"]  # default all robust genes are "highly" variable
+
+    prior_n = data.shape[1]
+    data._inplace_subset_var(data.var["n_cells"] > 0)
+    logger.info(f"After filtration, {data.shape[1]}/{prior_n} genes are kept. Among {data.shape[1]} genes, {data.var['robust'].sum()} genes are robust.")
+
+
+def _generate_filter_plots(
+    data: MultimodalData, plot_filt: str, plot_filt_figsize: str = None, min_genes_before_filt: int = 100
 ) -> None:
     """ This function generates filtration plots, only used in command line.
     """
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
 
-    df_plot_before = data.obs[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
+    df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
+    df_plot_before = df[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
     df_plot_before.reset_index(drop=True, inplace=True)
     df_plot_before["status"] = "original"
 
-    data = data[data.obs["passed_qc"]]  # focusing only on filtered cells
-
-    df_plot_after = data.obs[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
+    df_plot_after = data.obs.loc[data.obs["passed_qc"], ["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
     df_plot_after.reset_index(drop=True, inplace=True)
     df_plot_after["status"] = "filtered"
+
     df_plot = pd.concat((df_plot_before, df_plot_after), axis=0)
 
     from pegasus.plotting import plot_qc_violin
@@ -250,10 +232,12 @@ def generate_filter_plots(
         width, height = plot_filt_figsize.split(",")
         figsize = (int(width), int(height))
 
+    group_key = data.get_uid()
+
     plot_qc_violin(
         df_plot,
         "count",
-        plot_filt + ".filt.UMI.pdf",
+        f"{plot_filt}.{group_key}.filt.UMI.pdf",
         xattr="Channel",
         hue="status",
         xlabel="Channel",
@@ -265,7 +249,7 @@ def generate_filter_plots(
     plot_qc_violin(
         df_plot,
         "gene",
-        plot_filt + ".filt.gene.pdf",
+        f"{plot_filt}.{group_key}.filt.gene.pdf",
         xattr="Channel",
         hue="status",
         xlabel="Channel",
@@ -277,7 +261,7 @@ def generate_filter_plots(
     plot_qc_violin(
         df_plot,
         "mito",
-        plot_filt + ".filt.mito.pdf",
+        f"{plot_filt}.{group_key}.filt.mito.pdf",
         xattr="Channel",
         hue="status",
         xlabel="Channel",
@@ -290,56 +274,83 @@ def generate_filter_plots(
 
 
 @pg_deco.TimeLogger()
-def run_filter_data(
-    data: AnnData,
+def _run_filter_data(
+    data: MultimodalData,
+    focus_list: List[str] = None,
     output_filt: str = None,
     plot_filt: str = None,
     plot_filt_figsize: Tuple[int, int] = None,
-    mito_prefix: str = "MT-",
+    min_genes_before_filt: int = 100,
+    select_singlets: bool = False,
+    remap_string: str = None,
+    subset_string: str = None,
     min_genes: int = 500,
     max_genes: int = 6000,
-    min_umis: int = 100,
-    max_umis: int = 600000,
-    percent_mito: float = 10.0,
+    min_umis: int = None,
+    max_umis: int = None,
+    mito_prefix: str = "MT-",
+    percent_mito: float = 20.0,
     percent_cells: float = 0.05,
 ) -> None:
     """ This function is for command line use.
     """
+    if focus_list is None:
+        focus_list = [data.current_key()]
 
-    qc_metrics(
-        data,
-        mito_prefix,
-        min_genes,
-        max_genes,
-        min_umis,
-        max_umis,
-        percent_mito,
-        percent_cells,
-    )
+    mito_dict = {}
+    default_mito = None
+    if mito_prefix is not None:
+        fields = mito_prefix.split(',')
+        if len(fields) == 1 and fields[0].find(':') < 0:
+            default_mito = fields[0]
+        else:
+            for field in fields:
+                genome, mito_pref = field.split(':')
+                mito_dict[genome] = mito_pref
 
-    if output_filt is not None:
-        writer = pd.ExcelWriter(output_filt + ".filt.xlsx", engine="xlsxwriter")
-        df_cells, df_genes = get_filter_stats(data)
-        df_cells.to_excel(writer, sheet_name="Cell filtration stats")
-        df_genes.to_excel(writer, sheet_name="Gene filtration stats")
-        writer.save()
-        logger.info("Filtration results are written.")
+    for key in focus_list:
+        unidata = data.get_data(key)
 
-    if plot_filt is not None:
-        generate_filter_plots(data, plot_filt, plot_filt_figsize)
+        qc_metrics(
+            unidata,
+            select_singlets,
+            remap_string,
+            subset_string,
+            min_genes,
+            max_genes,
+            min_umis,
+            max_umis,
+            mito_dict.get(unidata.get_genome(), default_mito),
+            percent_mito,
+        )
 
-    filter_data(data)
+        if output_filt is not None:
+            group_key = unidata.get_uid()
+            writer = pd.ExcelWriter(f"{output_filt}.{group_key}.filt.xlsx", engine="xlsxwriter")
+            df_cells = get_filter_stats(unidata, min_genes_before_filt = min_genes_before_filt)
+            df_cells.to_excel(writer, sheet_name="Cell filtration stats")
+            writer.save()
+            logger.info(f"Filtration results for {group_key} are written.")
+
+        if plot_filt is not None:
+            _generate_filter_plots(unidata, plot_filt, plot_filt_figsize = plot_filt_figsize, min_genes_before_filt = min_genes_before_filt)
+
+    filter_data(data, focus_list = focus_list)
+
+    for key in focus_list:
+        unidata = data.get_data(key)
+        identify_robust_genes(unidata, percent_cells = percent_cells)
 
 
 @pg_deco.TimeLogger()
 @pg_deco.GCCollect()
-def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
+def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
-        Annotated data matrix with rows for cells and columns for genes.
+    data: ``pegasusio.MultimodalData``
+        Use current selected modality in data, which should contain one RNA expression matrix.
 
     norm_count: ``int``, optional, default: ``1e5``.
         Total count of cells after normalization.
@@ -352,22 +363,29 @@ def log_norm(data: AnnData, norm_count: float = 1e5) -> None:
 
     Examples
     --------
-    >>> pg.log_norm(adata)
+    >>> pg.log_norm(data)
     """
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
 
-    assert issparse(data.X)
+    assert data.get_modality() == "rna"
+
+    data.add_matrix("raw.X", data.X)
+    data.X = data.get_matrix("X").astype(np.float32)
+
     mat = data.X[:, data.var["robust"].values]
     scale = norm_count / mat.sum(axis=1).A1
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X.data = np.log1p(data.X.data) # faster than data.X.log1p()
+    data.obs["scale"] = scale
 
 
-def select_features(data: AnnData, features: str = None) -> str:
+def select_features(data: MultimodalData, features: str = None) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     features: ``str``, optional, default: ``None``.
@@ -384,7 +402,7 @@ def select_features(data: AnnData, features: str = None) -> str:
 
     Examples
     --------
-    >>> pg.select_features(adata)
+    >>> pg.select_features(data)
     """
     keyword = "fmat_" + str(features)  # fmat: feature matrix
 
@@ -405,7 +423,7 @@ def select_features(data: AnnData, features: str = None) -> str:
 
 @pg_deco.GCCollect()
 def pca(
-    data: AnnData,
+    data: MultimodalData,
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
@@ -419,7 +437,7 @@ def pca(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     n_components: ``int``, optional, default: ``50``.
@@ -459,7 +477,7 @@ def pca(
 
     Examples
     --------
-    >>> pg.pca(adata)
+    >>> pg.pca(data)
     """
 
     keyword = select_features(data, features)

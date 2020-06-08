@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
 from sklearn.neighbors import NearestNeighbors
-from anndata import AnnData
+from pegasusio import MultimodalData
 from joblib import effective_n_jobs
 from typing import List, Tuple
 
@@ -84,7 +84,7 @@ def calculate_nearest_neighbors(
 
 @pg_deco.TimeLogger()
 def get_neighbors(
-    data: AnnData,
+    data: MultimodalData,
     K: int = 100,
     rep: str = "pca",
     n_jobs: int = -1,
@@ -96,7 +96,7 @@ def get_neighbors(
     Parameters
     ----------
 
-    data : `AnnData`
+    data : `pegasusio.MultimodalData`
         An AnnData object.
     K : `int`, optional (default: 100)
         Number of neighbors, including the data point itself.
@@ -116,7 +116,7 @@ def get_neighbors(
 
     Examples
     --------
-    >>> indices, distances = tools.get_neighbors(adata)
+    >>> indices, distances = tools.get_neighbors(data)
     """
 
     rep = update_rep(rep)
@@ -192,7 +192,7 @@ def calculate_affinity_matrix(
     return W
 
 def neighbors(
-    data: AnnData,
+    data: MultimodalData,
     K: int = 100,
     rep: "str" = "pca",
     n_jobs: int = -1,
@@ -206,7 +206,7 @@ def neighbors(
     Parameters
     ----------
 
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     K: ``int``, optional, default: ``100``
@@ -214,15 +214,15 @@ def neighbors(
 
     rep: ``str``, optional, default: ``"pca"``
         Embedding representation used to calculate kNN. If ``None``, use ``data.X``; otherwise, keyword ``'X_' + rep`` must exist in ``data.obsm``.
-    
+
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all available threads.
-    
+
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
-    
+
     full_speed: ``bool``, optional, default: ``False``
-        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible. 
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
     Returns
@@ -236,7 +236,7 @@ def neighbors(
 
     Examples
     --------
-    >>> pg.neighbors(adata)
+    >>> pg.neighbors(data)
     """
 
     # calculate kNN
@@ -249,11 +249,11 @@ def neighbors(
         random_state=random_state,
         full_speed=full_speed,
     )
- 
+
     # calculate affinity matrix
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W
- 
+
 
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
     dof = ideal_dist.size - 1
@@ -278,7 +278,7 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
     return results
 
 def calc_kBET(
-    data: AnnData,
+    data: MultimodalData,
     attr: str,
     rep: str = "pca",
     K: int = 25,
@@ -293,7 +293,7 @@ def calc_kBET(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     attr: ``str``
@@ -330,9 +330,9 @@ def calc_kBET(
 
     Examples
     --------
-    >>> pg.calc_kBET(adata, attr = 'Channel')
+    >>> pg.calc_kBET(data, attr = 'Channel')
 
-    >>> pg.calc_kBET(adata, attr = 'Channel', rep = 'umap')
+    >>> pg.calc_kBET(data, attr = 'Channel', rep = 'umap')
     """
     assert attr in data.obs
     if data.obs[attr].dtype.name != "category":
@@ -381,7 +381,7 @@ def calc_kBET(
     return (stat_mean, pvalue_mean, accept_rate)
 
 def calc_kSIM(
-    data: AnnData,
+    data: MultimodalData,
     attr: str,
     rep: str = "pca",
     K: int = 25,
@@ -395,7 +395,7 @@ def calc_kSIM(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
+    data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
     attr: ``str``
@@ -426,9 +426,9 @@ def calc_kSIM(
 
     Examples
     --------
-    >>> pg.calc_kSIM(adata, attr = 'cell_type')
+    >>> pg.calc_kSIM(data, attr = 'cell_type')
 
-    >>> pg.calc_kSIM(adata, attr = 'cell_type', rep = 'umap')
+    >>> pg.calc_kSIM(data, attr = 'cell_type', rep = 'umap')
     """
     assert attr in data.obs
     nsample = data.shape[0]
