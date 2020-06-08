@@ -33,8 +33,8 @@ Options:
 
   --min-genes <number>                             Only keep cells with at least <number> of genes. [default: 500]
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
-  --min-umis <number>                              Only keep cells with at least <number> of UMIs. [default: None]
-  --max-umis <number>                              Only keep cells with less than <number> of UMIs. [default: None]
+  --min-umis <number>                              Only keep cells with at least <number> of UMIs.
+  --max-umis <number>                              Only keep cells with less than <number> of UMIs.
   --mito-prefix <prefix>                           Prefix for mitochondrial genes. Can provide multiple prefixes for multiple organisms (e.g. "GRCh38:MT-,mm10:mt-"). [default: GRCh38:MT-,mm10:mt-]
   --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>%. [default: 20.0]
   --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent>% of cells to select variable genes. [default: 0.05]
@@ -142,7 +142,7 @@ Options:
 Outputs:
   output_name.zarr.zip                     Output file in Zarr format. To load this file in python, use ``import pegasus; data = pegasus.read_input('output_name.zarr.zip')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). This file can be loaded into R and converted into a Seurat object.
   output_name.<group>.h5ad                 Optional output. Only exists if '--output-h5ad' is set. Results in h5ad format per focused <group>. This file can be loaded into R and converted into a Seurat object.
-  output_name.<group>.loom                 Optional output. Only exists if '--output-loom' is set. Results in loom format per focused <group>. 
+  output_name.<group>.loom                 Optional output. Only exists if '--output-loom' is set. Results in loom format per focused <group>.
   output_name.<group>.filt.xlsx            Optional output. Only exists if '--output-filtration-results' is set. Filtration statistics per focused <group>. This file has two sheets --- Cell filtration stats and Gene filtration stats. The first sheet records cell filtering results and it has 10 columns: Channel, channel name; kept, number of cells kept; median_n_genes, median number of expressed genes in kept cells; median_n_umis, median number of UMIs in kept cells; median_percent_mito, median mitochondrial rate as UMIs between mitochondrial genes and all genes in kept cells; filt, number of cells filtered out; total, total number of cells before filtration, if the input contain all barcodes, this number is the cells left after '--min-genes-on-raw' filtration; median_n_genes_before, median expressed genes per cell before filtration; median_n_umis_before, median UMIs per cell before filtration; median_percent_mito_before, median mitochondrial rate per cell before filtration. The channels are sorted in ascending order with respect to the number of kept cells per channel. The second sheet records genes that failed to pass the filtering. This sheet has 3 columns: gene, gene name; n_cells, number of cells this gene is expressed; percent_cells, the fraction of cells this gene is expressed. Genes are ranked in ascending order according to number of cells the gene is expressed. Note that only genes not expressed in any cell are removed from the data. Other filtered genes are marked as non-robust and not used for TPM-like normalization.
   output_name.<group>.filt.gene.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting gene count distributions before and after filtration per channel per focused <group>.
   output_name.<group>.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel per focused <group>.
@@ -167,12 +167,12 @@ Examples:
             "append": self.args["--append"],
             "output_h5ad": self.args["--output-h5ad"],
             "output_loom": self.args["--output-loom"],
-            "min_genes": int(self.args["--min-genes"]),
-            "max_genes": int(self.args["--max-genes"]),
-            "min_umis": int(self.args["--min-umis"]),
-            "max_umis": int(self.args["--max-umis"]),
+            "min_genes": self.convert_to_int(self.args["--min-genes"]),
+            "max_genes": self.convert_to_int(self.args["--max-genes"]),
+            "min_umis": self.convert_to_int(self.args["--min-umis"]),
+            "max_umis": self.convert_to_int(self.args["--max-umis"]),
             "mito_prefix": self.args["--mito-prefix"],
-            "percent_mito": float(self.args["--percent-mito"]),
+            "percent_mito": self.convert_to_float(self.args["--percent-mito"]),
             "percent_cells": float(self.args["--gene-percent-cells"]),
             "output_filt": self.args["<output_name>"]
             if self.args["--output-filtration-results"]

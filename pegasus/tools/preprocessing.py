@@ -71,7 +71,7 @@ def qc_metrics(
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
-    apply_qc_filter(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
+    calc_qc_filters(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
 
 
 def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> pd.DataFrame:
@@ -203,7 +203,7 @@ def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> 
 
     prior_n = data.shape[1]
     data._inplace_subset_var(data.var["n_cells"] > 0)
-    logger.info(f"After filtration, {data.shape[1]}/{prior_n} genes are kept. Among {data.shape[1]} genes, {data.var["robust"].sum()} genes are robust.")
+    logger.info(f"After filtration, {data.shape[1]}/{prior_n} genes are kept. Among {data.shape[1]} genes, {data.var['robust'].sum()} genes are robust.")
 
 
 def _generate_filter_plots(
@@ -363,7 +363,7 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     data.X = data.get_matrix("X").astype(np.float32)
 
     mat = data.X[:, data.var["robust"].values]
-    data.obs["n_robust_counts"] = mat.sum(axis=1).A1 
+    data.obs["n_robust_counts"] = mat.sum(axis=1).A1
     scale = norm_count / data.obs["n_robust_counts"].values
     data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
     data.X.data = np.log1p(data.X.data) # faster than data.X.log1p()

@@ -5,7 +5,7 @@ from .preprocessing import (
     qc_metrics,
     get_filter_stats,
     filter_data,
-    run_filter_data,
+    _run_filter_data,
     log_norm,
     select_features,
     pca,
