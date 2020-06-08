@@ -267,16 +267,32 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.calc_pseudotime(unidata, kwargs["pseudotime"])
 
 
-    if append_data is not None:
-        append_data.obs_names 
-        unidata.obs_names
-        
+    # if append_data is not None:
+    #     locs = unidata.obs_names.get_indexer(append_data.obs_names)
+
+
+    #         genome = ",".join(genomes)
+    #         feature_metadata = pd.concat([unidata.feature_metadata for unidata in unidata_arr], axis = 0)
+    #         feature_metadata.reset_index(inplace = True)
+    #         feature_metadata.fillna(value = "N/A", inplace = True)
+    #         X = hstack([unidata.matrices["X"] for unidata in unidata_arr], format = "csr")
+    #         unidata = UnimodalData(unidata_arr[0].barcode_metadata, feature_metadata, {"X": X}, {"genome": genome, "modality": "rna"})
+    #         unikey = unidata.get_uid()
+    #         self.data[unikey] = unidata
+    #         del unidata_arr
+    #         gc.collect()
+
+    #     self._selected = unikey
+    #     self._unidata = self.data[unikey]
+
+
+
 
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
         adata.uns["scale.data"] = unidata.uns["fmat_highly_variable_features"]  # assign by reference
         adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
-        write_output(adata, f"{output_name}.h5ad")
+        adata.write(f"{output_name}.h5ad", compression="gzip")
         del adata
 
     # write out results
