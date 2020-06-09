@@ -50,6 +50,9 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
         tools.correct_batch(unidata, features="highly_variable_features")
 
+    if kwargs["calc_sigscore"] is not None:
+        tools.calc_signature_score(unidata, kwargs["calc_sigscore"])
+
     # PCA
     tools.pca(
         unidata,

@@ -59,6 +59,8 @@ Options:
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
+  --calc-signature-scores <GMT_file>               Calculate signature scores for gene sets in <GMT_file>.
+
   --pca-n <number>                                 Number of principal components. [default: 50]
   --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
 
@@ -195,6 +197,7 @@ Examples:
             "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
+            "calc_sigscore": self.args["--calc-signature-scores"],
             "pca_n": int(self.args["--pca-n"]),
             "pca_robust": self.args["--pca-robust"],
             "K": int(self.args["--knn-K"]),
