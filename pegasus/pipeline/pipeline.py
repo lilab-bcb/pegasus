@@ -1,5 +1,5 @@
-import anndata
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix, coo_matrix, hstack
 
 from pegasusio import UnimodalData, MultimodalData
@@ -342,9 +342,10 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     if len(focus_list) == 0:
         focus_list = [data.current_key()]
 
+
     append_data = None
     if kwargs["append"] is not None:
-        append_data = data.get_data(append_data)
+        append_data = data.get_data(kwargs["append"])
 
     logger.info("Inputs are loaded.")
 
