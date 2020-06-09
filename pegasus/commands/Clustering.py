@@ -35,7 +35,7 @@ Options:
   --max-genes <number>                             Only keep cells with less than <number> of genes. [default: 6000]
   --min-umis <number>                              Only keep cells with at least <number> of UMIs.
   --max-umis <number>                              Only keep cells with less than <number> of UMIs.
-  --mito-prefix <prefix>                           Prefix for mitochondrial genes. Can provide multiple prefixes for multiple organisms (e.g. "GRCh38:MT-,mm10:mt-"). [default: GRCh38:MT-,mm10:mt-]
+  --mito-prefix <prefix>                           Prefix for mitochondrial genes. Can provide multiple prefixes for multiple organisms (e.g. "MT-" means to use "MT-", "GRCh38:MT-,mm10:mt-,MT-" means to use "MT-" for GRCh38, "mt-" for mm10 and "MT-" for all other organisms). [default: GRCh38:MT-,mm10:mt-,MT-]
   --percent-mito <percent>                         Only keep cells with mitochondrial percent less than <percent>%. [default: 20.0]
   --gene-percent-cells <percent>                   Only use genes that are expressed in at least <percent>% of cells to select variable genes. [default: 0.05]
 
