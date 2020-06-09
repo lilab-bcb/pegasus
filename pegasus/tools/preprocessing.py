@@ -98,6 +98,9 @@ def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> 
     if isinstance(data, MultimodalData):
         data = data.current_data()
 
+    if "Channel" not in data.obs:
+        data.obs["Channel"] = pd.Categorical([""] * data.shape[0])
+
     df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
     gb1 = df.groupby("Channel")
     df_before = gb1.median()
@@ -213,6 +216,9 @@ def _generate_filter_plots(
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
+
+    if "Channel" not in data.obs:
+        data.obs["Channel"] = pd.Categorical([""] * data.shape[0])
 
     df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
     df_plot_before = df[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()

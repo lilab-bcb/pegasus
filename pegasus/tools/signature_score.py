@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 
-from typing import Dict, List
-from anndata import AnnData
+from typing import Dict, List, Union
+from pegasusio import UnimodalData, MultimodalData
+
 
 import logging
 
@@ -11,7 +12,7 @@ from pegasus.utils import decorators as pg_deco
 
 
 @pg_deco.TimeLogger()
-def calc_signature_score(data: AnnData, signatures: Dict[str, List[str]], n_bins: int = 50) -> None:
+def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[str]], str], n_bins: int = 50) -> None:
     """Calculate signature / gene module score.
 
     This is an improved version of Livnat et al. 2018 Cell implementation.
@@ -19,10 +20,10 @@ def calc_signature_score(data: AnnData, signatures: Dict[str, List[str]], n_bins
     Parameters
     ----------
     data: ``anndata.AnnData``
-        Annotated data matrix with rows for cells and columns for genes.
+        MultimodalData with the current selected UnimodalData used.
 
-    signatures: ``Dict[str, List[str]]``
-        A dictionary containing multiple signature score calculation requests. Each score will be stored in data.obs field with key as the keyword. The value of the dict is a list of gene symbols.
+    signatures: ``Dict[str, List[str]]`` or ``str``
+        A dictionary containing multiple signature score calculation requests. Each score will be stored in data.obs field with key as the keyword. The value of the dict is a list of gene symbols. If <signatures> is a string, load signatures from the corresponding Gene Matrix Transposed (GMT)-formatted file. 
 
     n_bins: ``int``, optional, default: 50
 
@@ -52,6 +53,19 @@ def calc_signature_score(data: AnnData, signatures: Dict[str, List[str]], n_bins
     --------
     >>> pg.calc_signature_score(data, {"T_cell_sig": ["CD3D", "CD3E", "CD3G", "TRAC"]})
     """
+    if isinstance(data, MultimodalData):
+        data = data._unidata
+
+    if isinstance(signatures, str):
+        input_file = signatures
+        signatures = {}
+        with open(input_file) as fin:
+            for line in fin:
+                items = line.strip().split('\t')
+                signatures[items[0]] = list(set(items[2:]))
+        logger.info(f"Loaded signatures from GMT file {input_file}.")
+
+
     if "mean" not in data.var:
         data.var["mean"] = data.X.mean(axis = 0).A1
 
