@@ -2,10 +2,12 @@
 Pegasus for Single Cell Analysis
 ====================================
 
-|PyPI| |Docs|
+|PyPI| |PyPIDownload| |Docs|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pegasuspy.svg
    :target: https://pypi.org/project/pegasuspy
+.. |PyPIDownload| image:: https://pepy.tech/badge/pegasuspy
+   :target: https://pepy.tech/project/pegasuspy
 .. |Docs| image:: https://readthedocs.org/projects/pegasus/badge/?version=latest
    :target: https://pegasus.readthedocs.io/
 
