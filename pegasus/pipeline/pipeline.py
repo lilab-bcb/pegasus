@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix, coo_matrix, hstack
 
 from pegasusio import UnimodalData, MultimodalData
-from pegasusio import read_input, write_output
+from pegasusio import read_input, write_output, _get_fillna_dict
 
 from pegasus import tools, cite_seq, misc
 
@@ -14,6 +14,8 @@ logger = logging.getLogger("pegasus")
 
 
 def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, append_data: UnimodalData, **kwargs) -> None:
+    print()
+    logger.info(f"Begin to analyze UnimodalData {unidata.get_uid()}.")
     if kwargs["channel_attr"] is not None:
         unidata.obs["Channel"] = unidata.obs[kwargs["channel_attr"]]
 
@@ -277,39 +279,32 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         Y = append_data.X[idx, :].tocoo(copy = False)
         Z = coo_matrix((Y.data, (locs[Y.row], Y.col)), shape = (unidata.shape[0], append_data.shape[1])).tocsr()
 
-        rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
-        
-        Zt = Z.astype(np.float32)
-        Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
-        Zt.data = np.log1p(Zt.data)
+        idy = Z.getnnz(axis = 0) > 0
+        n_nonzero = idy.sum()
+        if n_nonzero > 0:
+            if n_nonzero < append_data.shape[1]:
+                Z = Z[:, idy]
+                append_df = append_data.feature_metadata.loc[idy, :]
+            else:
+                append_df = append_data.feature_metadata
 
-        X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
+            rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
+            
+            Zt = Z.astype(np.float32)
+            Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
+            Zt.data = np.log1p(Zt.data)
 
-        genome = unidata.get_genome() + "," + append_data.get_genome()
+            X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
 
-        feature_metadata = pd.concat([unidata.feature_metadata, append_data.feature_metadata], axis = 0)
-        feature_metadata.reset_index(inplace = True)
+            genome = unidata.get_genome() + "_and_" + append_data.get_genome()
 
-        def _get_fillna_dict(df: pd.DataFrame) -> dict:
-            """ Generate a fillna dict for columns in a df """
-            fillna_dict = {}
-            for column in df:
-                if df[column].dtype.kind == "b":
-                    fillna_dict[column] = False
-                elif df[column].dtype.kind in {"i", "u", "f", "c"}:
-                    fillna_dict[column] = 0
-                elif df[column].dtype.kind == "S":
-                    fillna_dict[column] = b""
-                elif df[column].dtype.kind in {"O", "U"}:
-                    fillna_dict[column] = ""
-                else:
-                    raise ValueError(f"{column} has unsupported dtype {df[column].dtype}!")
-            return fillna_dict
+            feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
+            feature_metadata.reset_index(inplace = True)
+            feature_metadata.fillna(value = _get_fillna_dict(unidata.feature_metadata), inplace = True)
 
-        feature_metadata.fillna(value = _get_fillna_dict(unidata.feature_metadata), inplace = True)
+            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping)
+            unidata.uns["genome"] = genome
 
-        unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping)
-        unidata.uns["genome"] = genome
 
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
@@ -377,6 +372,8 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     for key in focus_list:
         unidata = data.get_data(key)
         analyze_one_modality(unidata, f"{output_name}.{unidata.get_uid()}", is_raw, append_data, **kwargs)
+
+    print()
 
     # if kwargs["subcluster"]:
     #     unidata = tools.get_anndata_for_subclustering(adata, kwargs["subset_selections"])

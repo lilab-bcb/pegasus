@@ -7,7 +7,7 @@ from scipy.sparse import issparse
 from sklearn.decomposition import PCA
 
 from typing import List, Tuple
-from pegasusio import UnimodalData, MultimodalData, calc_qc_filters
+from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
 
 import logging
 logger = logging.getLogger("pegasus")
@@ -71,6 +71,13 @@ def qc_metrics(
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
+
+    # Make sure that n_genes and n_counts statistics are calculated by setting min_genes = 1 and min_umis = 1
+    if min_genes is None:
+        min_genes = 1
+    if min_umis is None:
+        min_umis = 1
+
     calc_qc_filters(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
 
 
@@ -130,19 +137,10 @@ def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> 
     df_cells.fillna(0, inplace=True)
     df_cells["kept"] = df_cells["kept"].astype(int)
     df_cells["filt"] = df_cells["total"] - df_cells["kept"]
-    df_cells = df_cells[
-        [
-            "kept",
-            "median_n_genes",
-            "median_n_umis",
-            "median_percent_mito",
-            "filt",
-            "total",
-            "median_n_genes_before",
-            "median_n_umis_before",
-            "median_percent_mito_before",
-        ]
-    ]
+
+    target_cols = np.array(["kept", "median_n_genes", "median_n_umis", "median_percent_mito", "filt", "total", "median_n_genes_before", "median_n_umis_before", "median_percent_mito_before"])
+    target_cols = target_cols[np.isin(target_cols, df_cells.columns)]
+    df_cells = df_cells[target_cols]
     df_cells.sort_values("kept", inplace=True)
 
     return df_cells
@@ -220,12 +218,15 @@ def _generate_filter_plots(
     if "Channel" not in data.obs:
         data.obs["Channel"] = pd.Categorical([""] * data.shape[0])
 
+    target_cols = np.array(["Channel", "n_genes", "n_counts", "percent_mito"])
+    target_cols = target_cols[np.isin(target_cols, data.obs.columns)]
+
     df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
-    df_plot_before = df[["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
+    df_plot_before = df[target_cols].copy()
     df_plot_before.reset_index(drop=True, inplace=True)
     df_plot_before["status"] = "original"
 
-    df_plot_after = data.obs.loc[data.obs["passed_qc"], ["Channel", "n_genes", "n_counts", "percent_mito"]].copy()
+    df_plot_after = data.obs.loc[data.obs["passed_qc"], target_cols].copy()
     df_plot_after.reset_index(drop=True, inplace=True)
     df_plot_after["status"] = "filtered"
 
@@ -264,17 +265,18 @@ def _generate_filter_plots(
         figsize=figsize,
     )
 
-    plot_qc_violin(
-        df_plot,
-        "mito",
-        f"{plot_filt}.{group_key}.filt.mito.pdf",
-        xattr="Channel",
-        hue="status",
-        xlabel="Channel",
-        split=True,
-        linewidth=0,
-        figsize=figsize,
-    )
+    if "percent_mito" in df_plot.columns:
+        plot_qc_violin(
+            df_plot,
+            "mito",
+            f"{plot_filt}.{group_key}.filt.mito.pdf",
+            xattr="Channel",
+            hue="status",
+            xlabel="Channel",
+            split=True,
+            linewidth=0,
+            figsize=figsize,
+        )
 
     logger.info("Filtration plots are generated.")
 
@@ -303,17 +305,7 @@ def _run_filter_data(
     if focus_list is None:
         focus_list = [data.current_key()]
 
-    mito_dict = {}
-    default_mito = None
-    if mito_prefix is not None:
-        fields = mito_prefix.split(',')
-        if len(fields) == 1 and fields[0].find(':') < 0:
-            default_mito = fields[0]
-        else:
-            for field in fields:
-                genome, mito_pref = field.split(':')
-                mito_dict[genome] = mito_pref
-
+    mito_dict = DictWithDefault(mito_prefix)
     for key in focus_list:
         unidata = data.get_data(key)
 
@@ -326,7 +318,7 @@ def _run_filter_data(
             max_genes,
             min_umis,
             max_umis,
-            mito_dict.get(unidata.get_genome(), default_mito),
+            mito_dict.get(unidata.get_genome()),
             percent_mito,
         )
 
