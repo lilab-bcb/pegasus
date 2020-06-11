@@ -5,6 +5,7 @@ from .preprocessing import (
     qc_metrics,
     get_filter_stats,
     filter_data,
+    identify_robust_genes,
     _run_filter_data,
     log_norm,
     select_features,
