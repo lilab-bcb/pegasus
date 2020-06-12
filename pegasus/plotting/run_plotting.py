@@ -4,7 +4,7 @@ from matplotlib import pyplot as pl
 from pegasusio import read_input
 from .plot_utils import transform_basis
 from .plot_qc import plot_qc_violin
-from . import plot_library, iplot_library
+from . import plot_library
 
 
 
@@ -45,38 +45,3 @@ def make_static_plots(input_file, plot_type, output_file, dpi=500, **kwargs):
 
     print(output_file + " is generated.")
 
-
-def make_interactive_plots(input_file, plot_type, output_file, **kwargs):
-    adata = read_input(input_file, mode="r")
-    basis = transform_basis(plot_type)
-    if plot_type == "diffmap" or plot_type == "diffmap_pca":
-        df = pd.DataFrame(
-            adata.obsm["X_{}".format(plot_type)][:, 0:3],
-            index=adata.obs.index,
-            columns=[basis + i for i in ["1", "2", "3"]],
-        )
-        if kwargs["isgene"]:
-            coln = adata.var.index.get_loc(kwargs["attr"])
-            df.insert(0, "Annotation", adata.X[:, coln].toarray().ravel())
-        else:
-            df.insert(0, "Annotation", adata.obs[kwargs["attr"]])
-        if not kwargs["isreal"]:
-            iplot_library.scatter3d(df, output_file)
-        else:
-            iplot_library.scatter3d_real(df, output_file, kwargs["log10"])
-    else:
-        df = pd.DataFrame(
-            adata.obsm["X_{}".format(plot_type)],
-            index=adata.obs.index,
-            columns=[basis + i for i in ["1", "2"]],
-        )
-        if kwargs["isgene"]:
-            coln = adata.var.index.get_loc(kwargs["attr"])
-            df.insert(0, "Annotation", adata.X[:, coln].toarray().ravel())
-        else:
-            df.insert(0, "Annotation", adata.obs[kwargs["attr"]])
-        if not kwargs["isreal"]:
-            iplot_library.scatter(df, output_file)
-        else:
-            iplot_library.scatter_real(df, output_file, kwargs["log10"])
-    print(output_file + " is generated.")

@@ -1,4 +1,103 @@
 import numpy as np
+from collections import namedtuple
+import matplotlib.pyplot as plt
+from typing import List, Tuple
+
+
+def _transform_basis(basis: str) -> str:
+    if basis == "tsne" or basis == "citeseq_tsne":
+        return "tSNE"
+    elif basis == "fitsne":
+        return "FItSNE"
+    elif basis == "umap":
+        return "UMAP"
+    elif basis == "diffmap":
+        return "DC"
+    elif basis == "pca" or basis == "rpca":
+        return "PC"
+    elif basis == "diffmap_pca":
+        return "DPC"
+    elif basis == "fle":
+        return "FLE"
+    elif basis == "net_tsne":
+        return "Net-tSNE"
+    elif basis == "net_fitsne":
+        return "Net-FItSNE"
+    elif basis == "net_umap":
+        return "Net-UMAP"
+    elif basis == "net_fle":
+        return "Net-FLE"
+    else:
+        return basis
+
+
+def _get_nrows_and_ncols(num_figs: int, nrows: int, ncols: int) -> Tuple[int, int]:
+    if nrows is None and ncols is None:
+        nrows = int(np.sqrt(num_figs))
+        ncols = (num_figs // nrows) + (num_figs % nrows > 0)
+    elif nrows is None:
+        nrows = (num_figs // ncols) + (num_figs % ncols > 0)
+    elif ncols is None:
+        ncols = (num_figs // nrows) + (num_figs % nrows > 0)
+
+    return nrows, ncols
+
+
+def _get_marker_size(nsamples: int) -> float:
+    return min(20.0, (240000.0 if nsamples > 300000 else 120000.0) / nsamples)
+
+
+def _get_subplot_layouts(
+    nrows: int,
+    ncols: int,
+    subplot_size: Tuple[float, float],
+    left: float,
+    bottom: float,
+    wspace: float,
+    hspace: float,
+    squeeze=True,
+    sharex=True,
+    sharey=True,
+    frameon=False,
+):
+    left_margin = left * subplot_size[0]
+    bottom_margin = bottom * subplot_size[1]
+    right_space = wspace * subplot_size[0]
+    top_space = hspace * subplot_size[1]
+
+    figsize = (
+        left_margin + subplot_size[0] * (1.0 + wspace) * ncols,
+        bottom_margin + subplot_size[1] * (1.0 + hspace) * nrows,
+    )
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=figsize,
+        squeeze=squeeze,
+        sharex=sharex,
+        sharey=sharey,
+        frameon=frameon,
+    )
+
+    fig.subplots_adjust(
+        left=left_margin / figsize[0],
+        bottom=bottom_margin / figsize[1],
+        right=1.0 - right_space / figsize[0],
+        top=1.0 - top_space / figsize[1],
+        wspace=wspace,
+        hspace=hspace,
+    )
+
+    return fig, axes
+
+
+def _get_legend_ncol(label_size: int, max_ncol: int = None):
+    max_ncol = 100 if max_ncol is None else max_ncol
+    return min(1 if label_size <= 14 else (2 if label_size <= 30 else 3), max_ncol)
+
+
+
+
 
 # palettes are imported from scanpy, need to be replaced
 
@@ -164,7 +263,7 @@ godsnot_64 = [
 ]
 
 
-def get_palettes(n_labels, with_background=False, show_background=False):
+def _get_palettes(n_labels: int, with_background: bool = False, show_background: bool = False):
     if with_background:
         n_labels -= 1
 
@@ -186,28 +285,66 @@ def get_palettes(n_labels, with_background=False, show_background=False):
     return palettes
 
 
-def transform_basis(basis):
-    if basis == "tsne" or basis == "citeseq_tsne":
-        return "tSNE"
-    elif basis == "fitsne":
-        return "FItSNE"
-    elif basis == "umap":
-        return "UMAP"
-    elif basis == "diffmap":
-        return "DC"
-    elif basis == "pca" or basis == "rpca":
-        return "PC"
-    elif basis == "diffmap_pca":
-        return "DPC"
-    elif basis == "fle":
-        return "FLE"
-    elif basis == "net_tsne":
-        return "Net-tSNE"
-    elif basis == "net_fitsne":
-        return "Net-FItSNE"
-    elif basis == "net_umap":
-        return "Net-UMAP"
-    elif basis == "net_fle":
-        return "Net-FLE"
-    else:
-        return basis
+
+
+Restriction = namedtuple("Restriction", ["negation", "values"])
+
+
+class RestrictionParser:
+    def __init__(self, restrictions: List[str]):
+        self.restrs = {}
+
+        if restrictions is None:
+            return None
+        
+        for restr_str in restrictions:
+            attr, value_str = restr_str.split(":")
+            negation = False
+            if value_str[0] == "~":
+                negation = True
+                value_str = value_str[1:]
+            self.restrs[attr] = Restriction(negation=negation, values=value_str.split(","))
+
+
+    def contains(self, attr: str) -> bool:
+        return attr in self.restrs
+
+    def get_attrs(self) -> List[str]:
+        return self.restrs.keys()
+
+    def get_satisfied(self, data: "AnnData") -> List[bool]:
+        selected = np.ones(data.shape[0], dtype=bool)
+        for attr, restr in self.restrs.items():
+            labels = data.obs[attr].astype(str)
+            if restr.negation:
+                selected = selected & (~np.isin(labels, restr.values))
+            else:
+                selected = selected & np.isin(labels, restr.values)
+        return selected
+
+    def get_unsatisfied(self, data: "AnnData", apply_to_all: bool) -> List[bool]:
+        unsel = np.zeros(data.shape[0], dtype=bool)
+        if apply_to_all:
+            for attr, restr in self.restrs.items():
+                labels = data.obs[attr].astype(str)
+                if restr.negation:
+                    unsel = unsel | np.isin(labels, restr.values)
+                else:
+                    unsel = unsel | (~np.isin(labels, restr.values))
+        return unsel
+
+    def get_satisfied_per_attr(self, labels: List[str], attr: str) -> List[bool]:
+        one_restr = self.restrs[attr]
+        if one_restr.negation:
+            return ~np.isin(labels, rest_vec)
+        else:
+            return np.isin(labels, rest_vec)
+
+    def get_unsatisfied_per_attr(self, labels: List[str], attr: str) -> List[bool]:
+        one_restr = self.restrs[attr]
+        if one_restr.negation:
+            return np.isin(labels, rest_vec)
+        else:
+            return ~np.isin(labels, rest_vec)
+
+
