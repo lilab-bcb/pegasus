@@ -34,7 +34,7 @@ def scatter(
     legend_fontsize: Optional[int] = None,
     apply_to_all: Optional[bool] = True,
     restrictions: Optional[List[str]] = None,
-    palettes: Optional[List[str]] = None,
+    palettes: Optional[str] = None,
     show_background: Optional[bool] = False,
     legend_ncol: Optional[str] = None,
     cmap: Optional[str] = "YlOrRd",
@@ -100,7 +100,7 @@ def scatter(
                     except KeyError:
                         raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
                     values = data.X[:, pos].toarray().ravel() if issparse(data.X) else data.X[:, pos]
-                    
+
                 if is_numeric_dtype(values):
                     assert apply_to_all or (not restr_obj.contains(attr))
                     values[unsel] = 0 # 0 is good for both integer and float data types
@@ -130,13 +130,13 @@ def scatter(
                     labels = pd.Categorical(labels, categories=natsorted(np.unique(labels)))
                     label_size = labels.categories.size
 
-                    palettes = _get_palettes(label_size, with_background=idx.sum() > 0, show_background=show_background) if palettes is None else np.array(palettes.split(","))
+                    palettes_list = _get_palettes(label_size, with_background=idx.sum() > 0, show_background=show_background) if palettes is None else np.array(palettes.split(","))
 
                     text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
                         kwargs = {"marker": ".", "alpha": alpha_value, "edgecolors": "none", "rasterized": True}
-                        
+
                         if legend_loc != "on data":
                             kwargs["label"] = cat
                         else:
@@ -145,7 +145,7 @@ def scatter(
                         ax.scatter(
                             x[idx],
                             y[idx],
-                            c=palettes[k],
+                            c=palettes_list[k],
                             s=marker_size,
                             **kwargs,
                         )
@@ -205,7 +205,7 @@ def scatter_groups(
     show_full: show the picture with all groups as the first plot.
     categories: if not None, use this to define new groups.
     ### Sample usage:
-    ###    fig = plot_scatter_groups(data, 'tsne', 'louvain_labels', 'Individual', nrows = 2, ncols = 4, alpha = 0.5)
+    ###    fig = plot_scatter_groups(data, 'louvain_labels', 'Individual', 'tsne', nrows = 2, ncols = 4, alpha = 0.5)
     """
     if matkey is not None:
         data.select_matrix(matkey)

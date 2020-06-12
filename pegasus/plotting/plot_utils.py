@@ -101,28 +101,28 @@ def _get_legend_ncol(label_size: int, max_ncol: int = None):
 
 # palettes are imported from scanpy, need to be replaced
 
-vega_20_scanpy = [
-    "#1f77b4",
+pegasus_20 = [
+    "#c5b0d5",
     "#ff7f0e",
-    "#2ca02c",
-    "#d62728",
-    "#9467bd",
     "#8c564b",
-    "#e377c2",  # '#7f7f7f' removed grey
-    "#bcbd22",
-    "#17becf",
+    "#ff9896",
+    "#1f77b4",
+    "#dbdb8d",
+    "#e377c2",
+    "#2ca02c",
     "#aec7e8",
     "#ffbb78",
-    "#98df8a",
-    "#ff9896",
-    "#c5b0d5",
-    "#c49c94",
-    "#f7b6d2",  # '#c7c7c7' removed grey
-    "#dbdb8d",
     "#9edae5",
+    "#98df8a",
+    "#d62728",
+    "#9467bd",
+    "#c49c94",
+    "#f7b6d2",
+    "#bcbd22",
+    "#17becf",
     "#ad494a",
     "#8c6d31",
-]  # manual additions
+]
 
 zeileis_26 = [
     "#023fa5",
@@ -268,7 +268,7 @@ def _get_palettes(n_labels: int, with_background: bool = False, show_background:
         n_labels -= 1
 
     if n_labels <= 20:
-        palettes = vega_20_scanpy
+        palettes = pegasus_20
     elif n_labels <= 26:
         palettes = zeileis_26
     else:
@@ -296,7 +296,7 @@ class RestrictionParser:
 
         if restrictions is None:
             return None
-        
+
         for restr_str in restrictions:
             attr, value_str = restr_str.split(":")
             negation = False
@@ -346,5 +346,3 @@ class RestrictionParser:
             return np.isin(labels, rest_vec)
         else:
             return ~np.isin(labels, rest_vec)
-
-
