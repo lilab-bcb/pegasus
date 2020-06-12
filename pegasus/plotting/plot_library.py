@@ -320,213 +320,221 @@ def scatter_groups(
     return fig if not show else None
 
 
-# def plot_composition(
-#     data,
-#     cluster,
-#     attr,
-#     style="frequency",
-#     stacked=True,
-#     logy=False,
-#     subplot_size=(6, 4),
-#     left=0.15,
-#     bottom=None,
-#     wspace=0.3,
-#     hspace=None,
-#     restrictions=[],
-#     **others,
-# ):
-#     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
+def compo_plot(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    xattr: str,
+    yattr: str,
+    style: Optional[str] = "frequency",
+    restrictions: Optional[List[str]] = None,
+    xlabel: Optional[str] = None,
+    subplot_size: Optional[Tuple[float, float]] = (6, 4),
+    left: Optional[float] = 0.15,
+    bottom: Optional[float] = 0.15,
+    wspace: Optional[float] = 0.3,
+    hspace: Optional[float] = 0.15,
+    show: Optional[bool] = True,
+    **others,
+):
+    """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
     
-#     This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
+    This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
 
-#     Parameters
-#     ----------
+    Parameters
+    ----------
 
-#     data : `AnnData` or `UnimodalData` or `MultimodalData` object
-#         Single cell expression data as an anndata object.
-#     cluster : `str`
-#         A string represents cluster labels, e.g. louvain_labels.
-#     attr: `str`
-#         A sample attribute representing the condition, e.g. Donor.
-#     style: `str`, optional (default: `frequency`)
-#         Composition plot style. Can be either `frequency`, `count`, or 'normalized'. Within each cluster, the `frequency` style show the ratio of cells from each condition over all cells in the cluster, the `count` style just shows the number of cells from each condition, the `normalized` style shows the percentage of cells from the condition in this cluster over the total number of cells from the condition for each condition. 
-#     stacked: `bool`, optional (default: `True`)
-#         If stack the bars from each condition.
-#     logy: `bool`, optional (default: `False`)
-#         If show the y-axis in log10 scale
-#     subplot_size: `tuple`, optional (default: `(6, 4)`)
-#         The plot size (width, height) in inches.
-#     left: `float`, optional (default: `0.15`)
-#         This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
-#     bottom: `float`, optional (default: `0.15`)
-#         This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]),
-#     wspace: `float`, optional (default: `0.2`)
-#         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
-#     hspace: `float`, optional (defualt: `0.15`)
-#         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
-#     restrictions: `list[str]`, optional (default: `[]`)
-#         This parameter is used to select a subset of data to plot.
+    data : `AnnData` or `UnimodalData` or `MultimodalData` object
+        Single cell expression data.
+    xattr : `str`
+        A string for the attribute used in x-axis, e.g. Donor.
+    yattr: `str`
+        A string for the attribute used in y-axis, e.g. Cell type.
+    style: `str`, optional (default: `frequency`)
+        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each yattr over all cells in the xattr (stacked), the `normalized` style shows the percentage of cells from yattr in the xattr over all of cells from yattr for each yattr (not stacked). 
+    restrictions: `list[str]`, optional (default: None)
+        This parameter is used to select a subset of data to plot.
+    xlabel: `str`, optional (default None)
+        X-axis label. If None, use xattr
+    subplot_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    left: `float`, optional (default: `0.15`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]),
+    wspace: `float`, optional (default: `0.3`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
     
-#     Returns
-#     -------
+    Returns
+    -------
 
-#     `Figure` object
-#         A `matplotlib.figure.Figure` object containing the composition plot.
+    `Figure` object
+        A `matplotlib.figure.Figure` object containing the composition plot if show == False
 
-#     Examples
-#     --------
-#     >>> fig = plotting.plot_composition(data, 'louvain_labels', 'Donor', style = 'normalized', stacked = False)
-#     """
+    Examples
+    --------
+    >>> fig = plotting.plot_composition(data, 'louvain_labels', 'Donor', style = 'normalized', stacked = False)
+    """
+    if xlabel is None:
+        xlabel = xattr
 
-#     kwargs = set_up_kwargs(subplot_size, left, bottom, wspace, hspace)
-#     fig, ax = get_subplot_layouts(**kwargs)
+    fig, ax = _get_subplot_layouts(nrows=1, ncols=1, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace)
 
-#     restr_obj = RestrictionParser(restrictions)
-#     selected = restr_obj.get_satisfied(data)
+    restr_obj = RestrictionParser(restrictions)
+    selected = restr_obj.get_satisfied(data)
 
-#     df = pd.crosstab(data.obs.loc[selected, cluster], data.obs.loc[selected, attr])
-#     df = df.reindex(
-#         index=natsorted(df.index.values), columns=natsorted(df.columns.values)
-#     )
-#     # df = df.reindex(index = natsorted(df.index.values), columns = ['singlet', 'doublet', 'unknown'])
+    df = pd.crosstab(data.obs.loc[selected, xattr], data.obs.loc[selected, yattr])
+    df = df.reindex(
+        index=natsorted(df.index.values), columns=natsorted(df.columns.values)
+    )
 
-#     if style == "frequency":
-#         df = df.div(df.sum(axis=1), axis=0) * 100.0
-#     elif style == "normalized":
-#         df = df.div(df.sum(axis=0), axis=1) * 100.0
+    if style == "frequency":
+        df = df.div(df.sum(axis=1), axis=0) * 100.0
+    else:
+        assert style == "normalized"
+        df = df.div(df.sum(axis=0), axis=1) * 100.0
 
-#     palettes = get_palettes(df.shape[1])
+    palettes = _get_palettes(df.shape[1])
 
-#     rot = None
-#     if len(max(df.index.astype(str), key=len)) < 5:
-#         rot = 0
+    rot = None
+    if len(max(df.index.astype(str), key=len)) < 5:
+        rot = 0
 
-#     if logy and not stacked:
-#         df_sum = df.sum(axis=1)
-#         df_new = df.cumsum(axis=1)
-#         df_new = 10 ** df_new.div(df_sum, axis=0).mul(np.log10(df_sum), axis=0)
-#         df = df_new.diff(axis=1).fillna(value=df_new.iloc[:, 0:1], axis=1)
-#         df.plot(
-#             kind="bar",
-#             stacked=False,
-#             legend=False,
-#             logy=True,
-#             ylim=(1.01, df_sum.max() * 1.7),
-#             color=palettes,
-#             rot=rot,
-#             ax=ax,
-#         )
-#     else:
-#         df.plot(
-#             kind="bar",
-#             stacked=stacked,
-#             legend=False,
-#             logy=logy,
-#             color=palettes,
-#             rot=rot,
-#             ax=ax,
-#         )
+    df.plot(
+        kind = "bar",
+        stacked = style == "frequency",
+        legend = False,
+        color = palettes,
+        rot = rot,
+        ax = ax,
+    )
 
-#     ax.grid(False)
-#     ax.set_xlabel("Cluster ID")
-#     ax.set_ylabel("Percentage" if style != "count" else "Count")
-#     ax.set_title(
-#         "AMI = {0:.4f}".format(
-#             adjusted_mutual_info_score(
-#                 data.obs.loc[selected, cluster],
-#                 data.obs.loc[selected, attr],
-#                 average_method="arithmetic",
-#             )
-#         )
-#     )
-#     ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
+    ax.grid(False)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Percentage")
+    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
 
-#     return fig
+    return fig if not show else None
 
 
+def violin(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    keys: Union[str, List[str]],
+    groupby: str,
+    matkey: Optional[str] = None,
+    stripplot: Optional[bool] = True,
+    subplot_size: Optional[Tuple[float, float]] = (2, 4),
+    left: Optional[float] = 0.15,
+    bottom: Optional[float] = 0.15,
+    wspace: Optional[float] = 0.1,
+    hspace: Optional[float] = 0.15,
+    ylabel: Optional[str] = None,
+    show: Optional[bool] = True,
+    **others,
+    ):
+    """
+    ### Sample usage:
+    ###     cg = plot_violin_genes(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
+    ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+    """
+    if matkey is None:
+        data.select_matrix(matkey)
+
+    nrows, ncols = (len(keys), 1)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
+
+    if not is_list_like(keys):
+        keys = [keys]
+
+    obs_keys = []
+    genes = []
+
+    for key in keys:
+        if key in data.obs:
+            assert is_numeric_dtype(data.obs[key])
+            obs_keys.append(key)
+        else:
+            genes.append(key)
+
+    df_list = [pd.DataFrame({"label": data.obs[groupby].values})]
+    if len(obs_keys) > 0:
+        df_list.append(data.obs[obs_keys])
+    if len(genes) > 0:
+        expr_mat = data[:, genes].X.toarray()
+        df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
+    df = pd.concat(df_list, axis = 1)
+
+    for i in range(nrows):
+        ax = axes[i, 0]
+        if stripplot:
+            sns.stripplot(x="label", y=keys[i], data=df, ax=ax, size=2, color="k")
+        sns.violinplot(x="label", y=keys[i], data=df, inner=None, linewidth=1, ax=ax, cut=0)
+        ax.set_xlabel("")
+        ax.set_ylabel(keys[i])
+        ax.set_title(genes[idx])
+    
+    if ylabel is not None:
+        plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
+    
+    return fig if not show else None
 
 
+def heatmap(
+    data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = ?, **kwargs
+):
+### Sample usage:
+###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
+###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+
+    sns.set(font_scale=0.35)
+
+    adata = data.raw if use_raw else data
+    df = pd.DataFrame(adata[:, genes].X.toarray(), index=data.obs.index, columns=genes)
+    if showzscore:
+        df = df.apply(zscore, axis=0)
+
+    cluster_ids = as_category(data.obs[cluster])
+    idx = cluster_ids.argsort()
+    df = df.iloc[idx, :]  # organize df by category order
+    row_colors = np.zeros(df.shape[0], dtype=object)
+    palettes = get_palettes(cluster_ids.categories.size)
+
+    cluster_ids = cluster_ids[idx]
+    for k, cat in enumerate(cluster_ids.categories):
+        row_colors[np.isin(cluster_ids, cat)] = palettes[k]
+
+    cg = sns.clustermap(
+        data=df,
+        row_colors=row_colors,
+        row_cluster=False,
+        col_cluster=True,
+        linewidths=0,
+        yticklabels=[],
+        xticklabels=genes
+    )
+    cg.ax_heatmap.set_ylabel("")
+    # move the colorbar
+    cg.ax_row_dendrogram.set_visible(False)
+    dendro_box = cg.ax_row_dendrogram.get_position()
+    dendro_box.x0 = (dendro_box.x0 + 2 * dendro_box.x1) / 3
+    dendro_box.x1 = dendro_box.x0 + 0.02
+    cg.cax.set_position(dendro_box)
+    cg.cax.yaxis.set_ticks_position("left")
+    cg.cax.tick_params(labelsize=10)
+    # draw a legend for the cluster groups
+    cg.ax_col_dendrogram.clear()
+    for k, cat in enumerate(cluster_ids.categories):
+        cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
+    cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
+    cg.ax_col_dendrogram.grid(False)
+    cg.ax_col_dendrogram.set_xticks([])
+    cg.ax_col_dendrogram.set_yticks([])
+
+    return cg
 
 
+def dotplot(
+):
+    # Learn from scplot
 
 
-# ### Sample usage:
-# ###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-# ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
-# def plot_heatmap(
-#     data, cluster, genes, use_raw=False, showzscore=False, title="", **kwargs
-# ):
-#     sns.set(font_scale=0.35)
-
-#     adata = data.raw if use_raw else data
-#     df = pd.DataFrame(adata[:, genes].X.toarray(), index=data.obs.index, columns=genes)
-#     if showzscore:
-#         df = df.apply(zscore, axis=0)
-
-#     cluster_ids = as_category(data.obs[cluster])
-#     idx = cluster_ids.argsort()
-#     df = df.iloc[idx, :]  # organize df by category order
-#     row_colors = np.zeros(df.shape[0], dtype=object)
-#     palettes = get_palettes(cluster_ids.categories.size)
-
-#     cluster_ids = cluster_ids[idx]
-#     for k, cat in enumerate(cluster_ids.categories):
-#         row_colors[np.isin(cluster_ids, cat)] = palettes[k]
-
-#     cg = sns.clustermap(
-#         data=df,
-#         row_colors=row_colors,
-#         row_cluster=False,
-#         col_cluster=True,
-#         linewidths=0,
-#         yticklabels=[],
-#         xticklabels=genes
-#     )
-#     cg.ax_heatmap.set_ylabel("")
-#     # move the colorbar
-#     cg.ax_row_dendrogram.set_visible(False)
-#     dendro_box = cg.ax_row_dendrogram.get_position()
-#     dendro_box.x0 = (dendro_box.x0 + 2 * dendro_box.x1) / 3
-#     dendro_box.x1 = dendro_box.x0 + 0.02
-#     cg.cax.set_position(dendro_box)
-#     cg.cax.yaxis.set_ticks_position("left")
-#     cg.cax.tick_params(labelsize=10)
-#     # draw a legend for the cluster groups
-#     cg.ax_col_dendrogram.clear()
-#     for k, cat in enumerate(cluster_ids.categories):
-#         cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
-#     cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
-#     cg.ax_col_dendrogram.grid(False)
-#     cg.ax_col_dendrogram.set_xticks([])
-#     cg.ax_col_dendrogram.set_yticks([])
-
-#     return cg
-
-
-# ### Sample usage:
-# ###     cg = plot_violin_genes(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-# ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
-# def plot_violin_genes(data, cluster, genes, subplot_size, ylab):
-#     nrows, ncols = get_nrows_and_ncols(len(genes), None, None)
-#     fig, axes = get_subplot_layouts(
-#         nrows=nrows, ncols=ncols, subplot_size=subplot_size, hspace=0.3, wspace=0.1, squeeze=False
-#     )
-#     expr_mat = data[:, genes].X.toarray()
-#     df = pd.DataFrame(data=expr_mat, columns=genes)
-#     df.insert(0, "label", data.obs[cluster].values)
-#     for i in range(nrows):
-#         for j in range(ncols):
-#             ax = axes[i, j]
-#             idx = i * ncols + j
-#             if idx < len(genes):
-#                 sns.violinplot(
-#                     x="label", y=genes[idx], data=df, inner=None, linewidth=0, ax=ax, cut=0
-#                 )
-#                 sns.stripplot(x="label", y=genes[idx], data=df, ax=ax, size=2, color="k")
-#                 ax.set_xlabel("")
-#                 ax.set_ylabel("")
-#                 ax.set_title(genes[idx])
-#             else:
-#                 ax.set_frame_on(False)
-#     plt.figtext(0.02, 0.5, ylab, rotation="vertical", fontsize="xx-large")
-#     return fig
