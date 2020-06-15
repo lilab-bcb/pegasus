@@ -479,62 +479,62 @@ def violin(
     return fig if not show else None
 
 
-def heatmap(
-    data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = ?, **kwargs
-):
-### Sample usage:
-###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+# def heatmap(
+#     data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = ?, **kwargs
+# ):
+# ### Sample usage:
+# ###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
+# ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
 
-    sns.set(font_scale=0.35)
+#     sns.set(font_scale=0.35)
 
-    adata = data.raw if use_raw else data
-    df = pd.DataFrame(adata[:, genes].X.toarray(), index=data.obs.index, columns=genes)
-    if showzscore:
-        df = df.apply(zscore, axis=0)
+#     adata = data.raw if use_raw else data
+#     df = pd.DataFrame(adata[:, genes].X.toarray(), index=data.obs.index, columns=genes)
+#     if showzscore:
+#         df = df.apply(zscore, axis=0)
 
-    cluster_ids = as_category(data.obs[cluster])
-    idx = cluster_ids.argsort()
-    df = df.iloc[idx, :]  # organize df by category order
-    row_colors = np.zeros(df.shape[0], dtype=object)
-    palettes = get_palettes(cluster_ids.categories.size)
+#     cluster_ids = as_category(data.obs[cluster])
+#     idx = cluster_ids.argsort()
+#     df = df.iloc[idx, :]  # organize df by category order
+#     row_colors = np.zeros(df.shape[0], dtype=object)
+#     palettes = get_palettes(cluster_ids.categories.size)
 
-    cluster_ids = cluster_ids[idx]
-    for k, cat in enumerate(cluster_ids.categories):
-        row_colors[np.isin(cluster_ids, cat)] = palettes[k]
+#     cluster_ids = cluster_ids[idx]
+#     for k, cat in enumerate(cluster_ids.categories):
+#         row_colors[np.isin(cluster_ids, cat)] = palettes[k]
 
-    cg = sns.clustermap(
-        data=df,
-        row_colors=row_colors,
-        row_cluster=False,
-        col_cluster=True,
-        linewidths=0,
-        yticklabels=[],
-        xticklabels=genes
-    )
-    cg.ax_heatmap.set_ylabel("")
-    # move the colorbar
-    cg.ax_row_dendrogram.set_visible(False)
-    dendro_box = cg.ax_row_dendrogram.get_position()
-    dendro_box.x0 = (dendro_box.x0 + 2 * dendro_box.x1) / 3
-    dendro_box.x1 = dendro_box.x0 + 0.02
-    cg.cax.set_position(dendro_box)
-    cg.cax.yaxis.set_ticks_position("left")
-    cg.cax.tick_params(labelsize=10)
-    # draw a legend for the cluster groups
-    cg.ax_col_dendrogram.clear()
-    for k, cat in enumerate(cluster_ids.categories):
-        cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
-    cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
-    cg.ax_col_dendrogram.grid(False)
-    cg.ax_col_dendrogram.set_xticks([])
-    cg.ax_col_dendrogram.set_yticks([])
+#     cg = sns.clustermap(
+#         data=df,
+#         row_colors=row_colors,
+#         row_cluster=False,
+#         col_cluster=True,
+#         linewidths=0,
+#         yticklabels=[],
+#         xticklabels=genes
+#     )
+#     cg.ax_heatmap.set_ylabel("")
+#     # move the colorbar
+#     cg.ax_row_dendrogram.set_visible(False)
+#     dendro_box = cg.ax_row_dendrogram.get_position()
+#     dendro_box.x0 = (dendro_box.x0 + 2 * dendro_box.x1) / 3
+#     dendro_box.x1 = dendro_box.x0 + 0.02
+#     cg.cax.set_position(dendro_box)
+#     cg.cax.yaxis.set_ticks_position("left")
+#     cg.cax.tick_params(labelsize=10)
+#     # draw a legend for the cluster groups
+#     cg.ax_col_dendrogram.clear()
+#     for k, cat in enumerate(cluster_ids.categories):
+#         cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
+#     cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
+#     cg.ax_col_dendrogram.grid(False)
+#     cg.ax_col_dendrogram.set_xticks([])
+#     cg.ax_col_dendrogram.set_yticks([])
 
-    return cg
+#     return cg
 
 
-def dotplot(
-):
-    # Learn from scplot
+# def dotplot(
+# ):
+#     # Learn from scplot
 
 

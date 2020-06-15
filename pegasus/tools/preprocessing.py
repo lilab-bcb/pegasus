@@ -10,9 +10,9 @@ from typing import List, Tuple
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
 
 import logging
-logger = logging.getLogger("pegasus")
+logger = logging.getLogger(__name__)
 
-from pegasus.utils import decorators as pg_deco
+from pegasusio import timer, run_gc
 
 
 
@@ -281,7 +281,7 @@ def _generate_filter_plots(
     logger.info("Filtration plots are generated.")
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def _run_filter_data(
     data: MultimodalData,
     focus_list: List[str] = None,
@@ -340,8 +340,8 @@ def _run_filter_data(
         identify_robust_genes(unidata, percent_cells = percent_cells)
 
 
-@pg_deco.TimeLogger()
-@pg_deco.GCCollect()
+@timer(logger=logger)
+@run_gc()
 def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
@@ -419,7 +419,7 @@ def select_features(data: MultimodalData, features: str = None) -> str:
     return keyword
 
 
-@pg_deco.GCCollect()
+@run_gc
 def pca(
     data: MultimodalData,
     n_components: int = 50,

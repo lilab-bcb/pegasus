@@ -7,11 +7,12 @@ except ImportError:
     print("Need python-igraph!")
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def construct_graph(
     W: "csr_matrix", directed: bool = False, adjust_weights: bool = True
 ) -> "igraph":

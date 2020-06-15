@@ -10,8 +10,9 @@ from collections import defaultdict
 from typing import List, Tuple, Dict
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
 def calc_basic_stat(
@@ -973,7 +974,8 @@ def write_results_to_excel(
         "Excel spreadsheet is written. Time spent = {:.2f}s.".format(end - start)
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def run_de_analysis(
     input_file: str,
     output_excel_file: str,

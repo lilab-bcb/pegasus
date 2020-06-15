@@ -2,12 +2,13 @@ import time
 import numpy as np
 from scipy.sparse import issparse
 from pegasusio import MultimodalData
-import logging
 
 from pegasus.tools import estimate_feature_statistics, select_features, X_from_rep
 
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+import logging
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
 
@@ -70,6 +71,7 @@ def set_group_attribute(data: MultimodalData, attribute_string: str) -> None:
     else:
         assert attribute_string in data.obs.columns
         data.obs["Group"] = data.obs[attribute_string]
+
 
 def estimate_adjustment_matrices(data: MultimodalData) -> bool:
     """ Estimate adjustment matrices
@@ -137,6 +139,7 @@ def correct_batch_effects(data: MultimodalData, keyword: str, features: str = No
         )
     # X[X < 0.0] = 0.0
 
+
 def correct_batch(data: MultimodalData, features: str = None) -> None:
     """Batch correction on data.
 
@@ -182,8 +185,7 @@ def correct_batch(data: MultimodalData, features: str = None) -> None:
         )
 
 
-
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def run_harmony(
     data: MultimodalData,
     rep: str = 'pca',

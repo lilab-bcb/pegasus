@@ -1,15 +1,16 @@
 import numpy as np
 import pandas as pd
 import json
-import logging
 
 from sys import stdout
 from natsort import natsorted
 from typing import List, Dict, Union
 from anndata import AnnData
 
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+import logging
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
 class CellType:
@@ -387,7 +388,7 @@ def annotate(
     """
     data.obs[name] = [anno_dict[x] for x in data.obs[based_on]]
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def run_annotate_cluster(
     input_file: str,
     output_file: str,

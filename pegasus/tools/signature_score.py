@@ -4,14 +4,14 @@ import pandas as pd
 from typing import Dict, List, Union
 from pegasusio import UnimodalData, MultimodalData
 
-
 import logging
+logger = logging.getLogger(__name__)
 
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+from pegasusio import timer
 
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[str]], str], n_bins: int = 50) -> None:
     """Calculate signature / gene module score.
 

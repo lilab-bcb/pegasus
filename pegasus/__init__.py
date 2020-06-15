@@ -61,21 +61,7 @@ from .tools import (
     calc_signature_score,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
-from .demuxEM import estimate_background_probs, demultiplex
 from .misc import search_genes, search_de_genes
-
-from scplot import (
-    violin,
-    heatmap,
-    scatter,
-    line,
-    dotplot,
-    scatter_matrix,
-    embedding,
-    composition_plot,
-    variable_feature_plot,
-    volcano,
-)
 
 from importlib_metadata import version, PackageNotFoundError
 

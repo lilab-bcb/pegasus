@@ -11,8 +11,9 @@ from typing import List
 from pegasusio import MultimodalData
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
 def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> None:
@@ -309,7 +310,8 @@ def select_hvf_seurat(
     data.var["highly_variable_features"] = False
     data.var.loc[robust_idx, "highly_variable_features"] = hvf_index
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def highly_variable_features(
     data: MultimodalData,
     consider_batch: bool,

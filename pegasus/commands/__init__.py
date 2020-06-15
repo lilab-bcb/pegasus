@@ -1,5 +1,4 @@
 from .AggregateMatrix import AggregateMatrix as aggregate_matrix
-from .DemuxEM import DemuxEM as demuxEM
 from .Clustering import Clustering as cluster
 from .DeAnalysis import DeAnalysis as de_analysis
 from .Enrichment import Enrichment as enrichment
