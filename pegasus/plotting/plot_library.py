@@ -15,7 +15,7 @@ from matplotlib import rcParams
 import anndata
 from pegasusio import UnimodalData, MultimodalData
 
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Callable
 
 import logging
 logger = logging.getLogger(__name__)
@@ -336,7 +336,7 @@ def compo_plot(
     **others,
 ):
     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
-    
+
     This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
 
     Parameters
@@ -349,7 +349,7 @@ def compo_plot(
     yattr: `str`
         A string for the attribute used in y-axis, e.g. Cell type.
     style: `str`, optional (default: `frequency`)
-        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each yattr over all cells in the xattr (stacked), the `normalized` style shows the percentage of cells from yattr in the xattr over all of cells from yattr for each yattr (not stacked). 
+        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each yattr over all cells in the xattr (stacked), the `normalized` style shows the percentage of cells from yattr in the xattr over all of cells from yattr for each yattr (not stacked).
     restrictions: `list[str]`, optional (default: None)
         This parameter is used to select a subset of data to plot.
     xlabel: `str`, optional (default None)
@@ -364,7 +364,7 @@ def compo_plot(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
-    
+
     Returns
     -------
 
@@ -472,15 +472,15 @@ def violin(
         ax.set_xlabel("")
         ax.set_ylabel(keys[i])
         ax.set_title(genes[idx])
-    
+
     if ylabel is not None:
         plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
-    
+
     return fig if not show else None
 
 
 def heatmap(
-    data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = ?, **kwargs
+    data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = "Reds", **kwargs
 ):
 ### Sample usage:
 ###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
@@ -532,9 +532,124 @@ def heatmap(
 
     return cg
 
+#def __size_legend(size_min, size_max, dot_min, dot_max, size_tick_labels_format, size_ticks):
+#    size_ticks_pixels = np.interp(size_ticks, (size_min, size_max), (dot_min, dot_max))
+#    size_tick_labels = [size_tick_labels_format.format(x) for x in size_ticks]
+#    points = hv.Points(
+#        {'x': np.repeat(0.15, len(size_ticks)), 'y': np.arange(len(size_ticks), 0, -1),
+#         'size': size_ticks_pixels},
+#        vdims='size').opts(xaxis=None, color='black', yaxis=None, size=dim('size'))
+#    labels = hv.Labels(
+#        {'x': np.repeat(0.3, len(size_ticks)), 'y': np.arange(len(size_ticks), 0, -1),
+#         'text': size_tick_labels},
+#        ['x', 'y'], 'text').opts(text_align='left', text_font_size='9pt')
+#    overlay = (points * labels)
+#    overlay.opts(width=dot_max + 100, height=int(len(size_ticks) * (dot_max + 12)), xlim=(0, 1),
+#        ylim=(0, len(size_ticks) + 1),
+#        invert_yaxis=True, shared_axes=False, show_frame=False)
+#    return overlay
 
 def dotplot(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    keys: Union[str, List[str]],
+    by: str,
+    reduce_function: Callable[[np.ndarray], float] = np.mean,
+    fraction_min: float = 0,
+    fraction_max: float = None,
+    dot_min: int = 0,
+    dot_max: int = 20,
+    cmap: Union[str, List[str], Tuple[str]] = 'Reds',
+    sort_function: Callable[[pd.DataFrame], List[str]] = None,
+    show: Optional[bool] = True,
+    **kwds,
 ):
-    # Learn from scplot
+    """
+    Generate a dot plot.
+    """
+    sns.set(font_scale=0.7, style='whitegrid')
 
+    if not is_list_like(keys):
+        keys = [keys]
 
+    keywords = dict(cmap=cmap)
+    keywords.update(kwds)
+
+    from scipy.sparse import issparse
+    X = data[:, keys].X
+    if issparse(X):
+        X = X.toarray()
+    df = pd.DataFrame(data=X, columns=keys)
+    df[by] = data.obs[by].values
+
+    def non_zero(g):
+        return np.count_nonzero(g) / g.shape[0]
+
+    summarized_df = df.groupby(by).aggregate([reduce_function, non_zero])
+    if sort_function is not None:
+        row_indices = sort_function(summarized_df)
+        summarized_df = summarized_df.iloc[row_indices]
+    else:
+        summarized_df = summarized_df.loc[natsorted(summarized_df.index, reverse=True)]
+
+    mean_columns = []
+    frac_columns = []
+    for j in range(len(summarized_df.columns)):
+        if j % 2 == 0:
+            mean_columns.append(summarized_df.columns[j])
+        else:
+            frac_columns.append(summarized_df.columns[j])
+
+    # Features on rows, by on rows
+    fraction_df = summarized_df[frac_columns]
+    mean_df = summarized_df[mean_columns]
+
+    y, x = np.indices(mean_df.shape)
+    y = y.flatten()
+    x = x.flatten()
+    fraction = fraction_df.values.flatten()
+    if fraction_max is None:
+        fraction_max = fraction.max()
+    pixels = np.interp(fraction, (fraction_min, fraction_max), (dot_min, dot_max))
+    pixels = pixels * 5
+    summary_values = mean_df.values.flatten()
+    xlabel = [keys[i] for i in range(len(keys))]
+    ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
+    dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
+            xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
+
+    #xticks = [(i, keys[i]) for i in range(len(keys))]
+    #yticks = [(i, str(summarized_df.index[i])) for i in range(len(summarized_df.index))]
+    xticks = keys
+    yticks = summarized_df.index.map(str).values
+
+    # note we take the max label string length as an approximation of width of labels in pixels
+    width = int(np.ceil(((dot_max + 1) + 4) * len(xticks) + dotplot_df['ylabel'].str.len().max()) + dot_max + 100)
+    height = int(np.ceil(((dot_max + 1) + 4) * len(yticks) + dotplot_df['xlabel'].str.len().max()) + 50)
+    fig, ax = plt.subplots(figsize=(width / 100.0, height / 100.0), dpi=100)
+
+    ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
+    ax.set_ylabel(str(by))
+    ax.set_xlabel('')
+    ax.set_xlim(-1, len(xticks))
+    ax.set_ylim(-1, len(yticks))
+    ax.set_xticks(range(len(xticks)))
+    ax.set_xticklabels(xticks)
+    ax.set_yticks(range(len(summarized_df.index)))
+    ax.set_yticklabels(yticks)
+    plt.xticks(rotation=90)
+
+    size_range = fraction_max - fraction_min
+    if 0.3 < size_range <= 0.6:
+        size_legend_step = 0.1
+    elif size_range <= 0.3:
+        size_legend_step = 0.05
+    else:
+        size_legend_step = 0.2
+
+    size_ticks = np.arange(fraction_min if fraction_min > 0 or fraction_min > 0 else fraction_min + size_legend_step,
+        fraction_max + size_legend_step, size_legend_step)
+    #result = p + __size_legend(size_min=fraction_min, size_max=fraction_max, dot_min=dot_min, dot_max=dot_max,
+    #    size_tick_labels_format='{:.0%}', size_ticks=size_ticks)
+    #result.df = dotplot_df
+
+    return fig if not show else None
