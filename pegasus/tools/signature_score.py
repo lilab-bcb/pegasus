@@ -70,9 +70,18 @@ def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[
         data.var["mean"] = data.X.mean(axis = 0).A1
 
     if data.uns.get("sig_n_bins", 0) != n_bins:
-        data.uns["sig_n_bins"] = n_bins
         mean_vec = data.var["mean"]
-        bins = pd.qcut(mean_vec, n_bins)
+        if mean_vec.size <= n_bins:
+            logger.error(f"Number of bins {n_bins} is larger or equal to the total number of genes {mean_vec.size}! Please adjust n_bins and rerun this function!")
+            return None
+        data.uns["sig_n_bins"] = n_bins
+        try:
+            bins = pd.qcut(mean_vec, n_bins)
+        except ValueError:
+            logger.warning("Detected and dropped duplicate bin edges!")
+            bins = pd.qcut(mean_vec, n_bins, duplicates = "drop")
+        if bins.value_counts().min() == 1:
+            logger.warning("Detected bins with only 1 gene!")
         bins.cat.categories = bins.cat.categories.astype(str)
         data.var["bins"] = bins
         # calculate background expectations

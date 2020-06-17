@@ -27,6 +27,7 @@ from .tools import (
     qc_metrics,
     get_filter_stats,
     filter_data,
+    identify_robust_genes,
     log_norm,
     select_features,
     pca,
