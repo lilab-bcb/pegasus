@@ -12,8 +12,9 @@ from typing import List, Tuple
 from pegasus.tools import update_rep, X_from_rep, knn_is_cached
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
 
@@ -82,7 +83,8 @@ def calculate_nearest_neighbors(
 
     return indices, distances
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def get_neighbors(
     data: MultimodalData,
     K: int = 100,
@@ -155,7 +157,7 @@ def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
 
 
 # We should not modify distances array!
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def calculate_affinity_matrix(
     indices: List[int], distances: List[float]
 ) -> "csr_matrix":
@@ -190,6 +192,7 @@ def calculate_affinity_matrix(
     W.eliminate_zeros()
 
     return W
+
 
 def neighbors(
     data: MultimodalData,
@@ -379,6 +382,7 @@ def calc_kBET(
     accept_rate = (kBET_arr[:, 1] >= alpha).sum() / nsample
 
     return (stat_mean, pvalue_mean, accept_rate)
+
 
 def calc_kSIM(
     data: MultimodalData,

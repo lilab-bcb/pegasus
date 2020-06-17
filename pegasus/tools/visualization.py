@@ -25,8 +25,10 @@ from pegasus.tools import (
 )
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
+
 
 
 def calc_tsne(
@@ -242,7 +244,8 @@ def calc_force_directed_layout(
         init=init,
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def tsne(
     data: MultimodalData,
     rep: str = "pca",
@@ -313,7 +316,7 @@ def tsne(
     )
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def fitsne(
     data: MultimodalData,
     rep: str = "pca",
@@ -383,7 +386,8 @@ def fitsne(
         random_state,
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def umap(
     data: MultimodalData,
     rep: str = "pca",
@@ -465,7 +469,8 @@ def umap(
     end = time.time()
     logger.info("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def fle(
     data: MultimodalData,
     file_name: str = None,
@@ -565,7 +570,8 @@ def fle(
         random_state,
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     """
     TODO: documentation (not user API)
@@ -598,7 +604,8 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
 
     return selected
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def net_tsne(
     data: MultimodalData,
     rep: str = "pca",
@@ -738,7 +745,8 @@ def net_tsne(
         n_iter_early_exag=0,
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def net_fitsne(
     data: MultimodalData,
     rep: str = "pca",
@@ -878,7 +886,8 @@ def net_fitsne(
         mom_switch_iter=0,
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def net_umap(
     data: MultimodalData,
     rep: str = "pca",
@@ -1047,7 +1056,8 @@ def net_umap(
         knn_dists=knn_dists,
     )
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def net_fle(
     data: MultimodalData,
     file_name: str = None,

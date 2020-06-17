@@ -19,13 +19,11 @@ Sub-commands:
     annotate_cluster        This subcommand is used to automatically annotate cell types for each cluster based on existing markers. Currently, it works for human/mouse immune/brain cells.
   Plotting:
     plot                    Make static plots, which includes plotting tSNEs by cluster labels and different groups.
-    iplot                   Make interactive plots using plotly. The outputs are HTML pages. You can visualize diffusion maps with this sub-command.
   Subclustering:
     view                    View attribute (e.g. cluster labels) and their values. This subcommand is used to determine cells to run subcluster analysis.
     subcluster              Perform sub-cluster analyses on a subset of cells from the analyzed data (i.e. 'cluster' output).
   Web-based visualization:
     scp_output              Generate output files for single cell portal.
-    parquet                 Generate a PARQUET file for web-based visualization.
   CITE-Seq:
     merge_rna_adt           Merge RNA and ADT matrices into one 10x-formatted hdf5 file.
   MISC:

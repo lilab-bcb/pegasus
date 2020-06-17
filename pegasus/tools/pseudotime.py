@@ -11,11 +11,13 @@ from typing import List
 from anndata import AnnData
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def calc_pseudotime(data: AnnData, roots: List[str]) -> None:
     """Calculate Pseudotime based on Diffusion Map.
 

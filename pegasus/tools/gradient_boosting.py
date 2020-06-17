@@ -13,11 +13,12 @@ from sklearn.cluster import KMeans
 from pegasus.io import read_input
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def find_markers(
     data: AnnData,
     label_attr: str,

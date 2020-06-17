@@ -14,9 +14,9 @@ from typing import List
 from pegasus.tools import construct_graph
 
 import logging
+logger = logging.getLogger(__name__)
 
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+from pegasusio import timer
 
 
 def louvain(
@@ -167,7 +167,7 @@ def leiden(
     )
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def partition_cells_by_kmeans(
     data: MultimodalData,
     rep: str,

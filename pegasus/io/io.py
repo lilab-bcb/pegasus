@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import gzip
-import logging
 import os.path
 import re
 from typing import List, Tuple, Dict
@@ -16,8 +15,9 @@ from scipy.sparse import csr_matrix, issparse
 from . import Array2D, MemData
 from .anndata_legacy import _to_dict_fixed_width_arrays, _parse_whitelist, _update_backed_h5ad
 
+import logging
 logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+from pegasusio import timer
 
 
 def load_10x_h5_file_v2(h5_in: "tables.File", fn: str, ngene: int = None) -> "MemData":
@@ -673,7 +673,7 @@ def infer_file_format(input_file: str) -> Tuple[str, str, str]:
     return file_format, copy_path, copy_type
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def read_input(
     input_file: str,
     genome: str = None,
@@ -842,7 +842,7 @@ def _write_loom(data: "AnnData", output_file: str):
     logger.info('{0} is written.'.format(output_file))
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def write_output(
     data: "MemData or AnnData",
     output_file: str,

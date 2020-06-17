@@ -13,8 +13,9 @@ from pegasusio import MultimodalData
 from pegasus.tools import update_rep, W_from_rep
 
 import logging
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+logger = logging.getLogger(__name__)
+
+from pegasusio import timer
 
 
 def calculate_normalized_affinity(
@@ -103,7 +104,7 @@ def calculate_diffusion_map(
     return Phi_pt, Lambda, Phi  # , U_df, W_norm
 
 
-@pg_deco.TimeLogger()
+@timer(logger=logger)
 def diffmap(
     data: MultimodalData,
     n_components: int = 100,
@@ -166,7 +167,8 @@ def diffmap(
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def reduce_diffmap_to_3d(data: MultimodalData, random_state: int = 0) -> None:
     """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
 

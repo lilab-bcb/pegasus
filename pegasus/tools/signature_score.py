@@ -4,14 +4,14 @@ import pandas as pd
 from typing import Dict, List, Union
 from pegasusio import UnimodalData, MultimodalData
 
-
 import logging
+logger = logging.getLogger(__name__)
 
-logger = logging.getLogger("pegasus")
-from pegasus.utils import decorators as pg_deco
+from pegasusio import timer
 
 
-@pg_deco.TimeLogger()
+
+@timer(logger=logger)
 def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[str]], str], n_bins: int = 50) -> None:
     """Calculate signature / gene module score.
 
@@ -70,9 +70,19 @@ def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[
         data.var["mean"] = data.X.mean(axis = 0).A1
 
     if data.uns.get("sig_n_bins", 0) != n_bins:
-        data.uns["sig_n_bins"] = n_bins
         mean_vec = data.var["mean"]
-        bins = pd.qcut(mean_vec, n_bins)
+        if mean_vec.size <= n_bins:
+            logger.error(f"Number of bins {n_bins} is larger or equal to the total number of genes {mean_vec.size}! Please adjust n_bins and rerun this function!")
+            return None
+        data.uns["sig_n_bins"] = n_bins
+        try:
+            bins = pd.qcut(mean_vec, n_bins)
+        except ValueError:
+            logger.warning("Detected and dropped duplicate bin edges!")
+            bins = pd.qcut(mean_vec, n_bins, duplicates = "drop")
+            n_bins = bins.cat.categories.size
+        if bins.value_counts().min() == 1:
+            logger.warning("Detected bins with only 1 gene!")
         bins.cat.categories = bins.cat.categories.astype(str)
         data.var["bins"] = bins
         # calculate background expectations
@@ -86,9 +96,13 @@ def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[
     for key, gene_list in signatures.items():
         genes = pd.Index(gene_list)
         idx = data.var_names.isin(genes)
-        if idx.sum() < genes.size:
+        nvalid = idx.sum()
+        if nvalid < genes.size:
             omitted = ~genes.isin(data.var_names)
-            logger.warning("For signature {}, genes {} are not in the data and thus omitted!".format(key, str(list(genes[omitted]))[1:-1]))
-        if key in data.obs:
-            logger.warning("Signature key {} exists in data.obs, the existing content will be overwritten!".format(key))
-        data.obs[key] = (data.X[:, idx].mean(axis = 1).A1 - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)
+            logger.warning(f"For signature {key}, genes {str(list(genes[omitted]))[1:-1]} are not in the data and thus omitted!")
+        if nvalid < 2:
+            logger.warning(f"Signature {key} has less than 2 genes in the data and thus we skip its score calculation!")
+        else:
+            if key in data.obs:
+                logger.warning("Signature key {} exists in data.obs, the existing content will be overwritten!".format(key))
+            data.obs[key] = (data.X[:, idx].mean(axis = 1).A1 - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)
