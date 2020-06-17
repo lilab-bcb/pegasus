@@ -341,7 +341,7 @@ def _run_filter_data(
 
 
 @timer(logger=logger)
-@run_gc()
+@run_gc
 def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     """Normalization, and then apply natural logarithm to the data.
 

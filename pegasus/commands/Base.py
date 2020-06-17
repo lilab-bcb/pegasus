@@ -1,5 +1,5 @@
 from docopt import docopt
-from typing import List
+from typing import List, Union
 
 
 class Base:
@@ -16,6 +16,14 @@ class Base:
 
     def convert_to_float(self, value: str) -> float:
     	return float(value) if value is not None else None
+
+    def convert_to_list(self, astring: str, sep: str = ",", converter: object = str) -> Union[List[object], None]:
+        if astring is None:
+            return None
+        fields = [converter(x) for x in astring.split(sep)]
+        if len(fields) == 1:
+            return fields[0]
+        return fields
 
     def execute(self):
         raise NotImplementedError

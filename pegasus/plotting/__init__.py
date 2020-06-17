@@ -1,9 +1,9 @@
-# from .run_plotting import make_static_plots
 from .plot_library import (
     scatter,
-    scatter_groups,
     compo_plot,
+    # scatter_groups,
     # violin,
     # heatmap,
+    # dotplot,
 )
-# from .plot_qc import plot_qc_violin, plot_hvf
+from .plot_qc import plot_qc_violin, plot_hvf
