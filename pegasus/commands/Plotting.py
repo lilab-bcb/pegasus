@@ -51,7 +51,7 @@ Options:
 
 Examples:
   pegasus plot scatter --basis tsne --attributes louvain_labels,Individual Manton_BM.h5ad test.pdf
-  pegasus plot composition --cluster-labels louvain_labels --attribute Individual --style normalized --not-stacked Manton_BM.h5ad test.pdf
+  pegasus plot composition --xattr Individual --yattr louvain_labels --style normalized Manton_BM.h5ad test.pdf
     """
     def execute(self):
         kwargs = {
@@ -74,11 +74,12 @@ Examples:
             "xattr": self.args["--xattr"],
             "yattr": self.args["--yattr"],
             "style": self.args["--style"],
+            "show": False,
         }
 
         for key in ["nrows", "ncols", "subplot_size", "left", "bottom", "wspace", "hspace"]:
             if kwargs[key] is None:
-                del kwargs["nrows"]
+                del kwargs[key]
 
         plot_type2keyword = {"scatter": "scatter", "composition" : "compo_plot"}
 
