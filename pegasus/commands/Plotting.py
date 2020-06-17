@@ -75,6 +75,10 @@ Examples:
             "style": self.args["--style"],
         }
 
+        for key in ["nrows", "ncols", "subplot_size", "left", "bottom", "wspace", "hspace"]:
+            if kwargs[key] is None:
+                del kwargs["nrows"]
+
         plot_type2keyword = {"scatter": "scatter", "composition" : "compo_plot"}
         
         data = read_input(self.args["<input_file>"])
