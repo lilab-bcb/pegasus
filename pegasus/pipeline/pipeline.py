@@ -27,26 +27,31 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             tools.set_group_attribute(unidata, kwargs["group_attribute"])
 
     # select highly variable features
+    standardize = False # if no select HVF, False
     if kwargs["select_hvf"]:
-        tools.highly_variable_features(
-            unidata,
-            kwargs["batch_correction"],
-            flavor=kwargs["hvf_flavor"],
-            n_top=kwargs["hvf_ngenes"],
-            n_jobs=kwargs["n_jobs"],
-        )
-        if kwargs["hvf_flavor"] == "pegasus":
-            if kwargs["plot_hvf"] is not None:
-                from pegasus.plotting import plot_hvf
+        if unidata.shape[1] <= kwargs["hvf_ngenes"]:
+            logger.warning(f"Number of genes {unidata.shape[1]} is no greater than the target number of highly variable features {kwargs['hvf_ngenes']}. HVF selection is omitted.")
+        else:
+            standardize = True
+            tools.highly_variable_features(
+                unidata,
+                kwargs["batch_correction"],
+                flavor=kwargs["hvf_flavor"],
+                n_top=kwargs["hvf_ngenes"],
+                n_jobs=kwargs["n_jobs"],
+            )
+            if kwargs["hvf_flavor"] == "pegasus":
+                if kwargs["plot_hvf"] is not None:
+                    from pegasus.plotting import plot_hvf
 
-                robust_idx = unidata.var["robust"].values
-                plot_hvf(
-                    unidata.var.loc[robust_idx, "mean"],
-                    unidata.var.loc[robust_idx, "var"],
-                    unidata.var.loc[robust_idx, "hvf_loess"],
-                    unidata.var.loc[robust_idx, "highly_variable_features"],
-                    kwargs["plot_hvf"] + ".hvf.pdf",
-                )
+                    robust_idx = unidata.var["robust"].values
+                    plot_hvf(
+                        unidata.var.loc[robust_idx, "mean"],
+                        unidata.var.loc[robust_idx, "var"],
+                        unidata.var.loc[robust_idx, "hvf_loess"],
+                        unidata.var.loc[robust_idx, "highly_variable_features"],
+                        kwargs["plot_hvf"] + ".hvf.pdf",
+                    )
 
     # batch correction: L/S
     if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
@@ -55,11 +60,16 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["calc_sigscore"] is not None:
         tools.calc_signature_score(unidata, kwargs["calc_sigscore"])
 
+    n_pc = min(kwargs["pca_n"], unidata.shape[0], unidata.shape[1])
+    if n_pc < kwargs["pca_n"]:
+        logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
+
     # PCA
     tools.pca(
         unidata,
-        n_components=kwargs["pca_n"],
+        n_components=n_pc,
         features="highly_variable_features",
+        standardize=standardize,
         robust=kwargs["pca_robust"],
         random_state=kwargs["random_state"],
     )
@@ -308,7 +318,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
-        adata.uns["scale.data"] = unidata.uns["fmat_highly_variable_features"]  # assign by reference
+        adata.uns["scale.data"] = adata.uns.pop("fmat_highly_variable_features")  # assign by reference
         adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
         adata.write(f"{output_name}.h5ad", compression="gzip")
         del adata

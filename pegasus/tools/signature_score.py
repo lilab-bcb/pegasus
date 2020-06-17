@@ -86,9 +86,13 @@ def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[
     for key, gene_list in signatures.items():
         genes = pd.Index(gene_list)
         idx = data.var_names.isin(genes)
-        if idx.sum() < genes.size:
+        nvalid = idx.sum()
+        if nvalid < genes.size:
             omitted = ~genes.isin(data.var_names)
-            logger.warning("For signature {}, genes {} are not in the data and thus omitted!".format(key, str(list(genes[omitted]))[1:-1]))
-        if key in data.obs:
-            logger.warning("Signature key {} exists in data.obs, the existing content will be overwritten!".format(key))
-        data.obs[key] = (data.X[:, idx].mean(axis = 1).A1 - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)
+            logger.warning(f"For signature {key}, genes {str(list(genes[omitted]))[1:-1]} are not in the data and thus omitted!")
+        if nvalid < 2:
+            logger.warning(f"Signature {key} has less than 2 genes in the data and thus we skip its score calculation!")
+        else:
+            if key in data.obs:
+                logger.warning("Signature key {} exists in data.obs, the existing content will be overwritten!".format(key))
+            data.obs[key] = (data.X[:, idx].mean(axis = 1).A1 - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)

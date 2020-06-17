@@ -76,7 +76,9 @@ Examples:
             "style": self.args["--style"],
         }
 
-        print(kwargs["subplot_size"])
+        for key in ["nrows", "ncols", "subplot_size", "left", "bottom", "wspace", "hspace"]:
+            if kwargs[key] is None:
+                del kwargs["nrows"]
 
         plot_type2keyword = {"scatter": "scatter", "composition" : "compo_plot"}
 
