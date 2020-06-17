@@ -29,7 +29,7 @@ Options:
   --attributes <attrs>               <attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
   --basis <basis>                    Basis for 2D plotting, chosen from 'umap', 'tsne', 'fitsne', 'fle', 'net_umap', 'net_tsne', 'net_fitsne' or 'net_fle'. [default: umap]
   --alpha <alpha>                    Point transparent parameter. Can be a list of parameters separated by comma.
-  --legend-loc <str>                 Legend location, can be either "right margin" or "on data" [default: right margin] 
+  --legend-loc <str>                 Legend location, can be either "right margin" or "on data" [default: right margin]
   --legend-fontsize <fontsize>       Legend font size.
   --apply-to-each-figure             Indicate that the <restriction> strings are not applied to all attributes but for specific attributes. The string's 'attr' value should math the attribute you want to restrict.
   --set-palettes <str>               A comma-separated list of colors for visualization.
@@ -41,6 +41,7 @@ Options:
   --bottom <bottom>                  Figure's bottom margin in fraction with respect to subplot height.
   --wspace <wspace>                  Horizontal space between subplots in fraction with respect to subplot width.
   --hspace <hspace>                  Vertical space between subplots in fraction with respect to subplot height.
+  --do-not-show-all                  Do not show all components in group for scatter_groups.
 
   --xattr <attr>                     Use <attr> in x-axis for the composition plot, e.g. Donor.
   --yattr <attr>                     Use <attr> in y-axis for the composition plot, e.g. Cell type.
@@ -75,10 +76,12 @@ Examples:
             "style": self.args["--style"],
         }
 
+        print(kwargs["subplot_size"])
+
         plot_type2keyword = {"scatter": "scatter", "composition" : "compo_plot"}
-        
+
         data = read_input(self.args["<input_file>"])
-        fig = getattr(pegasus.plotting, plot_type2keyword(self.args["<plot_type>"]))(data, **kwargs)
+        fig = getattr(pegasus.plotting, plot_type2keyword[self.args["<plot_type>"]])(data, **kwargs)
 
         output_file = self.args["<output_file>"]
         fig.savefig(output_file, dpi=int(self.args["--dpi"]))
