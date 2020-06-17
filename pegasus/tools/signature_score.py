@@ -80,6 +80,7 @@ def calc_signature_score(data: MultimodalData, signatures: Union[Dict[str, List[
         except ValueError:
             logger.warning("Detected and dropped duplicate bin edges!")
             bins = pd.qcut(mean_vec, n_bins, duplicates = "drop")
+            n_bins = bins.size
         if bins.value_counts().min() == 1:
             logger.warning("Detected bins with only 1 gene!")
         bins.cat.categories = bins.cat.categories.astype(str)
