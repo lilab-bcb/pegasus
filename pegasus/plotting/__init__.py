@@ -4,6 +4,6 @@ from .plot_library import (
     # scatter_groups,
     # violin,
     # heatmap,
-    # dotplot,
+    dotplot,
 )
 from .plot_qc import plot_qc_violin, plot_hvf

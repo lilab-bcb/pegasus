@@ -63,7 +63,7 @@ def scatter(
     matkey: ``str``, optional, default: None
         If matkey is set, select matrix with matkey as keyword in the current modality.
     alpha: ``float`` or ``List[float], optional, default: ``1.0``
-        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.        
+        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data".
     legend_fontsize: ``int``, optional, default: None
@@ -412,7 +412,7 @@ def compo_plot(
 
     Examples
     --------
-    >>> fig = plotting.plot_composition(data, 'louvain_labels', 'Donor', style = 'normalized', stacked = False)
+    >>> fig = pg.compo_plot(data, 'louvain_labels', 'Donor', style = 'normalized')
     """
     if xlabel is None:
         xlabel = xattr
@@ -571,6 +571,10 @@ def heatmap(
 
     return cg
 
+def __get_dot_size(size_arr, size_min, size_max, dot_min, dot_max):
+    size_pixel = np.interp(size_arr, (size_min, size_max), (dot_min, dot_max))
+    size_pixel = 5 * size_pixel
+    return size_pixel
 
 def dotplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
@@ -583,11 +587,53 @@ def dotplot(
     dot_max: int = 20,
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
+    grid: bool = True,
     show: Optional[bool] = True,
     **kwds,
 ):
     """
     Generate a dot plot.
+
+    Parameters
+    ----------
+
+    data: ``AnnData`` or ``UnimodalData`` or ``MultimodalData`` object
+        Single cell expression data.
+    keys: ``str`` or ``List[str]``
+        Features to plot.
+    by: ``str``
+        Cell attribute to plot.
+    reduce_function: ``Callable[[np.ndarray], float]``, optional, default: ``np.mean``
+        Function to calculate statistic on expression data. Default is mean.
+    fraction_min: ``float``, optional, default: ``0``.
+        Minimum fraction of expressing cells to consider.
+    fraction_max: ``float``, optional, default: ``None``.
+        Maximum fraction of expressing cells to consider. If ``None``, use the maximum value from data.
+    dot_min: ``int``, optional, default: ``0``.
+        Minimum size in pixels for dots.
+    dot_max: ``int``, optional, default: ``20``.
+        Maximum size in pixels for dots.
+    cmap: ``str`` or ``List[str]`` or ``Tuple[str]``, optional, default: ``Reds``
+        Color map.
+    sort_function: ``Callable[[pd.DataFrame], List[str]]``, optional, default: ``None``
+        Function used for sorting labels. If ``None``, don't sort.
+    grid: ``bool``, optional, default: ``True``
+        If ``True``, plot grids.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    **kwds:
+        Are passed to ``matplotlib.pyplot.scatter``.
+
+    Returns
+    -------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.dotplot(data, keys = ['CD14', 'TRAC', 'CD34'], by = 'louvain_labels')
+
     """
     sns.set(font_scale=0.7, style='whitegrid')
 
@@ -632,25 +678,35 @@ def dotplot(
     fraction = fraction_df.values.flatten()
     if fraction_max is None:
         fraction_max = fraction.max()
-    pixels = np.interp(fraction, (fraction_min, fraction_max), (dot_min, dot_max))
-    pixels = pixels * 5
+    pixels = __get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
     summary_values = mean_df.values.flatten()
     xlabel = [keys[i] for i in range(len(keys))]
     ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
     dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
             xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
 
-    #xticks = [(i, keys[i]) for i in range(len(keys))]
-    #yticks = [(i, str(summarized_df.index[i])) for i in range(len(summarized_df.index))]
     xticks = keys
     yticks = summarized_df.index.map(str).values
 
-    # note we take the max label string length as an approximation of width of labels in pixels
+    import matplotlib.gridspec as gridspec
+
     width = int(np.ceil(((dot_max + 1) + 4) * len(xticks) + dotplot_df['ylabel'].str.len().max()) + dot_max + 100)
     height = int(np.ceil(((dot_max + 1) + 4) * len(yticks) + dotplot_df['xlabel'].str.len().max()) + 50)
-    fig, ax = plt.subplots(figsize=(width / 100.0, height / 100.0), dpi=100)
+    fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=100)
+    gs = gridspec.GridSpec(3, 11, figure = fig)
 
-    ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
+    # note we take the max label string length as an approximation of width of labels in pixels
+    ax = fig.add_subplot(gs[:, :-1])
+
+    sc = ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
+
+    ax.spines["top"].set_color('black')
+    ax.spines["bottom"].set_color('black')
+    ax.spines["left"].set_color('black')
+    ax.spines["right"].set_color('black')
+    if not grid:
+        ax.grid(False)
+
     ax.set_ylabel(str(by))
     ax.set_xlabel('')
     ax.set_xlim(-1, len(xticks))
@@ -660,6 +716,9 @@ def dotplot(
     ax.set_yticks(range(len(summarized_df.index)))
     ax.set_yticklabels(yticks)
     plt.xticks(rotation=90)
+
+    cbar = plt.colorbar(sc)
+    #cbar.set_label("Mean of\nexpressing cells")
 
     size_range = fraction_max - fraction_min
     if 0.3 < size_range <= 0.6:
@@ -671,8 +730,28 @@ def dotplot(
 
     size_ticks = np.arange(fraction_min if fraction_min > 0 or fraction_min > 0 else fraction_min + size_legend_step,
         fraction_max + size_legend_step, size_legend_step)
-    #result = p + __size_legend(size_min=fraction_min, size_max=fraction_max, dot_min=dot_min, dot_max=dot_max,
-    #    size_tick_labels_format='{:.0%}', size_ticks=size_ticks)
-    #result.df = dotplot_df
+
+    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0, -1])
+    size_legend = fig.add_subplot(ax2[0])
+    size_tick_pixels = __get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
+
+    size_tick_labels = ["{:.0%}".format(x) for x in size_ticks]
+    size_legend.scatter(x=np.repeat(0, len(size_ticks)), y=np.arange(0, len(size_ticks)), s=size_tick_pixels, c='black', linewidth=0.5)
+    size_legend.title.set_text("Fraction of\nexpressing cells")
+    size_legend.set_xlim(-0.1, 0.1)
+    size_legend.set_xticks([])
+
+    ymin, ymax = size_legend.get_ylim()
+    size_legend.set_ylim(ymin, ymax + 0.5)
+
+    size_legend.set_yticks(np.arange(len(size_ticks)))
+    size_legend.set_yticklabels(size_tick_labels)
+    size_legend.tick_params(axis='y', labelleft=False, labelright=True)
+
+    size_legend.spines["top"].set_visible(False)
+    size_legend.spines["bottom"].set_visible(False)
+    size_legend.spines["left"].set_visible(False)
+    size_legend.spines["right"].set_visible(False)
+    size_legend.grid(False)
 
     return fig if not show else None
