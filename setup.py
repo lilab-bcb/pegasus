@@ -59,7 +59,6 @@ setup(
         "Topic :: Software Development :: Build Tools",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
@@ -78,7 +77,7 @@ setup(
         leiden=['leidenalg'],
         mkl=["mkl"]
     ),
-    python_requires="~=3.5",
+    python_requires="~=3.6",
     package_data={
         "pegasus.annotate_cluster": [
             "human_immune_cell_markers.json",
@@ -88,6 +87,7 @@ setup(
             "human_lung_cell_markers.json",
         ],
         "pegasus.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
+        "pegasus": ["data_files/*.gmt"],
     },
     entry_points={"console_scripts": ["pegasus=pegasus.__main__:main"]},
 )
