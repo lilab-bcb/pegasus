@@ -115,7 +115,7 @@ Next, you can install Pegasus system-wide by PyPI (see `macOS Installation via P
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK via Homebrew::
 
-	brew cast install java
+	brew cask install java
 
 .. _macOS Installation via PyPI: ./installation.html#id2
 .. _macOS Installation via Miniconda: ./installation.html#id3
