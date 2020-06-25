@@ -18,6 +18,7 @@ Arguments:
 Options:
   -p <threads>                     Use <threads> threads. [default: 1]
   --labels <attr>                  <attr> used as cluster labels. [default: louvain_labels]
+  --condition <attr>               Compute DE between two conditions in each cluster label if specified.
   --result-key <key>               Store DE results into AnnData varm with key = <key>. [default: de_res]
   --auc                            Calculate area under ROC (AUROC) and area under Precision-Recall (AUPR).
   --t                              Calculate Welch's t-test.
@@ -43,6 +44,7 @@ Examples:
             self.args["<input_h5ad_file>"],
             self.args["<output_spreadsheet>"],
             self.args["--labels"],
+            condition=self.args['--condition'],
             result_key=self.args["--result-key"],
             n_jobs=int(self.args["-p"]),
             auc=self.args["--auc"],
