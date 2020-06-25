@@ -35,6 +35,7 @@ from .tools import (
     set_group_attribute,
     correct_batch,
     run_harmony,
+    run_scanorama,
     neighbors,
     calc_kBET,
     calc_kSIM,
