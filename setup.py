@@ -31,6 +31,7 @@ requires = [
     "pyarrow",
     "pybind11",
     "python-igraph",
+    "scanorama",
     "scikit-learn>=0.21.3",
     "scikit-misc",
     "scipy",
@@ -39,7 +40,7 @@ requires = [
     "statsmodels",
     "tables",
     "torch",
-    "umap-learn>=0.3.9",
+    "umap-learn>=0.4",
     "xlrd",
     "xlsxwriter"
 ]

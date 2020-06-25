@@ -63,7 +63,7 @@ from .tools import (
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes
-from .plotting import scatter, compo_plot
+from .plotting import scatter, compo_plot, scatter_groups
 
 from importlib_metadata import version, PackageNotFoundError
 

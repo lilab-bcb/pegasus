@@ -12,7 +12,7 @@ from .preprocessing import (
     pca,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
-from .batch_correction import set_group_attribute, correct_batch, run_harmony
+from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
 from .nearest_neighbors import (
     calculate_nearest_neighbors,
     get_neighbors,

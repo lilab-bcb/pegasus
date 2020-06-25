@@ -58,23 +58,29 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.correct_batch(unidata, features="highly_variable_features")
 
     if kwargs["calc_sigscore"] is not None:
-        tools.calc_signature_score(unidata, kwargs["calc_sigscore"])
+        sig_files = kwargs["calc_sigscore"].split(",")
+        for sig_file in sig_files:
+            tools.calc_signature_score(unidata, sig_file)
 
     n_pc = min(kwargs["pca_n"], unidata.shape[0], unidata.shape[1])
     if n_pc < kwargs["pca_n"]:
         logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
 
-    # PCA
-    tools.pca(
-        unidata,
-        n_components=n_pc,
-        features="highly_variable_features",
-        standardize=standardize,
-        robust=kwargs["pca_robust"],
-        random_state=kwargs["random_state"],
-    )
 
-    pca_key = "pca"
+    if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
+        pca_key = tools.run_scanorama(unidata, n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
+    else:    
+        # PCA
+        tools.pca(
+            unidata,
+            n_components=n_pc,
+            features="highly_variable_features",
+            standardize=standardize,
+            robust=kwargs["pca_robust"],
+            random_state=kwargs["random_state"],
+        )
+        pca_key = "pca"
+
     # batch correction: Harmony
     if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
         pca_key = tools.run_harmony(unidata, rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
