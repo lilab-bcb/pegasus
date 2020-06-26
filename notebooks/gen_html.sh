@@ -1,2 +1,1 @@
 jupyter nbconvert pegasus_analysis.ipynb --to html --output ../docs/_static/tutorials/pegasus_analysis.html
-jupyter nbconvert sn_analysis.ipynb --to html --output ../docs/_static/tutorials/sn_analysis.html

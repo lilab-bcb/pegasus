@@ -19,7 +19,7 @@ requires = [
     "joblib",
     "lightgbm==2.2.1",
     "loompy",
-    "louvain-github",
+    "louvain>=0.7.0",
     "matplotlib>=2.0.0",
     "MulticoreTSNE-modified",
     "natsort",
@@ -39,7 +39,7 @@ requires = [
     "statsmodels",
     "tables",
     "torch",
-    "umap-learn>=0.3.9",
+    "umap-learn>=0.4.0",
     "xlrd",
     "xlsxwriter"
 ]

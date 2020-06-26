@@ -1,3 +1,10 @@
+Version 0.17.2 `June 26, 2020`
+--------------------------------
+
+* Make Pegasus compatible with *umap-learn* v0.4+.
+* Use *louvain* 0.7+ for Louvain clustering.
+* Update tutorial.
+
 Version 0.17.1 `April 6, 2020`
 --------------------------------
 

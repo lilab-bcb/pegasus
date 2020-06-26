@@ -178,38 +178,38 @@ def calc_umap(
             logger.info("Construct fuzzy simplicial set")
 
         umap_obj._small_data = False
-        umap_obj.graph_ = umap_module.umap_.fuzzy_simplicial_set(
-            X,
-            umap_obj.n_neighbors,
-            _random_state,
-            umap_obj.metric,
-            umap_obj._metric_kwds,
-            knn_indices,
-            knn_dists,
-            umap_obj.angular_rp_forest,
-            umap_obj.set_op_mix_ratio,
-            umap_obj.local_connectivity,
-            umap_obj.verbose,
+        umap_obj.graph_, umap_obj._sigmas, umap_obj._rhos = umap_module.umap_.fuzzy_simplicial_set(
+            X=X,
+            n_neighbors=umap_obj.n_neighbors,
+            random_state=_random_state,
+            metric=umap_obj.metric,
+            metric_kwds=umap_obj._metric_kwds,
+            knn_indices=knn_indices,
+            knn_dists=knn_dists,
+            angular=umap_obj.angular_rp_forest,
+            set_op_mix_ratio=umap_obj.set_op_mix_ratio,
+            local_connectivity=umap_obj.local_connectivity,
+            verbose=umap_obj.verbose,
         )
 
         _n_epochs = umap_obj.n_epochs if umap_obj.n_epochs is not None else 0
         if umap_obj.verbose:
             logger.info("Construct embedding")
         embedding = umap_module.umap_.simplicial_set_embedding(
-            X,
-            umap_obj.graph_,
-            umap_obj.n_components,
-            umap_obj._initial_alpha,
-            umap_obj._a,
-            umap_obj._b,
-            umap_obj.repulsion_strength,
-            umap_obj.negative_sample_rate,
-            _n_epochs,
-            _init,
-            _random_state,
-            umap_obj.metric,
-            umap_obj._metric_kwds,
-            umap_obj.verbose,
+            data=X,
+            graph=umap_obj.graph_,
+            n_components=umap_obj.n_components,
+            initial_alpha=umap_obj._initial_alpha,
+            a=umap_obj._a,
+            b=umap_obj._b,
+            gamma=umap_obj.repulsion_strength,
+            negative_sample_rate=umap_obj.negative_sample_rate,
+            n_epochs=_n_epochs,
+            init=_init,
+            random_state=_random_state,
+            metric=umap_obj.metric,
+            metric_kwds=umap_obj._metric_kwds,
+            verbose=umap_obj.verbose,
         )
 
     return embedding
@@ -298,7 +298,7 @@ def tsne(
     --------
     >>> pg.tsne(adata)
     """
-    
+
     rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
 
@@ -535,7 +535,7 @@ def fle(
     --------
     >>> pg.fle(adata)
     """
-    
+
     if file_name is None:
         import tempfile
 
@@ -965,7 +965,7 @@ def net_umap(
     --------
     >>> pg.net_umap(adata)
     """
-    
+
     rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
