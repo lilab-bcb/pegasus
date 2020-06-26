@@ -1,5 +1,5 @@
 ====================================
-Pegasus for Single Cell Analysis
+Pegasus 0.17 for Single Cell Analysis
 ====================================
 
 |PyPI| |Docs|
