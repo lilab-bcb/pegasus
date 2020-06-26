@@ -46,6 +46,7 @@ requires = [
 
 setup(
     name="pegasuspy",
+    use_scm_version=True,
     description="Pegasus is a Python package for analyzing sc/snRNA-seq data of millions of cells",
     long_description=long_description,
     url="https://github.com/klarman-cell-observatory/pegasus",
