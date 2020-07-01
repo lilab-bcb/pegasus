@@ -998,7 +998,8 @@ def run_de_analysis(
     from pegasus.io import read_input, write_output
 
     data = read_input(input_file, h5ad_mode="r+")
-
+    if condition is not None:
+        data = data[~data.obs[condition].isna()]
     de_analysis(
         data,
         cluster,
