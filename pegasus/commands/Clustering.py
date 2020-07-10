@@ -68,7 +68,7 @@ Options:
   --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
   --kBET                                           Calculate kBET.
-  --kBET-batch <batch>                             kBET batch keyword.
+  --kBET-batch <batch>                             kBET batch keyword. [default: Channel]
   --kBET-alpha <alpha>                             kBET rejection alpha. [default: 0.05]
   --kBET-K <K>                                     kBET K. [default: 25]
 

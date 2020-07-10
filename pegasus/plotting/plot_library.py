@@ -20,7 +20,7 @@ from typing import List, Tuple, Union, Optional, Callable
 import logging
 logger = logging.getLogger(__name__)
 
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
+from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
 
 
 
@@ -398,7 +398,7 @@ def compo_plot(
     left: `float`, optional (default: `0.15`)
         This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]),
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]).
     wspace: `float`, optional (default: `0.3`)
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
@@ -460,30 +460,76 @@ def violin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     keys: Union[str, List[str]],
     groupby: str,
-    matkey: Optional[str] = None,
-    stripplot: Optional[bool] = True,
-    subplot_size: Optional[Tuple[float, float]] = (2, 4),
+    use_raw: bool = False,
+    stripplot: bool = False,
+    scale: str = 'width',
+    jitter: Union[float, bool] = False,
+    subplot_size: Optional[Tuple[float, float]] = (8, 0.5),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
-    hspace: Optional[float] = 0.15,
     ylabel: Optional[str] = None,
     show: Optional[bool] = True,
     **others,
     ):
     """
-    ### Sample usage:
-    ###     cg = plot_violin_genes(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-    ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+    Generate a stacked violin plot.
+
+    Parameters
+    ----------
+    data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
+        Single-cell expression data.
+    keys: ``str`` or ``List[str]``
+        Cell attributes or features to plot.
+        Cell attributes must exist in ``data.obs`` and must be numeric.
+        Features must exist in ``data.var``.
+    groupby: ``str``
+        Cell attribute to group data points.
+    use_raw: ``bool``, optional, default: ``False``
+        If ``True``, use raw counts for plotting; otherwise, use log-norm counts.
+    stripplot: ``bool``, optional, default: ``False``
+        Attach a stripplot to the violinplot or not.
+    scale: ``str``, optional, default: ``width``
+        The method used to scale the width of each violin:
+            - If ``width``, each violin will have the same width.
+            - If ``area``, each violin will have the same area.
+            - If ``count``, the width of the violins will be scaled by the number of observations in that bin.
+    jitter: ``float`` or ``bool``, optional, default: ``False``
+        Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
+        This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
+    subplot_size: ``Tuple[float, float]``, optional, default: ``(10, 1)``
+        The size (width, height) in inches of each violin subplot.
+    left: ``float``, optional, default: ``0.15``
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
+    bottom: ``float``, optional, default: ``0.15``
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]).
+    wspace: ``float``, optional, default: ``0.1``
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
+    ylabel: ``str``, optional, default: ``None``
+        Y-axis label. No label to show if ``None``.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    others
+        Are passed to ``seaborn.violinplot``.
+
+    Returns
+    -------
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.violin(data, keys=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
     """
-    if matkey is None:
-        data.select_matrix(matkey)
-
-    nrows, ncols = (len(keys), 1)
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
-
     if not is_list_like(keys):
         keys = [keys]
+
+    if use_raw:
+        data.select_matrix('raw.X')
+
+    nrows, ncols = (len(keys), 1)
+
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
     obs_keys = []
     genes = []
@@ -506,11 +552,16 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=keys[i], data=df, ax=ax, size=2, color="k")
-        sns.violinplot(x="label", y=keys[i], data=df, inner=None, linewidth=1, ax=ax, cut=0)
-        ax.set_xlabel("")
-        ax.set_ylabel(keys[i])
-        ax.set_title(genes[idx])
+            sns.stripplot(x="label", y=keys[i], data=df, ax=ax, size=1, color="k", jitter=jitter)
+        sns.violinplot(x="label", y=keys[i], data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, **others)
+        ax.grid(False)
+        if i < nrows - 1:
+            ax.set_xlabel("")
+        else:
+            ax.set_xlabel(groupby)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+        ax.set_ylabel(keys[i], labelpad=8, rotation=0, horizontalalignment='right', fontsize='medium')
+        ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
 
     if ylabel is not None:
         plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
@@ -519,24 +570,51 @@ def violin(
 
 
 def heatmap(
-    data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = "Reds", **kwargs
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    cluster: str,
+    genes: Union[str, List[str]],
+    cmap: str = "Reds",
+    show: bool = True,
+    **kwargs,
 ):
-### Sample usage:
-###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+    """
+    Generate a heatmap.
 
-    sns.set(font_scale=0.35)
+    Parameters
+    -----------
 
-    adata = data.raw if use_raw else data
-    df = pd.DataFrame(adata[:, genes].X.toarray(), index=data.obs.index, columns=genes)
-    if showzscore:
-        df = df.apply(zscore, axis=0)
+    data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
+        Single-cell expression data.
+    cluster: ``str``
+        Cell attribute to plot.
+    genes: ``str`` or ``List[str]``
+        Features to plot.
+    cmap: ``str``, optional, default: ``Reds``
+        Color map for plotting. See https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html for a detailed list.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    kwargs
+        Are passed to ``seaborn.heatmap``.
 
-    cluster_ids = as_category(data.obs[cluster])
+    Returns
+    -------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.heatmap(data, cluster='louvain_labels', genes=['CD14', 'TRAC', 'CD34'])
+
+    """
+
+    df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
+
+    cluster_ids = pd.Categorical(data.obs[cluster])
     idx = cluster_ids.argsort()
     df = df.iloc[idx, :]  # organize df by category order
     row_colors = np.zeros(df.shape[0], dtype=object)
-    palettes = get_palettes(cluster_ids.categories.size)
+    palettes = _get_palettes(cluster_ids.categories.size)
 
     cluster_ids = cluster_ids[idx]
     for k, cat in enumerate(cluster_ids.categories):
@@ -549,7 +627,8 @@ def heatmap(
         col_cluster=True,
         linewidths=0,
         yticklabels=[],
-        xticklabels=genes
+        xticklabels=genes,
+        **kwargs,
     )
     cg.ax_heatmap.set_ylabel("")
     # move the colorbar
@@ -569,12 +648,8 @@ def heatmap(
     cg.ax_col_dendrogram.set_xticks([])
     cg.ax_col_dendrogram.set_yticks([])
 
-    return cg
+    return cg if not show else None
 
-def __get_dot_size(size_arr, size_min, size_max, dot_min, dot_max):
-    size_pixel = np.interp(size_arr, (size_min, size_max), (dot_min, dot_max))
-    size_pixel = 5 * size_pixel
-    return size_pixel
 
 def dotplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
@@ -678,7 +753,7 @@ def dotplot(
     fraction = fraction_df.values.flatten()
     if fraction_max is None:
         fraction_max = fraction.max()
-    pixels = __get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
+    pixels = _get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
     summary_values = mean_df.values.flatten()
     xlabel = [keys[i] for i in range(len(keys))]
     ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
@@ -733,7 +808,7 @@ def dotplot(
 
     ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0, -1])
     size_legend = fig.add_subplot(ax2[0])
-    size_tick_pixels = __get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
+    size_tick_pixels = _get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
 
     size_tick_labels = ["{:.0%}".format(x) for x in size_ticks]
     size_legend.scatter(x=np.repeat(0, len(size_ticks)), y=np.arange(0, len(size_ticks)), s=size_tick_pixels, c='black', linewidth=0.5)
