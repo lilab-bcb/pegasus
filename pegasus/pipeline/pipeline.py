@@ -288,6 +288,8 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.calc_pseudotime(unidata, kwargs["pseudotime"])
 
 
+    genome = unidata.uns["genome"]
+
     if append_data is not None:
         locs = unidata.obs_names.get_indexer(append_data.obs_names)
         idx = locs >= 0
@@ -312,14 +314,14 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
             X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
 
-            genome = unidata.get_genome() + "_and_" + append_data.get_genome()
+            new_genome = unidata.get_genome() + "_and_" + append_data.get_genome()
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
             feature_metadata.fillna(value = _get_fillna_dict(unidata.feature_metadata), inplace = True)
 
-            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping)
-            unidata.uns["genome"] = genome
+            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
+            unidata.uns["genome"] = new_genome
 
 
     if kwargs["output_h5ad"]:
@@ -334,6 +336,9 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         write_output(unidata, f"{output_name}.loom")
 
 
+    # Change genome name back if append_data is True
+    if unidata.uns["genome"] != genome:
+        unidata.uns["genome"] = genome
     # Eliminate objects starting with fmat_ from uns
     for key in list(unidata.uns):
         if key.startswith("fmat_"):
