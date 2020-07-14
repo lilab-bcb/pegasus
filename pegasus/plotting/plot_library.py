@@ -20,8 +20,8 @@ from typing import List, Tuple, Union, Optional, Callable
 import logging
 logger = logging.getLogger(__name__)
 
+from pegasus.tools import X_from_rep
 from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
-
 
 
 def scatter(
@@ -590,12 +590,13 @@ def heatmap(
     genes: ``str`` or ``List[str]``
         Features to plot.
     cmap: ``str``, optional, default: ``Reds``
-        Color map for plotting. See https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html for a detailed list.
+        Color map for plotting. See `colormap documentation`_ for a detailed list.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
     kwargs
         Are passed to ``seaborn.heatmap``.
 
+    .. _colormap documentation: https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html
     Returns
     -------
 
@@ -663,7 +664,7 @@ def dotplot(
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
-    show: Optional[bool] = True,
+    show: bool = True,
     **kwds,
 ):
     """
@@ -828,5 +829,130 @@ def dotplot(
     size_legend.spines["left"].set_visible(False)
     size_legend.spines["right"].set_visible(False)
     size_legend.grid(False)
+
+    return fig if not show else None
+
+def dendrogram(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    groupby: str,
+    rep: str = 'pca',
+    genes: Optional[List[str]] = None,
+    correlation_method: str = 'pearson',
+    n_clusters: Optional[int] = None,
+    affinity: str = 'euclidean',
+    linkage: str = 'complete',
+    compute_full_tree: Union[str, bool] = 'auto',
+    distance_threshold: Optional[float] = 0,
+    figsize: Tuple[float, float] = (6, 6),
+    orientation: str = 'top',
+    color_threshold: Optional[float] = None,
+    show: bool = True,
+    **kwargs,
+):
+    """
+    Generate a dendrogram on hierarchical clustering result.
+
+    Parameters
+    ----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``AnnData`` object
+        Single cell expression data.
+    groupby: ``str``
+        Categorical cell attribute to plot, which must exist in ``data.obs``.
+    genes: ``List[str]``, optional, default: ``None``
+        List of genes to use. Gene names must exist in ``data.var``. If set, use the counts in ``data.X`` for plotting; if set as ``None``, use the embedding specified in ``rep`` for plotting.
+    rep: ``str``, optional, default: ``pca``
+        Cell embedding to use. It only works when ``genes``is ``None``, and its key ``"X_"+rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+    correlation_method: ``str``, optional, default: ``pearson``
+        Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation`_ for details.
+    n_clusters: ``int``, optional, default: ``None``
+        The number of clusters to find, used by hierarchical clustering. It must be ``None`` if ``distance_threshold`` is not ``None``.
+    affinity: ``str``, optional, default: ``correlation``
+        Metric used to compute the linkage, used by hierarchical clustering. Valid values for metric are:
+            - From scikit-learn: ``cityblock``, ``cosine``, ``euclidean``, ``l1``, ``l2``, ``manhattan``.
+            - From scipy.spatial.distance: ``braycurtis``, ``canberra``, ``chebyshev``, ``correlation``, ``dice``, ``hamming``, ``jaccard``, ``kulsinski``, ``mahalanobis``, ``minkowski``, ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``, ``sokalsneath``, ``sqeuclidean``, ``yule``.
+        Default is the correlation distance. See `scikit-learn distance documentation <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise_distances.html>`_ for details.
+    linkage: ``str``, optional, default: ``complete``
+        Which linkage criterion to use, used by hierarchical clustering. Below are available options:
+            - ``ward`` minimizes the variance of the clusters being merged.
+            - ``avarage`` uses the average of the distances of each observation of the two sets.
+            - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
+            - ``single`` uses the minimum of the distances between all observations of the two sets.
+        See `scikit-learn documentation`_ for details.
+    compute_full_tree: ``str`` or ``bool``, optional, default: ``auto``
+        Stop early the construction of the tree at ``n_clusters``, used by hierarchical clustering. It must be ``True`` if ``distance_threshold`` is not ``None``.
+        By default, this option is ``auto``, which is ``True`` if and only if ``distance_threshold`` is not ``None``, or ``n_clusters`` is less than ``min(100, 0.02 * n_groups)``, where ``n_groups`` is the number of categories in ``data.obs[groupby]``.
+    distance_threshold: ``float``, optional, default: ``0``
+        The linkage distance threshold above which, clusters will not be merged. If not ``None``, ``n_clusters`` must be ``None`` and ``compute_full_tree`` must be ``True``.
+    figsize: ``Tuple[float, float]``, optional, default: ``(6, 6)``
+        The size (width, height) in inches of figure.
+    orientation: ``str``, optional, default: ``top``
+        The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
+    color_threshold: ``float``, optional, default: ``None``
+        Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    **kwargs:
+        Are passed to ``scipy.cluster.hierarchy.dendrogram``.
+
+    .. _scikit-learn documentation: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
+    .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
+    .. _pandas corr documentation: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corr.html
+
+    Returns
+    -------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.dendrogram(data, groupby='louvain_labels')
+    >>> pg.dendrogram(data, groupby='louvain_labels', genes=data.var_names)
+    """
+    if genes is None:
+        embed_df = pd.DataFrame(X_from_rep(data, rep))
+        embed_df.set_index(data.obs[groupby], inplace=True)
+    else:
+        sub_data = data[:, genes]
+        X = sub_data.X.toarray() if issparse(sub_data.X) else sub_data.X
+        embed_df = pd.DataFrame(X)
+        embed_df.set_index(data.obs[groupby], inplace=True)
+
+    mean_df = embed_df.groupby(level=0).mean()
+
+    from sklearn.cluster import AgglomerativeClustering
+    from scipy.cluster.hierarchy import dendrogram
+
+    corr_mat = mean_df.T.corr(method=correlation_method)
+
+    clusterer = AgglomerativeClustering(
+                    n_clusters=n_clusters,
+                    affinity=affinity,
+                    linkage=linkage,
+                    compute_full_tree=compute_full_tree,
+                    distance_threshold=distance_threshold
+                )
+    clusterer.fit(corr_mat)
+
+    print(clusterer.distances_)
+
+    counts = np.zeros(clusterer.children_.shape[0])
+    n_samples = len(clusterer.labels_)
+    for i, merge in enumerate(clusterer.children_):
+        current_count = 0
+        for child_idx in merge:
+            if child_idx < n_samples:
+                current_count += 1  # Leaf node
+            else:
+                current_count += counts[child_idx - n_samples]
+        counts[i] = current_count
+
+    linkage_matrix = np.column_stack([clusterer.children_, clusterer.distances_, counts]).astype(float)
+
+    fig, axis = plt.subplots(1, 1, figsize=figsize)
+    dendrogram(linkage_matrix, labels=mean_df.index.categories, ax=axis, **kwargs)
+    plt.xticks(rotation=90, fontsize=8)
+    plt.tight_layout()
 
     return fig if not show else None

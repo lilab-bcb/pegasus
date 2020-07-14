@@ -3,7 +3,8 @@ from .plot_library import (
     compo_plot,
     scatter_groups,
     violin,
-    # heatmap,
+    heatmap,
     dotplot,
+    dendrogram,
 )
 from .plot_qc import plot_qc_violin, plot_hvf
