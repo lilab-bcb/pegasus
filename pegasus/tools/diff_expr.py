@@ -994,9 +994,9 @@ def run_de_analysis(
     """ For command line only
     """
 
-    from pegasus.io import read_input, write_output
+    from pegasusio import read_input, write_output
 
-    data = read_input(input_file, h5ad_mode="r+")
+    data = read_input(input_file, mode='r')
 
     de_analysis(
         data,
@@ -1011,9 +1011,9 @@ def run_de_analysis(
         verbose=verbose,
     )
 
-    write_output(data, input_file, whitelist=["varm/{}".format(result_key)])
+    write_output(data, input_file)
     logger.info(
-        "Differential expression results are written to varm/{} in h5ad file.".format(
+        "Differential expression results are written to varm/{} in zarr file.".format(
             result_key
         )
     )
