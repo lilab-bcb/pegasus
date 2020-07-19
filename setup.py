@@ -38,7 +38,6 @@ requires = [
     "seaborn",
     "setuptools",
     "statsmodels",
-    "tables",
     "torch",
     "umap-learn>=0.4",
     "xlrd",
