@@ -61,7 +61,7 @@ def scatter(
     basis: ``str``, optional, default: ``umap``
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
-        If matkey is set, select matrix with matkey as keyword in the current modality.
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     alpha: ``float`` or ``List[float], optional, default: ``1.0``
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str``, optional, default: ``right margin``
@@ -101,7 +101,12 @@ def scatter(
     nattrs = len(attrs)
     if not is_list_like(alpha):
         alpha = [alpha] * nattrs
+
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
+
     if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
     x = data.obsm[f"X_{basis}"][:, 0]
@@ -212,6 +217,11 @@ def scatter(
             if j == 0:
                 ax.set_ylabel(f"{basis}2")
 
+    # Reset current matrix if needed.
+    if (not isinstance(data, anndata.AnnData)):
+        if cur_mat_key != data.current_matrix():
+            data.select_matrix(cur_mat_key)
+
     return fig if not show else None
 
 
@@ -246,7 +256,10 @@ def scatter_groups(
     ### Sample usage:
     ###    fig = plot_scatter_groups(data, 'louvain_labels', 'Individual', 'tsne', nrows = 2, ncols = 4, alpha = 0.5)
     """
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
     if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
     x = data.obsm[f"X_{basis}"][:, 0]
@@ -356,6 +369,10 @@ def scatter_groups(
             if j == 0:
                 ax.set_ylabel(basis + "2")
 
+    if not isinstance(data, anndata.AnnData):
+        if cur_matkey != data.current_matrix():
+            data.select_matrix(cur_matkey)
+
     return fig if not show else None
 
 
@@ -460,7 +477,7 @@ def violin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     keys: Union[str, List[str]],
     groupby: str,
-    use_raw: bool = False,
+    matkey: Optional[str] = None,
     stripplot: bool = False,
     scale: str = 'width',
     jitter: Union[float, bool] = False,
@@ -485,8 +502,8 @@ def violin(
         Features must exist in ``data.var``.
     groupby: ``str``
         Cell attribute to group data points.
-    use_raw: ``bool``, optional, default: ``False``
-        If ``True``, use raw counts for plotting; otherwise, use log-norm counts.
+    matkey: ``str``, optional, default: ``None``
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     stripplot: ``bool``, optional, default: ``False``
         Attach a stripplot to the violinplot or not.
     scale: ``str``, optional, default: ``width``
@@ -524,8 +541,11 @@ def violin(
     if not is_list_like(keys):
         keys = [keys]
 
-    if use_raw:
-        data.select_matrix('raw.X')
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
+    if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        data.select_matrix(matkey)
 
     nrows, ncols = (len(keys), 1)
 
@@ -566,6 +586,11 @@ def violin(
     if ylabel is not None:
         plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
 
+    # Reset current matrix if needed.
+    if not isinstance(data, anndata.AnnData):
+        if data.current_matrix() != cur_matkey:
+            data.select_matrix(cur_matkey)
+
     return fig if not show else None
 
 
@@ -573,6 +598,7 @@ def heatmap(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     cluster: str,
     genes: Union[str, List[str]],
+    matkey: Optional[str] = None,
     cmap: str = "Reds",
     show: bool = True,
     **kwargs,
@@ -589,6 +615,8 @@ def heatmap(
         Cell attribute to plot.
     genes: ``str`` or ``List[str]``
         Features to plot.
+    matkey: ``str``, optional, default: ``None``
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     cmap: ``str``, optional, default: ``Reds``
         Color map for plotting. See `colormap documentation`_ for a detailed list.
     show: ``bool``, optional, default: ``True``
@@ -608,6 +636,11 @@ def heatmap(
     >>> pg.heatmap(data, cluster='louvain_labels', genes=['CD14', 'TRAC', 'CD34'])
 
     """
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
+    if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        data.select_matrix(matkey)
 
     df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
 
@@ -648,6 +681,10 @@ def heatmap(
     cg.ax_col_dendrogram.grid(False)
     cg.ax_col_dendrogram.set_xticks([])
     cg.ax_col_dendrogram.set_yticks([])
+
+    if not isinstance(data, anndata.AnnData):
+        if cur_matkey != data.current_matrix():
+            data.select_matrix(cur_matkey)
 
     return cg if not show else None
 

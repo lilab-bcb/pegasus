@@ -29,7 +29,6 @@ Sub-commands:
   MISC:
     check_indexes           Check CITE-Seq/hashing indexes to avoid index collision.
     down_sample             Down sample molecule_info to get raw_feature matrix.
-    convert_h5sc            Convert h5sc files into 10x genomics V2 HDF5 file.
 
 Options:
   -h, --help          Show help information.

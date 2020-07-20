@@ -86,7 +86,7 @@ setup(
             "human_brain_cell_markers.json",
             "human_lung_cell_markers.json",
         ],
-        "pegasus.check_sample_indexes": ["chromium-dna-sample-indexes-plate.json"],
+        "pegasus.check_sample_indexes": ["chromium-shared-sample-indexes-plate.json", "Chromium-i7-Multiplex-Kit-N-Set-A-sample-indexes-plate.json"],
         "pegasus": ["data_files/*.gmt"],
     },
     entry_points={"console_scripts": ["pegasus=pegasus.__main__:main"]},
