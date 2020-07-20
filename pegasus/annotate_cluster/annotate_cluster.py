@@ -10,7 +10,7 @@ from anndata import AnnData
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasusio import timer
+from pegasusio import timer, MultimodalData, UnimodalData
 
 
 class CellType:
@@ -235,7 +235,7 @@ def infer_cluster_names(
 
 
 def infer_cell_types(
-    data: AnnData,
+    data: Union[MultimodalData, UnimodalData, AnnData],
     markers: Union[str, Dict],
     de_test: str,
     de_alpha: float = 0.05,
@@ -249,8 +249,8 @@ def infer_cell_types(
     Parameters
     ----------
 
-    data : ``anndata.AnnData``
-        AnnData object of count matrix and DE analysis results.
+    data : ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData``.
+        Data structure of count matrix and DE analysis results.
 
     markers : ``str`` or ``Dict``
         * If ``str``, it
@@ -361,15 +361,18 @@ def infer_cell_types(
 
 
 def annotate(
-    data: AnnData, name: str, based_on: str, anno_dict: Dict[str, str]
+    data: Union[MultimodalData, UnimodalData,AnnData],
+    name: str,
+    based_on: str,
+    anno_dict: Dict[str, str],
 ) -> None:
     """Add annotation to AnnData obj.
 
     Parameters
     ----------
 
-    data : `AnnData`
-        AnnData object.
+    data : ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData``
+        Gene-count matrix with DE analysis information.
     name : `str`
         Name of the new annotation in data.obs.
     based_on : `str`
@@ -414,10 +417,9 @@ def run_annotate_cluster(
         ignore_nonde=ignore_nonde,
         output_file=output_file,
     )
-    data.file.close()
 
 
-def annotate_anndata_object(input_file: str, annotation: str) -> None:
+def annotate_data_object(input_file: str, annotation: str) -> None:
     """ For command line use.
         annotation:  anno_name:clust_name:cell_type1;...cell_typen
     """

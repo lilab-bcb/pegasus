@@ -37,11 +37,5 @@ from .visualization import (
 )
 from .diff_expr import de_analysis, markers, write_results_to_excel, run_de_analysis
 from .gradient_boosting import find_markers, run_find_markers
-from .scp_output import (
-    run_scp_output,
-    scp_write_coords,
-    scp_write_metadata,
-    scp_write_expression,
-)
 from .subcluster_utils import get_anndata_for_subclustering
 from .signature_score import calc_signature_score

@@ -8,11 +8,11 @@ class DeAnalysis(Base):
 Perform DE analysis.
 
 Usage:
-  pegasus de_analysis [options] <input_h5ad_file> <output_spreadsheet>
+  pegasus de_analysis [options] <input_data_file> <output_spreadsheet>
   pegasus de_analysis -h
 
 Arguments:
-  input_h5ad_file        Single cell data with clustering calculated. DE results would be written back.
+  input_data_file        Single cell data with clustering calculated. DE results would be written back.
   output_spreadsheet     Output spreadsheet with DE results.
 
 Options:
@@ -31,16 +31,16 @@ Options:
   -h, --help                       Print out help information.
 
 Outputs:
-  input_h5ad_file        DE results would be written back to the 'varm' field with name set by --result-key <key>.
+  input_data_file        DE results would be written back to the 'varm' field with name set by --result-key <key>.
   output_spreadsheet     An excel spreadsheet containing DE results. Each cluster has two tabs in the spreadsheet. One is for up-regulated genes and the other is for down-regulated genes.
 
 Examples:
-  pegasus de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu manton_bm.h5ad manton_bm_de.xlsx
+  pegasus de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu manton_bm.zarr.zip manton_bm_de.xlsx
     """
 
     def execute(self):
         run_de_analysis(
-            self.args["<input_h5ad_file>"],
+            self.args["<input_data_file>"],
             self.args["<output_spreadsheet>"],
             self.args["--labels"],
             result_key=self.args["--result-key"],

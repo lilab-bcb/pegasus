@@ -1,19 +1,19 @@
 import os
 from .Base import Base
-from pegasus.annotate_cluster import run_annotate_cluster, annotate_anndata_object
+from pegasus.annotate_cluster import run_annotate_cluster, annotate_data_object
 
 
 class AnnotateCluster(Base):
     """
-Annotate potential cell types for each cluster. This command has two forms: the first form generates putative annotations and the second form write annotations into the h5ad object.
+Annotate potential cell types for each cluster. This command has two forms: the first form generates putative annotations and the second form write annotations into the data object.
 
 Usage:
-  pegasus annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_h5ad_file> <output_file>
-  pegasus annotate_cluster --annotation <annotation_string> <input_h5ad_file>
+  pegasus annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_data_file> <output_file>
+  pegasus annotate_cluster --annotation <annotation_string> <input_data_file>
   pegasus annotate_cluster -h
 
 Arguments:
-  input_h5ad_file        Single cell data with DE analysis done by pegasus de_analysis.
+  input_data_file        Single cell data with DE analysis done by pegasus de_analysis.
   output_file            Output annotation file.
 
 Options:
@@ -32,14 +32,14 @@ Outputs:
   output_file        This is a text file. For each cluster, all its putative cell types are listed in descending order of the cell type score. For each putative cell type, all markers support this cell type are listed. If one putative cell type has cell subtypes, all subtypes will be listed under this cell type.
 
 Examples:
-  pegasus annotate_cluster manton_bm.h5ad manton_bm.anno.txt
-  pegasus annotate_cluster --annotation "anno:louvain_labels:T cells;B cells;NK cells;Monocytes" manton_bm.h5ad
+  pegasus annotate_cluster manton_bm.zarr.zip manton_bm.anno.txt
+  pegasus annotate_cluster --annotation "anno:louvain_labels:T cells;B cells;NK cells;Monocytes" manton_bm.zarr.zip
     """
 
     def execute(self):
         if self.args["<output_file>"] is not None:
             run_annotate_cluster(
-                self.args["<input_h5ad_file>"],
+                self.args["<input_data_file>"],
                 self.args["<output_file>"],
                 self.args["--marker-file"],
                 de_test=self.args["--de-test"],
@@ -49,6 +49,6 @@ Examples:
                 ignore_nonde=self.args["--do-not-use-non-de-genes"],
             )
         else:
-            annotate_anndata_object(
-                self.args["<input_h5ad_file>"], self.args["--annotation"]
+            annotate_data_object(
+                self.args["<input_data_file>"], self.args["--annotation"]
             )
