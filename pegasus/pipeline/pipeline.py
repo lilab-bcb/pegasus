@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix, coo_matrix, hstack
 from pegasusio import UnimodalData, MultimodalData
 from pegasusio import read_input, write_output, _get_fillna_dict
 
-from pegasus import tools, cite_seq, misc
+from pegasus import tools, misc
 
 
 import logging
@@ -69,7 +69,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
     if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
         pca_key = tools.run_scanorama(unidata, n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
-    else:    
+    else:
         # PCA
         tools.pca(
             unidata,
@@ -307,7 +307,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 append_df = append_data.feature_metadata
 
             rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
-            
+
             Zt = Z.astype(np.float32)
             Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
             Zt.data = np.log1p(Zt.data)
@@ -355,7 +355,7 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
 
     # load input data
     data = read_input(input_file, black_list = black_list)
-    
+
     # process focus_list
     focus_list = kwargs["focus"]
     if len(focus_list) == 0:
@@ -399,7 +399,7 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     # if kwargs["subcluster"]:
     #     unidata = tools.get_anndata_for_subclustering(adata, kwargs["subset_selections"])
     #     is_raw = True  # get submat and then set is_raw to True
-            
+
     # write out results
 
     write_output(data, f"{output_name}.zarr.zip")

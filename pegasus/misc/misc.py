@@ -60,10 +60,10 @@ def search_de_genes(
 ) -> pd.DataFrame:
     """Extract and display differential expression analysis results of markers for each cluster.
 
-    This function helps to see if markers are up or down regulated in each cluster via the interactive python environment: 
+    This function helps to see if markers are up or down regulated in each cluster via the interactive python environment:
         * ``++`` indicates up-regulated and fold change >= threshold;
         * ``+`` indicates up-regulated but fold change < threshold;
-        * ``--`` indicates down-regulated and fold change <= 1 / threshold; 
+        * ``--`` indicates down-regulated and fold change <= 1 / threshold;
         * ``-`` indicates down-regulated but fold change > 1 / threshold;
         * ``?`` indicates not differentially expressed.
 
@@ -139,7 +139,7 @@ def show_attributes(
     """ Show data attributes. For command line use.
     """
 
-    # data = read_input(input_file, h5ad_mode="r")
+    # data = read_input(input_file, mode="r")
     # if show_attributes:
     #     print(
     #         "Available sample attributes in input dataset: {0}".format(

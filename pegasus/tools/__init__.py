@@ -1,6 +1,5 @@
 from .utils import update_rep, X_from_rep, W_from_rep, knn_is_cached
 
-from .data_aggregation import aggregate_matrices
 from .preprocessing import (
     qc_metrics,
     get_filter_stats,
@@ -44,6 +43,5 @@ from .scp_output import (
     scp_write_metadata,
     scp_write_expression,
 )
-from .down_sampling import down_sample
 from .subcluster_utils import get_anndata_for_subclustering
 from .signature_score import calc_signature_score

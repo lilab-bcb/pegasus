@@ -253,7 +253,7 @@ def infer_cell_types(
         AnnData object of count matrix and DE analysis results.
 
     markers : ``str`` or ``Dict``
-        * If ``str``, it 
+        * If ``str``, it
             * either refers to a JSON file containing legacy markers, or
             * ``'human_immune'`` for predefined pegasus markers on human immune cells;
             * ``'mouse_immune'`` for mouse immune cells;
@@ -401,9 +401,9 @@ def run_annotate_cluster(
 ) -> None:
     """ For command line use.
     """
-    from pegasus.io import read_input
+    from pegasusio import read_input
 
-    data = read_input(input_file, h5ad_mode="r")
+    data = read_input(input_file, mode="r")
     infer_cell_types(
         data,
         marker_file,
@@ -421,10 +421,10 @@ def annotate_anndata_object(input_file: str, annotation: str) -> None:
     """ For command line use.
         annotation:  anno_name:clust_name:cell_type1;...cell_typen
     """
-    from pegasus.io import read_input, write_output
+    from pegasusio import read_input, write_output
 
-    data = read_input(input_file, h5ad_mode="r+")
+    data = read_input(input_file, mode="r")
     anno_name, clust_name, anno_str = annotation.split(":")
     anno_dict = {str(i + 1): x for i, x in enumerate(anno_str.split(";"))}
     annotate(data, anno_name, clust_name, anno_dict)
-    write_output(data, input_file, whitelist = ["obs", "uns"])
+    write_output(data, input_file)

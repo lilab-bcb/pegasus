@@ -21,9 +21,8 @@ warnings.filterwarnings("ignore", category=UserWarning,  module='lightgbm')
 warnings.filterwarnings("ignore", category=FutureWarning, module='anndata')
 
 
-from .io import infer_file_format, read_input, write_output
+from pegasusio import infer_file_type, read_input, write_output
 from .tools import (
-    aggregate_matrices,
     qc_metrics,
     get_filter_stats,
     filter_data,

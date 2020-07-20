@@ -10,7 +10,7 @@ from anndata import AnnData
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 
-from pegasus.io import read_input
+from pegasusio import read_input
 
 import logging
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ def find_markers(
 
     # from xgboost import XGBClassifier
     try:
-        from lightgbm import LGBMClassifier 
+        from lightgbm import LGBMClassifier
     except ImportError:
         print("Need lightgbm! Try 'pip install lightgbm'.")
     start_lgb = time.time()

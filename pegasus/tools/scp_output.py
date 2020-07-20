@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from pegasus.io import read_input
+from pegasusio import read_input
 from scipy.sparse import issparse
 
 
@@ -147,7 +147,7 @@ def run_scp_output(
     --------
     >>> pg.run_scp_output("result.h5ad", output_name = "scp_result")
     """
-    adata = read_input(input_h5ad_file, h5ad_mode="a")
+    adata = read_input(input_h5ad_file, mode="a")
     start = time.perf_counter()
     scp_write_coords(adata, output_name)
     scp_write_metadata(adata, output_name)
