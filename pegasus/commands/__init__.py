@@ -6,3 +6,4 @@ from .Plotting import Plotting as plot
 # from .SubClustering import SubClustering as subcluster
 from .CheckSampleIndexes import CheckSampleIndexes as check_indexes
 from .FindMarkers import FindMarkers as find_markers
+from .SCPOutput import SCPOutput as scp_output
