@@ -35,6 +35,7 @@ requires = [
     "scikit-learn>=0.21.3",
     "scikit-misc",
     "scipy",
+    "scplot",
     "seaborn",
     "setuptools",
     "statsmodels",

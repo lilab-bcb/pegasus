@@ -219,8 +219,8 @@ def scatter(
 
     # Reset current matrix if needed.
     if (not isinstance(data, anndata.AnnData)):
-        if cur_mat_key != data.current_matrix():
-            data.select_matrix(cur_mat_key)
+        if cur_matkey != data.current_matrix():
+            data.select_matrix(cur_matkey)
 
     return fig if not show else None
 
@@ -599,7 +599,9 @@ def heatmap(
     cluster: str,
     genes: Union[str, List[str]],
     matkey: Optional[str] = None,
-    cmap: str = "Reds",
+    on_average: bool = True,
+    row_cluster: bool = False,
+    col_cluster: bool = True,
     show: bool = True,
     **kwargs,
 ):
@@ -617,6 +619,10 @@ def heatmap(
         Features to plot.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    on_average: ``bool``, optional, default: ``True``
+        If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
+    row_cluster: ``bool``, optional, default: ``False``
+    col_cluster: ``bool``, optional, default: ``True``
     cmap: ``str``, optional, default: ``Reds``
         Color map for plotting. See `colormap documentation`_ for a detailed list.
     show: ``bool``, optional, default: ``True``
@@ -643,44 +649,60 @@ def heatmap(
         data.select_matrix(matkey)
 
     df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
+    df['cluster_name'] = data.obs[cluster]
 
-    cluster_ids = pd.Categorical(data.obs[cluster])
-    idx = cluster_ids.argsort()
-    df = df.iloc[idx, :]  # organize df by category order
-    row_colors = np.zeros(df.shape[0], dtype=object)
-    palettes = _get_palettes(cluster_ids.categories.size)
+    if on_average:
+        if not 'cmap' in kwargs.keys():
+            kwargs['cmap'] = 'viridis'
+        df = df.groupby('cluster_name').mean()
+        cluster_ids = df.index
+    else:
+        cluster_ids = pd.Categorical(data.obs[cluster])
+        idx = cluster_ids.argsort()
+        df = df.iloc[idx, :]  # organize df by category order
+        df.drop(columns=['cluster_name'], inplace=True)
 
-    cluster_ids = cluster_ids[idx]
-    for k, cat in enumerate(cluster_ids.categories):
-        row_colors[np.isin(cluster_ids, cat)] = palettes[k]
+    if not on_average:
+        row_colors = np.zeros(df.shape[0], dtype=object)
+        palettes = _get_palettes(cluster_ids.categories.size)
+        cluster_ids = cluster_ids[idx]
+        for k, cat in enumerate(cluster_ids.categories):
+            row_colors[np.isin(cluster_ids, cat)] = palettes[k]
 
     cg = sns.clustermap(
         data=df,
-        row_colors=row_colors,
-        row_cluster=False,
-        col_cluster=True,
+        row_colors=row_colors if not on_average else None,
+        row_cluster=row_cluster,
+        col_cluster=col_cluster,
         linewidths=0,
-        yticklabels=[],
+        yticklabels=cluster_ids if on_average else [],
         xticklabels=genes,
         **kwargs,
     )
     cg.ax_heatmap.set_ylabel("")
-    # move the colorbar
-    cg.ax_row_dendrogram.set_visible(False)
-    dendro_box = cg.ax_row_dendrogram.get_position()
-    dendro_box.x0 = (dendro_box.x0 + 2 * dendro_box.x1) / 3
-    dendro_box.x1 = dendro_box.x0 + 0.02
-    cg.cax.set_position(dendro_box)
-    cg.cax.yaxis.set_ticks_position("left")
+
+    if row_cluster:
+        cg.ax_heatmap.yaxis.tick_right()
+    else:
+        cg.ax_heatmap.yaxis.tick_left()
+
+    cg.ax_row_dendrogram.set_visible(row_cluster)
     cg.cax.tick_params(labelsize=10)
+    # move the colorbar if needed
+    if not (row_cluster and on_average):
+        color_box = cg.ax_heatmap.get_position()
+        color_box.x0 = color_box.x1 + 0.04
+        color_box.x1 = color_box.x0 + 0.02
+        cg.cax.set_position(color_box)
+        cg.cax.yaxis.set_ticks_position("right")
     # draw a legend for the cluster groups
-    cg.ax_col_dendrogram.clear()
-    for k, cat in enumerate(cluster_ids.categories):
-        cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
-    cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
-    cg.ax_col_dendrogram.grid(False)
-    cg.ax_col_dendrogram.set_xticks([])
-    cg.ax_col_dendrogram.set_yticks([])
+    #cg.ax_col_dendrogram.clear()
+    #for k, cat in enumerate(cluster_ids.categories):
+    #    cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
+    #cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
+    #cg.ax_col_dendrogram.grid(False)
+    #cg.ax_col_dendrogram.set_xticks([])
+    #cg.ax_col_dendrogram.set_yticks([])
 
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
@@ -866,6 +888,9 @@ def dotplot(
     size_legend.spines["left"].set_visible(False)
     size_legend.spines["right"].set_visible(False)
     size_legend.grid(False)
+
+    # Reset global settings.
+    sns.set(font_scale=1.0, style='whitegrid')
 
     return fig if not show else None
 

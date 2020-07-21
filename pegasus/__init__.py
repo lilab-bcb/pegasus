@@ -22,6 +22,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='anndata')
 
 
 from pegasusio import infer_file_type, read_input, write_output
+from scplot import volcano
 from .tools import (
     qc_metrics,
     get_filter_stats,
@@ -63,7 +64,15 @@ from .tools import (
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes
-from .plotting import scatter, compo_plot, scatter_groups
+from .plotting import (
+    scatter,
+    compo_plot,
+    scatter_groups,
+    violin,
+    heatmap,
+    dotplot,
+    dendrogram,
+)
 
 from importlib_metadata import version, PackageNotFoundError
 
