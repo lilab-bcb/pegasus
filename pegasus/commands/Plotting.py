@@ -58,7 +58,7 @@ Examples:
             "restrictions": self.args["--restriction"],
             "attrs": self.convert_to_list(self.args["--attributes"]),
             "basis": self.args["--basis"],
-            "alpha": self.convert_to_list(self.args["--alpha"]),
+            "alpha": self.convert_to_list(self.args["--alpha"], converter=float),
             "legend_loc": self.args["--legend-loc"],
             "legend_fontsize": self.convert_to_float(self.args["--legend-fontsize"]),
             "showall": not self.args["--do-not-show-all"],

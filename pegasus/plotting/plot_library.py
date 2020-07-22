@@ -20,8 +20,8 @@ from typing import List, Tuple, Union, Optional, Callable
 import logging
 logger = logging.getLogger(__name__)
 
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
-
+from pegasus.tools import X_from_rep
+from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
 
 
 def scatter(
@@ -61,7 +61,7 @@ def scatter(
     basis: ``str``, optional, default: ``umap``
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
-        If matkey is set, select matrix with matkey as keyword in the current modality.
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     alpha: ``float`` or ``List[float], optional, default: ``1.0``
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str``, optional, default: ``right margin``
@@ -101,7 +101,12 @@ def scatter(
     nattrs = len(attrs)
     if not is_list_like(alpha):
         alpha = [alpha] * nattrs
+
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
+
     if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
     x = data.obsm[f"X_{basis}"][:, 0]
@@ -212,6 +217,11 @@ def scatter(
             if j == 0:
                 ax.set_ylabel(f"{basis}2")
 
+    # Reset current matrix if needed.
+    if (not isinstance(data, anndata.AnnData)):
+        if cur_matkey != data.current_matrix():
+            data.select_matrix(cur_matkey)
+
     return fig if not show else None
 
 
@@ -246,7 +256,10 @@ def scatter_groups(
     ### Sample usage:
     ###    fig = plot_scatter_groups(data, 'louvain_labels', 'Individual', 'tsne', nrows = 2, ncols = 4, alpha = 0.5)
     """
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
     if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
     x = data.obsm[f"X_{basis}"][:, 0]
@@ -356,6 +369,10 @@ def scatter_groups(
             if j == 0:
                 ax.set_ylabel(basis + "2")
 
+    if not isinstance(data, anndata.AnnData):
+        if cur_matkey != data.current_matrix():
+            data.select_matrix(cur_matkey)
+
     return fig if not show else None
 
 
@@ -398,7 +415,7 @@ def compo_plot(
     left: `float`, optional (default: `0.15`)
         This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]),
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]).
     wspace: `float`, optional (default: `0.3`)
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
@@ -461,29 +478,78 @@ def violin(
     keys: Union[str, List[str]],
     groupby: str,
     matkey: Optional[str] = None,
-    stripplot: Optional[bool] = True,
-    subplot_size: Optional[Tuple[float, float]] = (2, 4),
+    stripplot: bool = False,
+    scale: str = 'width',
+    jitter: Union[float, bool] = False,
+    subplot_size: Optional[Tuple[float, float]] = (8, 0.5),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
-    hspace: Optional[float] = 0.15,
     ylabel: Optional[str] = None,
     show: Optional[bool] = True,
     **others,
     ):
     """
-    ### Sample usage:
-    ###     cg = plot_violin_genes(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-    ###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+    Generate a stacked violin plot.
+
+    Parameters
+    ----------
+    data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
+        Single-cell expression data.
+    keys: ``str`` or ``List[str]``
+        Cell attributes or features to plot.
+        Cell attributes must exist in ``data.obs`` and must be numeric.
+        Features must exist in ``data.var``.
+    groupby: ``str``
+        Cell attribute to group data points.
+    matkey: ``str``, optional, default: ``None``
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    stripplot: ``bool``, optional, default: ``False``
+        Attach a stripplot to the violinplot or not.
+    scale: ``str``, optional, default: ``width``
+        The method used to scale the width of each violin:
+            - If ``width``, each violin will have the same width.
+            - If ``area``, each violin will have the same area.
+            - If ``count``, the width of the violins will be scaled by the number of observations in that bin.
+    jitter: ``float`` or ``bool``, optional, default: ``False``
+        Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
+        This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
+    subplot_size: ``Tuple[float, float]``, optional, default: ``(10, 1)``
+        The size (width, height) in inches of each violin subplot.
+    left: ``float``, optional, default: ``0.15``
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
+    bottom: ``float``, optional, default: ``0.15``
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]).
+    wspace: ``float``, optional, default: ``0.1``
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
+    ylabel: ``str``, optional, default: ``None``
+        Y-axis label. No label to show if ``None``.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    others
+        Are passed to ``seaborn.violinplot``.
+
+    Returns
+    -------
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.violin(data, keys=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
     """
-    if matkey is None:
+    if not is_list_like(keys):
+        keys = [keys]
+
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
+    if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
     nrows, ncols = (len(keys), 1)
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
-    if not is_list_like(keys):
-        keys = [keys]
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
     obs_keys = []
     genes = []
@@ -506,75 +572,144 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=keys[i], data=df, ax=ax, size=2, color="k")
-        sns.violinplot(x="label", y=keys[i], data=df, inner=None, linewidth=1, ax=ax, cut=0)
-        ax.set_xlabel("")
-        ax.set_ylabel(keys[i])
-        ax.set_title(genes[idx])
+            sns.stripplot(x="label", y=keys[i], data=df, ax=ax, size=1, color="k", jitter=jitter)
+        sns.violinplot(x="label", y=keys[i], data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, **others)
+        ax.grid(False)
+        if i < nrows - 1:
+            ax.set_xlabel("")
+        else:
+            ax.set_xlabel(groupby)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+        ax.set_ylabel(keys[i], labelpad=8, rotation=0, horizontalalignment='right', fontsize='medium')
+        ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
 
     if ylabel is not None:
         plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
+
+    # Reset current matrix if needed.
+    if not isinstance(data, anndata.AnnData):
+        if data.current_matrix() != cur_matkey:
+            data.select_matrix(cur_matkey)
 
     return fig if not show else None
 
 
 def heatmap(
-    data, cluster, genes, use_raw=False, showzscore=False, title="", cmap = "Reds", **kwargs
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    cluster: str,
+    genes: Union[str, List[str]],
+    matkey: Optional[str] = None,
+    on_average: bool = True,
+    row_cluster: bool = False,
+    col_cluster: bool = True,
+    show: bool = True,
+    **kwargs,
 ):
-### Sample usage:
-###     cg = plot_heatmap(data, 'louvain_labels', ['CD8A', 'CD4', 'CD3G', 'MS4A1', 'NCAM1', 'CD14', 'ITGAX', 'IL3RA', 'CD38', 'CD34', 'PPBP'], use_raw = True, title="markers")
-###     cg.savefig("heatmap.png", bbox_inches='tight', dpi=600)
+    """
+    Generate a heatmap.
 
-    sns.set(font_scale=0.35)
+    Parameters
+    -----------
 
-    adata = data.raw if use_raw else data
-    df = pd.DataFrame(adata[:, genes].X.toarray(), index=data.obs.index, columns=genes)
-    if showzscore:
-        df = df.apply(zscore, axis=0)
+    data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
+        Single-cell expression data.
+    cluster: ``str``
+        Cell attribute to plot.
+    genes: ``str`` or ``List[str]``
+        Features to plot.
+    matkey: ``str``, optional, default: ``None``
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    on_average: ``bool``, optional, default: ``True``
+        If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
+    row_cluster: ``bool``, optional, default: ``False``
+    col_cluster: ``bool``, optional, default: ``True``
+    cmap: ``str``, optional, default: ``Reds``
+        Color map for plotting. See `colormap documentation`_ for a detailed list.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    kwargs
+        Are passed to ``seaborn.heatmap``.
 
-    cluster_ids = as_category(data.obs[cluster])
-    idx = cluster_ids.argsort()
-    df = df.iloc[idx, :]  # organize df by category order
-    row_colors = np.zeros(df.shape[0], dtype=object)
-    palettes = get_palettes(cluster_ids.categories.size)
+    .. _colormap documentation: https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html
+    Returns
+    -------
 
-    cluster_ids = cluster_ids[idx]
-    for k, cat in enumerate(cluster_ids.categories):
-        row_colors[np.isin(cluster_ids, cat)] = palettes[k]
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.heatmap(data, cluster='louvain_labels', genes=['CD14', 'TRAC', 'CD34'])
+
+    """
+    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+        cur_matkey = data.current_matrix()
+    if matkey is not None:
+        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        data.select_matrix(matkey)
+
+    df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
+    df['cluster_name'] = data.obs[cluster]
+
+    if on_average:
+        if not 'cmap' in kwargs.keys():
+            kwargs['cmap'] = 'viridis'
+        df = df.groupby('cluster_name').mean()
+        cluster_ids = df.index
+    else:
+        cluster_ids = pd.Categorical(data.obs[cluster])
+        idx = cluster_ids.argsort()
+        df = df.iloc[idx, :]  # organize df by category order
+        df.drop(columns=['cluster_name'], inplace=True)
+
+    if not on_average:
+        row_colors = np.zeros(df.shape[0], dtype=object)
+        palettes = _get_palettes(cluster_ids.categories.size)
+        cluster_ids = cluster_ids[idx]
+        for k, cat in enumerate(cluster_ids.categories):
+            row_colors[np.isin(cluster_ids, cat)] = palettes[k]
 
     cg = sns.clustermap(
         data=df,
-        row_colors=row_colors,
-        row_cluster=False,
-        col_cluster=True,
+        row_colors=row_colors if not on_average else None,
+        row_cluster=row_cluster,
+        col_cluster=col_cluster,
         linewidths=0,
-        yticklabels=[],
-        xticklabels=genes
+        yticklabels=cluster_ids if on_average else [],
+        xticklabels=genes,
+        **kwargs,
     )
     cg.ax_heatmap.set_ylabel("")
-    # move the colorbar
-    cg.ax_row_dendrogram.set_visible(False)
-    dendro_box = cg.ax_row_dendrogram.get_position()
-    dendro_box.x0 = (dendro_box.x0 + 2 * dendro_box.x1) / 3
-    dendro_box.x1 = dendro_box.x0 + 0.02
-    cg.cax.set_position(dendro_box)
-    cg.cax.yaxis.set_ticks_position("left")
+
+    if row_cluster:
+        cg.ax_heatmap.yaxis.tick_right()
+    else:
+        cg.ax_heatmap.yaxis.tick_left()
+
+    cg.ax_row_dendrogram.set_visible(row_cluster)
     cg.cax.tick_params(labelsize=10)
+    # move the colorbar if needed
+    if not (row_cluster and on_average):
+        color_box = cg.ax_heatmap.get_position()
+        color_box.x0 = color_box.x1 + 0.04
+        color_box.x1 = color_box.x0 + 0.02
+        cg.cax.set_position(color_box)
+        cg.cax.yaxis.set_ticks_position("right")
     # draw a legend for the cluster groups
-    cg.ax_col_dendrogram.clear()
-    for k, cat in enumerate(cluster_ids.categories):
-        cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
-    cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
-    cg.ax_col_dendrogram.grid(False)
-    cg.ax_col_dendrogram.set_xticks([])
-    cg.ax_col_dendrogram.set_yticks([])
+    #cg.ax_col_dendrogram.clear()
+    #for k, cat in enumerate(cluster_ids.categories):
+    #    cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
+    #cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
+    #cg.ax_col_dendrogram.grid(False)
+    #cg.ax_col_dendrogram.set_xticks([])
+    #cg.ax_col_dendrogram.set_yticks([])
 
-    return cg
+    if not isinstance(data, anndata.AnnData):
+        if cur_matkey != data.current_matrix():
+            data.select_matrix(cur_matkey)
 
-def __get_dot_size(size_arr, size_min, size_max, dot_min, dot_max):
-    size_pixel = np.interp(size_arr, (size_min, size_max), (dot_min, dot_max))
-    size_pixel = 5 * size_pixel
-    return size_pixel
+    return cg if not show else None
+
 
 def dotplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
@@ -588,7 +723,7 @@ def dotplot(
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
-    show: Optional[bool] = True,
+    show: bool = True,
     **kwds,
 ):
     """
@@ -678,7 +813,7 @@ def dotplot(
     fraction = fraction_df.values.flatten()
     if fraction_max is None:
         fraction_max = fraction.max()
-    pixels = __get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
+    pixels = _get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
     summary_values = mean_df.values.flatten()
     xlabel = [keys[i] for i in range(len(keys))]
     ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
@@ -733,7 +868,7 @@ def dotplot(
 
     ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0, -1])
     size_legend = fig.add_subplot(ax2[0])
-    size_tick_pixels = __get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
+    size_tick_pixels = _get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
 
     size_tick_labels = ["{:.0%}".format(x) for x in size_ticks]
     size_legend.scatter(x=np.repeat(0, len(size_ticks)), y=np.arange(0, len(size_ticks)), s=size_tick_pixels, c='black', linewidth=0.5)
@@ -753,5 +888,133 @@ def dotplot(
     size_legend.spines["left"].set_visible(False)
     size_legend.spines["right"].set_visible(False)
     size_legend.grid(False)
+
+    # Reset global settings.
+    sns.set(font_scale=1.0, style='whitegrid')
+
+    return fig if not show else None
+
+def dendrogram(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    groupby: str,
+    rep: str = 'pca',
+    genes: Optional[List[str]] = None,
+    correlation_method: str = 'pearson',
+    n_clusters: Optional[int] = None,
+    affinity: str = 'euclidean',
+    linkage: str = 'complete',
+    compute_full_tree: Union[str, bool] = 'auto',
+    distance_threshold: Optional[float] = 0,
+    figsize: Tuple[float, float] = (6, 6),
+    orientation: str = 'top',
+    color_threshold: Optional[float] = None,
+    show: bool = True,
+    **kwargs,
+):
+    """
+    Generate a dendrogram on hierarchical clustering result.
+
+    Parameters
+    ----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``AnnData`` object
+        Single cell expression data.
+    groupby: ``str``
+        Categorical cell attribute to plot, which must exist in ``data.obs``.
+    genes: ``List[str]``, optional, default: ``None``
+        List of genes to use. Gene names must exist in ``data.var``. If set, use the counts in ``data.X`` for plotting; if set as ``None``, use the embedding specified in ``rep`` for plotting.
+    rep: ``str``, optional, default: ``pca``
+        Cell embedding to use. It only works when ``genes``is ``None``, and its key ``"X_"+rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+    correlation_method: ``str``, optional, default: ``pearson``
+        Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation`_ for details.
+    n_clusters: ``int``, optional, default: ``None``
+        The number of clusters to find, used by hierarchical clustering. It must be ``None`` if ``distance_threshold`` is not ``None``.
+    affinity: ``str``, optional, default: ``correlation``
+        Metric used to compute the linkage, used by hierarchical clustering. Valid values for metric are:
+            - From scikit-learn: ``cityblock``, ``cosine``, ``euclidean``, ``l1``, ``l2``, ``manhattan``.
+            - From scipy.spatial.distance: ``braycurtis``, ``canberra``, ``chebyshev``, ``correlation``, ``dice``, ``hamming``, ``jaccard``, ``kulsinski``, ``mahalanobis``, ``minkowski``, ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``, ``sokalsneath``, ``sqeuclidean``, ``yule``.
+        Default is the correlation distance. See `scikit-learn distance documentation <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise_distances.html>`_ for details.
+    linkage: ``str``, optional, default: ``complete``
+        Which linkage criterion to use, used by hierarchical clustering. Below are available options:
+            - ``ward`` minimizes the variance of the clusters being merged.
+            - ``avarage`` uses the average of the distances of each observation of the two sets.
+            - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
+            - ``single`` uses the minimum of the distances between all observations of the two sets.
+        See `scikit-learn documentation`_ for details.
+    compute_full_tree: ``str`` or ``bool``, optional, default: ``auto``
+        Stop early the construction of the tree at ``n_clusters``, used by hierarchical clustering. It must be ``True`` if ``distance_threshold`` is not ``None``.
+        By default, this option is ``auto``, which is ``True`` if and only if ``distance_threshold`` is not ``None``, or ``n_clusters`` is less than ``min(100, 0.02 * n_groups)``, where ``n_groups`` is the number of categories in ``data.obs[groupby]``.
+    distance_threshold: ``float``, optional, default: ``0``
+        The linkage distance threshold above which, clusters will not be merged. If not ``None``, ``n_clusters`` must be ``None`` and ``compute_full_tree`` must be ``True``.
+    figsize: ``Tuple[float, float]``, optional, default: ``(6, 6)``
+        The size (width, height) in inches of figure.
+    orientation: ``str``, optional, default: ``top``
+        The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
+    color_threshold: ``float``, optional, default: ``None``
+        Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    **kwargs:
+        Are passed to ``scipy.cluster.hierarchy.dendrogram``.
+
+    .. _scikit-learn documentation: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
+    .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
+    .. _pandas corr documentation: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corr.html
+
+    Returns
+    -------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    --------
+    >>> pg.dendrogram(data, groupby='louvain_labels')
+    >>> pg.dendrogram(data, groupby='louvain_labels', genes=data.var_names)
+    """
+    if genes is None:
+        embed_df = pd.DataFrame(X_from_rep(data, rep))
+        embed_df.set_index(data.obs[groupby], inplace=True)
+    else:
+        sub_data = data[:, genes]
+        X = sub_data.X.toarray() if issparse(sub_data.X) else sub_data.X
+        embed_df = pd.DataFrame(X)
+        embed_df.set_index(data.obs[groupby], inplace=True)
+
+    mean_df = embed_df.groupby(level=0).mean()
+
+    from sklearn.cluster import AgglomerativeClustering
+    from scipy.cluster.hierarchy import dendrogram
+
+    corr_mat = mean_df.T.corr(method=correlation_method)
+
+    clusterer = AgglomerativeClustering(
+                    n_clusters=n_clusters,
+                    affinity=affinity,
+                    linkage=linkage,
+                    compute_full_tree=compute_full_tree,
+                    distance_threshold=distance_threshold
+                )
+    clusterer.fit(corr_mat)
+
+    print(clusterer.distances_)
+
+    counts = np.zeros(clusterer.children_.shape[0])
+    n_samples = len(clusterer.labels_)
+    for i, merge in enumerate(clusterer.children_):
+        current_count = 0
+        for child_idx in merge:
+            if child_idx < n_samples:
+                current_count += 1  # Leaf node
+            else:
+                current_count += counts[child_idx - n_samples]
+        counts[i] = current_count
+
+    linkage_matrix = np.column_stack([clusterer.children_, clusterer.distances_, counts]).astype(float)
+
+    fig, axis = plt.subplots(1, 1, figsize=figsize)
+    dendrogram(linkage_matrix, labels=mean_df.index.categories, ax=axis, **kwargs)
+    plt.xticks(rotation=90, fontsize=8)
+    plt.tight_layout()
 
     return fig if not show else None

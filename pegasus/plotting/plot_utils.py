@@ -30,6 +30,10 @@ def _transform_basis(basis: str) -> str:
     else:
         return basis
 
+def _get_dot_size(size_arr, size_min, size_max, dot_min, dot_max):
+    size_pixel = np.interp(size_arr, (size_min, size_max), (dot_min, dot_max))
+    size_pixel = 5 * size_pixel
+    return size_pixel
 
 def _get_nrows_and_ncols(num_figs: int, nrows: int, ncols: int) -> Tuple[int, int]:
     if nrows is None and ncols is None:

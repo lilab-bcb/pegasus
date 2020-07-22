@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix, coo_matrix, hstack
 from pegasusio import UnimodalData, MultimodalData
 from pegasusio import read_input, write_output, _get_fillna_dict
 
-from pegasus import tools, cite_seq, misc
+from pegasus import tools, misc
 
 
 import logging
@@ -58,23 +58,29 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.correct_batch(unidata, features="highly_variable_features")
 
     if kwargs["calc_sigscore"] is not None:
-        tools.calc_signature_score(unidata, kwargs["calc_sigscore"])
+        sig_files = kwargs["calc_sigscore"].split(",")
+        for sig_file in sig_files:
+            tools.calc_signature_score(unidata, sig_file)
 
     n_pc = min(kwargs["pca_n"], unidata.shape[0], unidata.shape[1])
     if n_pc < kwargs["pca_n"]:
         logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
 
-    # PCA
-    tools.pca(
-        unidata,
-        n_components=n_pc,
-        features="highly_variable_features",
-        standardize=standardize,
-        robust=kwargs["pca_robust"],
-        random_state=kwargs["random_state"],
-    )
 
-    pca_key = "pca"
+    if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
+        pca_key = tools.run_scanorama(unidata, n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
+    else:
+        # PCA
+        tools.pca(
+            unidata,
+            n_components=n_pc,
+            features="highly_variable_features",
+            standardize=standardize,
+            robust=kwargs["pca_robust"],
+            random_state=kwargs["random_state"],
+        )
+        pca_key = "pca"
+
     # batch correction: Harmony
     if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
         pca_key = tools.run_harmony(unidata, rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
@@ -282,6 +288,8 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.calc_pseudotime(unidata, kwargs["pseudotime"])
 
 
+    genome = unidata.uns["genome"]
+
     if append_data is not None:
         locs = unidata.obs_names.get_indexer(append_data.obs_names)
         idx = locs >= 0
@@ -299,21 +307,21 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 append_df = append_data.feature_metadata
 
             rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
-            
+
             Zt = Z.astype(np.float32)
             Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
             Zt.data = np.log1p(Zt.data)
 
             X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
 
-            genome = unidata.get_genome() + "_and_" + append_data.get_genome()
+            new_genome = unidata.get_genome() + "_and_" + append_data.get_genome()
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
             feature_metadata.fillna(value = _get_fillna_dict(unidata.feature_metadata), inplace = True)
 
-            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping)
-            unidata.uns["genome"] = genome
+            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
+            unidata.uns["genome"] = new_genome
 
 
     if kwargs["output_h5ad"]:
@@ -328,6 +336,9 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         write_output(unidata, f"{output_name}.loom")
 
 
+    # Change genome name back if append_data is True
+    if unidata.uns["genome"] != genome:
+        unidata.uns["genome"] = genome
     # Eliminate objects starting with fmat_ from uns
     for key in list(unidata.uns):
         if key.startswith("fmat_"):
@@ -344,7 +355,7 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
 
     # load input data
     data = read_input(input_file, black_list = black_list)
-    
+
     # process focus_list
     focus_list = kwargs["focus"]
     if len(focus_list) == 0:
@@ -388,7 +399,7 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     # if kwargs["subcluster"]:
     #     unidata = tools.get_anndata_for_subclustering(adata, kwargs["subset_selections"])
     #     is_raw = True  # get submat and then set is_raw to True
-            
+
     # write out results
 
     write_output(data, f"{output_name}.zarr.zip")

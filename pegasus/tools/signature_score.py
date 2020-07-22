@@ -63,6 +63,7 @@ def _load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:
             items = line.strip().split('\t')
             signatures[items[0]] = list(set(items[2:]))
     logger.info(f"Loaded signatures from GMT file {input_file}.")
+    return signatures
 
 
 def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_omitted_genes: bool = False, skip_threshold: int = 2) -> None:

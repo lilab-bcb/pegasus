@@ -1,6 +1,5 @@
 from .utils import update_rep, X_from_rep, W_from_rep, knn_is_cached
 
-from .data_aggregation import aggregate_matrices
 from .preprocessing import (
     qc_metrics,
     get_filter_stats,
@@ -12,7 +11,7 @@ from .preprocessing import (
     pca,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
-from .batch_correction import set_group_attribute, correct_batch, run_harmony
+from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
 from .nearest_neighbors import (
     calculate_nearest_neighbors,
     get_neighbors,
@@ -38,12 +37,5 @@ from .visualization import (
 )
 from .diff_expr import de_analysis, markers, write_results_to_excel, run_de_analysis
 from .gradient_boosting import find_markers, run_find_markers
-from .scp_output import (
-    run_scp_output,
-    scp_write_coords,
-    scp_write_metadata,
-    scp_write_expression,
-)
-from .down_sampling import down_sample
 from .subcluster_utils import get_anndata_for_subclustering
 from .signature_score import calc_signature_score

@@ -378,8 +378,9 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     data.obs["scale"] = scale
 
 
-def select_features(data: MultimodalData, features: str = None) -> str:
-    """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix. `'fmat_*'` will be removed before writing out the disk.
+@run_gc
+def select_features(data: MultimodalData, features: str = "highly_variable_features", standardize: bool = True, max_value: float = 10.0) -> str:
+    """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix, with the option of standardization and truncating based on max_value. `'fmat_*'` will be removed before writing out the disk.
 
     Parameters
     ----------
@@ -388,6 +389,12 @@ def select_features(data: MultimodalData, features: str = None) -> str:
 
     features: ``str``, optional, default: ``None``.
         a keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
+
+    standardize: ``bool``, optional, default: ``True``.
+        Whether to scale the data to unit variance and zero mean.
+
+    max_value: ``float``, optional, default: ``10``.
+        The threshold to truncate data after scaling. If ``None``, do not truncate.
 
     Returns
     -------
@@ -403,23 +410,32 @@ def select_features(data: MultimodalData, features: str = None) -> str:
     >>> pg.select_features(data)
     """
     keyword = "fmat_" + str(features)  # fmat: feature matrix
-
     if keyword not in data.uns:
         if features is not None:
             assert features in data.var
-            fmat = data.X[:, data.var[features].values]
+            X = data.X[:, data.var[features].values]
         else:
-            fmat = data.X
+            X = data.X
+        data.uns[keyword] = X.toarray() if issparse(X) else X.copy()
 
-        if issparse(fmat):
-            data.uns[keyword] = fmat.toarray()
-        else:
-            data.uns[keyword] = fmat.copy()
+    if standardize or (max_value is not None):
+        X = data.uns[keyword]
+        if standardize:
+            m1 = X.mean(axis=0)
+            psum = np.multiply(X, X).sum(axis=0)
+            std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
+            std[std == 0] = 1
+            X -= m1
+            X /= std
+        if max_value is not None:
+            X[X > max_value] = max_value
+            X[X < -max_value] = -max_value
+        data.uns[keyword] = X
 
     return keyword
 
 
-@run_gc
+@timer(logger=logger)
 def pca(
     data: MultimodalData,
     n_components: int = 50,
@@ -445,7 +461,7 @@ def pca(
         Keyword in ``data.var`` to specify features used for PCA.
 
     standardize: ``bool``, optional, default: ``True``.
-        Whether to scale the data to unit variance and zero mean or not.
+        Whether to scale the data to unit variance and zero mean.
 
     max_value: ``float``, optional, default: ``10``.
         The threshold to truncate data after scaling. If ``None``, do not truncate.
@@ -477,26 +493,8 @@ def pca(
     --------
     >>> pg.pca(data)
     """
-
-    keyword = select_features(data, features)
-
-    start = time.perf_counter()
-
+    keyword = select_features(data, features = features, standardize = standardize, max_value = max_value)
     X = data.uns[keyword]
-
-    if standardize:
-        # scaler = StandardScaler(copy=False)
-        # scaler.fit_transform(X)
-        m1 = X.mean(axis=0)
-        psum = np.multiply(X, X).sum(axis=0)
-        std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
-        std[std == 0] = 1
-        X -= m1
-        X /= std
-
-    if max_value is not None:
-        X[X > max_value] = max_value
-        X[X < -max_value] = -max_value
 
     pca = PCA(n_components=n_components, random_state=random_state)
     if robust:
@@ -512,6 +510,3 @@ def pca(
     data.uns["pca"] = {}
     data.uns["pca"]["variance"] = pca.explained_variance_
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
-
-    end = time.perf_counter()
-    logger.info("PCA is done. Time spent = {:.2f}s.".format(end - start))

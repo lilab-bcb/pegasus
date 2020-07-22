@@ -1,5 +1,7 @@
 import time
 import numpy as np
+import pandas as pd
+from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse
 from pegasusio import MultimodalData
 
@@ -172,7 +174,7 @@ def correct_batch(data: MultimodalData, features: str = None) -> None:
     logger.info("Adjustment parameters are estimated.")
 
     # select dense matrix
-    keyword = select_features(data, features)
+    keyword = select_features(data, features = features, standardize = False, max_value = None) # do not standardize or truncate max_value
     logger.info("Features are selected.")
 
     if can_correct:
@@ -226,12 +228,98 @@ def run_harmony(
     --------
     >>> pg.run_harmony(data, rep = "pca", n_jobs = 10, random_state = 25)
     """
+    if not is_categorical_dtype(data.obs['Channel']):
+        data.obs['Channel'] = pd.Categorical(data.obs['Channel'])
+    if data.obs['Channel'].cat.categories.size  == 1:
+        logger.warning("Warning: data only contains 1 channel. Cannot apply Harmony!")
+        return rep
+
     try:
         from harmony import harmonize
-    except ImportError:
-        print("Need harmony! Try 'pip install harmony-pytorch'.")
+    except ImportError as e:
+        print(f"ERROR: {e}")
+        print("ERROR: Need Harmony! Try 'pip install harmony-pytorch'.")
+        import sys
+        sys.exit(-1)
+
 
     logger.info("Start integration using Harmony.")
     out_rep = rep + '_harmony'
     data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
     return out_rep
+
+
+@timer(logger=logger)
+def run_scanorama(
+    data: MultimodalData,
+    n_components: int = 50,
+    features: str = "highly_variable_features",
+    standardize: bool = True,
+    max_value: float = 10,
+    random_state: int = 0,
+) -> str:
+    """Batch correction using Scanorama
+
+    Parameters
+    ----------
+    data: ``MultimodalData``.
+        Annotated data matrix with rows for cells and columns for genes.
+    
+    n_components: ``int``, optional default: ``50``.
+        Number of integrated embedding components to keep. This sets Scanorama's dimred parameter.
+
+    features: ``str``, optional, default: ``"highly_variable_features"``.
+        Keyword in ``data.var`` to specify features used for Scanorama.
+
+    standardize: ``bool``, optional, default: ``True``.
+        Whether to scale the data to unit variance and zero mean.
+
+    max_value: ``float``, optional, default: ``10``.
+        The threshold to truncate data after scaling. If ``None``, do not truncate.
+
+    random_state: ``int``, optional, default: ``0``.
+        Seed for random number generator.
+
+    Returns
+    -------
+    out_rep: ``str``
+        The keyword in ``data.obsm`` referring to the embedding calculated by Scanorama algorithm. out_rep is always equal to "scanorama"
+
+    Update ``data.obsm``:
+        * ``data.obsm['X_scanorama']``: The embedding calculated by Scanorama algorithm.
+
+    Examples
+    --------
+    >>> pg.run_scanorama(data, random_state = 25)
+    """
+    if not is_categorical_dtype(data.obs['Channel']):
+        data.obs['Channel'] = pd.Categorical(data.obs['Channel'])
+    if data.obs['Channel'].cat.categories.size  == 1:
+        logger.warning("Warning: data only contains 1 channel. Cannot apply Scanorama!")
+        return 'pca'
+
+    try:
+        from scanorama import integrate
+    except ImportError as e:
+        print(f"ERROR: {e}")
+        print("ERROR: Need Scanorama! Try 'pip install scanorama'.")
+        import sys
+        sys.exit(-1)
+
+    logger.info("Start integration using Scanorama.")
+
+    rep = 'scanorama'
+    keyword = select_features(data, features = features, standardize = standardize, max_value = max_value)
+    X = data.uns[keyword]
+
+    datasets = []
+    for channel in data.obs['Channel'].cat.categories:
+        idx = (data.obs['Channel'] == channel).values
+        assert idx.sum() > 0
+        datasets.append(X[idx, :])
+    genes_list = [[str(i) for i in range(X.shape[1])]] * data.obs['Channel'].cat.categories.size
+    
+    integrated, genes = integrate(datasets, genes_list, dimred = n_components, seed = random_state)
+    data.obsm[f'X_{rep}'] = np.concatenate(integrated, axis = 0)
+
+    return rep

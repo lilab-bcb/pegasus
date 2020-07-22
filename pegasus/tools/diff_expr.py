@@ -7,12 +7,12 @@ from joblib import Parallel, delayed, effective_n_jobs
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from collections import defaultdict
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
 
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasusio import timer
+from pegasusio import timer, MultimodalData, UnimodalData
 
 
 def calc_basic_stat(
@@ -613,7 +613,7 @@ def organize_results(results: List[List[pd.DataFrame]]) -> pd.DataFrame:
 
 
 def de_analysis(
-    data: AnnData,
+    data: Union[MultimodalData, UnimodalData, AnnData],
     cluster: str,
     condition: str = None,
     subset: str = None,
@@ -630,8 +630,8 @@ def de_analysis(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
-        Annotated data matrix with rows for cells and columns for genes.
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData``
+        Data matrix with rows for cells and columns for genes.
 
     cluster: ``str``
         Cluster labels used in DE analysis. Must exist in ``data.obs``.
@@ -675,7 +675,7 @@ def de_analysis(
 
     Examples
     --------
-    >>> pg.de_analysis(adata, cluster = 'spectral_leiden_labels')
+    >>> pg.de_analysis(data, cluster = 'spectral_leiden_labels')
 
     subset: a comma-separated list of cluster labels. Then de will be performed only on these subsets.
     """
@@ -815,7 +815,7 @@ def get_sort_key(sort_by: List[str], col_names: List[str], direction: str):
 
 
 def markers(
-    data: AnnData,
+    data: Union[MultimodalData, UnimodalData, AnnData],
     head: int = None,
     de_key: str = "de_res",
     sort_by: str = "auroc,WAD_score",
@@ -825,8 +825,8 @@ def markers(
 
     Parameters
     ----------
-    data: ``anndata.AnnData``
-        Annotated data matrix with rows for cells and columns for genes.
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData``
+        Data matrix with rows for cells and columns for genes.
 
     head: ``int``, optional, default: ``None``
         List only top ``head`` genes for each cluster. If ``None``, show any DE genes.
@@ -847,7 +847,7 @@ def markers(
 
     Examples
     --------
-    >>> marker_dict = pg.markers(adata)
+    >>> marker_dict = pg.markers(data)
     """
     if de_key not in data.varm.keys():
         raise ValueError("Please run de_analysis first!")
@@ -994,9 +994,9 @@ def run_de_analysis(
     """ For command line only
     """
 
-    from pegasus.io import read_input, write_output
+    from pegasusio import read_input, write_output
 
-    data = read_input(input_file, h5ad_mode="r+")
+    data = read_input(input_file, mode='r')
 
     de_analysis(
         data,
@@ -1011,9 +1011,9 @@ def run_de_analysis(
         verbose=verbose,
     )
 
-    write_output(data, input_file, whitelist=["varm/{}".format(result_key)])
+    write_output(data, input_file)
     logger.info(
-        "Differential expression results are written to varm/{} in h5ad file.".format(
+        "Differential expression results are written to varm/{} in zarr file.".format(
             result_key
         )
     )
