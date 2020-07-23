@@ -30,6 +30,7 @@ Preprocess
 	qc_metrics
 	get_filter_stats
 	filter_data
+    identify_robust_genes
 	log_norm
 	highly_variable_features
 	select_features
@@ -125,36 +126,27 @@ Annotate clusters:
 Plotting
 --------
 
-Interactive Plots
+Static Plots
 ~~~~~~~~~~~~~~~~~
 
 .. autosummary::
 	:toctree: .
 
-	embedding
-	composition_plot
-	variable_feature_plot
+	scatter
+    scatter_groups
+	compo_plot
+    violin
 	heatmap
 	dotplot
+    dendrogram
 
-Quality Control Plots
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-	:toctree: .
-
-	violin
-	scatter
-	scatter_matrix
-
-Demultiplexing
---------------
+Interactive Plots
+~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	estimate_background_probs
-	demultiplex
+    volcano
 
 
 Miscellaneous
@@ -166,4 +158,3 @@ Miscellaneous
 	calc_signature_score
 	search_genes
 	search_de_genes
-

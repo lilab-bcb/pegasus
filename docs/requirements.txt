@@ -6,15 +6,14 @@ pandas>=0.21
 matplotlib>=2.0.0
 scipy
 seaborn
-tables
 statsmodels
-scikit-learn>=0.21.3
+scikit-learn
 scikit-misc
 natsort
 joblib
 numba
 importlib_metadata; python_version < '3.8'
-umap-learn>=0.3.9
+umap-learn
 forceatlas2-python
 pyarrow
 bokeh
