@@ -84,17 +84,9 @@ def scatter(
 
     Examples
     --------
-    >>> pg.qc_metrics(data)
-    """
+    >>> pg.scatter(data, attrs=['louvain_labels', 'Channel'], basis='fitsne')
+    >>> pg.scatter(data, attrs=['CD14', 'TRAC'], basis='umap')
 
-
-
-    """
-    attrs: can be either in data.obs or a gene name
-    legend_loc can be either "right margin" or  "on data"
-    Example:
-    pg.scatter(data, 'umap', 'leiden_labels')
-    fig = pg.scatter(data, 'tsne', ['louvain_labels', 'hdbscan_labels_soft'], nrows = 1, ncols = 2, alpha = 0.5, show = False)
     """
     if not is_list_like(attrs):
         attrs = [attrs]
@@ -254,7 +246,7 @@ def scatter_groups(
     show_full: show the picture with all groups as the first plot.
     categories: if not None, use this to define new groups.
     ### Sample usage:
-    ###    fig = plot_scatter_groups(data, 'louvain_labels', 'Individual', 'tsne', nrows = 2, ncols = 4, alpha = 0.5)
+    ###    scatter_groups(data, attr='louvain_labels', group='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
     """
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
@@ -475,7 +467,7 @@ def compo_plot(
 
 def violin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    keys: Union[str, List[str]],
+    attrs: Union[str, List[str]],
     groupby: str,
     matkey: Optional[str] = None,
     stripplot: bool = False,
@@ -536,10 +528,10 @@ def violin(
 
     Examples
     --------
-    >>> pg.violin(data, keys=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
+    >>> pg.violin(data, attrs=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
     """
-    if not is_list_like(keys):
-        keys = [keys]
+    if not is_list_like(attrs):
+        attrs = [attrs]
 
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
@@ -547,14 +539,14 @@ def violin(
         assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
-    nrows, ncols = (len(keys), 1)
+    nrows, ncols = (len(attrs), 1)
 
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
     obs_keys = []
     genes = []
 
-    for key in keys:
+    for key in attrs:
         if key in data.obs:
             assert is_numeric_dtype(data.obs[key])
             obs_keys.append(key)
@@ -572,15 +564,15 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=keys[i], data=df, ax=ax, size=1, color="k", jitter=jitter)
-        sns.violinplot(x="label", y=keys[i], data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, **others)
+            sns.stripplot(x="label", y=attrs[i], data=df, ax=ax, size=1, color="k", jitter=jitter)
+        sns.violinplot(x="label", y=attrs[i], data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, **others)
         ax.grid(False)
         if i < nrows - 1:
             ax.set_xlabel("")
         else:
             ax.set_xlabel(groupby)
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-        ax.set_ylabel(keys[i], labelpad=8, rotation=0, horizontalalignment='right', fontsize='medium')
+        ax.set_ylabel(attrs[i], labelpad=8, rotation=0, horizontalalignment='right', fontsize='medium')
         ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
 
     if ylabel is not None:
@@ -596,8 +588,8 @@ def violin(
 
 def heatmap(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    cluster: str,
     genes: Union[str, List[str]],
+    groupby: str,
     matkey: Optional[str] = None,
     on_average: bool = True,
     row_cluster: bool = False,
@@ -613,10 +605,10 @@ def heatmap(
 
     data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
         Single-cell expression data.
-    cluster: ``str``
-        Cell attribute to plot.
     genes: ``str`` or ``List[str]``
         Features to plot.
+    groupby: ``str``
+        Cell attribute to plot.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     on_average: ``bool``, optional, default: ``True``
@@ -639,7 +631,7 @@ def heatmap(
 
     Examples
     --------
-    >>> pg.heatmap(data, cluster='louvain_labels', genes=['CD14', 'TRAC', 'CD34'])
+    >>> pg.heatmap(data, genes=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
 
     """
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
@@ -649,7 +641,7 @@ def heatmap(
         data.select_matrix(matkey)
 
     df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
-    df['cluster_name'] = data.obs[cluster]
+    df['cluster_name'] = data.obs[groupby]
 
     if on_average:
         if not 'cmap' in kwargs.keys():
@@ -657,7 +649,7 @@ def heatmap(
         df = df.groupby('cluster_name').mean()
         cluster_ids = df.index
     else:
-        cluster_ids = pd.Categorical(data.obs[cluster])
+        cluster_ids = pd.Categorical(data.obs[groupby])
         idx = cluster_ids.argsort()
         df = df.iloc[idx, :]  # organize df by category order
         df.drop(columns=['cluster_name'], inplace=True)
@@ -713,8 +705,8 @@ def heatmap(
 
 def dotplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    keys: Union[str, List[str]],
-    by: str,
+    genes: Union[str, List[str]],
+    groupby: str,
     reduce_function: Callable[[np.ndarray], float] = np.mean,
     fraction_min: float = 0,
     fraction_max: float = None,
@@ -734,9 +726,9 @@ def dotplot(
 
     data: ``AnnData`` or ``UnimodalData`` or ``MultimodalData`` object
         Single cell expression data.
-    keys: ``str`` or ``List[str]``
+    genes: ``str`` or ``List[str]``
         Features to plot.
-    by: ``str``
+    groupby: ``str``
         Cell attribute to plot.
     reduce_function: ``Callable[[np.ndarray], float]``, optional, default: ``np.mean``
         Function to calculate statistic on expression data. Default is mean.
@@ -767,28 +759,28 @@ def dotplot(
 
     Examples
     --------
-    >>> pg.dotplot(data, keys = ['CD14', 'TRAC', 'CD34'], by = 'louvain_labels')
+    >>> pg.dotplot(data, genes = ['CD14', 'TRAC', 'CD34'], groupby = 'louvain_labels')
 
     """
     sns.set(font_scale=0.7, style='whitegrid')
 
-    if not is_list_like(keys):
-        keys = [keys]
+    if not is_list_like(genes):
+        geness = [genes]
 
     keywords = dict(cmap=cmap)
     keywords.update(kwds)
 
     from scipy.sparse import issparse
-    X = data[:, keys].X
+    X = data[:, genes].X
     if issparse(X):
         X = X.toarray()
-    df = pd.DataFrame(data=X, columns=keys)
-    df[by] = data.obs[by].values
+    df = pd.DataFrame(data=X, columns=genes)
+    df[groupby] = data.obs[groupby].values
 
     def non_zero(g):
         return np.count_nonzero(g) / g.shape[0]
 
-    summarized_df = df.groupby(by).aggregate([reduce_function, non_zero])
+    summarized_df = df.groupby(groupby).aggregate([reduce_function, non_zero])
     if sort_function is not None:
         row_indices = sort_function(summarized_df)
         summarized_df = summarized_df.iloc[row_indices]
@@ -815,12 +807,12 @@ def dotplot(
         fraction_max = fraction.max()
     pixels = _get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
     summary_values = mean_df.values.flatten()
-    xlabel = [keys[i] for i in range(len(keys))]
+    xlabel = [genes[i] for i in range(len(genes))]
     ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
     dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
             xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
 
-    xticks = keys
+    xticks = genes
     yticks = summarized_df.index.map(str).values
 
     import matplotlib.gridspec as gridspec
@@ -842,7 +834,7 @@ def dotplot(
     if not grid:
         ax.grid(False)
 
-    ax.set_ylabel(str(by))
+    ax.set_ylabel(str(groupby))
     ax.set_xlabel('')
     ax.set_xlim(-1, len(xticks))
     ax.set_ylim(-1, len(yticks))
@@ -919,12 +911,12 @@ def dendrogram(
 
     data: ``MultimodalData``, ``UnimodalData``, or ``AnnData`` object
         Single cell expression data.
-    groupby: ``str``
-        Categorical cell attribute to plot, which must exist in ``data.obs``.
     genes: ``List[str]``, optional, default: ``None``
         List of genes to use. Gene names must exist in ``data.var``. If set, use the counts in ``data.X`` for plotting; if set as ``None``, use the embedding specified in ``rep`` for plotting.
     rep: ``str``, optional, default: ``pca``
         Cell embedding to use. It only works when ``genes``is ``None``, and its key ``"X_"+rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+    groupby: ``str``
+        Categorical cell attribute to plot, which must exist in ``data.obs``.
     correlation_method: ``str``, optional, default: ``pearson``
         Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation`_ for details.
     n_clusters: ``int``, optional, default: ``None``
@@ -969,8 +961,8 @@ def dendrogram(
 
     Examples
     --------
-    >>> pg.dendrogram(data, groupby='louvain_labels')
-    >>> pg.dendrogram(data, groupby='louvain_labels', genes=data.var_names)
+    >>> pg.dendrogram(data, genes=data.var_names, groupby='louvain_labels')
+    >>> pg.dendrogram(data, rep='pca', groupby='louvain_labels')
     """
     if genes is None:
         embed_df = pd.DataFrame(X_from_rep(data, rep))
