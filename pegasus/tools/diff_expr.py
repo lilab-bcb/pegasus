@@ -863,7 +863,7 @@ def markers(
     results = defaultdict(dict)
     for clust_id, col_names in clust2cols.items():
         rec_names = [x + ":" + clust_id for x in col_names]
-        df = pd.DataFrame(data=rec_array[rec_names], index=data.var_names)
+        df = pd.DataFrame(data=rec_array[rec_names], index=data.var_names.copy())
         df.columns = col_names
         df.index.name = "feature"
 
