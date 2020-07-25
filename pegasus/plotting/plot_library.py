@@ -890,7 +890,7 @@ def dotplot(
     size_legend.grid(False)
 
     # Reset global settings.
-    sns.set(font_scale=1.0, style='whitegrid')
+    sns.set(font_scale=1.0, style='white')
 
     return fig if not show else None
 
@@ -982,6 +982,7 @@ def dendrogram(
         embed_df.set_index(data.obs[groupby], inplace=True)
 
     mean_df = embed_df.groupby(level=0).mean()
+    mean_df.index = mean_df.index.astype('category')
 
     from sklearn.cluster import AgglomerativeClustering
     from scipy.cluster.hierarchy import dendrogram
@@ -996,8 +997,6 @@ def dendrogram(
                     distance_threshold=distance_threshold
                 )
     clusterer.fit(corr_mat)
-
-    print(clusterer.distances_)
 
     counts = np.zeros(clusterer.children_.shape[0])
     n_samples = len(clusterer.labels_)
@@ -1014,7 +1013,7 @@ def dendrogram(
 
     fig, axis = plt.subplots(1, 1, figsize=figsize)
     dendrogram(linkage_matrix, labels=mean_df.index.categories, ax=axis, **kwargs)
-    plt.xticks(rotation=90, fontsize=8)
+    plt.xticks(rotation=90, fontsize=10)
     plt.tight_layout()
 
     return fig if not show else None
