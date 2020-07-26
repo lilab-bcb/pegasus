@@ -430,3 +430,81 @@ def annotate_data_object(input_file: str, annotation: str) -> None:
     anno_dict = {str(i + 1): x for i, x in enumerate(anno_str.split(";"))}
     annotate(data, anno_name, clust_name, anno_dict)
     write_output(data, input_file)
+
+def annotate_cluster(
+    data: Union[MultimodalData, UnimodalData, AnnData],
+    markers: Union[str, Dict],
+    de_test: str,
+    annotation_key: str,
+    cluster_labels: str = "louvain_labels",
+    de_alpha: float = 0.05,
+    de_key: str = "de_res",
+    threshold: float = 0.5,
+    ignore_nonde: bool = False,
+    output_file: str = None,
+) -> None:
+    """Infer putative cell types for each cluster using legacy markers.
+
+    Parameters
+    ----------
+
+    data : ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData``.
+        Data structure of count matrix and DE analysis results.
+
+    markers : ``str`` or ``Dict``
+        * If ``str``, it
+            * either refers to a JSON file containing legacy markers, or
+            * ``'human_immune'`` for predefined pegasus markers on human immune cells;
+            * ``'mouse_immune'`` for mouse immune cells;
+            * ``'human_brain'`` for human brain cells;
+            * ``'mouse_brain'`` for mouse brain cells.
+        * If ``Dict``, it refers to a Python dictionary describing the markers.
+
+    de_test: ``str``
+        pegasus determines cell types using DE test results. This argument indicates which DE test result to use, can be either ``'t'``, ``'fisher'`` or ``'mwu'``.
+
+    annotation_key: ``str``
+        The key name of resulting cluster-specific cell types in ``data.obs``.
+
+    cluster_labels: ``str``, optional, default: ``"louvain_labels"``
+        The cluster attribute name in ``data.obs``. It must be consistent with the cluster attribute used in ``pg.de_analysis``, namely consistent with ``de_key`` parameter.
+
+    de_alpha: ``float``, optional, default: ``0.05``
+        False discovery rate for controling family-wide error.
+
+    de_key : ``str``, optional, default: ``"de_res"``
+        The keyword in ``data.varm`` that stores DE analysis results.
+
+    threshold : ``float``, optional, defaut: ``0.5``
+        Only select putative cell types with a score larger than or equal to ``threshold``.
+
+    ignore_nonde: ``bool``, optional, default: ``False``
+        Do not consider non DE genes as weak negative markers.
+
+    output_file: ``str``, optional, default: ``None``
+        File name of output cluster annotation. If ``None``, do not write to any file.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[annotation_key]``: Putative cell type annotation of cells as categorical data.
+
+    Examples
+    --------
+    >>> pg.annotate_cluster(data, markers='human_immune', de_test='t', annotation_key='anno')
+    """
+    celltype_dict = infer_cell_types(
+                        data,
+                        markers=markers,
+                        de_test=de_test,
+                        de_alpha=de_alpha,
+                        de_key=de_key,
+                        threshold=threshold,
+                        ignore_nonde=ignore_nonde,
+                        output_file=output_file,
+                    )
+    cluster_names = infer_cluster_names(celltype_dict, threshold)
+    anno_dict = dict(zip(map(lambda n: str(n), range(1, len(cluster_names)+1)), cluster_names))
+    annotate(data, name=annotation_key, based_on=cluster_labels, anno_dict=anno_dict)

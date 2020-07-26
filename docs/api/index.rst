@@ -121,7 +121,7 @@ Annotate clusters:
 	:toctree: .
 
 	infer_cell_types
-	annotate
+	annotate_cluster
 
 Plotting
 --------
