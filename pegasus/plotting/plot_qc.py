@@ -65,15 +65,3 @@ def plot_qc_violin(
     plt.tight_layout()
     plt.savefig(out_file, dpi=dpi)
     plt.close()
-
-
-def plot_hvf(x, y, fitted, hvg_index, out_file, dpi=500, markersize=5, linewidth=2):
-    ax = plt.gca()
-    ax.plot(x[hvg_index], y[hvg_index], "b.", markersize=markersize)
-    ax.plot(x[~hvg_index], y[~hvg_index], "k.", markersize=markersize)
-    order = np.argsort(x)
-    ax.plot(x[order], fitted[order], "r-", linewidth=linewidth)
-    ax.set_xlabel("Mean log expression")
-    ax.set_ylabel("Variance of log expression")
-    plt.savefig(out_file, dpi=dpi)
-    plt.close()

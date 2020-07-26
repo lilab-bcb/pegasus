@@ -1,5 +1,5 @@
 from .Base import Base
-from pegasusio import read_input, write_scp_file
+from pegasusio import read_input, write_output
 
 
 class SCPOutput(Base):
@@ -28,9 +28,10 @@ Examples:
 
     def execute(self):
         data = read_input(self.args["<input_data_file>"])
-        write_scp_file(
+        write_output(
             data,
             self.args["<output_name>"],
-            not self.args["--dense"],
-            int(self.args["--round-to"]),
+            file_type = "scp",
+            is_sparse = not self.args["--dense"],
+            precision = int(self.args["--round-to"]),
         )

@@ -6,5 +6,6 @@ from .plot_library import (
     heatmap,
     dotplot,
     dendrogram,
+    hvfplot,
+    qcviolin,
 )
-from .plot_qc import plot_qc_violin, plot_hvf

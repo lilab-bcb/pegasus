@@ -52,26 +52,30 @@ def _get_marker_size(nsamples: int) -> float:
 
 
 def _get_subplot_layouts(
-    nrows: int,
-    ncols: int,
-    subplot_size: Tuple[float, float],
-    left: float,
-    bottom: float,
-    wspace: float,
-    hspace: float,
-    squeeze=True,
-    sharex=True,
-    sharey=True,
-    frameon=False,
+    nrows: int = 1,
+    ncols: int = 1,
+    panel_size: Tuple[float, float] = (6, 4),
+    dpi: float = 300.0,
+    left: float = 0.0,
+    bottom: float = 0.0,
+    wspace: float = 0.0,
+    hspace: float = 0.0,
+    squeeze: bool = True,
+    sharex: bool = True,
+    sharey: bool = True,
+    frameon: bool = False,
 ):
-    left_margin = left * subplot_size[0]
-    bottom_margin = bottom * subplot_size[1]
-    right_space = wspace * subplot_size[0]
-    top_space = hspace * subplot_size[1]
+    """
+    Get subplot layouts. Default is nrows = ncols = 1
+    """
+    left_margin = left * panel_size[0]
+    bottom_margin = bottom * panel_size[1]
+    right_space = wspace * panel_size[0]
+    top_space = hspace * panel_size[1]
 
     figsize = (
-        left_margin + subplot_size[0] * (1.0 + wspace) * ncols,
-        bottom_margin + subplot_size[1] * (1.0 + hspace) * nrows,
+        left_margin + panel_size[0] * (1.0 + wspace) * ncols,
+        bottom_margin + panel_size[1] * (1.0 + hspace) * nrows,
     )
     fig, axes = plt.subplots(
         nrows=nrows,
@@ -81,6 +85,7 @@ def _get_subplot_layouts(
         sharex=sharex,
         sharey=sharey,
         frameon=frameon,
+        dpi = dpi,
     )
 
     fig.subplots_adjust(

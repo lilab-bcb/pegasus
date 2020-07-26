@@ -42,12 +42,13 @@ def scatter(
     vmax: Optional[float] = None,
     nrows: Optional[int] = None,
     ncols: Optional[int] = None,
-    subplot_size: Optional[Tuple[float, float]] = (4, 4),
+    panel_size: Optional[Tuple[float, float]] = (4, 4),
     left: Optional[float] = 0.2,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
     show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
     **others,
 ) -> plt.Figure:
     """Generate scatter plots for different attributes
@@ -69,6 +70,8 @@ def scatter(
     legend_fontsize: ``int``, optional, default: None
         Legend fontsize. If None, use matplotlib.rcParams["legend.fontsize"].
     restrictions: ``List[str]``, optional, default: None
+    dpi: ``float``, optional, default: 300.0
+        The resolution of the figure in dots-per-inch.
 
     Returns
     -------
@@ -107,7 +110,7 @@ def scatter(
     basis = _transform_basis(basis)
     marker_size = _get_marker_size(x.size)
     nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
     if legend_loc is None:
         legend_loc = rcParams["legend.loc"]
@@ -234,12 +237,13 @@ def scatter_groups(
     vmax: Optional[float] = None,
     nrows: Optional[int] = None,
     ncols: Optional[int] = None,
-    subplot_size: Optional[Tuple[float, float]] = (4, 4),
+    panel_size: Optional[Tuple[float, float]] = (4, 4),
     left: Optional[float] = 0.2,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
     show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
     **others,
 ):
     """
@@ -277,7 +281,7 @@ def scatter_groups(
             df_g[key] = restr_ojb.get_satisfied_per_attr(groups, key)
 
     nrows, ncols = _get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
     if legend_fontsize is None:
         legend_fontsize = rcParams["legend.fontsize"]
@@ -375,12 +379,13 @@ def compo_plot(
     style: Optional[str] = "frequency",
     restrictions: Optional[List[str]] = None,
     xlabel: Optional[str] = None,
-    subplot_size: Optional[Tuple[float, float]] = (6, 4),
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
     hspace: Optional[float] = 0.15,
     show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
     **others,
 ):
     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
@@ -402,16 +407,16 @@ def compo_plot(
         This parameter is used to select a subset of data to plot.
     xlabel: `str`, optional (default None)
         X-axis label. If None, use xattr
-    subplot_size: `tuple`, optional (default: `(6, 4)`)
+    panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     left: `float`, optional (default: `0.15`)
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.3`)
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
-        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * subplot_size[1]).
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
 
     Returns
     -------
@@ -426,7 +431,7 @@ def compo_plot(
     if xlabel is None:
         xlabel = xattr
 
-    fig, ax = _get_subplot_layouts(nrows=1, ncols=1, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=hspace)
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace) # default nrows = 1 & ncols = 1
 
     restr_obj = RestrictionParser(restrictions)
     selected = restr_obj.get_satisfied(data)
@@ -473,12 +478,13 @@ def violin(
     stripplot: bool = False,
     scale: str = 'width',
     jitter: Union[float, bool] = False,
-    subplot_size: Optional[Tuple[float, float]] = (8, 0.5),
+    panel_size: Optional[Tuple[float, float]] = (8, 0.5),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
     ylabel: Optional[str] = None,
     show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
     **others,
     ):
     """
@@ -506,14 +512,14 @@ def violin(
     jitter: ``float`` or ``bool``, optional, default: ``False``
         Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
         This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
-    subplot_size: ``Tuple[float, float]``, optional, default: ``(10, 1)``
+    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 1)``
         The size (width, height) in inches of each violin subplot.
     left: ``float``, optional, default: ``0.15``
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * subplot_size[0]).
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
     bottom: ``float``, optional, default: ``0.15``
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * subplot_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
     wspace: ``float``, optional, default: ``0.1``
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * subplot_size[0]).
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     ylabel: ``str``, optional, default: ``None``
         Y-axis label. No label to show if ``None``.
     show: ``bool``, optional, default: ``True``
@@ -541,7 +547,7 @@ def violin(
 
     nrows, ncols = (len(attrs), 1)
 
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, subplot_size=subplot_size, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
     obs_keys = []
     genes = []
@@ -595,6 +601,7 @@ def heatmap(
     row_cluster: bool = False,
     col_cluster: bool = True,
     show: bool = True,
+    dpi: Optional[float] = 300.0,
     **kwargs,
 ):
     """
@@ -716,6 +723,7 @@ def dotplot(
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
     show: bool = True,
+    dpi: Optional[float] = 300.0,
     **kwds,
 ):
     """
@@ -819,7 +827,7 @@ def dotplot(
 
     width = int(np.ceil(((dot_max + 1) + 4) * len(xticks) + dotplot_df['ylabel'].str.len().max()) + dot_max + 100)
     height = int(np.ceil(((dot_max + 1) + 4) * len(yticks) + dotplot_df['xlabel'].str.len().max()) + 50)
-    fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=100)
+    fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=dpi)
     gs = gridspec.GridSpec(3, 11, figure = fig)
 
     # note we take the max label string length as an approximation of width of labels in pixels
@@ -886,6 +894,7 @@ def dotplot(
 
     return fig if not show else None
 
+
 def dendrogram(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     groupby: str,
@@ -897,10 +906,11 @@ def dendrogram(
     linkage: str = 'complete',
     compute_full_tree: Union[str, bool] = 'auto',
     distance_threshold: Optional[float] = 0,
-    figsize: Tuple[float, float] = (6, 6),
+    panel_size: Tuple[float, float] = (6, 6),
     orientation: str = 'top',
     color_threshold: Optional[float] = None,
     show: bool = True,
+    dpi: Optional[float] = 300.0,
     **kwargs,
 ):
     """
@@ -938,7 +948,7 @@ def dendrogram(
         By default, this option is ``auto``, which is ``True`` if and only if ``distance_threshold`` is not ``None``, or ``n_clusters`` is less than ``min(100, 0.02 * n_groups)``, where ``n_groups`` is the number of categories in ``data.obs[groupby]``.
     distance_threshold: ``float``, optional, default: ``0``
         The linkage distance threshold above which, clusters will not be merged. If not ``None``, ``n_clusters`` must be ``None`` and ``compute_full_tree`` must be ``True``.
-    figsize: ``Tuple[float, float]``, optional, default: ``(6, 6)``
+    panel_size: ``Tuple[float, float]``, optional, default: ``(6, 6)``
         The size (width, height) in inches of figure.
     orientation: ``str``, optional, default: ``top``
         The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
@@ -1003,9 +1013,151 @@ def dendrogram(
 
     linkage_matrix = np.column_stack([clusterer.children_, clusterer.distances_, counts]).astype(float)
 
-    fig, axis = plt.subplots(1, 1, figsize=figsize)
+    fig, axis = plt.subplots(panel_size=figsize, dpi=dpi)
     dendrogram(linkage_matrix, labels=mean_df.index.categories, ax=axis, **kwargs)
     plt.xticks(rotation=90, fontsize=10)
     plt.tight_layout()
+
+    return fig if not show else None
+
+
+def hvfplot(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    top_n: int = 20,
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
+):
+    """
+    Generate highly variable feature plot
+    top_n: show top_n hv features
+    """
+    robust_idx = data.var["robust"].values
+    x = data.var.loc[robust_idx, "mean"]
+    y = data.var.loc[robust_idx, "var"]
+    fitted = data.var.loc[robust_idx, "hvf_loess"]
+    hvg_index = data.var.loc[robust_idx, "highly_variable_features"]
+    hvg_rank = data.var.loc[robust_idx, "hvf_rank"]
+    gene_symbols = data.var_names[robust_idx]
+
+    from adjustText import adjust_text
+
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
+
+    ax.scatter(x[hvg_index], y[hvg_index], s=5, c='b', marker='o', linewidth=0.5, alpha=0.5, label='highly variable features')
+    ax.scatter(x[~hvg_index], y[~hvg_index], s=5, c='k', marker='o', linewidth=0.5, alpha=0.5, label = 'other features')
+    ax.legend(loc = 'upper right', fontsize = 5)
+
+    order = x.argsort().values
+    ax.plot(x[order], fitted[order], "r-", linewidth=1)
+    
+    ord_rank = hvg_rank.argsort().values
+    
+    texts = []
+    for i in range(top_n):
+        pos = ord_rank[i]
+        texts.append(ax.text(x[pos], y[pos], gene_symbols[pos], fontsize=5))
+    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
+
+    return fig if not show else None
+
+
+def qcviolin(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    plot_type: str,
+    min_genes_before_filt: Optional[int] = 100,
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    left: Optional[float] = 0.2,
+    bottom: Optional[float] = 0.15,
+    wspace: Optional[float] = 0.4,
+    hspace: Optional[float] = 0.15,
+    show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
+):
+    """
+    min_genes_before_filt: if raw data , filter raw data based on min_genes_before_filt
+    plot_type: gene, count, mito
+    """
+    pt2attr = {"gene": "n_genes", "count": "n_counts", "mito": "percent_mito"}
+    pt2ylab = {
+        "gene": "Number of expressed genes",
+        "count": "Number of UMIs",
+        "mito": "Percentage of mitochondrial UMIs",
+    }
+
+    if "df_qcplot" not in data.uns:
+        if "Channel" not in data.obs:
+            data.obs["Channel"] = pd.Categorical([""] * data.shape[0])
+
+        target_cols = np.array(["Channel", "n_genes", "n_counts", "percent_mito"])
+        target_cols = target_cols[np.isin(target_cols, data.obs.columns)]
+
+        df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
+        df_plot_before = df[target_cols].copy()
+        df_plot_before.reset_index(drop=True, inplace=True)
+        df_plot_before["status"] = "original"
+
+        df_plot_after = data.obs.loc[data.obs["passed_qc"], target_cols].copy()
+        df_plot_after.reset_index(drop=True, inplace=True)
+        df_plot_after["status"] = "filtered"
+
+        df_qcplot = pd.concat((df_plot_before, df_plot_after), axis=0)
+
+        df_qcplot["status"] = pd.Categorical(df_qcplot["status"].values, categories = ["original", "filtered"])
+        df_qcplot["Channel"] = pd.Categorical(df_qcplot["Channel"].values, categories = natsorted(df_qcplot["Channel"].astype(str).unique()))
+
+        data.uns["df_qcplot"] = df_qcplot
+
+
+    df_qcplot = data.uns["df_qcplot"]
+    if pt2attr[plot_type] not in df_qcplot:
+        logger.warning(f"Cannot find qc metric {pt2attr[plot_type]}!")
+        return None
+
+    channels = df_qcplot["Channel"].cat.categories
+    n_channels = channels.size
+    n_pannels = (n_channels - 1) // 8 + 1
+
+    nrows = ncols = None
+    nrows, ncols = _get_nrows_and_ncols(n_pannels, nrows, ncols)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
+
+    for i in range(nrows):
+        for j in range(ncols):
+            ax = axes[i, j]
+            ax.grid(False)
+            panel_no = i * ncols + j
+            if panel_no < n_pannels:
+                start = panel_no * 8
+                end = min(start + 8, n_channels)
+                idx = np.isin(df_qcplot["Channel"], channels[start:end])
+                df_plot = df_qcplot[idx]
+
+                sns.violinplot(
+                    x="Channel",
+                    y=pt2attr[plot_type],
+                    hue="status",
+                    data=df_plot,
+                    split=True,
+                    linewidth=0,
+                    cut=0,
+                    ax = ax,
+                )
+
+                is_rotate = max([len(x) for x in channels[start:end]]) > 5
+
+                for tick in ax.xaxis.get_major_ticks():
+                    tick.label.set_fontsize(5)
+                    if is_rotate:
+                        tick.label.set_rotation(45)
+                ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=5)
+
+            else:
+                ax.set_frame_on(False)
+
+            if i == nrows - 1:
+                ax.set_xlabel("Channel")
+            if j == 0:
+                ax.set_ylabel(pt2ylab[plot_type])
 
     return fig if not show else None

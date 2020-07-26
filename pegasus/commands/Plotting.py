@@ -75,6 +75,7 @@ Examples:
             "yattr": self.args["--yattr"],
             "style": self.args["--style"],
             "show": False,
+            "dpi": int(self.args["--dpi"]),
         }
 
         for key in ["nrows", "ncols", "subplot_size", "left", "bottom", "wspace", "hspace"]:
@@ -87,5 +88,5 @@ Examples:
         fig = getattr(pegasus.plotting, plot_type2keyword[self.args["<plot_type>"]])(data, **kwargs)
 
         output_file = self.args["<output_file>"]
-        fig.savefig(output_file, dpi=int(self.args["--dpi"]))
+        fig.savefig(output_file)
         logger.info(f"{output_file} is generated.")

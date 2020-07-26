@@ -42,16 +42,9 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             )
             if kwargs["hvf_flavor"] == "pegasus":
                 if kwargs["plot_hvf"] is not None:
-                    from pegasus.plotting import plot_hvf
-
-                    robust_idx = unidata.var["robust"].values
-                    plot_hvf(
-                        unidata.var.loc[robust_idx, "mean"],
-                        unidata.var.loc[robust_idx, "var"],
-                        unidata.var.loc[robust_idx, "hvf_loess"],
-                        unidata.var.loc[robust_idx, "highly_variable_features"],
-                        kwargs["plot_hvf"] + ".hvf.pdf",
-                    )
+                    from pegasus.plotting import hvfplot
+                    fig = hvfplot(unidata, show = False)
+                    fig.savefig(f"{kwargs['plot_hvf']}.hvf.pdf")
 
     # batch correction: L/S
     if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
