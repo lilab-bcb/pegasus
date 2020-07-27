@@ -126,9 +126,6 @@ Annotate clusters:
 Plotting
 --------
 
-Static Plots
-~~~~~~~~~~~~~~~~~
-
 .. autosummary::
 	:toctree: .
 
@@ -139,15 +136,9 @@ Static Plots
 	heatmap
 	dotplot
     dendrogram
-
-Interactive Plots
-~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-    :toctree: .
-
+    hvfplot
+    qcviolin
     volcano
-
 
 Miscellaneous
 -------------

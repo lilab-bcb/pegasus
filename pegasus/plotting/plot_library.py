@@ -30,7 +30,6 @@ def scatter(
     matkey: Optional[str] = None,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[str] = "right margin",
-    legend_fontsize: Optional[int] = 5,
     restrictions: Optional[List[str]] = None,
     apply_to_all: Optional[bool] = True,
     palettes: Optional[str] = None,
@@ -67,7 +66,7 @@ def scatter(
     legend_loc: ``str``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data".
     legend_fontsize: ``int``, optional, default: 5
-        Legend fontsize. 
+        Legend fontsize.
     restrictions: ``List[str]``, optional, default: None
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
@@ -113,6 +112,8 @@ def scatter(
 
     restr_obj = RestrictionParser(restrictions)
     unsel = restr_obj.get_unsatisfied(data, apply_to_all)
+
+    legend_fontsize = 5 if legend_loc == 'on data' else 10
 
     for i in range(nrows):
         for j in range(ncols):
@@ -649,7 +650,7 @@ def heatmap(
 
     if on_average:
         if not 'cmap' in kwargs.keys():
-            kwargs['cmap'] = 'viridis'
+            kwargs['cmap'] = 'Reds'
         df = df.groupby('cluster_name').mean()
         cluster_ids = df.index
     else:
@@ -1010,8 +1011,8 @@ def dendrogram(
 
     linkage_matrix = np.column_stack([clusterer.children_, clusterer.distances_, counts]).astype(float)
 
-    fig, axis = plt.subplots(panel_size=figsize, dpi=dpi)
-    dendrogram(linkage_matrix, labels=mean_df.index.categories, ax=axis, **kwargs)
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
+    dendrogram(linkage_matrix, labels=mean_df.index.categories, ax=ax, **kwargs)
     plt.xticks(rotation=90, fontsize=10)
     plt.tight_layout()
 
@@ -1045,9 +1046,9 @@ def hvfplot(
 
     order = x.argsort().values
     ax.plot(x[order], fitted[order], "r-", linewidth=1)
-    
+
     ord_rank = hvg_rank.argsort().values
-    
+
     texts = []
     for i in range(top_n):
         pos = ord_rank[i]
@@ -1149,7 +1150,7 @@ def qcviolin(
                     inner=None,
                     ax = ax,
                 )
-                
+
                 ax.set_xlabel("Channel")
                 ax.set_ylabel(pt2ylab[plot_type])
 
@@ -1165,7 +1166,7 @@ def qcviolin(
                 ax.set_frame_on(False)
                 ax.set_xticks([])
                 ax.set_yticks([])
-    
+
     return fig if not show else None
 
 
@@ -1232,7 +1233,7 @@ def volcano(
         fontsize=8,
         ncol=4,
     )
-    for handle in legend.legendHandles: # adjust legend size 
+    for handle in legend.legendHandles: # adjust legend size
         handle.set_sizes([50.0])
 
     ax.axhline(y = yconst, c = 'k', lw = 0.5, ls = '--')
@@ -1253,7 +1254,7 @@ def volcano(
         gid = idx[pos]
         texts.append(ax.text(log2fc[gid], neglog10p[gid], data.var_names[gid], fontsize=5))
 
-    from adjustText import adjust_text  
+    from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
     return fig if not show else None

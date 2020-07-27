@@ -456,7 +456,7 @@ def pca(
 
     X_pca = pca.fit_transform(X)
 
-    data.obsm["X_pca"] = X_pca
+    data.obsm["X_pca"] = np.ascontiguousarray(X_pca)
     data.uns[
         "PCs"
     ] = pca.components_.T  # cannot be varm because numbers of features are not the same

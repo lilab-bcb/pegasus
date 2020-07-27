@@ -22,7 +22,6 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='anndata')
 
 
 from pegasusio import infer_file_type, read_input, write_output
-from scplot import volcano
 from .tools import (
     qc_metrics,
     get_filter_stats,
