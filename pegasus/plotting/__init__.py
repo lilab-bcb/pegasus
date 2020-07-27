@@ -8,4 +8,5 @@ from .plot_library import (
     dendrogram,
     hvfplot,
     qcviolin,
+    volcano,
 )

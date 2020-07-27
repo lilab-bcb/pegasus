@@ -9,7 +9,6 @@ from pandas.api.types import is_numeric_dtype, is_list_like, is_categorical
 from scipy.stats import zscore
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
-from matplotlib import rcParams
 
 
 import anndata
@@ -31,7 +30,7 @@ def scatter(
     matkey: Optional[str] = None,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[str] = "right margin",
-    legend_fontsize: Optional[int] = None,
+    legend_fontsize: Optional[int] = 5,
     restrictions: Optional[List[str]] = None,
     apply_to_all: Optional[bool] = True,
     palettes: Optional[str] = None,
@@ -67,8 +66,8 @@ def scatter(
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data".
-    legend_fontsize: ``int``, optional, default: None
-        Legend fontsize. If None, use matplotlib.rcParams["legend.fontsize"].
+    legend_fontsize: ``int``, optional, default: 5
+        Legend fontsize. 
     restrictions: ``List[str]``, optional, default: None
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
@@ -111,11 +110,6 @@ def scatter(
     marker_size = _get_marker_size(x.size)
     nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
-
-    if legend_loc is None:
-        legend_loc = rcParams["legend.loc"]
-    if legend_fontsize is None:
-        legend_fontsize = rcParams["legend.fontsize"]
 
     restr_obj = RestrictionParser(restrictions)
     unsel = restr_obj.get_unsatisfied(data, apply_to_all)
@@ -200,8 +194,11 @@ def scatter(
                         for handle in legend.legendHandles:
                             handle.set_sizes([300.0])
                     elif legend_loc == "on data":
+                        texts = []
                         for px, py, txt in text_list:
-                            ax.text(px, py, txt, fontsize=legend_fontsize, horizontalalignment="center", verticalalignment="center")
+                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, ha = "center", va = "center"))
+                        # from adjustText import adjust_text
+                        # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
                 ax.set_title(attr)
             else:
@@ -1040,8 +1037,6 @@ def hvfplot(
     hvg_rank = data.var.loc[robust_idx, "hvf_rank"]
     gene_symbols = data.var_names[robust_idx]
 
-    from adjustText import adjust_text
-
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
 
     ax.scatter(x[hvg_index], y[hvg_index], s=5, c='b', marker='o', linewidth=0.5, alpha=0.5, label='highly variable features')
@@ -1057,6 +1052,8 @@ def hvfplot(
     for i in range(top_n):
         pos = ord_rank[i]
         texts.append(ax.text(x[pos], y[pos], gene_symbols[pos], fontsize=5))
+
+    from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
     return fig if not show else None
@@ -1169,4 +1166,94 @@ def qcviolin(
                 ax.set_xticks([])
                 ax.set_yticks([])
     
+    return fig if not show else None
+
+
+def volcano(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    cluster_id: str,
+    de_test: str = 't',
+    qval_threshold: float = 0.05,
+    log2fc_threshold: float = 1.0,
+    top_n: int = 20,
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
+):
+    """
+    Volcano plot
+    de_test: statistic test to search for
+    top_n: mark top 20 up-regulated and down-regulated genes
+    """
+    if "de_res" not in data.varm:
+        logger.warning("Please conduct DE analysis first!")
+        return None
+
+    de_res = data.varm["de_res"]
+
+    fcstr = f"fold_change:{cluster_id}"
+    pstr = f"{de_test}_pval:{cluster_id}"
+    qstr = f"{de_test}_qval:{cluster_id}"
+
+    columns = de_res.dtype.names
+    if (fcstr not in columns) or (pstr not in columns) or (qstr not in columns):
+        logger.warning(f"Please conduct DE test {de_test} first!")
+        return None
+
+    log2fc = np.log2(de_res[fcstr])
+    pvals = de_res[pstr]
+    pvals[pvals == 0.0] = 1e-45 # very small pvalue to avoid log10 0
+    neglog10p = -np.log10(pvals)
+    yconst = min(neglog10p[de_res[qstr] <= qval_threshold])
+
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
+
+    idxsig = neglog10p >= yconst
+    idxnsig = neglog10p < yconst
+    idxfc = (log2fc <= -log2fc_threshold) | (log2fc >= log2fc_threshold)
+    idxnfc = ~idxfc
+
+    idx = idxnsig & idxnfc
+    ax.scatter(log2fc[idx], neglog10p[idx], s=5, c='k', marker='o', linewidths=0.5, alpha=0.5, label="NS")
+    idx = idxnsig & idxfc
+    ax.scatter(log2fc[idx], neglog10p[idx], s=5, c='g', marker='o', linewidths=0.5, alpha=0.5, label=r"Log$_2$ FC")
+    idx = idxsig & idxnfc
+    ax.scatter(log2fc[idx], neglog10p[idx], s=5, c='b', marker='o', linewidths=0.5, alpha=0.5, label=r"q-value")
+    idx = idxsig & idxfc
+    ax.scatter(log2fc[idx], neglog10p[idx], s=5, c='r', marker='o', linewidths=0.5, alpha=0.5, label=r"q-value and log$_2$ FC")
+
+    ax.set_xlabel(r"Log$_2$ fold change")
+    ax.set_ylabel(r"$-$Log$_{10}$ $P$")
+
+    legend = ax.legend(
+        loc="center",
+        bbox_to_anchor=(0.5, 1.1),
+        frameon=False,
+        fontsize=8,
+        ncol=4,
+    )
+    for handle in legend.legendHandles: # adjust legend size 
+        handle.set_sizes([50.0])
+
+    ax.axhline(y = yconst, c = 'k', lw = 0.5, ls = '--')
+    ax.axvline(x = -log2fc_threshold, c = 'k', lw = 0.5, ls = '--')
+    ax.axvline(x = log2fc_threshold, c = 'k', lw = 0.5, ls = '--')
+
+    texts = []
+
+    idx = np.where(idxsig & (log2fc >= log2fc_threshold))[0]
+    posvec = np.argsort(log2fc[idx])[::-1][0:top_n]
+    for pos in posvec:
+        gid = idx[pos]
+        texts.append(ax.text(log2fc[gid], neglog10p[gid], data.var_names[gid], fontsize=5))
+
+    idx = np.where(idxsig & (log2fc <= -log2fc_threshold))[0]
+    posvec = np.argsort(log2fc[idx])[0:top_n]
+    for pos in posvec:
+        gid = idx[pos]
+        texts.append(ax.text(log2fc[gid], neglog10p[gid], data.var_names[gid], fontsize=5))
+
+    from adjustText import adjust_text  
+    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
+
     return fig if not show else None
