@@ -72,6 +72,9 @@ from .plotting import (
     heatmap,
     dotplot,
     dendrogram,
+    hvfplot,
+    qcviolin,
+    volcano,
 )
 
 from importlib_metadata import version, PackageNotFoundError

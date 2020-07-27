@@ -212,71 +212,24 @@ def _generate_filter_plots(
 ) -> None:
     """ This function generates filtration plots, only used in command line.
     """
-    if isinstance(data, MultimodalData):
-        data = data.current_data()
+    group_key = data.current_data().get_uid()
 
-    if "Channel" not in data.obs:
-        data.obs["Channel"] = pd.Categorical([""] * data.shape[0])
+    from pegasus.plotting import qcviolin
 
-    target_cols = np.array(["Channel", "n_genes", "n_counts", "percent_mito"])
-    target_cols = target_cols[np.isin(target_cols, data.obs.columns)]
-
-    df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
-    df_plot_before = df[target_cols].copy()
-    df_plot_before.reset_index(drop=True, inplace=True)
-    df_plot_before["status"] = "original"
-
-    df_plot_after = data.obs.loc[data.obs["passed_qc"], target_cols].copy()
-    df_plot_after.reset_index(drop=True, inplace=True)
-    df_plot_after["status"] = "filtered"
-
-    df_plot = pd.concat((df_plot_before, df_plot_after), axis=0)
-
-    from pegasus.plotting import plot_qc_violin
-
-    figsize = None
+    kwargs = {"show": False, "dpi": 500}
     if plot_filt_figsize is not None:
         width, height = plot_filt_figsize.split(",")
-        figsize = (int(width), int(height))
+        kwargs["panel_size"] = (int(width), int(height))
 
-    group_key = data.get_uid()
+    fig = qcviolin(data, "count", **kwargs)
+    fig.savefig(f"{plot_filt}.{group_key}.filt.UMI.pdf")
 
-    plot_qc_violin(
-        df_plot,
-        "count",
-        f"{plot_filt}.{group_key}.filt.UMI.pdf",
-        xattr="Channel",
-        hue="status",
-        xlabel="Channel",
-        split=True,
-        linewidth=0,
-        figsize=figsize,
-    )
+    fig = qcviolin(data, "gene", **kwargs)
+    fig.savefig(f"{plot_filt}.{group_key}.filt.gene.pdf")
 
-    plot_qc_violin(
-        df_plot,
-        "gene",
-        f"{plot_filt}.{group_key}.filt.gene.pdf",
-        xattr="Channel",
-        hue="status",
-        xlabel="Channel",
-        split=True,
-        linewidth=0,
-        figsize=figsize,
-    )
-
-    if "percent_mito" in df_plot.columns:
-        plot_qc_violin(
-            df_plot,
-            "mito",
-            f"{plot_filt}.{group_key}.filt.mito.pdf",
-            xattr="Channel",
-            hue="status",
-            xlabel="Channel",
-            split=True,
-            linewidth=0,
-            figsize=figsize,
-        )
+    fig = qcviolin(data, "mito", **kwargs)
+    if fig is not None:
+        fig.savefig(f"{plot_filt}.{group_key}.filt.mito.pdf")
 
     logger.info("Filtration plots are generated.")
 

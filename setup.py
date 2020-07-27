@@ -7,6 +7,7 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 requires = [
+    "adjustText",
     "anndata>=0.7.1",
     "Cython",
     "docopt",
