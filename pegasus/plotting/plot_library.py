@@ -1066,16 +1066,18 @@ def qcviolin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     plot_type: str,
     min_genes_before_filt: Optional[int] = 100,
+    n_violin_per_panel: Optional[int] = 8,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     left: Optional[float] = 0.2,
     bottom: Optional[float] = 0.15,
-    wspace: Optional[float] = 0.4,
-    hspace: Optional[float] = 0.15,
+    wspace: Optional[float] = 0.3,
+    hspace: Optional[float] = 0.35,
     show: Optional[bool] = True,
     dpi: Optional[float] = 300.0,
 ):
     """
     min_genes_before_filt: if raw data , filter raw data based on min_genes_before_filt
+    n_violin_per_panel: number of violins in one panel.
     plot_type: gene, count, mito
     """
     pt2attr = {"gene": "n_genes", "count": "n_counts", "mito": "percent_mito"}
@@ -1110,17 +1112,18 @@ def qcviolin(
 
 
     df_qcplot = data.uns["df_qcplot"]
+
     if pt2attr[plot_type] not in df_qcplot:
         logger.warning(f"Cannot find qc metric {pt2attr[plot_type]}!")
         return None
 
     channels = df_qcplot["Channel"].cat.categories
     n_channels = channels.size
-    n_pannels = (n_channels - 1) // 8 + 1
+    n_pannels = (n_channels - 1) // n_violin_per_panel + 1
 
     nrows = ncols = None
     nrows, ncols = _get_nrows_and_ncols(n_pannels, nrows, ncols)
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, sharex = False, sharey = False, squeeze=False)
 
     for i in range(nrows):
         for j in range(ncols):
@@ -1128,10 +1131,15 @@ def qcviolin(
             ax.grid(False)
             panel_no = i * ncols + j
             if panel_no < n_pannels:
-                start = panel_no * 8
-                end = min(start + 8, n_channels)
+                start = panel_no * n_violin_per_panel
+                end = min(start + n_violin_per_panel, n_channels)
                 idx = np.isin(df_qcplot["Channel"], channels[start:end])
-                df_plot = df_qcplot[idx]
+
+                if start == 0 and end == n_channels:
+                    df_plot = df_qcplot
+                else:
+                    df_plot = df_qcplot[idx].copy()
+                    df_plot["Channel"] = pd.Categorical(df_plot["Channel"].values, categories = natsorted(channels[start:end]))
 
                 sns.violinplot(
                     x="Channel",
@@ -1139,25 +1147,26 @@ def qcviolin(
                     hue="status",
                     data=df_plot,
                     split=True,
-                    linewidth=0,
+                    linewidth=0.5,
                     cut=0,
+                    inner=None,
                     ax = ax,
                 )
+                
+                ax.set_xlabel("Channel")
+                ax.set_ylabel(pt2ylab[plot_type])
 
                 is_rotate = max([len(x) for x in channels[start:end]]) > 5
 
                 for tick in ax.xaxis.get_major_ticks():
-                    tick.label.set_fontsize(5)
+                    tick.label.set_fontsize(8)
                     if is_rotate:
-                        tick.label.set_rotation(45)
-                ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=5)
+                        tick.label.set_rotation(-45)
+                ax.legend(loc="upper right", fontsize=8)
 
             else:
                 ax.set_frame_on(False)
-
-            if i == nrows - 1:
-                ax.set_xlabel("Channel")
-            if j == 0:
-                ax.set_ylabel(pt2ylab[plot_type])
-
+                ax.set_xticks([])
+                ax.set_yticks([])
+    
     return fig if not show else None

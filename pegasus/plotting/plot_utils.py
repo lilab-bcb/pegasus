@@ -37,8 +37,8 @@ def _get_dot_size(size_arr, size_min, size_max, dot_min, dot_max):
 
 def _get_nrows_and_ncols(num_figs: int, nrows: int, ncols: int) -> Tuple[int, int]:
     if nrows is None and ncols is None:
-        nrows = int(np.sqrt(num_figs))
-        ncols = (num_figs // nrows) + (num_figs % nrows > 0)
+        ncols = int(np.sqrt(num_figs - 1)) + 1
+        nrows = (num_figs // ncols) + (num_figs % ncols > 0)
     elif nrows is None:
         nrows = (num_figs // ncols) + (num_figs % ncols > 0)
     elif ncols is None:
