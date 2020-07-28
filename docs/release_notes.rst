@@ -1,3 +1,9 @@
+Version 1.0.0rc2 `July 27, 2020`
+--------------------------------
+
+* Use ``zarr`` file format by default.
+* Provide static plots.
+
 Version 0.17.1 `April 6, 2020`
 --------------------------------
 
