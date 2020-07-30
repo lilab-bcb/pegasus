@@ -717,6 +717,7 @@ def dotplot(
     fraction_max: float = None,
     dot_min: int = 0,
     dot_max: int = 20,
+    switch_axes: bool = False,
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
@@ -746,6 +747,8 @@ def dotplot(
         Minimum size in pixels for dots.
     dot_max: ``int``, optional, default: ``20``.
         Maximum size in pixels for dots.
+    switch_axes: ``bool``, optional, default: ``False``.
+        If ``True``, switch X and Y axes.
     cmap: ``str`` or ``List[str]`` or ``Tuple[str]``, optional, default: ``Reds``
         Color map.
     sort_function: ``Callable[[pd.DataFrame], List[str]]``, optional, default: ``None``
@@ -813,13 +816,20 @@ def dotplot(
         fraction_max = fraction.max()
     pixels = _get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
     summary_values = mean_df.values.flatten()
+
     xlabel = [genes[i] for i in range(len(genes))]
     ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
-    dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
-            xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
 
     xticks = genes
     yticks = summarized_df.index.map(str).values
+
+    if switch_axes:
+        x, y = y, x
+        xlabel, ylabel = ylabel, xlabel
+        xticks, yticks = yticks, xticks
+
+    dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
+                    xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
 
     import matplotlib.gridspec as gridspec
 
@@ -846,7 +856,7 @@ def dotplot(
     ax.set_ylim(-1, len(yticks))
     ax.set_xticks(range(len(xticks)))
     ax.set_xticklabels(xticks)
-    ax.set_yticks(range(len(summarized_df.index)))
+    ax.set_yticks(range(len(yticks)))
     ax.set_yticklabels(yticks)
     plt.xticks(rotation=90)
 
