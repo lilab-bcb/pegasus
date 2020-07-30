@@ -208,11 +208,11 @@ def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> 
 
 
 def _generate_filter_plots(
-    data: MultimodalData, plot_filt: str, plot_filt_figsize: str = None, min_genes_before_filt: int = 100
+    unidata: UnimodalData, plot_filt: str, plot_filt_figsize: str = None, min_genes_before_filt: int = 100
 ) -> None:
     """ This function generates filtration plots, only used in command line.
     """
-    group_key = data.current_data().get_uid()
+    group_key = unidata.get_uid()
 
     from pegasus.plotting import qcviolin
 
@@ -221,13 +221,13 @@ def _generate_filter_plots(
         width, height = plot_filt_figsize.split(",")
         kwargs["panel_size"] = (int(width), int(height))
 
-    fig = qcviolin(data, "count", **kwargs)
+    fig = qcviolin(unidata, "count", **kwargs)
     fig.savefig(f"{plot_filt}.{group_key}.filt.UMI.pdf")
 
-    fig = qcviolin(data, "gene", **kwargs)
+    fig = qcviolin(unidata, "gene", **kwargs)
     fig.savefig(f"{plot_filt}.{group_key}.filt.gene.pdf")
 
-    fig = qcviolin(data, "mito", **kwargs)
+    fig = qcviolin(unidata, "mito", **kwargs)
     if fig is not None:
         fig.savefig(f"{plot_filt}.{group_key}.filt.mito.pdf")
 

@@ -28,7 +28,6 @@ requires = [
     "numpy",
     "pandas>=0.24",
     "pegasusio",
-    "plotly",
     "pyarrow",
     "pybind11",
     "python-igraph",
