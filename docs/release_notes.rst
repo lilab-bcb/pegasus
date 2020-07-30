@@ -2,7 +2,16 @@ Version 1.0.0rc2 `July 27, 2020`
 --------------------------------
 
 * Use ``zarr`` file format by default.
+* Use *PegasusIO* for I/O and count matrices aggregation.
+* Seperate hashing data demultiplexing part as *demuxEM* package.
 * Provide static plots.
+
+Version 0.17.2 `June 26, 2020`
+--------------------------------
+
+* Make Pegasus compatible with *umap-learn* v0.4+.
+* Use *louvain* 0.7+ for Louvain clustering.
+* Update tutorial.
 
 Version 0.17.1 `April 6, 2020`
 --------------------------------

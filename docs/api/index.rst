@@ -19,7 +19,6 @@ Read and Write
 
 	read_input
 	write_output
-	aggregate_matrices
 
 Preprocess
 ~~~~~~~~~~
@@ -46,6 +45,7 @@ Batch Correction
 	set_group_attribute
 	correct_batch
 	run_harmony
+    run_scanorama
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~

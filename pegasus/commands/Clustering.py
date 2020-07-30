@@ -81,12 +81,12 @@ Options:
 
   --louvain                                        Run louvain clustering algorithm.
   --louvain-resolution <resolution>                Resolution parameter for the louvain clustering algorithm. [default: 1.3]
-  --louvain-class-label <label>                    Louvain cluster label name in AnnData. [default: louvain_labels]
+  --louvain-class-label <label>                    Louvain cluster label name in result. [default: louvain_labels]
 
   --leiden                                         Run leiden clustering algorithm.
   --leiden-resolution <resolution>                 Resolution parameter for the leiden clustering algorithm. [default: 1.3]
   --leiden-niter <niter>                           Number of iterations of running the Leiden algorithm. If <niter> is negative, run Leiden iteratively until no improvement. [default: -1]
-  --leiden-class-label <label>                     Leiden cluster label name in AnnData. [default: leiden_labels]
+  --leiden-class-label <label>                     Leiden cluster label name in result. [default: leiden_labels]
 
   --spectral-louvain                               Run spectral-louvain clustering algorithm.
   --spectral-louvain-basis <basis>                 Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. If 'diffmap' is not calculated, use 'pca' instead. [default: diffmap]
@@ -94,7 +94,7 @@ Options:
   --spectral-louvain-nclusters2 <number>           Number of second level clusters for Kmeans. [default: 50]
   --spectral-louvain-ninit <number>                Number of Kmeans tries for first level clustering. Default is the same as scikit-learn Kmeans function. [default: 10]
   --spectral-louvain-resolution <resolution>       Resolution parameter for louvain. [default: 1.3]
-  --spectral-louvain-class-label <label>           Spectral-louvain label name in AnnData. [default: spectral_louvain_labels]
+  --spectral-louvain-class-label <label>           Spectral-louvain label name in result. [default: spectral_louvain_labels]
 
   --spectral-leiden                                Run spectral-leiden clustering algorithm.
   --spectral-leiden-basis <basis>                  Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. If 'diffmap' is not calculated, use 'pca' instead. [default: diffmap]
@@ -102,7 +102,7 @@ Options:
   --spectral-leiden-nclusters2 <number>            Number of second level clusters for Kmeans. [default: 50]
   --spectral-leiden-ninit <number>                 Number of Kmeans tries for first level clustering. Default is the same as scikit-learn Kmeans function. [default: 10]
   --spectral-leiden-resolution <resolution>        Resolution parameter for leiden. [default: 1.3]
-  --spectral-leiden-class-label <label>            Spectral-leiden label name in AnnData. [default: spectral_leiden_labels]
+  --spectral-leiden-class-label <label>            Spectral-leiden label name in result. [default: spectral_leiden_labels]
 
   --tsne                                           Run multi-core t-SNE for visualization.
   --fitsne                                         Run FIt-SNE for visualization.
@@ -153,6 +153,7 @@ Outputs:
 
 Examples:
   pegasus cluster -p 20 --correct-batch-effect --louvain --tsne manton_bm_10x.h5 manton_bm
+  pegasus cluster -p 20 --leiden --umap --net-fle example.zarr.zip example_out
     """
 
     def execute(self):
