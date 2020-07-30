@@ -804,7 +804,7 @@ def dotplot(
         else:
             frac_columns.append(summarized_df.columns[j])
 
-    # Features on rows, by on rows
+    # Genes on columns, groupby on rows
     fraction_df = summarized_df[frac_columns]
     mean_df = summarized_df[mean_columns]
 
@@ -838,7 +838,6 @@ def dotplot(
     fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=dpi)
     gs = gridspec.GridSpec(3, 11, figure = fig)
 
-    # note we take the max label string length as an approximation of width of labels in pixels
     ax = fig.add_subplot(gs[:, :-1])
 
     sc = ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
@@ -850,8 +849,13 @@ def dotplot(
     if not grid:
         ax.grid(False)
 
-    ax.set_ylabel(str(groupby))
-    ax.set_xlabel('')
+    if not switch_axes:
+        ax.set_ylabel(str(groupby))
+        ax.set_xlabel('')
+    else:
+        ax.set_ylabel('')
+        ax.set_xlabel(str(groupby))
+
     ax.set_xlim(-1, len(xticks))
     ax.set_ylim(-1, len(yticks))
     ax.set_xticks(range(len(xticks)))
@@ -874,7 +878,7 @@ def dotplot(
     size_ticks = np.arange(fraction_min if fraction_min > 0 or fraction_min > 0 else fraction_min + size_legend_step,
         fraction_max + size_legend_step, size_legend_step)
 
-    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0, -1])
+    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0:3, -1])
     size_legend = fig.add_subplot(ax2[0])
     size_tick_pixels = _get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
 
