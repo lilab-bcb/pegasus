@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasus.tools import X_from_rep
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
+from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, _plot_cluster_labels_in_heatmap, RestrictionParser
 
 
 def scatter(
@@ -596,10 +596,11 @@ def heatmap(
     groupby: str,
     matkey: Optional[str] = None,
     on_average: bool = True,
-    row_cluster: bool = False,
-    col_cluster: bool = True,
+    switch_axes: bool = False,
+    row_cluster: Optional[bool] = None,
+    col_cluster: Optional[bool] = None,
+    figsize: Tuple[float, float] = (10, 10),
     show: bool = True,
-    dpi: Optional[float] = 300.0,
     **kwargs,
 ):
     """
@@ -618,10 +619,13 @@ def heatmap(
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     on_average: ``bool``, optional, default: ``True``
         If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
+    switch_axes: ``bool``, optional, default: ``False``
+        By default, X axis is for genes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
+        Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
     row_cluster: ``bool``, optional, default: ``False``
     col_cluster: ``bool``, optional, default: ``True``
-    cmap: ``str``, optional, default: ``Reds``
-        Color map for plotting. See `colormap documentation`_ for a detailed list.
+    figsize: ``Tuple[float, float]``, optional, default: ``(10, 10)``
+        Overall size of the figure in ``(width, height)`` form.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
     kwargs
@@ -645,6 +649,12 @@ def heatmap(
         assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
+    if row_cluster is None:
+        row_cluster = True if switch_axes else False
+
+    if col_cluster is None:
+        col_cluster = True if not switch_axes else False
+
     df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
     df['cluster_name'] = data.obs[groupby]
 
@@ -654,29 +664,48 @@ def heatmap(
         df = df.groupby('cluster_name').mean()
         cluster_ids = df.index
     else:
+        row_cluster = False if not switch_axes else row_cluster
+        col_cluster = False if switch_axes else col_cluster
+
         cluster_ids = pd.Categorical(data.obs[groupby])
         idx = cluster_ids.argsort()
         df = df.iloc[idx, :]  # organize df by category order
         df.drop(columns=['cluster_name'], inplace=True)
 
-    if not on_average:
-        row_colors = np.zeros(df.shape[0], dtype=object)
+        cell_colors = np.zeros(df.shape[0], dtype=object)
         palettes = _get_palettes(cluster_ids.categories.size)
         cluster_ids = cluster_ids[idx]
         for k, cat in enumerate(cluster_ids.categories):
-            row_colors[np.isin(cluster_ids, cat)] = palettes[k]
+            cell_colors[np.isin(cluster_ids, cat)] = palettes[k]
 
-    cg = sns.clustermap(
-        data=df,
-        row_colors=row_colors if not on_average else None,
-        row_cluster=row_cluster,
-        col_cluster=col_cluster,
-        linewidths=0,
-        yticklabels=cluster_ids if on_average else [],
-        xticklabels=genes,
-        **kwargs,
-    )
-    cg.ax_heatmap.set_ylabel("")
+    if not switch_axes:
+        cg = sns.clustermap(
+            data=df,
+            row_colors=cell_colors if not on_average else None,
+            col_colors=None,
+            row_cluster=row_cluster,
+            col_cluster=col_cluster,
+            linewidths=0,
+            yticklabels=cluster_ids if on_average else [],
+            xticklabels=genes,
+            figsize=figsize,
+            **kwargs,
+        )
+        cg.ax_heatmap.set_ylabel("")
+    else:
+        cg = sns.clustermap(
+            data=df.T,
+            row_colors=None,
+            col_colors=cell_colors if not on_average else None,
+            row_cluster=row_cluster,
+            col_cluster=col_cluster,
+            linewidths=0,
+            yticklabels=genes,
+            xticklabels=cluster_ids if on_average else [],
+            figsize=figsize,
+            **kwargs,
+        )
+        cg.ax_heatmap.set_xlabel("")
 
     if row_cluster:
         cg.ax_heatmap.yaxis.tick_right()
@@ -685,21 +714,27 @@ def heatmap(
 
     cg.ax_row_dendrogram.set_visible(row_cluster)
     cg.cax.tick_params(labelsize=10)
-    # move the colorbar if needed
-    if not (row_cluster and on_average):
+
+    if not row_cluster:
+        # Move the colorbar to the right-side.
         color_box = cg.ax_heatmap.get_position()
         color_box.x0 = color_box.x1 + 0.04
         color_box.x1 = color_box.x0 + 0.02
         cg.cax.set_position(color_box)
         cg.cax.yaxis.set_ticks_position("right")
-    # draw a legend for the cluster groups
-    #cg.ax_col_dendrogram.clear()
-    #for k, cat in enumerate(cluster_ids.categories):
-    #    cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
-    #cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
-    #cg.ax_col_dendrogram.grid(False)
-    #cg.ax_col_dendrogram.set_xticks([])
-    #cg.ax_col_dendrogram.set_yticks([])
+    else:
+        # Avoid overlap of colorbar and row dendrogram.
+        color_box = cg.cax.get_position()
+        square_plot = cg.ax_heatmap.get_position()
+        if square_plot.y1 > color_box.y0:
+            y_diff = square_plot.y1 - color_box.y0
+            color_box.y0 = square_plot.y1
+            color_box.y1 += y_diff
+            cg.cax.set_position(color_box)
+
+    if not on_average:
+        orientation = 'left' if not switch_axes else 'top'
+        _plot_cluster_labels_in_heatmap(cg.ax_heatmap, cluster_ids, orientation)
 
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
@@ -804,7 +839,7 @@ def dotplot(
         else:
             frac_columns.append(summarized_df.columns[j])
 
-    # Features on rows, by on rows
+    # Genes on columns, groupby on rows
     fraction_df = summarized_df[frac_columns]
     mean_df = summarized_df[mean_columns]
 
@@ -838,7 +873,6 @@ def dotplot(
     fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=dpi)
     gs = gridspec.GridSpec(3, 11, figure = fig)
 
-    # note we take the max label string length as an approximation of width of labels in pixels
     ax = fig.add_subplot(gs[:, :-1])
 
     sc = ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
@@ -850,8 +884,13 @@ def dotplot(
     if not grid:
         ax.grid(False)
 
-    ax.set_ylabel(str(groupby))
-    ax.set_xlabel('')
+    if not switch_axes:
+        ax.set_ylabel(str(groupby))
+        ax.set_xlabel('')
+    else:
+        ax.set_ylabel('')
+        ax.set_xlabel(str(groupby))
+
     ax.set_xlim(-1, len(xticks))
     ax.set_ylim(-1, len(yticks))
     ax.set_xticks(range(len(xticks)))
@@ -874,7 +913,7 @@ def dotplot(
     size_ticks = np.arange(fraction_min if fraction_min > 0 or fraction_min > 0 else fraction_min + size_legend_step,
         fraction_max + size_legend_step, size_legend_step)
 
-    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0, -1])
+    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0:3, -1])
     size_legend = fig.add_subplot(ax2[0])
     size_tick_pixels = _get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
 
