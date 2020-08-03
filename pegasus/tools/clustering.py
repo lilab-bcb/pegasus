@@ -177,14 +177,19 @@ def partition_cells_by_kmeans(
     n_init: int,
     random_state: int,
 ) -> List[int]:
-    n_jobs = effective_n_jobs(n_jobs)
 
     rep_key = "X_" + rep
     X = data.obsm[rep_key].astype("float64")
 
-    km = KMeans(
-        n_clusters=n_clusters, n_jobs=n_jobs, n_init=n_init, random_state=random_state
-    )
+    kmeans_params = {
+        'n_clusters': n_clusters,
+        'n_init': n_init,
+        'random_state': random_state,
+    }
+    if n_jobs != -1:
+        kmeans_params['n_jobs'] = effective_n_jobs(n_jobs)
+
+    km = KMeans(**kmeans_params)
     km.fit(X)
     coarse = km.labels_.copy()
 
