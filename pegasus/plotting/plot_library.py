@@ -73,15 +73,9 @@ def scatter(
 
     Returns
     -------
-    ``None``
-
-    Update ``data.obs``:
-
-        * ``n_genes``: Total number of genes for each cell.
-        * ``n_counts``: Total number of counts for each cell.
-        * ``percent_mito``: Percent of mitochondrial genes for each cell.
-        * ``passed_qc``: Boolean type indicating if a cell passes the QC process based on the QC metrics.
-        * ``demux_type``: this column might be deleted if select_singlets is on.
+    
+    `Figure` object
+        A `matplotlib.figure.Figure` object containing the composition plot if show == False
 
     Examples
     --------
@@ -415,6 +409,10 @@ def compo_plot(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
 
     Returns
     -------
@@ -522,6 +520,8 @@ def violin(
         Y-axis label. No label to show if ``None``.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     others
         Are passed to ``seaborn.violinplot``.
 
@@ -792,6 +792,8 @@ def dotplot(
         If ``True``, plot grids.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     **kwds:
         Are passed to ``matplotlib.pyplot.scatter``.
 
@@ -1003,6 +1005,8 @@ def dendrogram(
         Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     **kwargs:
         Are passed to ``scipy.cluster.hierarchy.dendrogram``.
 
@@ -1076,8 +1080,33 @@ def hvfplot(
     dpi: Optional[float] = 300.0,
 ):
     """
-    Generate highly variable feature plot
-    top_n: show top_n hv features
+    Generate highly variable feature plot.
+    Only works for HVGs returned by ``highly_variable_features`` method with ``flavor=='pegasus'``.
+
+    Parameters
+    -----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    top_n: ``int``, optional, default: ``20``
+        Number of top highly variable features to show names.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
+        The size (width, height) in inches of figure.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    --------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    ---------
+    >>> pg.hvfplot(data)
+    >>> pg.hvfplot(data, top_n=10, dpi=150)
     """
     robust_idx = data.var["robust"].values
     x = data.var.loc[robust_idx, "mean"]
@@ -1092,6 +1121,8 @@ def hvfplot(
     ax.scatter(x[hvg_index], y[hvg_index], s=5, c='b', marker='o', linewidth=0.5, alpha=0.5, label='highly variable features')
     ax.scatter(x[~hvg_index], y[~hvg_index], s=5, c='k', marker='o', linewidth=0.5, alpha=0.5, label = 'other features')
     ax.legend(loc = 'upper right', fontsize = 5)
+    ax.set_xlabel("Mean log expression")
+    ax.set_ylabel("Variance of log expression")
 
     order = x.argsort().values
     ax.plot(x[order], fitted[order], "r-", linewidth=1)
