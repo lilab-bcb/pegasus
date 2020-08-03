@@ -177,7 +177,6 @@ def partition_cells_by_kmeans(
     n_init: int,
     random_state: int,
 ) -> List[int]:
-    n_jobs = effective_n_jobs(n_jobs)
 
     rep_key = "X_" + rep
     X = data.obsm[rep_key].astype("float64")
@@ -188,7 +187,7 @@ def partition_cells_by_kmeans(
         'random_state': random_state,
     }
     if n_jobs != -1:
-        kmeans_params['n_jobs'] = n_jobs
+        kmeans_params['n_jobs'] = effective_n_jobs(n_jobs)
 
     km = KMeans(**kmeans_params)
     km.fit(X)
