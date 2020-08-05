@@ -73,7 +73,7 @@ def scatter(
 
     Returns
     -------
-    
+
     `Figure` object
         A `matplotlib.figure.Figure` object containing the composition plot if show == False
 
@@ -875,7 +875,9 @@ def dotplot(
     fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=dpi)
     gs = gridspec.GridSpec(3, 11, figure = fig)
 
-    ax = fig.add_subplot(gs[:, :-1])
+    # Main plot
+    mainplot_col_grid = -2 if len(xlabel) < 10 else -1
+    ax = fig.add_subplot(gs[:, :mainplot_col_grid])
 
     sc = ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
 
@@ -915,7 +917,8 @@ def dotplot(
     size_ticks = np.arange(fraction_min if fraction_min > 0 or fraction_min > 0 else fraction_min + size_legend_step,
         fraction_max + size_legend_step, size_legend_step)
 
-    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0:3, -1])
+    legend_row_grid = 1 if height / 3 > 100 else 3
+    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0:legend_row_grid, -1])
     size_legend = fig.add_subplot(ax2[0])
     size_tick_pixels = _get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
 
