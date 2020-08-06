@@ -942,7 +942,7 @@ def dotplot(
     size_legend.grid(False)
 
     # Reset global settings.
-    sns.set(font_scale=1.0, style='white')
+    sns.reset_orig()
 
     return fig if not show else None
 
