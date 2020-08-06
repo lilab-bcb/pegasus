@@ -197,7 +197,7 @@ def scatter(
                     elif legend_loc == "on data":
                         texts = []
                         for px, py, txt in text_list:
-                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, ha = "center", va = "center"))
+                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, fontweight = "bold", ha = "center", va = "center"))
                         # from adjustText import adjust_text
                         # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
@@ -225,11 +225,11 @@ def scatter_groups(
     basis: Optional[str] = "umap",
     matkey: Optional[str] = None,
     alpha: Optional[float] = 1.0,
-    legend_fontsize: Optional[int] = None,
+    legend_loc: Optional[str] = "right margin",
+    legend_ncol: Optional[str] = None,
     show_full: Optional[bool] = True,
     categories: Optional[List[str]] = None,
     palettes: Optional[List[str]] = None,
-    legend_ncol: Optional[str] = None,
     cmap: Optional[str] = "YlOrRd",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
@@ -281,9 +281,7 @@ def scatter_groups(
     nrows, ncols = _get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
-    if legend_fontsize is None:
-        legend_fontsize = rcParams["legend.fontsize"]
-
+    legend_fontsize = 5 if legend_loc == 'on data' else 10
 
     if attr in data.obs:
         values = data.obs[attr].values
@@ -311,29 +309,38 @@ def scatter_groups(
             gid = i * ncols + j
             if gid < df_g.shape[1]:
                 if is_cat:
+                    text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = np.logical_and(df_g.iloc[:, gid].values, labels == cat)
+                        kwargs = {"marker": ".", "alpha": alpha, "edgecolors": "none", "rasterized": True}
+
+                        if legend_loc != "on data":
+                            kwargs["label"] = str(cat)
+                        else:
+                            text_list.append((np.median(x[idx]), np.median(y[idx]), str(cat)))
+
                         ax.scatter(
                             x[idx],
                             y[idx],
                             c=palettes[k],
                             s=marker_size,
-                            marker=".",
-                            alpha=alpha,
-                            edgecolors="none",
-                            label=str(cat),
-                            rasterized=True,
+                            **kwargs,
                         )
 
-                    legend = ax.legend(
-                        loc="center left",
-                        bbox_to_anchor=(1, 0.5),
-                        frameon=False,
-                        fontsize=legend_fontsize,
-                        ncol=legend_ncol,
-                    )
-                    for handle in legend.legendHandles:
-                        handle.set_sizes([300.0])
+                    if legend_loc == "right margin":
+                        legend = ax.legend(
+                            loc="center left",
+                            bbox_to_anchor=(1, 0.5),
+                            frameon=False,
+                            fontsize=legend_fontsize,
+                            ncol=legend_ncol,
+                        )
+                        for handle in legend.legendHandles:
+                            handle.set_sizes([300.0])
+                    elif legend_loc == "on data":
+                        texts = []
+                        for px, py, txt in text_list:
+                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, fontweight = "bold", ha = "center", va = "center"))
                 else:
                     idx_g = df_g.iloc[:, gid].values
                     img = ax.scatter(
@@ -445,18 +452,11 @@ def compo_plot(
         assert style == "normalized"
         df = df.div(df.sum(axis=0), axis=1) * 100.0
 
-    palettes = _get_palettes(df.shape[1])
-
-    rot = None
-    if len(max(df.index.astype(str), key=len)) < 5:
-        rot = 0
-
     df.plot(
         kind = "bar",
         stacked = style == "frequency",
         legend = False,
-        color = palettes,
-        rot = rot,
+        color = _get_palettes(df.shape[1]),
         ax = ax,
     )
 
@@ -464,6 +464,9 @@ def compo_plot(
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Percentage")
     ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
+
+    if len(max(df.index.astype(str), key=len)) >= 5:
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha='left')
 
     return fig if not show else None
 
@@ -1153,15 +1156,9 @@ def qcviolin(
 
                 ax.set_xlabel("Channel")
                 ax.set_ylabel(pt2ylab[plot_type])
-
-                is_rotate = max([len(x) for x in channels[start:end]]) > 5
-
-                for tick in ax.xaxis.get_major_ticks():
-                    tick.label.set_fontsize(8)
-                    if is_rotate:
-                        tick.label.set_rotation(-45)
                 ax.legend(loc="upper right", fontsize=8)
-
+                if max([len(x) for x in channels[start:end]]) >= 5:
+                    ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, rotation=-45)
             else:
                 ax.set_frame_on(False)
                 ax.set_xticks([])
