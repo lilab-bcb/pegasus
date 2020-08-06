@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasus.tools import X_from_rep
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, RestrictionParser
+from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, _plot_cluster_labels_in_heatmap, RestrictionParser
 
 
 def scatter(
@@ -73,15 +73,9 @@ def scatter(
 
     Returns
     -------
-    ``None``
 
-    Update ``data.obs``:
-
-        * ``n_genes``: Total number of genes for each cell.
-        * ``n_counts``: Total number of counts for each cell.
-        * ``percent_mito``: Percent of mitochondrial genes for each cell.
-        * ``passed_qc``: Boolean type indicating if a cell passes the QC process based on the QC metrics.
-        * ``demux_type``: this column might be deleted if select_singlets is on.
+    `Figure` object
+        A `matplotlib.figure.Figure` object containing the composition plot if show == False
 
     Examples
     --------
@@ -422,6 +416,10 @@ def compo_plot(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
 
     Returns
     -------
@@ -525,6 +523,8 @@ def violin(
         Y-axis label. No label to show if ``None``.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     others
         Are passed to ``seaborn.violinplot``.
 
@@ -599,10 +599,11 @@ def heatmap(
     groupby: str,
     matkey: Optional[str] = None,
     on_average: bool = True,
-    row_cluster: bool = False,
-    col_cluster: bool = True,
+    switch_axes: bool = False,
+    row_cluster: Optional[bool] = None,
+    col_cluster: Optional[bool] = None,
+    figsize: Tuple[float, float] = (10, 10),
     show: bool = True,
-    dpi: Optional[float] = 300.0,
     **kwargs,
 ):
     """
@@ -621,10 +622,13 @@ def heatmap(
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     on_average: ``bool``, optional, default: ``True``
         If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
+    switch_axes: ``bool``, optional, default: ``False``
+        By default, X axis is for genes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
+        Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
     row_cluster: ``bool``, optional, default: ``False``
     col_cluster: ``bool``, optional, default: ``True``
-    cmap: ``str``, optional, default: ``Reds``
-        Color map for plotting. See `colormap documentation`_ for a detailed list.
+    figsize: ``Tuple[float, float]``, optional, default: ``(10, 10)``
+        Overall size of the figure in ``(width, height)`` form.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
     kwargs
@@ -648,6 +652,12 @@ def heatmap(
         assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
+    if row_cluster is None:
+        row_cluster = True if switch_axes else False
+
+    if col_cluster is None:
+        col_cluster = True if not switch_axes else False
+
     df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
     df['cluster_name'] = data.obs[groupby]
 
@@ -657,29 +667,48 @@ def heatmap(
         df = df.groupby('cluster_name').mean()
         cluster_ids = df.index
     else:
+        row_cluster = False if not switch_axes else row_cluster
+        col_cluster = False if switch_axes else col_cluster
+
         cluster_ids = pd.Categorical(data.obs[groupby])
         idx = cluster_ids.argsort()
         df = df.iloc[idx, :]  # organize df by category order
         df.drop(columns=['cluster_name'], inplace=True)
 
-    if not on_average:
-        row_colors = np.zeros(df.shape[0], dtype=object)
+        cell_colors = np.zeros(df.shape[0], dtype=object)
         palettes = _get_palettes(cluster_ids.categories.size)
         cluster_ids = cluster_ids[idx]
         for k, cat in enumerate(cluster_ids.categories):
-            row_colors[np.isin(cluster_ids, cat)] = palettes[k]
+            cell_colors[np.isin(cluster_ids, cat)] = palettes[k]
 
-    cg = sns.clustermap(
-        data=df,
-        row_colors=row_colors if not on_average else None,
-        row_cluster=row_cluster,
-        col_cluster=col_cluster,
-        linewidths=0,
-        yticklabels=cluster_ids if on_average else [],
-        xticklabels=genes,
-        **kwargs,
-    )
-    cg.ax_heatmap.set_ylabel("")
+    if not switch_axes:
+        cg = sns.clustermap(
+            data=df,
+            row_colors=cell_colors if not on_average else None,
+            col_colors=None,
+            row_cluster=row_cluster,
+            col_cluster=col_cluster,
+            linewidths=0,
+            yticklabels=cluster_ids if on_average else [],
+            xticklabels=genes,
+            figsize=figsize,
+            **kwargs,
+        )
+        cg.ax_heatmap.set_ylabel("")
+    else:
+        cg = sns.clustermap(
+            data=df.T,
+            row_colors=None,
+            col_colors=cell_colors if not on_average else None,
+            row_cluster=row_cluster,
+            col_cluster=col_cluster,
+            linewidths=0,
+            yticklabels=genes,
+            xticklabels=cluster_ids if on_average else [],
+            figsize=figsize,
+            **kwargs,
+        )
+        cg.ax_heatmap.set_xlabel("")
 
     if row_cluster:
         cg.ax_heatmap.yaxis.tick_right()
@@ -688,21 +717,27 @@ def heatmap(
 
     cg.ax_row_dendrogram.set_visible(row_cluster)
     cg.cax.tick_params(labelsize=10)
-    # move the colorbar if needed
-    if not (row_cluster and on_average):
+
+    if not row_cluster:
+        # Move the colorbar to the right-side.
         color_box = cg.ax_heatmap.get_position()
         color_box.x0 = color_box.x1 + 0.04
         color_box.x1 = color_box.x0 + 0.02
         cg.cax.set_position(color_box)
         cg.cax.yaxis.set_ticks_position("right")
-    # draw a legend for the cluster groups
-    #cg.ax_col_dendrogram.clear()
-    #for k, cat in enumerate(cluster_ids.categories):
-    #    cg.ax_col_dendrogram.bar(0, 0, color=palettes[k], label=cat, linewidth=0)
-    #cg.ax_col_dendrogram.legend(loc="center", ncol=15, fontsize=10)
-    #cg.ax_col_dendrogram.grid(False)
-    #cg.ax_col_dendrogram.set_xticks([])
-    #cg.ax_col_dendrogram.set_yticks([])
+    else:
+        # Avoid overlap of colorbar and row dendrogram.
+        color_box = cg.cax.get_position()
+        square_plot = cg.ax_heatmap.get_position()
+        if square_plot.y1 > color_box.y0:
+            y_diff = square_plot.y1 - color_box.y0
+            color_box.y0 = square_plot.y1
+            color_box.y1 += y_diff
+            cg.cax.set_position(color_box)
+
+    if not on_average:
+        orientation = 'left' if not switch_axes else 'top'
+        _plot_cluster_labels_in_heatmap(cg.ax_heatmap, cluster_ids, orientation)
 
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
@@ -720,6 +755,7 @@ def dotplot(
     fraction_max: float = None,
     dot_min: int = 0,
     dot_max: int = 20,
+    switch_axes: bool = False,
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
@@ -749,6 +785,8 @@ def dotplot(
         Minimum size in pixels for dots.
     dot_max: ``int``, optional, default: ``20``.
         Maximum size in pixels for dots.
+    switch_axes: ``bool``, optional, default: ``False``.
+        If ``True``, switch X and Y axes.
     cmap: ``str`` or ``List[str]`` or ``Tuple[str]``, optional, default: ``Reds``
         Color map.
     sort_function: ``Callable[[pd.DataFrame], List[str]]``, optional, default: ``None``
@@ -757,6 +795,8 @@ def dotplot(
         If ``True``, plot grids.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     **kwds:
         Are passed to ``matplotlib.pyplot.scatter``.
 
@@ -804,7 +844,7 @@ def dotplot(
         else:
             frac_columns.append(summarized_df.columns[j])
 
-    # Features on rows, by on rows
+    # Genes on columns, groupby on rows
     fraction_df = summarized_df[frac_columns]
     mean_df = summarized_df[mean_columns]
 
@@ -816,13 +856,20 @@ def dotplot(
         fraction_max = fraction.max()
     pixels = _get_dot_size(fraction, fraction_min, fraction_max, dot_min, dot_max)
     summary_values = mean_df.values.flatten()
+
     xlabel = [genes[i] for i in range(len(genes))]
     ylabel = [str(summarized_df.index[i]) for i in range(len(summarized_df.index))]
-    dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
-            xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
 
     xticks = genes
     yticks = summarized_df.index.map(str).values
+
+    if switch_axes:
+        x, y = y, x
+        xlabel, ylabel = ylabel, xlabel
+        xticks, yticks = yticks, xticks
+
+    dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
+                    xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
 
     import matplotlib.gridspec as gridspec
 
@@ -831,8 +878,9 @@ def dotplot(
     fig = plt.figure(figsize=(1.1 * width / 100.0, height / 100.0), dpi=dpi)
     gs = gridspec.GridSpec(3, 11, figure = fig)
 
-    # note we take the max label string length as an approximation of width of labels in pixels
-    ax = fig.add_subplot(gs[:, :-1])
+    # Main plot
+    mainplot_col_grid = -2 if len(xlabel) < 10 else -1
+    ax = fig.add_subplot(gs[:, :mainplot_col_grid])
 
     sc = ax.scatter(x='x', y='y', c='value', s='pixels', data=dotplot_df, linewidth=0.5, edgecolors='black', **keywords)
 
@@ -843,13 +891,18 @@ def dotplot(
     if not grid:
         ax.grid(False)
 
-    ax.set_ylabel(str(groupby))
-    ax.set_xlabel('')
+    if not switch_axes:
+        ax.set_ylabel(str(groupby))
+        ax.set_xlabel('')
+    else:
+        ax.set_ylabel('')
+        ax.set_xlabel(str(groupby))
+
     ax.set_xlim(-1, len(xticks))
     ax.set_ylim(-1, len(yticks))
     ax.set_xticks(range(len(xticks)))
     ax.set_xticklabels(xticks)
-    ax.set_yticks(range(len(summarized_df.index)))
+    ax.set_yticks(range(len(yticks)))
     ax.set_yticklabels(yticks)
     plt.xticks(rotation=90)
 
@@ -867,7 +920,8 @@ def dotplot(
     size_ticks = np.arange(fraction_min if fraction_min > 0 or fraction_min > 0 else fraction_min + size_legend_step,
         fraction_max + size_legend_step, size_legend_step)
 
-    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0, -1])
+    legend_row_grid = 1 if height / 3 > 100 else 3
+    ax2 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[0:legend_row_grid, -1])
     size_legend = fig.add_subplot(ax2[0])
     size_tick_pixels = _get_dot_size(size_ticks, fraction_min, fraction_max, dot_min, dot_max)
 
@@ -957,6 +1011,8 @@ def dendrogram(
         Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
     show: ``bool``, optional, default: ``True``
         Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     **kwargs:
         Are passed to ``scipy.cluster.hierarchy.dendrogram``.
 
@@ -1030,8 +1086,33 @@ def hvfplot(
     dpi: Optional[float] = 300.0,
 ):
     """
-    Generate highly variable feature plot
-    top_n: show top_n hv features
+    Generate highly variable feature plot.
+    Only works for HVGs returned by ``highly_variable_features`` method with ``flavor=='pegasus'``.
+
+    Parameters
+    -----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    top_n: ``int``, optional, default: ``20``
+        Number of top highly variable features to show names.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
+        The size (width, height) in inches of figure.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    --------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+
+    Examples
+    ---------
+    >>> pg.hvfplot(data)
+    >>> pg.hvfplot(data, top_n=10, dpi=150)
     """
     robust_idx = data.var["robust"].values
     x = data.var.loc[robust_idx, "mean"]
@@ -1046,6 +1127,8 @@ def hvfplot(
     ax.scatter(x[hvg_index], y[hvg_index], s=5, c='b', marker='o', linewidth=0.5, alpha=0.5, label='highly variable features')
     ax.scatter(x[~hvg_index], y[~hvg_index], s=5, c='k', marker='o', linewidth=0.5, alpha=0.5, label = 'other features')
     ax.legend(loc = 'upper right', fontsize = 5)
+    ax.set_xlabel("Mean log expression")
+    ax.set_ylabel("Variance of log expression")
 
     order = x.argsort().values
     ax.plot(x[order], fitted[order], "r-", linewidth=1)

@@ -293,7 +293,36 @@ def _get_palettes(n_labels: int, with_background: bool = False, show_background:
 
     return palettes
 
+def _plot_cluster_labels_in_heatmap(ax, ids, orientation):
+    pos_acc = 0
+    ticks = []
+    labels = []
+    max_label_len = 0
+    for label, value in ids.value_counts().iteritems():
+        labels.append(label)
+        if len(label) > max_label_len:
+            max_label_len = len(label)
+        ticks.append(pos_acc + value / 2)
+        pos_acc += value
 
+    ax.grid(False)
+
+    if orientation == 'left':
+        ax.set_yticks(ticks)
+        ax.set_yticklabels(labels, rotation=0, x=-0.05)
+        ax.tick_params(axis='y', left=False)
+    else:
+        color_box = ax.get_position()
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(labels, rotation=90, y=color_box.y1+max_label_len/100)
+        ax.xaxis.set_ticks_position('top')
+        ax.tick_params(axis='x', top=False)
+
+    # Remove borders
+    ax.spines['left'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
 
 
 Restriction = namedtuple("Restriction", ["negation", "values"])
