@@ -1338,3 +1338,60 @@ def volcano(
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
     return fig if not show else None
+
+
+def rank_plot(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+):
+    """Generate a barcode rank plot, which shows the total UMIs against barcode rank (in descending order with respect to total UMIs)
+
+    Parameters
+    ----------
+
+    data : `AnnData` or `UnimodalData` or `MultimodalData` object
+        The main data object.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A `matplotlib.figure.Figure` object containing the rank plot if show == False
+
+    Examples
+    --------
+    >>> fig = pg.rank_plot(data, show = False, dpi = 500)
+    """
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
+
+    numis = data.X.sum(axis = 1).A1
+    ords = np.argsort(numis)[::-1]
+    ranks = np.array(range(1, numis.size + 1))
+    ax.scatter(ranks, numis[ords], c = 'lightgrey', s = 5)
+    ax.set_xscale("log", basex = 10)
+    ax.set_yscale("log", basey = 10)
+    ax.set_xlabel("Barcode rank")
+    ax.set_ylabel("Total UMIs")
+
+    def _gen_ticklabels(ticks, max_value):
+        label_arr = ['1', '10', '100', '1000', '10K', '100K', '1M', '10M', '100M']
+        ticklabels = [''] * ticks.size
+        for i in range(ticks.size):
+            exponent = int(round(np.log10(ticks[i])))
+            if exponent >= 0 and ticks[i] <= max_value:
+                ticklabels[i] = label_arr[exponent]
+        return ticklabels
+
+    ax.set_xticklabels(_gen_ticklabels(ax.get_xticks(), numis.size))
+    ax.set_yticklabels(_gen_ticklabels(ax.get_yticks(), numis.max()))
+
+    return fig if not show else None
