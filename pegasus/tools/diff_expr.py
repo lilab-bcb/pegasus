@@ -712,7 +712,7 @@ def de_analysis(
             )
 
         idx = np.isin(cluster_labels, subset)
-        cluster_labels = cluster_labels[idx]
+        cluster_labels = pd.Categorical(cluster_labels[idx], categories = subset)
         if cond_labels is not None:
             cond_labels = cond_labels[idx]
         X = X[idx]

@@ -10,4 +10,5 @@ from .plot_library import (
     qcviolin,
     volcano,
     rank_plot,
+    ridgeplot,
 )

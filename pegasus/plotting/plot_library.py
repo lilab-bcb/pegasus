@@ -1253,6 +1253,7 @@ def qcviolin(
 def volcano(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     cluster_id: str,
+    de_result_key: str = "de_res",
     de_test: str = 't',
     qval_threshold: float = 0.05,
     log2fc_threshold: float = 1.0,
@@ -1266,11 +1267,11 @@ def volcano(
     de_test: statistic test to search for
     top_n: mark top 20 up-regulated and down-regulated genes
     """
-    if "de_res" not in data.varm:
-        logger.warning("Please conduct DE analysis first!")
+    if de_result_key not in data.varm:
+        logger.warning(f"Cannot find DE results '{de_result_key}'. Please conduct DE analysis first!")
         return None
 
-    de_res = data.varm["de_res"]
+    de_res = data.varm[de_result_key]
 
     fcstr = f"fold_change:{cluster_id}"
     pstr = f"{de_test}_pval:{cluster_id}"
@@ -1395,3 +1396,111 @@ def rank_plot(
     ax.set_yticklabels(_gen_ticklabels(ax.get_yticks(), numis.max()))
 
     return fig if not show else None
+
+
+def ridgeplot(
+    data: Union[MultimodalData, UnimodalData],
+    features: Union[str, List[str]],
+    qc_attr: Optional[str] = None,
+    with_control: Optional[bool] = False,
+    overlap: Optional[float] = 0.5,    
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    show: Optional[bool] = True,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+):
+    """Generate ridge plots
+
+    If with_control = True, only one feature is allowed and signal/control/normalized will be shown.
+    If with_control = False, up to 8 features can be allowed.
+
+    Parameters
+    ----------
+
+    data : `UnimodalData` or `MultimodalData` object
+        CITE-Seq or Cyto data.
+    features : `str` or `List[str]`
+        One or more features to display.
+    qc_attr: `str`, optional, default None
+        If not None, only data.obs[qc_attr] == True are used.
+    with_control: `bool`, optional, default False
+        If show control ridgeplot.
+    overlap: `float`, default 0.5
+        Overlap between adjacent ridge plots (top and bottom).
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A `matplotlib.figure.Figure` object containing the rank plot if show == False
+
+    Examples
+    --------
+    >>> fig = pg.ridgeplot(data, features = ['CD8', 'CD4', 'CD3'], show = False, dpi = 500)
+    """
+    sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+
+    idx = data.obs[qc_attr].values if qc_attr is not None else np.ones(data.shape[0], dtype = bool)
+
+    df = None
+    if with_control:
+        if not isinstance(features, str):
+            logger.warning("With with_control == True, only one feature is allowed!")
+            return None
+
+        fid = data.var_names.get_loc(features)
+        cid = data.var.loc[features, "_control_id"]
+
+        arr1 = data.get_matrix("arcsinh.signal")[idx, fid].toarray()[:, 0]
+        arr2 = data.uns["_control_arcsinh"][idx, cid].toarray()[:, 0]
+        arr3 = data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0]
+        df = pd.DataFrame({"expression": np.concatenate((arr1, arr2, arr3)), "feature": np.concatenate((np.repeat("Signal", arr1.size), np.repeat("Control", arr2.size), np.repeat("Normalized", arr3.size)))})
+    else:
+        if isinstance(features, str):
+            features = [features]
+        if len(features) > 8:
+            logger.warning("With with_control == False, only up to 8 features are allowed!")
+            return None
+
+        exprs = []
+        feats = []
+
+        size = idx.sum()
+        for feature in features:
+            fid = data.var_names.get_loc(feature)
+            exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
+            feats.append(np.repeat(feature, size))
+
+        df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
+
+    g = sns.FacetGrid(df, row="feature", hue="feature", aspect=8, height=1.0)
+    g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5)
+    g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1)
+    g.map(plt.axhline, y=0, lw=1, clip_on=False)
+
+    def _set_label(value, color, label):
+        ax = plt.gca()
+        ax.text(0, 0.2, label, color="k", ha="right", va="center", transform=ax.transAxes)
+
+    g.map(_set_label, "expression")
+
+    g.fig.subplots_adjust(hspace=-overlap)
+
+    g.set_titles("")
+    g.set_xlabels("")
+    g.set(yticks=[])
+    g.despine(bottom=True, left=True)
+
+    g.fig.set_dpi(dpi)
+    g.fig.set_figwidth(panel_size[0])
+    g.fig.set_figheight(panel_size[1])
+
+    sns.reset_orig()
+
+    return g.fig if not show else None

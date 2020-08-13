@@ -75,6 +75,7 @@ from .plotting import (
     qcviolin,
     volcano,
     rank_plot,
+    ridgeplot,
 )
 
 from importlib_metadata import version, PackageNotFoundError
