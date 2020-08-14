@@ -96,7 +96,7 @@ def scatter(
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
 
@@ -313,7 +313,7 @@ def scatter_groups(
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
 
@@ -505,7 +505,7 @@ def compo_plot(
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -612,7 +612,7 @@ def violin(
     ylabel: ``str``, optional, default: ``None``
         Y-axis label. No label to show if ``None``.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     kwargs
@@ -670,11 +670,12 @@ def violin(
         sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, split=True, **kwargs)
         ax.grid(False)
 
-        if i == 0:
-            ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5))
-        else:
-            ax.get_legend().set_visible(False)
-        
+        if hue is not None:
+            if i == 0:
+                ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5))
+            else:
+                ax.get_legend().set_visible(False)
+
         if i < nrows - 1:
             ax.set_xlabel("")
         else:
@@ -728,13 +729,13 @@ def heatmap(
         By default, X axis is for genes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
     row_cluster: ``bool``, optional, default: ``False``
-        Cluster rows and generate a row-wise dendrogram. 
+        Cluster rows and generate a row-wise dendrogram.
     col_cluster: ``bool``, optional, default: ``True``
         Cluster columns and generate a column-wise dendrogram.
     panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
         Overall size of the heatmap in ``(width, height)`` form.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     kwargs
@@ -797,7 +798,7 @@ def heatmap(
             linewidths=0,
             yticklabels=cluster_ids if on_average else [],
             xticklabels=genes,
-            figsize=figsize,
+            figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_ylabel("")
@@ -811,7 +812,7 @@ def heatmap(
             linewidths=0,
             yticklabels=genes,
             xticklabels=cluster_ids if on_average else [],
-            figsize=figsize,
+            figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_xlabel("")
@@ -901,7 +902,7 @@ def dotplot(
     grid: ``bool``, optional, default: ``True``
         If ``True``, plot grids.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwds:
@@ -1117,7 +1118,7 @@ def dendrogram(
     color_threshold: ``float``, optional, default: ``None``
         Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwargs:
@@ -1206,7 +1207,7 @@ def hvfplot(
     panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
         The size (width, height) in inches of figure.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1268,7 +1269,7 @@ def qcviolin(
 ):
     """
     Plot quality control statistics (before filtration vs. after filtration) as violin plots. Require statistics such as "n_genes", "n_counts" and "percent_mito" precomputed.
-    
+
     Parameters
     -----------
 
@@ -1291,7 +1292,7 @@ def qcviolin(
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1420,13 +1421,13 @@ def volcano(
     qval_threshold: ``float``, optional, default: 0.05.
         Selected FDR rate. A horizontal line indicating this rate will be shown in the figure.
     log2fc_threshold: ``float``, optional, default: 1.0
-        Log2 fold change threshold to highlight biologically interesting genes. Two vertical lines representing negative and positive log2 fold change will be shown. 
+        Log2 fold change threshold to highlight biologically interesting genes. Two vertical lines representing negative and positive log2 fold change will be shown.
     top_n: ``int``, optional, default: ``20``
         Number of top DE genes to show names. Genes are ranked by Log2 fold change.
     panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
         The size (width, height) in inches of figure.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1531,7 +1532,7 @@ def rank_plot(
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1576,7 +1577,7 @@ def ridgeplot(
     features: Union[str, List[str]],
     qc_attr: Optional[str] = None,
     with_control: Optional[bool] = False,
-    overlap: Optional[float] = 0.5,    
+    overlap: Optional[float] = 0.5,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
@@ -1603,7 +1604,7 @@ def ridgeplot(
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     return_fig: ``bool``, optional, default: ``False``
-        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
