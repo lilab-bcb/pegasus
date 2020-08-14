@@ -30,11 +30,11 @@ def scatter(
     matkey: Optional[str] = None,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[str] = "right margin",
+    legend_ncol: Optional[str] = None,
     restrictions: Optional[List[str]] = None,
     apply_to_all: Optional[bool] = True,
-    palettes: Optional[str] = None,
     show_background: Optional[bool] = False,
-    legend_ncol: Optional[str] = None,
+    palettes: Optional[str] = None,
     cmap: Optional[str] = "YlOrRd",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
@@ -47,7 +47,7 @@ def scatter(
     hspace: Optional[float] = 0.15,
     show: Optional[bool] = True,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
 ) -> plt.Figure:
     """Generate scatter plots for different attributes
 
@@ -65,9 +65,38 @@ def scatter(
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data".
-    legend_fontsize: ``int``, optional, default: 5
-        Legend fontsize.
+    legend_ncol: ``str``, optional, default: None
+        Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
     restrictions: ``List[str]``, optional, default: None
+        A list of restrictions to subset data for plotting. Each restriction takes the format of 'attr:value,value', or 'attr:~value,value...", where '~' refers to exclude values.
+    apply_to_all: ``bool``, optional, default: True
+        If restrictions apply to all subplots or each restriction corresponds to each subplot.
+    show_background: ``bool``, optional, default: False
+        Only applicable if `restrictions` is set. By default, only data points selected are shown. If show_background is True, data points that are not selected will also be shown.
+    palettes: ``str``, optional, default: None
+        Only used for plotting categorical attributes. palettes is a comma-separated string representing colors for each category. For example, palettes="black,blue,red,...,yellow".
+    cmap: ``str``, optional, default: ``YlOrRd``
+        Only used for plotting continuous attributes. Set colormap for the attributes.
+    vmin: ``float``, optional, default: None
+        Minimum value to show on a continuous scatter plot (feature plot).
+    vmax: ``float``, optional, default: None
+        Maximum value to show on a continuous scatter plot (feature plot).
+    nrows: ``int``, optional, default: None
+        Number of rows in the figure. If not set, pegasus will figure it out automatically.
+    ncols: ``int``, optional, default: None
+        Number of columns in the figure. If not set, pegasus will figure it out automatically.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    left: `float`, optional (default: `0.2`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.4`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
 
@@ -81,7 +110,6 @@ def scatter(
     --------
     >>> pg.scatter(data, attrs=['louvain_labels', 'Channel'], basis='fitsne')
     >>> pg.scatter(data, attrs=['CD14', 'TRAC'], basis='umap')
-
     """
     if not is_list_like(attrs):
         attrs = [attrs]
@@ -163,10 +191,10 @@ def scatter(
                     text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
-                        kwargs = {"marker": ".", "alpha": alpha_value, "edgecolors": "none", "rasterized": True}
+                        scatter_kwargs = {"marker": ".", "alpha": alpha_value, "edgecolors": "none", "rasterized": True}
 
                         if legend_loc != "on data":
-                            kwargs["label"] = cat
+                            scatter_kwargs["label"] = cat
                         else:
                             text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
 
@@ -175,7 +203,7 @@ def scatter(
                             y[idx],
                             c=palettes_list[k],
                             s=marker_size,
-                            **kwargs,
+                            **scatter_kwargs,
                         )
 
                     if legend_loc == "right margin":
@@ -215,7 +243,7 @@ def scatter(
 def scatter_groups(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attr: str,
-    group: str,
+    groupby: str,
     basis: Optional[str] = "umap",
     matkey: Optional[str] = None,
     alpha: Optional[float] = 1.0,
@@ -236,13 +264,69 @@ def scatter_groups(
     hspace: Optional[float] = 0.15,
     show: Optional[bool] = True,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
 ):
-    """
-    show_full: show the picture with all groups as the first plot.
-    categories: if not None, use this to define new groups.
-    ### Sample usage:
-    ###    scatter_groups(data, attr='louvain_labels', group='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
+    """ Generate scatter plots of attribute 'attr' for each category in attribute 'group'. Optionally show scatter plot containing data points from all categories in 'group'.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+       Use current selected modality in data.
+    attr: ``str``
+        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs or data.var_names (e.g. one gene). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+    groupby: ``str``
+        Generate separate scatter plots of 'attr' for data points in each category in 'groupby', which should be a key in data.obs representing one categorical variable.
+    basis: ``str``, optional, default: ``umap``
+        Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
+    matkey: ``str``, optional, default: None
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    alpha: ``float`` or ``List[float], optional, default: ``1.0``
+        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
+    legend_loc: ``str``, optional, default: ``right margin``
+        Legend location. Can be either "right margin" or "on data".
+    legend_ncol: ``str``, optional, default: None
+        Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
+    show_full: ``bool``, optional, default: True
+        Show the scatter plot with all categories in 'group' as the first plot.
+    categories: ``List[str]``, optional, default: None
+        Redefine group structure based on attribute 'group'. If 'categories' is not None, each string in the list takes the format of 'category_name:value,value', or 'category_name:~value,value...", where 'category_name' refers to new category name, 'value' refers to one of the category in 'group and ~' refers to exclude values.
+    palettes: ``str``, optional, default: None
+        Only used for plotting categorical attributes. palettes is a comma-separated string representing colors for each category. For example, palettes="black,blue,red,...,yellow".
+    cmap: ``str``, optional, default: ``YlOrRd``
+        Only used for plotting continuous attributes. Set colormap for the attributes.
+    vmin: ``float``, optional, default: None
+        Minimum value to show on a continuous scatter plot (feature plot).
+    vmax: ``float``, optional, default: None
+        Maximum value to show on a continuous scatter plot (feature plot).
+    nrows: ``int``, optional, default: None
+        Number of rows in the figure. If not set, pegasus will figure it out automatically.
+    ncols: ``int``, optional, default: None
+        Number of columns in the figure. If not set, pegasus will figure it out automatically.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    left: `float`, optional (default: `0.2`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.4`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    show: ``bool``, optional, default: ``True``
+        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: 300.0
+        The resolution of the figure in dots-per-inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A `matplotlib.figure.Figure` object containing the composition plot if show == False
+
+    Examples
+    --------
+    >>> pg.scatter_groups(data, attr='louvain_labels', group='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
+    >>> pg.scatter_groups(data, attr='anno', group='Channel', basis='umap', categories=['new_cat1:channel1,channel2', 'new_cat2:channel3'])
     """
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
@@ -256,8 +340,8 @@ def scatter_groups(
     basis = _transform_basis(basis)
     marker_size = _get_marker_size(x.size)
 
-    assert group in data.obs
-    groups = data.obs[group].values
+    assert groupby in data.obs
+    groups = data.obs[groupby].values
     if not is_categorical(groups):
         groups = pd.Categorical(groups, categories=natsorted(np.unique(groups)))
 
@@ -287,6 +371,10 @@ def scatter_groups(
         values = data.X[:, pos].toarray().ravel() if issparse(data.X) else data.X[:, pos]
 
     is_cat = is_categorical(values)
+    if (not is_cat) and (not is_numeric_dtype(values)):
+        values = pd.Categorical(values, categories=natsorted(np.unique(values)))
+        is_cat = True
+
     if is_cat:
         labels = values
         label_size = labels.categories.size
@@ -306,10 +394,10 @@ def scatter_groups(
                     text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = np.logical_and(df_g.iloc[:, gid].values, labels == cat)
-                        kwargs = {"marker": ".", "alpha": alpha, "edgecolors": "none", "rasterized": True}
+                        scatter_kwargs = {"marker": ".", "alpha": alpha, "edgecolors": "none", "rasterized": True}
 
                         if legend_loc != "on data":
-                            kwargs["label"] = str(cat)
+                            scatter_kwargs["label"] = str(cat)
                         else:
                             text_list.append((np.median(x[idx]), np.median(y[idx]), str(cat)))
 
@@ -318,7 +406,7 @@ def scatter_groups(
                             y[idx],
                             c=palettes[k],
                             s=marker_size,
-                            **kwargs,
+                            **scatter_kwargs,
                         )
 
                     if legend_loc == "right margin":
@@ -373,8 +461,8 @@ def scatter_groups(
 
 def compo_plot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    xattr: str,
-    yattr: str,
+    groupby: str,
+    condition: str,
     style: Optional[str] = "frequency",
     restrictions: Optional[List[str]] = None,
     xlabel: Optional[str] = None,
@@ -385,7 +473,7 @@ def compo_plot(
     hspace: Optional[float] = 0.15,
     show: Optional[bool] = True,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
 ):
     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
 
@@ -396,16 +484,16 @@ def compo_plot(
 
     data : `AnnData` or `UnimodalData` or `MultimodalData` object
         Single cell expression data.
-    xattr : `str`
-        A string for the attribute used in x-axis, e.g. Donor.
-    yattr: `str`
-        A string for the attribute used in y-axis, e.g. Cell type.
+    groupby : `str`
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Donor.
+    condition: `str`
+        A categorical variable in data.obs that is used to calculate frequency within each category defined by 'groupby', e.g. Cell type.
     style: `str`, optional (default: `frequency`)
-        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each yattr over all cells in the xattr (stacked), the `normalized` style shows the percentage of cells from yattr in the xattr over all of cells from yattr for each yattr (not stacked).
+        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each 'condition' within each category in 'groupby' (stacked), the `normalized` style shows for each category in 'groupby' the percentage of cells that are also in each 'condition' over all cells that are in the same 'condition' (not stacked).
     restrictions: `list[str]`, optional (default: None)
-        This parameter is used to select a subset of data to plot.
+        A list of restrictions to subset data for plotting. Each restriction takes the format of 'attr:value,value', or 'attr:~value,value...", where '~' refers to exclude values.
     xlabel: `str`, optional (default None)
-        X-axis label. If None, use xattr
+        Label for the horizontal axis. If None, use 'groupby'.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     left: `float`, optional (default: `0.15`)
@@ -432,14 +520,14 @@ def compo_plot(
     >>> fig = pg.compo_plot(data, 'louvain_labels', 'Donor', style = 'normalized')
     """
     if xlabel is None:
-        xlabel = xattr
+        xlabel = groupby
 
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace) # default nrows = 1 & ncols = 1
 
     restr_obj = RestrictionParser(restrictions)
     selected = restr_obj.get_satisfied(data)
 
-    df = pd.crosstab(data.obs.loc[selected, xattr], data.obs.loc[selected, yattr])
+    df = pd.crosstab(data.obs.loc[selected, groupby], data.obs.loc[selected, condition])
     df = df.reindex(
         index=natsorted(df.index.values), columns=natsorted(df.columns.values)
     )
@@ -473,10 +561,10 @@ def violin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attrs: Union[str, List[str]],
     groupby: str,
+    hue: Optional[str] = None,
     matkey: Optional[str] = None,
     stripplot: bool = False,
     scale: str = 'width',
-    jitter: Union[float, bool] = False,
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
@@ -484,7 +572,7 @@ def violin(
     ylabel: Optional[str] = None,
     show: Optional[bool] = True,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
     ):
     """
     Generate a stacked violin plot.
@@ -493,16 +581,18 @@ def violin(
     ----------
     data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
         Single-cell expression data.
-    keys: ``str`` or ``List[str]``
+    attrs: ``str`` or ``List[str]``
         Cell attributes or features to plot.
         Cell attributes must exist in ``data.obs`` and must be numeric.
         Features must exist in ``data.var``.
     groupby: ``str``
-        Cell attribute to group data points.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
+    hue: ``str``, optional, default: None
+        'hue' should be a categorical variable in data.obs that has only two levels. Set 'hue' will show us split violin plots.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     stripplot: ``bool``, optional, default: ``False``
-        Attach a stripplot to the violinplot or not.
+        Attach a stripplot to the violinplot or not. This option will be automatically turn off if 'hue' is set.
     scale: ``str``, optional, default: ``width``
         The method used to scale the width of each violin:
             - If ``width``, each violin will have the same width.
@@ -546,9 +636,8 @@ def violin(
         assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
-    nrows, ncols = (len(attrs), 1)
-
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
+    nrows = len(attrs)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=1, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
     obs_keys = []
     genes = []
@@ -558,9 +647,15 @@ def violin(
             assert is_numeric_dtype(data.obs[key])
             obs_keys.append(key)
         else:
+            if key not in data.var_names:
+                logger.warning("Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
+                return None
             genes.append(key)
 
     df_list = [pd.DataFrame({"label": data.obs[groupby].values})]
+    if hue is not None:
+        df_list.append(pd.DataFrame({hue: data.obs[hue].values}))
+        stripplot = False
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys])
     if len(genes) > 0:
@@ -571,9 +666,15 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=attrs[i], data=df, ax=ax, size=1, color="k", jitter=jitter)
-        sns.violinplot(x="label", y=attrs[i], data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, **others)
+            sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=1, color="k", jitter=True)
+        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, split=True, **kwargs)
         ax.grid(False)
+
+        if i == 0:
+            ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5))
+        else:
+            ax.get_legend().set_visible(False)
+        
         if i < nrows - 1:
             ax.set_xlabel("")
         else:
@@ -583,7 +684,7 @@ def violin(
         ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
 
     if ylabel is not None:
-        plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
+        fig.text(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
 
     # Reset current matrix if needed.
     if not isinstance(data, anndata.AnnData):
