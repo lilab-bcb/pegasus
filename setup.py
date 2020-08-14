@@ -18,7 +18,7 @@ requires = [
     "hnswlib",
     "importlib-metadata",
     "joblib",
-    "lightgbm==2.2.1",
+    "lightgbm>=2.2.1",
     "loompy",
     "louvain>=0.7.0",
     "matplotlib>=2.0.0",
