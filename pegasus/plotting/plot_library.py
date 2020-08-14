@@ -45,7 +45,7 @@ def scatter(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ) -> plt.Figure:
@@ -86,7 +86,7 @@ def scatter(
     ncols: ``int``, optional, default: None
         Number of columns in the figure. If not set, pegasus will figure it out automatically.
     panel_size: `tuple`, optional (default: `(6, 4)`)
-        The plot size (width, height) in inches.
+        The subplot size (width, height) in inches.
     left: `float`, optional (default: `0.2`)
         This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
@@ -95,8 +95,8 @@ def scatter(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
 
@@ -104,7 +104,7 @@ def scatter(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the composition plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -237,7 +237,7 @@ def scatter(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def scatter_groups(
@@ -262,7 +262,7 @@ def scatter_groups(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ):
@@ -303,7 +303,7 @@ def scatter_groups(
     ncols: ``int``, optional, default: None
         Number of columns in the figure. If not set, pegasus will figure it out automatically.
     panel_size: `tuple`, optional (default: `(6, 4)`)
-        The plot size (width, height) in inches.
+        The subplot size (width, height) in inches.
     left: `float`, optional (default: `0.2`)
         This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
@@ -312,8 +312,8 @@ def scatter_groups(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
 
@@ -321,7 +321,7 @@ def scatter_groups(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the composition plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -456,7 +456,7 @@ def scatter_groups(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def compo_plot(
@@ -471,7 +471,7 @@ def compo_plot(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
     hspace: Optional[float] = 0.15,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ):
@@ -504,8 +504,8 @@ def compo_plot(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -513,7 +513,7 @@ def compo_plot(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the composition plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -554,7 +554,7 @@ def compo_plot(
     if len(max(df.index.astype(str), key=len)) >= 5:
         ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha='left')
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def violin(
@@ -570,7 +570,7 @@ def violin(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
     ylabel: Optional[str] = None,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
     ):
@@ -601,7 +601,7 @@ def violin(
     jitter: ``float`` or ``bool``, optional, default: ``False``
         Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
         This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
-    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 1)``
+    panel_size: ``Tuple[float, float]``, optional, default: ``(8, 0.5)``
         The size (width, height) in inches of each violin subplot.
     left: ``float``, optional, default: ``0.15``
         This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
@@ -611,11 +611,11 @@ def violin(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     ylabel: ``str``, optional, default: ``None``
         Y-axis label. No label to show if ``None``.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
-    others
+    kwargs
         Are passed to ``seaborn.violinplot``.
 
     Returns
@@ -691,7 +691,7 @@ def violin(
         if data.current_matrix() != cur_matkey:
             data.select_matrix(cur_matkey)
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def heatmap(
@@ -703,8 +703,9 @@ def heatmap(
     switch_axes: bool = False,
     row_cluster: Optional[bool] = None,
     col_cluster: Optional[bool] = None,
-    figsize: Tuple[float, float] = (10, 10),
-    show: bool = True,
+    panel_size: Tuple[float, float] = (10, 10),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
     **kwargs,
 ):
     """
@@ -718,7 +719,7 @@ def heatmap(
     genes: ``str`` or ``List[str]``
         Features to plot.
     groupby: ``str``
-        Cell attribute to plot.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     on_average: ``bool``, optional, default: ``True``
@@ -727,11 +728,15 @@ def heatmap(
         By default, X axis is for genes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
     row_cluster: ``bool``, optional, default: ``False``
+        Cluster rows and generate a row-wise dendrogram. 
     col_cluster: ``bool``, optional, default: ``True``
-    figsize: ``Tuple[float, float]``, optional, default: ``(10, 10)``
-        Overall size of the figure in ``(width, height)`` form.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+        Cluster columns and generate a column-wise dendrogram.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
+        Overall size of the heatmap in ``(width, height)`` form.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     kwargs
         Are passed to ``seaborn.heatmap``.
 
@@ -740,7 +745,7 @@ def heatmap(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -818,6 +823,7 @@ def heatmap(
 
     cg.ax_row_dendrogram.set_visible(row_cluster)
     cg.cax.tick_params(labelsize=10)
+    cg.fig.dpi = dpi
 
     if not row_cluster:
         # Move the colorbar to the right-side.
@@ -844,7 +850,7 @@ def heatmap(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg if not show else None
+    return cg.fig if return_fig else None
 
 
 def dotplot(
@@ -860,7 +866,7 @@ def dotplot(
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
-    show: bool = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwds,
 ):
@@ -875,7 +881,7 @@ def dotplot(
     genes: ``str`` or ``List[str]``
         Features to plot.
     groupby: ``str``
-        Cell attribute to plot.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
     reduce_function: ``Callable[[np.ndarray], float]``, optional, default: ``np.mean``
         Function to calculate statistic on expression data. Default is mean.
     fraction_min: ``float``, optional, default: ``0``.
@@ -894,8 +900,8 @@ def dotplot(
         Function used for sorting labels. If ``None``, don't sort.
     grid: ``bool``, optional, default: ``True``
         If ``True``, plot grids.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwds:
@@ -905,7 +911,7 @@ def dotplot(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -1048,7 +1054,7 @@ def dotplot(
     # Reset global settings.
     sns.reset_orig()
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def dendrogram(
@@ -1065,7 +1071,7 @@ def dendrogram(
     panel_size: Tuple[float, float] = (6, 6),
     orientation: str = 'top',
     color_threshold: Optional[float] = None,
-    show: bool = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ):
@@ -1110,8 +1116,8 @@ def dendrogram(
         The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
     color_threshold: ``float``, optional, default: ``None``
         Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwargs:
@@ -1125,7 +1131,7 @@ def dendrogram(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -1176,14 +1182,14 @@ def dendrogram(
     plt.xticks(rotation=90, fontsize=10)
     plt.tight_layout()
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def hvfplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     top_n: int = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
 ):
     """
@@ -1199,8 +1205,8 @@ def hvfplot(
         Number of top highly variable features to show names.
     panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
         The size (width, height) in inches of figure.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1208,7 +1214,7 @@ def hvfplot(
     --------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     ---------
@@ -1244,7 +1250,7 @@ def hvfplot(
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def qcviolin(
@@ -1257,13 +1263,47 @@ def qcviolin(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
     hspace: Optional[float] = 0.35,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
 ):
     """
-    min_genes_before_filt: if raw data , filter raw data based on min_genes_before_filt
-    n_violin_per_panel: number of violins in one panel.
-    plot_type: gene, count, mito
+    Plot quality control statistics (before filtration vs. after filtration) as violin plots. Require statistics such as "n_genes", "n_counts" and "percent_mito" precomputed.
+    
+    Parameters
+    -----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    plot_type: ``str``
+        Choose from ``gene``, ``count`` and ``mito``, which shows number of expressed genes, number of UMIs and percentage of mitochondrial rate.
+    min_genes_before_filt: ``int``, optional, default: 100
+        If data loaded are raw data (i.e. min(n_genes) == 0), filter out cell barcodes with less than ``min_genes_before_filt`` for better visual effects.
+    n_violin_per_panel: ``int``, optional, default: 8
+        Number of violin plots (samples) shown in one panel.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The subplot size (width, height) in inches.
+    left: `float`, optional (default: `0.2`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.4`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    --------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    ---------
+    >>> pg.qcviolin(data, "mito", dpi = 500)
     """
     pt2attr = {"gene": "n_genes", "count": "n_counts", "mito": "percent_mito"}
     pt2ylab = {
@@ -1348,7 +1388,7 @@ def qcviolin(
                 ax.set_xticks([])
                 ax.set_yticks([])
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def volcano(
@@ -1360,13 +1400,45 @@ def volcano(
     log2fc_threshold: float = 1.0,
     top_n: int = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
 ):
     """
-    Volcano plot
-    de_test: statistic test to search for
-    top_n: mark top 20 up-regulated and down-regulated genes
+    Generate Volcano plots (-log10 p value vs. log2 fold change) for visualizing DE results.
+
+    Parameters
+    -----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    cluster_id: ``str``
+        Cluster ID for the cluster we want to show DE results.
+    de_result_key: ``str``, optional, default: ``de_res``
+        The varm keyword for DE results. data.varm[de_result_key] should store the full DE result table.
+    de_test: ``str``, optional, default: ``mwu``
+        Which DE test results to show.
+    qval_threshold: ``float``, optional, default: 0.05.
+        Selected FDR rate. A horizontal line indicating this rate will be shown in the figure.
+    log2fc_threshold: ``float``, optional, default: 1.0
+        Log2 fold change threshold to highlight biologically interesting genes. Two vertical lines representing negative and positive log2 fold change will be shown. 
+    top_n: ``int``, optional, default: ``20``
+        Number of top DE genes to show names. Genes are ranked by Log2 fold change.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
+        The size (width, height) in inches of figure.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    --------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    ---------
+    >>> pg.volcano(data, cluster_id = '1', dpi=200)
     """
     if de_result_key not in data.varm:
         logger.warning(f"Cannot find DE results '{de_result_key}'. Please conduct DE analysis first!")
@@ -1439,13 +1511,13 @@ def volcano(
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def rank_plot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     panel_size: Optional[Tuple[float, float]] = (6, 4),
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ):
@@ -1458,8 +1530,8 @@ def rank_plot(
         The main data object.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1467,7 +1539,7 @@ def rank_plot(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the rank plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -1496,7 +1568,7 @@ def rank_plot(
     ax.set_xticklabels(_gen_ticklabels(ax.get_xticks(), numis.size))
     ax.set_yticklabels(_gen_ticklabels(ax.get_yticks(), numis.max()))
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def ridgeplot(
@@ -1506,7 +1578,7 @@ def ridgeplot(
     with_control: Optional[bool] = False,
     overlap: Optional[float] = 0.5,    
     panel_size: Optional[Tuple[float, float]] = (6, 4),
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ):
@@ -1530,8 +1602,8 @@ def ridgeplot(
         Overlap between adjacent ridge plots (top and bottom).
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1539,7 +1611,7 @@ def ridgeplot(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the rank plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -1604,4 +1676,4 @@ def ridgeplot(
 
     sns.reset_orig()
 
-    return g.fig if not show else None
+    return g.fig if return_fig else None
