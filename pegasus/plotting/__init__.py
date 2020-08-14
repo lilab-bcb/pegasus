@@ -9,4 +9,6 @@ from .plot_library import (
     hvfplot,
     qcviolin,
     volcano,
+    rank_plot,
+    ridgeplot,
 )

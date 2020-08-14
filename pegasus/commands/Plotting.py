@@ -74,7 +74,7 @@ Examples:
             "xattr": self.args["--xattr"],
             "yattr": self.args["--yattr"],
             "style": self.args["--style"],
-            "show": False,
+            "return_fig": True,
             "dpi": int(self.args["--dpi"]),
         }
 

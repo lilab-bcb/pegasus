@@ -30,11 +30,11 @@ def scatter(
     matkey: Optional[str] = None,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[str] = "right margin",
+    legend_ncol: Optional[str] = None,
     restrictions: Optional[List[str]] = None,
     apply_to_all: Optional[bool] = True,
-    palettes: Optional[str] = None,
     show_background: Optional[bool] = False,
-    legend_ncol: Optional[str] = None,
+    palettes: Optional[str] = None,
     cmap: Optional[str] = "YlOrRd",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
@@ -45,9 +45,9 @@ def scatter(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
 ) -> plt.Figure:
     """Generate scatter plots for different attributes
 
@@ -65,9 +65,38 @@ def scatter(
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data".
-    legend_fontsize: ``int``, optional, default: 5
-        Legend fontsize.
+    legend_ncol: ``str``, optional, default: None
+        Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
     restrictions: ``List[str]``, optional, default: None
+        A list of restrictions to subset data for plotting. Each restriction takes the format of 'attr:value,value', or 'attr:~value,value...", where '~' refers to exclude values.
+    apply_to_all: ``bool``, optional, default: True
+        If restrictions apply to all subplots or each restriction corresponds to each subplot.
+    show_background: ``bool``, optional, default: False
+        Only applicable if `restrictions` is set. By default, only data points selected are shown. If show_background is True, data points that are not selected will also be shown.
+    palettes: ``str``, optional, default: None
+        Only used for plotting categorical attributes. palettes is a comma-separated string representing colors for each category. For example, palettes="black,blue,red,...,yellow".
+    cmap: ``str``, optional, default: ``YlOrRd``
+        Only used for plotting continuous attributes. Set colormap for the attributes.
+    vmin: ``float``, optional, default: None
+        Minimum value to show on a continuous scatter plot (feature plot).
+    vmax: ``float``, optional, default: None
+        Maximum value to show on a continuous scatter plot (feature plot).
+    nrows: ``int``, optional, default: None
+        Number of rows in the figure. If not set, pegasus will figure it out automatically.
+    ncols: ``int``, optional, default: None
+        Number of columns in the figure. If not set, pegasus will figure it out automatically.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The subplot size (width, height) in inches.
+    left: `float`, optional (default: `0.2`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.4`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
 
@@ -75,13 +104,12 @@ def scatter(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the composition plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
     >>> pg.scatter(data, attrs=['louvain_labels', 'Channel'], basis='fitsne')
     >>> pg.scatter(data, attrs=['CD14', 'TRAC'], basis='umap')
-
     """
     if not is_list_like(attrs):
         attrs = [attrs]
@@ -163,10 +191,10 @@ def scatter(
                     text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
-                        kwargs = {"marker": ".", "alpha": alpha_value, "edgecolors": "none", "rasterized": True}
+                        scatter_kwargs = {"marker": ".", "alpha": alpha_value, "edgecolors": "none", "rasterized": True}
 
                         if legend_loc != "on data":
-                            kwargs["label"] = cat
+                            scatter_kwargs["label"] = cat
                         else:
                             text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
 
@@ -175,7 +203,7 @@ def scatter(
                             y[idx],
                             c=palettes_list[k],
                             s=marker_size,
-                            **kwargs,
+                            **scatter_kwargs,
                         )
 
                     if legend_loc == "right margin":
@@ -191,7 +219,7 @@ def scatter(
                     elif legend_loc == "on data":
                         texts = []
                         for px, py, txt in text_list:
-                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, ha = "center", va = "center"))
+                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, fontweight = "bold", ha = "center", va = "center"))
                         # from adjustText import adjust_text
                         # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
@@ -209,21 +237,21 @@ def scatter(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def scatter_groups(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attr: str,
-    group: str,
+    groupby: str,
     basis: Optional[str] = "umap",
     matkey: Optional[str] = None,
     alpha: Optional[float] = 1.0,
-    legend_fontsize: Optional[int] = None,
+    legend_loc: Optional[str] = "right margin",
+    legend_ncol: Optional[str] = None,
     show_full: Optional[bool] = True,
     categories: Optional[List[str]] = None,
     palettes: Optional[List[str]] = None,
-    legend_ncol: Optional[str] = None,
     cmap: Optional[str] = "YlOrRd",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
@@ -234,15 +262,71 @@ def scatter_groups(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
 ):
-    """
-    show_full: show the picture with all groups as the first plot.
-    categories: if not None, use this to define new groups.
-    ### Sample usage:
-    ###    scatter_groups(data, attr='louvain_labels', group='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
+    """ Generate scatter plots of attribute 'attr' for each category in attribute 'group'. Optionally show scatter plot containing data points from all categories in 'group'.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+       Use current selected modality in data.
+    attr: ``str``
+        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs or data.var_names (e.g. one gene). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+    groupby: ``str``
+        Generate separate scatter plots of 'attr' for data points in each category in 'groupby', which should be a key in data.obs representing one categorical variable.
+    basis: ``str``, optional, default: ``umap``
+        Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
+    matkey: ``str``, optional, default: None
+        If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    alpha: ``float`` or ``List[float], optional, default: ``1.0``
+        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
+    legend_loc: ``str``, optional, default: ``right margin``
+        Legend location. Can be either "right margin" or "on data".
+    legend_ncol: ``str``, optional, default: None
+        Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
+    show_full: ``bool``, optional, default: True
+        Show the scatter plot with all categories in 'group' as the first plot.
+    categories: ``List[str]``, optional, default: None
+        Redefine group structure based on attribute 'group'. If 'categories' is not None, each string in the list takes the format of 'category_name:value,value', or 'category_name:~value,value...", where 'category_name' refers to new category name, 'value' refers to one of the category in 'group and ~' refers to exclude values.
+    palettes: ``str``, optional, default: None
+        Only used for plotting categorical attributes. palettes is a comma-separated string representing colors for each category. For example, palettes="black,blue,red,...,yellow".
+    cmap: ``str``, optional, default: ``YlOrRd``
+        Only used for plotting continuous attributes. Set colormap for the attributes.
+    vmin: ``float``, optional, default: None
+        Minimum value to show on a continuous scatter plot (feature plot).
+    vmax: ``float``, optional, default: None
+        Maximum value to show on a continuous scatter plot (feature plot).
+    nrows: ``int``, optional, default: None
+        Number of rows in the figure. If not set, pegasus will figure it out automatically.
+    ncols: ``int``, optional, default: None
+        Number of columns in the figure. If not set, pegasus will figure it out automatically.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The subplot size (width, height) in inches.
+    left: `float`, optional (default: `0.2`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.4`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: 300.0
+        The resolution of the figure in dots-per-inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> pg.scatter_groups(data, attr='louvain_labels', group='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
+    >>> pg.scatter_groups(data, attr='anno', group='Channel', basis='umap', categories=['new_cat1:channel1,channel2', 'new_cat2:channel3'])
     """
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
@@ -256,8 +340,8 @@ def scatter_groups(
     basis = _transform_basis(basis)
     marker_size = _get_marker_size(x.size)
 
-    assert group in data.obs
-    groups = data.obs[group].values
+    assert groupby in data.obs
+    groups = data.obs[groupby].values
     if not is_categorical(groups):
         groups = pd.Categorical(groups, categories=natsorted(np.unique(groups)))
 
@@ -275,9 +359,7 @@ def scatter_groups(
     nrows, ncols = _get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
-    if legend_fontsize is None:
-        legend_fontsize = rcParams["legend.fontsize"]
-
+    legend_fontsize = 5 if legend_loc == 'on data' else 10
 
     if attr in data.obs:
         values = data.obs[attr].values
@@ -289,6 +371,10 @@ def scatter_groups(
         values = data.X[:, pos].toarray().ravel() if issparse(data.X) else data.X[:, pos]
 
     is_cat = is_categorical(values)
+    if (not is_cat) and (not is_numeric_dtype(values)):
+        values = pd.Categorical(values, categories=natsorted(np.unique(values)))
+        is_cat = True
+
     if is_cat:
         labels = values
         label_size = labels.categories.size
@@ -305,29 +391,38 @@ def scatter_groups(
             gid = i * ncols + j
             if gid < df_g.shape[1]:
                 if is_cat:
+                    text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = np.logical_and(df_g.iloc[:, gid].values, labels == cat)
+                        scatter_kwargs = {"marker": ".", "alpha": alpha, "edgecolors": "none", "rasterized": True}
+
+                        if legend_loc != "on data":
+                            scatter_kwargs["label"] = str(cat)
+                        else:
+                            text_list.append((np.median(x[idx]), np.median(y[idx]), str(cat)))
+
                         ax.scatter(
                             x[idx],
                             y[idx],
                             c=palettes[k],
                             s=marker_size,
-                            marker=".",
-                            alpha=alpha,
-                            edgecolors="none",
-                            label=str(cat),
-                            rasterized=True,
+                            **scatter_kwargs,
                         )
 
-                    legend = ax.legend(
-                        loc="center left",
-                        bbox_to_anchor=(1, 0.5),
-                        frameon=False,
-                        fontsize=legend_fontsize,
-                        ncol=legend_ncol,
-                    )
-                    for handle in legend.legendHandles:
-                        handle.set_sizes([300.0])
+                    if legend_loc == "right margin":
+                        legend = ax.legend(
+                            loc="center left",
+                            bbox_to_anchor=(1, 0.5),
+                            frameon=False,
+                            fontsize=legend_fontsize,
+                            ncol=legend_ncol,
+                        )
+                        for handle in legend.legendHandles:
+                            handle.set_sizes([300.0])
+                    elif legend_loc == "on data":
+                        texts = []
+                        for px, py, txt in text_list:
+                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, fontweight = "bold", ha = "center", va = "center"))
                 else:
                     idx_g = df_g.iloc[:, gid].values
                     img = ax.scatter(
@@ -361,13 +456,13 @@ def scatter_groups(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def compo_plot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    xattr: str,
-    yattr: str,
+    groupby: str,
+    condition: str,
     style: Optional[str] = "frequency",
     restrictions: Optional[List[str]] = None,
     xlabel: Optional[str] = None,
@@ -376,9 +471,9 @@ def compo_plot(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
     hspace: Optional[float] = 0.15,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
 ):
     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
 
@@ -389,16 +484,16 @@ def compo_plot(
 
     data : `AnnData` or `UnimodalData` or `MultimodalData` object
         Single cell expression data.
-    xattr : `str`
-        A string for the attribute used in x-axis, e.g. Donor.
-    yattr: `str`
-        A string for the attribute used in y-axis, e.g. Cell type.
+    groupby : `str`
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Donor.
+    condition: `str`
+        A categorical variable in data.obs that is used to calculate frequency within each category defined by 'groupby', e.g. Cell type.
     style: `str`, optional (default: `frequency`)
-        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each yattr over all cells in the xattr (stacked), the `normalized` style shows the percentage of cells from yattr in the xattr over all of cells from yattr for each yattr (not stacked).
+        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each 'condition' within each category in 'groupby' (stacked), the `normalized` style shows for each category in 'groupby' the percentage of cells that are also in each 'condition' over all cells that are in the same 'condition' (not stacked).
     restrictions: `list[str]`, optional (default: None)
-        This parameter is used to select a subset of data to plot.
+        A list of restrictions to subset data for plotting. Each restriction takes the format of 'attr:value,value', or 'attr:~value,value...", where '~' refers to exclude values.
     xlabel: `str`, optional (default None)
-        X-axis label. If None, use xattr
+        Label for the horizontal axis. If None, use 'groupby'.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     left: `float`, optional (default: `0.15`)
@@ -409,8 +504,8 @@ def compo_plot(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
         This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -418,21 +513,21 @@ def compo_plot(
     -------
 
     `Figure` object
-        A `matplotlib.figure.Figure` object containing the composition plot if show == False
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
     >>> fig = pg.compo_plot(data, 'louvain_labels', 'Donor', style = 'normalized')
     """
     if xlabel is None:
-        xlabel = xattr
+        xlabel = groupby
 
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace) # default nrows = 1 & ncols = 1
 
     restr_obj = RestrictionParser(restrictions)
     selected = restr_obj.get_satisfied(data)
 
-    df = pd.crosstab(data.obs.loc[selected, xattr], data.obs.loc[selected, yattr])
+    df = pd.crosstab(data.obs.loc[selected, groupby], data.obs.loc[selected, condition])
     df = df.reindex(
         index=natsorted(df.index.values), columns=natsorted(df.columns.values)
     )
@@ -443,18 +538,11 @@ def compo_plot(
         assert style == "normalized"
         df = df.div(df.sum(axis=0), axis=1) * 100.0
 
-    palettes = _get_palettes(df.shape[1])
-
-    rot = None
-    if len(max(df.index.astype(str), key=len)) < 5:
-        rot = 0
-
     df.plot(
         kind = "bar",
         stacked = style == "frequency",
         legend = False,
-        color = palettes,
-        rot = rot,
+        color = _get_palettes(df.shape[1]),
         ax = ax,
     )
 
@@ -463,25 +551,28 @@ def compo_plot(
     ax.set_ylabel("Percentage")
     ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
 
-    return fig if not show else None
+    if len(max(df.index.astype(str), key=len)) >= 5:
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha='left')
+
+    return fig if return_fig else None
 
 
 def violin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attrs: Union[str, List[str]],
     groupby: str,
+    hue: Optional[str] = None,
     matkey: Optional[str] = None,
     stripplot: bool = False,
     scale: str = 'width',
-    jitter: Union[float, bool] = False,
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
     ylabel: Optional[str] = None,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-    **others,
+    **kwargs,
     ):
     """
     Generate a stacked violin plot.
@@ -490,16 +581,18 @@ def violin(
     ----------
     data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
         Single-cell expression data.
-    keys: ``str`` or ``List[str]``
+    attrs: ``str`` or ``List[str]``
         Cell attributes or features to plot.
         Cell attributes must exist in ``data.obs`` and must be numeric.
         Features must exist in ``data.var``.
     groupby: ``str``
-        Cell attribute to group data points.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
+    hue: ``str``, optional, default: None
+        'hue' should be a categorical variable in data.obs that has only two levels. Set 'hue' will show us split violin plots.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     stripplot: ``bool``, optional, default: ``False``
-        Attach a stripplot to the violinplot or not.
+        Attach a stripplot to the violinplot or not. This option will be automatically turn off if 'hue' is set.
     scale: ``str``, optional, default: ``width``
         The method used to scale the width of each violin:
             - If ``width``, each violin will have the same width.
@@ -508,7 +601,7 @@ def violin(
     jitter: ``float`` or ``bool``, optional, default: ``False``
         Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
         This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
-    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 1)``
+    panel_size: ``Tuple[float, float]``, optional, default: ``(8, 0.5)``
         The size (width, height) in inches of each violin subplot.
     left: ``float``, optional, default: ``0.15``
         This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
@@ -518,11 +611,11 @@ def violin(
         This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
     ylabel: ``str``, optional, default: ``None``
         Y-axis label. No label to show if ``None``.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
-    others
+    kwargs
         Are passed to ``seaborn.violinplot``.
 
     Returns
@@ -543,9 +636,8 @@ def violin(
         assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
         data.select_matrix(matkey)
 
-    nrows, ncols = (len(attrs), 1)
-
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
+    nrows = len(attrs)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=1, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
     obs_keys = []
     genes = []
@@ -555,9 +647,15 @@ def violin(
             assert is_numeric_dtype(data.obs[key])
             obs_keys.append(key)
         else:
+            if key not in data.var_names:
+                logger.warning("Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
+                return None
             genes.append(key)
 
     df_list = [pd.DataFrame({"label": data.obs[groupby].values})]
+    if hue is not None:
+        df_list.append(pd.DataFrame({hue: data.obs[hue].values}))
+        stripplot = False
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys])
     if len(genes) > 0:
@@ -568,9 +666,15 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=attrs[i], data=df, ax=ax, size=1, color="k", jitter=jitter)
-        sns.violinplot(x="label", y=attrs[i], data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, **others)
+            sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=1, color="k", jitter=True)
+        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, split=True, **kwargs)
         ax.grid(False)
+
+        if i == 0:
+            ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5))
+        else:
+            ax.get_legend().set_visible(False)
+        
         if i < nrows - 1:
             ax.set_xlabel("")
         else:
@@ -580,14 +684,14 @@ def violin(
         ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
 
     if ylabel is not None:
-        plt.figtext(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
+        fig.text(0.02, 0.5, ylabel, rotation="vertical", fontsize="xx-large")
 
     # Reset current matrix if needed.
     if not isinstance(data, anndata.AnnData):
         if data.current_matrix() != cur_matkey:
             data.select_matrix(cur_matkey)
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def heatmap(
@@ -599,8 +703,9 @@ def heatmap(
     switch_axes: bool = False,
     row_cluster: Optional[bool] = None,
     col_cluster: Optional[bool] = None,
-    figsize: Tuple[float, float] = (10, 10),
-    show: bool = True,
+    panel_size: Tuple[float, float] = (10, 10),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
     **kwargs,
 ):
     """
@@ -614,7 +719,7 @@ def heatmap(
     genes: ``str`` or ``List[str]``
         Features to plot.
     groupby: ``str``
-        Cell attribute to plot.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     on_average: ``bool``, optional, default: ``True``
@@ -623,11 +728,15 @@ def heatmap(
         By default, X axis is for genes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
     row_cluster: ``bool``, optional, default: ``False``
+        Cluster rows and generate a row-wise dendrogram. 
     col_cluster: ``bool``, optional, default: ``True``
-    figsize: ``Tuple[float, float]``, optional, default: ``(10, 10)``
-        Overall size of the figure in ``(width, height)`` form.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+        Cluster columns and generate a column-wise dendrogram.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
+        Overall size of the heatmap in ``(width, height)`` form.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
     kwargs
         Are passed to ``seaborn.heatmap``.
 
@@ -636,7 +745,7 @@ def heatmap(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -714,6 +823,7 @@ def heatmap(
 
     cg.ax_row_dendrogram.set_visible(row_cluster)
     cg.cax.tick_params(labelsize=10)
+    cg.fig.dpi = dpi
 
     if not row_cluster:
         # Move the colorbar to the right-side.
@@ -740,7 +850,7 @@ def heatmap(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg if not show else None
+    return cg.fig if return_fig else None
 
 
 def dotplot(
@@ -756,7 +866,7 @@ def dotplot(
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
     sort_function: Callable[[pd.DataFrame], List[str]] = None,
     grid: bool = True,
-    show: bool = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwds,
 ):
@@ -771,7 +881,7 @@ def dotplot(
     genes: ``str`` or ``List[str]``
         Features to plot.
     groupby: ``str``
-        Cell attribute to plot.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
     reduce_function: ``Callable[[np.ndarray], float]``, optional, default: ``np.mean``
         Function to calculate statistic on expression data. Default is mean.
     fraction_min: ``float``, optional, default: ``0``.
@@ -790,8 +900,8 @@ def dotplot(
         Function used for sorting labels. If ``None``, don't sort.
     grid: ``bool``, optional, default: ``True``
         If ``True``, plot grids.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwds:
@@ -801,7 +911,7 @@ def dotplot(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -944,7 +1054,7 @@ def dotplot(
     # Reset global settings.
     sns.reset_orig()
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def dendrogram(
@@ -961,7 +1071,7 @@ def dendrogram(
     panel_size: Tuple[float, float] = (6, 6),
     orientation: str = 'top',
     color_threshold: Optional[float] = None,
-    show: bool = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ):
@@ -1006,8 +1116,8 @@ def dendrogram(
         The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
     color_threshold: ``float``, optional, default: ``None``
         Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwargs:
@@ -1021,7 +1131,7 @@ def dendrogram(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     --------
@@ -1072,14 +1182,14 @@ def dendrogram(
     plt.xticks(rotation=90, fontsize=10)
     plt.tight_layout()
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def hvfplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     top_n: int = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
 ):
     """
@@ -1095,8 +1205,8 @@ def hvfplot(
         Number of top highly variable features to show names.
     panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
         The size (width, height) in inches of figure.
-    show: ``bool``, optional, default: ``True``
-        Return a ``Figure`` object if ``False``; return ``None`` otherwise.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
 
@@ -1104,7 +1214,7 @@ def hvfplot(
     --------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``show == False``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
     ---------
@@ -1140,7 +1250,7 @@ def hvfplot(
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def qcviolin(
@@ -1153,13 +1263,47 @@ def qcviolin(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
     hspace: Optional[float] = 0.35,
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
 ):
     """
-    min_genes_before_filt: if raw data , filter raw data based on min_genes_before_filt
-    n_violin_per_panel: number of violins in one panel.
-    plot_type: gene, count, mito
+    Plot quality control statistics (before filtration vs. after filtration) as violin plots. Require statistics such as "n_genes", "n_counts" and "percent_mito" precomputed.
+    
+    Parameters
+    -----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    plot_type: ``str``
+        Choose from ``gene``, ``count`` and ``mito``, which shows number of expressed genes, number of UMIs and percentage of mitochondrial rate.
+    min_genes_before_filt: ``int``, optional, default: 100
+        If data loaded are raw data (i.e. min(n_genes) == 0), filter out cell barcodes with less than ``min_genes_before_filt`` for better visual effects.
+    n_violin_per_panel: ``int``, optional, default: 8
+        Number of violin plots (samples) shown in one panel.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The subplot size (width, height) in inches.
+    left: `float`, optional (default: `0.2`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.4`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    --------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    ---------
+    >>> pg.qcviolin(data, "mito", dpi = 500)
     """
     pt2attr = {"gene": "n_genes", "count": "n_counts", "mito": "percent_mito"}
     pt2ylab = {
@@ -1236,44 +1380,71 @@ def qcviolin(
 
                 ax.set_xlabel("Channel")
                 ax.set_ylabel(pt2ylab[plot_type])
-
-                is_rotate = max([len(x) for x in channels[start:end]]) > 5
-
-                for tick in ax.xaxis.get_major_ticks():
-                    tick.label.set_fontsize(8)
-                    if is_rotate:
-                        tick.label.set_rotation(-45)
                 ax.legend(loc="upper right", fontsize=8)
-
+                if max([len(x) for x in channels[start:end]]) >= 5:
+                    ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, rotation=-45)
             else:
                 ax.set_frame_on(False)
                 ax.set_xticks([])
                 ax.set_yticks([])
 
-    return fig if not show else None
+    return fig if return_fig else None
 
 
 def volcano(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     cluster_id: str,
+    de_result_key: str = "de_res",
     de_test: str = 't',
     qval_threshold: float = 0.05,
     log2fc_threshold: float = 1.0,
     top_n: int = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
-    show: Optional[bool] = True,
+    return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
 ):
     """
-    Volcano plot
-    de_test: statistic test to search for
-    top_n: mark top 20 up-regulated and down-regulated genes
+    Generate Volcano plots (-log10 p value vs. log2 fold change) for visualizing DE results.
+
+    Parameters
+    -----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    cluster_id: ``str``
+        Cluster ID for the cluster we want to show DE results.
+    de_result_key: ``str``, optional, default: ``de_res``
+        The varm keyword for DE results. data.varm[de_result_key] should store the full DE result table.
+    de_test: ``str``, optional, default: ``mwu``
+        Which DE test results to show.
+    qval_threshold: ``float``, optional, default: 0.05.
+        Selected FDR rate. A horizontal line indicating this rate will be shown in the figure.
+    log2fc_threshold: ``float``, optional, default: 1.0
+        Log2 fold change threshold to highlight biologically interesting genes. Two vertical lines representing negative and positive log2 fold change will be shown. 
+    top_n: ``int``, optional, default: ``20``
+        Number of top DE genes to show names. Genes are ranked by Log2 fold change.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
+        The size (width, height) in inches of figure.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    --------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    ---------
+    >>> pg.volcano(data, cluster_id = '1', dpi=200)
     """
-    if "de_res" not in data.varm:
-        logger.warning("Please conduct DE analysis first!")
+    if de_result_key not in data.varm:
+        logger.warning(f"Cannot find DE results '{de_result_key}'. Please conduct DE analysis first!")
         return None
 
-    de_res = data.varm["de_res"]
+    de_res = data.varm[de_result_key]
 
     fcstr = f"fold_change:{cluster_id}"
     pstr = f"{de_test}_pval:{cluster_id}"
@@ -1340,4 +1511,169 @@ def volcano(
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
-    return fig if not show else None
+    return fig if return_fig else None
+
+
+def rank_plot(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+):
+    """Generate a barcode rank plot, which shows the total UMIs against barcode rank (in descending order with respect to total UMIs)
+
+    Parameters
+    ----------
+
+    data : `AnnData` or `UnimodalData` or `MultimodalData` object
+        The main data object.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> fig = pg.rank_plot(data, show = False, dpi = 500)
+    """
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
+
+    numis = data.X.sum(axis = 1).A1
+    ords = np.argsort(numis)[::-1]
+    ranks = np.array(range(1, numis.size + 1))
+    ax.scatter(ranks, numis[ords], c = 'lightgrey', s = 5)
+    ax.set_xscale("log", basex = 10)
+    ax.set_yscale("log", basey = 10)
+    ax.set_xlabel("Barcode rank")
+    ax.set_ylabel("Total UMIs")
+
+    def _gen_ticklabels(ticks, max_value):
+        label_arr = ['1', '10', '100', '1000', '10K', '100K', '1M', '10M', '100M']
+        ticklabels = [''] * ticks.size
+        for i in range(ticks.size):
+            exponent = int(round(np.log10(ticks[i])))
+            if exponent >= 0 and ticks[i] <= max_value:
+                ticklabels[i] = label_arr[exponent]
+        return ticklabels
+
+    ax.set_xticklabels(_gen_ticklabels(ax.get_xticks(), numis.size))
+    ax.set_yticklabels(_gen_ticklabels(ax.get_yticks(), numis.max()))
+
+    return fig if return_fig else None
+
+
+def ridgeplot(
+    data: Union[MultimodalData, UnimodalData],
+    features: Union[str, List[str]],
+    qc_attr: Optional[str] = None,
+    with_control: Optional[bool] = False,
+    overlap: Optional[float] = 0.5,    
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+):
+    """Generate ridge plots
+
+    If with_control = True, only one feature is allowed and signal/control/normalized will be shown.
+    If with_control = False, up to 8 features can be allowed.
+
+    Parameters
+    ----------
+
+    data : `UnimodalData` or `MultimodalData` object
+        CITE-Seq or Cyto data.
+    features : `str` or `List[str]`
+        One or more features to display.
+    qc_attr: `str`, optional, default None
+        If not None, only data.obs[qc_attr] == True are used.
+    with_control: `bool`, optional, default False
+        If show control ridgeplot.
+    overlap: `float`, default 0.5
+        Overlap between adjacent ridge plots (top and bottom).
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise. 
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> fig = pg.ridgeplot(data, features = ['CD8', 'CD4', 'CD3'], show = False, dpi = 500)
+    """
+    sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+
+    idx = data.obs[qc_attr].values if qc_attr is not None else np.ones(data.shape[0], dtype = bool)
+
+    df = None
+    if with_control:
+        if not isinstance(features, str):
+            logger.warning("With with_control == True, only one feature is allowed!")
+            return None
+
+        fid = data.var_names.get_loc(features)
+        cid = data.var.loc[features, "_control_id"]
+
+        arr1 = data.get_matrix("arcsinh.signal")[idx, fid].toarray()[:, 0]
+        arr2 = data.uns["_control_arcsinh"][idx, cid].toarray()[:, 0]
+        arr3 = data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0]
+        df = pd.DataFrame({"expression": np.concatenate((arr1, arr2, arr3)), "feature": np.concatenate((np.repeat("Signal", arr1.size), np.repeat("Control", arr2.size), np.repeat("Normalized", arr3.size)))})
+    else:
+        if isinstance(features, str):
+            features = [features]
+        if len(features) > 8:
+            logger.warning("With with_control == False, only up to 8 features are allowed!")
+            return None
+
+        exprs = []
+        feats = []
+
+        size = idx.sum()
+        for feature in features:
+            fid = data.var_names.get_loc(feature)
+            exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
+            feats.append(np.repeat(feature, size))
+
+        df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
+
+    g = sns.FacetGrid(df, row="feature", hue="feature", aspect=8, height=1.0)
+    g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5)
+    g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1)
+    g.map(plt.axhline, y=0, lw=1, clip_on=False)
+
+    def _set_label(value, color, label):
+        ax = plt.gca()
+        ax.text(0, 0.2, label, color="k", ha="right", va="center", transform=ax.transAxes)
+
+    g.map(_set_label, "expression")
+
+    g.fig.subplots_adjust(hspace=-overlap)
+
+    g.set_titles("")
+    g.set_xlabels("")
+    g.set(yticks=[])
+    g.despine(bottom=True, left=True)
+
+    g.fig.set_dpi(dpi)
+    g.fig.set_figwidth(panel_size[0])
+    g.fig.set_figheight(panel_size[1])
+
+    sns.reset_orig()
+
+    return g.fig if return_fig else None
