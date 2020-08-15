@@ -48,7 +48,7 @@ def scatter(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-) -> plt.Figure:
+) -> Union[plt.Figure, None]:
     """Generate scatter plots for different attributes
 
     Parameters
@@ -265,7 +265,7 @@ def scatter_groups(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-):
+) -> Union[plt.Figure, None]:
     """ Generate scatter plots of attribute 'attr' for each category in attribute 'group'. Optionally show scatter plot containing data points from all categories in 'group'.
 
     Parameters
@@ -474,7 +474,7 @@ def compo_plot(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-):
+) -> Union[plt.Figure, None]:
     """Generate a composition plot, which shows the percentage of cells from each condition for every cluster.
 
     This function is used to generate composition plots, which are bar plots showing the cell compositions (from different conditions) for each cluster. This type of plots is useful to fast assess library quality and batch effects.
@@ -573,7 +573,7 @@ def violin(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-    ):
+) -> Union[plt.Figure, None]:
     """
     Generate a stacked violin plot.
 
@@ -657,7 +657,7 @@ def violin(
         df_list.append(pd.DataFrame({hue: data.obs[hue].values}))
         stripplot = False
     if len(obs_keys) > 0:
-        df_list.append(data.obs[obs_keys])
+        df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
         expr_mat = data[:, genes].X.toarray()
         df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
@@ -708,7 +708,7 @@ def heatmap(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-):
+) -> Union[plt.Figure, None]:
     """
     Generate a heatmap.
 
@@ -870,7 +870,7 @@ def dotplot(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwds,
-):
+) -> Union[plt.Figure, None]:
     """
     Generate a dot plot.
 
@@ -1075,7 +1075,7 @@ def dendrogram(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-):
+) -> Union[plt.Figure, None]:
     """
     Generate a dendrogram on hierarchical clustering result.
 
@@ -1192,7 +1192,7 @@ def hvfplot(
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-):
+) -> Union[plt.Figure, None]:
     """
     Generate highly variable feature plot.
     Only works for HVGs returned by ``highly_variable_features`` method with ``flavor=='pegasus'``.
@@ -1266,7 +1266,7 @@ def qcviolin(
     hspace: Optional[float] = 0.35,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-):
+) -> Union[plt.Figure, None]:
     """
     Plot quality control statistics (before filtration vs. after filtration) as violin plots. Require statistics such as "n_genes", "n_counts" and "percent_mito" precomputed.
 
@@ -1403,7 +1403,7 @@ def volcano(
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
-):
+) -> Union[plt.Figure, None]:
     """
     Generate Volcano plots (-log10 p value vs. log2 fold change) for visualizing DE results.
 
@@ -1521,7 +1521,7 @@ def rank_plot(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-):
+) -> Union[plt.Figure, None]:
     """Generate a barcode rank plot, which shows the total UMIs against barcode rank (in descending order with respect to total UMIs)
 
     Parameters
@@ -1582,7 +1582,7 @@ def ridgeplot(
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
-):
+) -> Union[plt.Figure, None]:
     """Generate ridge plots
 
     If with_control = True, only one feature is allowed and signal/control/normalized will be shown.
