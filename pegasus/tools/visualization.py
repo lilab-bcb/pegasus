@@ -723,7 +723,7 @@ def net_tsne(
     data.uns["X_" + out_basis + "_small"] = X_tsne
     data.obs["ds_selected"] = selected
 
-    Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
+    Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
     Y_init[selected, :] = X_tsne
     Y_init[~selected, :] = net_train_and_predict(
         X, X_tsne, X_full[~selected, :], net_alpha, random_state, verbose=True
@@ -863,7 +863,7 @@ def net_fitsne(
     data.uns["X_" + out_basis + "_small"] = X_fitsne
     data.obs["ds_selected"] = selected
 
-    Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
+    Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
     Y_init[selected, :] = X_fitsne
     Y_init[~selected, :] = net_train_and_predict(
         X, X_fitsne, X_full[~selected, :], net_alpha, random_state, verbose=True
@@ -1027,7 +1027,7 @@ def net_umap(
     data.uns["X_" + out_basis + "_small"] = X_umap
     data.obs["ds_selected"] = selected
 
-    Y_init = np.zeros((data.shape[0], 2), dtype=np.float64)
+    Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
     Y_init[selected, :] = X_umap
     Y_init[~selected, :] = net_train_and_predict(
         X, X_umap, X_full[~selected, :], net_alpha, random_state, verbose=True
