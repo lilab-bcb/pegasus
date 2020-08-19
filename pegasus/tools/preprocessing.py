@@ -6,7 +6,7 @@ from scipy.sparse import issparse
 
 from sklearn.decomposition import PCA
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
 
 import logging
@@ -463,3 +463,60 @@ def pca(
     data.uns["pca"] = {}
     data.uns["pca"]["variance"] = pca.explained_variance_
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
+
+
+@timer(logger=logger)
+def pc_regress_out(
+    data: Union[MultimodalData, UnimodalData],
+    attrs: List[str],
+    rep: str = 'pca',
+) -> None:
+    """Regress out effects due to specific observational attributes at Principal Component level.
+
+    Parameters
+    ----------
+    data: ``MultimodalData`` or ``UnimodalData`` object
+        Annotated data matrix with rows for cells and columns for genes.
+
+    attrs: ``List[str]``
+        List of numeric cell attributes to be regressed out. They must exist in ``data.obs`` field.
+
+    rep: ``str``, optional, default: ``pca``
+        This is to specify which embedding to be used for regressing out.
+        The key ``'X_'+rep`` must exist in ``data.obsm`` field. By default, use PCA embedding.
+
+    Returns
+    -------
+    pca_key: ``str``
+        The key to the resulting new embedding matrix in ``data.obsm``. It's ``'X_'+rep+'_regressed'``.
+
+    Update ``data.obsm``:
+        * ``data.obsm[pca_key]``: The PCA matrix with effects of attributes specified regressed out.
+
+    Examples
+    --------
+    >>> pg.pc_regress(data, attrs=['G1/S', 'G2/M'])
+    """
+    n_components = data.obsm[f'X_{rep}'].shape[1]
+
+    from pandas.api.types import is_numeric_dtype
+    for attr in attrs:
+        if not is_numeric_dtype(data.obs[attr]):
+            raise TypeError(f"Cell attribute '{attr}' is not numeric. For regressing out, All attributes used must be numeric!")
+
+    X = data.obs[attrs]
+
+    from sklearn.linear_model import LinearRegression
+
+    response_list = []
+    for i in range(n_components):
+        pc = data.obsm[f'X_{rep}'][:, i]
+        model = LinearRegression().fit(X, pc)
+        y_pred = model.predict(X)
+        resid = pc - y_pred
+        response_list.append(resid)
+
+    pca_key = f'{rep}_regressed'
+    data.obsm[f'X_{pca_key}'] = np.vstack(response_list).T.astype(data.obsm[f'X_{rep}'].dtype)
+
+    return pca_key

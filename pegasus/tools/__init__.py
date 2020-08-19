@@ -9,6 +9,7 @@ from .preprocessing import (
     log_norm,
     select_features,
     pca,
+    pc_regress_out,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
 from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
