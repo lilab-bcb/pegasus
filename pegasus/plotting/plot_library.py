@@ -198,6 +198,8 @@ def scatter(
                     palette = palettes.get(attr)
                     if palette is None:
                         palette = _get_palette(label_size, with_background=with_background, show_background=show_background)
+                    elif with_background:
+                        palette = ["gainsboro" if show_background else "white"] + list(palette)
 
                     text_list = []
                     for k, cat in enumerate(labels.categories):
@@ -1717,3 +1719,125 @@ def ridgeplot(
     sns.reset_orig()
 
     return g.fig if return_fig else None
+
+
+
+def doublet_plot(
+    scores: List[float],
+    codes: List[int],
+    code_names: Optional[List[str]] = ["singlet", "singlet2", "doublet"],
+    panel_size: Optional[Tuple[float, float]] = (4, 3),
+    left: Optional[float] = 0.2,
+    bottom: Optional[float] = 0.2,
+    wspace: Optional[float] = 0.2,
+    hspace: Optional[float] = 0.2,
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Generate KDE for doublet predictions
+
+    Parameters
+    ----------
+    scores: `List[float]`,
+        Doublet scores.
+    codes: `List[int]`
+        Doublet type codes.
+    code_names: `List[str]`, optional (default: `["singlet", "singlet2", "doublet"]`)
+        Doublet type names.
+    panel_size: `tuple`, optional (default: `(4, 3)`)
+        The plot size (width, height) in inches.
+    left: `float`, optional (default: `0.15`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.3`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    """
+    from scipy.stats import gaussian_kde
+
+    # constants
+    alpha = 0.7
+    eps = 1e-6
+
+    fig, axes = _get_subplot_layouts(nrows = 2, ncols = 2, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, sharex=False, sharey=False)
+
+    # Panel 1, KDE of scores
+    ax = axes[0, 0]
+    x = np.linspace(scores.min() - 0.05, scores.max() + 0.05, 200) # generate x coordinates
+    kde = gaussian_kde(scores)
+    y = kde(x)
+    ax.plot(x, y, '-', c='k')
+    ax.set_ylim(bottom = 0.0)
+    ax.set_xlabel('doublet score')
+    ax.set_ylabel('density')
+
+    # Panel 2, KDE of log-transformed scores
+    ax = axes[0, 1]
+    scores = np.log(scores)
+    x = np.linspace(scores.min() - 0.5, scores.max() + 0.5, 200) # generate x coordinates
+    kde = gaussian_kde(scores)
+    y = kde(x)
+    ax.plot(x, y, '-', c='k')
+    ax.set_ylim(bottom = 0.0)
+    ax.set_xlabel('log doublet score')
+    ax.set_ylabel('density')
+
+    # Panel 3, KDE of each cluster
+    ax = axes[1, 0]
+    # Partition by clusters
+    idx1 = codes == 0
+    idx2 = codes == 1
+    idx3 = codes == 2
+    # Get scale factor for each cluster
+    scale1 = idx1.sum() * 1.0 / codes.size
+    scale2 = idx2.sum() * 1.0 / codes.size
+    scale3 = idx3.sum() * 1.0 / codes.size
+    # kde for singlets1
+    kde1 = gaussian_kde(scores[idx1])
+    y1 = kde1(x) * scale1
+    idxs1 = y1 > eps
+    ax.plot(x[idxs1], y1[idxs1], '-', c = 'orange', label = code_names[0])
+    # kde for singlets2
+    kde2 = gaussian_kde(scores[idx2])
+    y2 = kde2(x) * scale2
+    idxs2 = y2 > eps
+    ax.plot(x[idxs2], y2[idxs2], '-', c = 'green', label = code_names[1])
+    # kde for doublets
+    kde3 = gaussian_kde(scores[idx3])
+    y3 = kde3(x) * scale3
+    idxs3 = y3 > eps
+    ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', label = code_names[2])
+    # Set ylim bottom to 0 and show legend
+    ax.set_ylim(bottom = 0)
+    ax.set_xlabel('log doublet score')
+    ax.set_ylabel('density')
+    ax.legend(loc = 'best')
+
+    # Panel 4, overlay the overall KDE with cluster-specific KDEs
+    ax = axes[1, 1]
+    ax.plot(x, y, '-', c='k', label = 'overall')
+    ax.plot(x[idxs1], y1[idxs1], '-', c = 'orange', alpha = alpha, label = 'singlet1')
+    ax.plot(x[idxs2], y2[idxs2], '-', c = 'green', alpha = alpha, label = 'singlet2')
+    ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', alpha = alpha, label = 'doublet')
+    ax.set_ylim(bottom = 0)
+    ax.set_xlabel('log doublet score')
+    ax.set_ylabel('density')
+    ax.legend(loc = 'best')
+
+    return fig if return_fig else None

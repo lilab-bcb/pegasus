@@ -409,7 +409,7 @@ class DictWithDefault:
 
         for string in strlist:
             if string.find(':') >= 0:
-                key, values = field.split(':')
+                key, values = string.split(':')
                 self.mapping[key] = values.split(',')
             else:
                 self.default = string.split(',')

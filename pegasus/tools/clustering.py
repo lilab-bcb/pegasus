@@ -4,9 +4,6 @@ import pandas as pd
 from pegasusio import MultimodalData
 from natsort import natsorted
 
-import ctypes
-import ctypes.util
-
 from sklearn.cluster import KMeans
 from typing import List, Optional
 
@@ -18,6 +15,7 @@ logger = logging.getLogger(__name__)
 from pegasusio import timer
 
 
+@timer(logger=logger)
 def louvain(
     data: MultimodalData,
     rep: str = "pca",
@@ -61,8 +59,6 @@ def louvain(
     except ImportError:
         print("Need louvain! Try 'pip install louvain-github'.")
 
-    start = time.perf_counter()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -79,15 +75,11 @@ def louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Louvain clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Louvain clustering is done. Get {cluster} clusters.")
 
 
+@timer(logger=logger)
 def leiden(
     data: MultimodalData,
     rep: str = "pca",
@@ -135,8 +127,6 @@ def leiden(
     except ImportError:
         print("Need leidenalg! Try 'pip install leidenalg'.")
 
-    start = time.perf_counter()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -157,16 +147,10 @@ def leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Leiden clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Leiden clustering is done. Get {cluster} clusters.")
 
 
-@timer(logger=logger)
 def partition_cells_by_kmeans(
     X: np.ndarray,
     n_clusters: int,
@@ -207,6 +191,7 @@ def partition_cells_by_kmeans(
     return labels
 
 
+@timer(logger=logger)
 def spectral_louvain(
     data: MultimodalData,
     rep: str = "pca",
@@ -266,8 +251,6 @@ def spectral_louvain(
     except ImportError:
         print("Need louvain! Try 'pip install louvain-github'.")
 
-    start = time.perf_counter()
-
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning(
             "{} is not calculated, switch to pca instead.".format(rep_kmeans)
@@ -300,15 +283,11 @@ def spectral_louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Spectral Louvain clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Spectral Louvain clustering is done. Get {cluster} clusters.")
 
 
+@timer(logger=logger)
 def spectral_leiden(
     data: MultimodalData,
     rep: str = "pca",
@@ -368,8 +347,6 @@ def spectral_leiden(
     except ImportError:
         print("Need leidenalg! Try 'pip install leidenalg'.")
 
-    start = time.perf_counter()
-
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning(
             "{} is not calculated, switch to pca instead.".format(rep_kmeans)
@@ -402,13 +379,8 @@ def spectral_leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Spectral Leiden clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Spectral Leiden clustering is done. Get {cluster} clusters.")
 
 
 def cluster(
