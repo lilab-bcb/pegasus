@@ -82,15 +82,15 @@ def scatter(
     ncols: ``int``, optional, default: None
         Number of columns in the figure. If not set, pegasus will figure it out automatically.
     panel_size: `tuple`, optional (default: `(6, 4)`)
-        The subplot size (width, height) in inches.
+        The panel size (width, height) in inches.
     left: `float`, optional (default: `0.2`)
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+        This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.4`)
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+        This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
-        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+        This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -324,15 +324,15 @@ def scatter_groups(
     ncols: ``int``, optional, default: None
         Number of columns in the figure. If not set, pegasus will figure it out automatically.
     panel_size: `tuple`, optional (default: `(6, 4)`)
-        The subplot size (width, height) in inches.
+        The panel size (width, height) in inches.
     left: `float`, optional (default: `0.2`)
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+        This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.4`)
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+        This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
-        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+        This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -525,9 +525,9 @@ def compo_plot(
     data : `AnnData` or `UnimodalData` or `MultimodalData` object
         Single cell expression data.
     groupby : `str`
-        A categorical variable in data.obs that is used to categorize the cells, e.g. Donor.
+        A categorical variable in data.obs that is used to categorize the cells, e.g. cell type.
     condition: `str`
-        A categorical variable in data.obs that is used to calculate frequency within each category defined by 'groupby', e.g. Cell type.
+        A categorical variable in data.obs that is used to calculate frequency within each category defined by 'groupby', e.g. donor.
     style: `str`, optional (default: `frequency`)
         Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each 'condition' within each category in 'groupby' (stacked), the `normalized` style shows for each category in 'groupby' the percentage of cells that are also in each 'condition' over all cells that are in the same 'condition' (not stacked).
     restrictions: ``str`` or ``List[str]``, optional, default: None
@@ -537,13 +537,13 @@ def compo_plot(
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     left: `float`, optional (default: `0.15`)
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+        This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.3`)
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+        This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
-        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+        This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
@@ -643,13 +643,13 @@ def violin(
         Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
         This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
     panel_size: ``Tuple[float, float]``, optional, default: ``(8, 0.5)``
-        The size (width, height) in inches of each violin subplot.
+        The size (width, height) in inches of each violin panel.
     left: ``float``, optional, default: ``0.15``
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+        This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: ``float``, optional, default: ``0.15``
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: ``float``, optional, default: ``0.1``
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+        This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     ylabel: ``str``, optional, default: ``None``
         Y-axis label. No label to show if ``None``.
     return_fig: ``bool``, optional, default: ``False``
@@ -1323,15 +1323,15 @@ def qcviolin(
     n_violin_per_panel: ``int``, optional, default: 8
         Number of violin plots (samples) shown in one panel.
     panel_size: `tuple`, optional (default: `(6, 4)`)
-        The subplot size (width, height) in inches.
+        The panel size (width, height) in inches.
     left: `float`, optional (default: `0.2`)
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+        This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.4`)
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+        This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
-        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+        This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
@@ -1748,13 +1748,13 @@ def doublet_plot(
     panel_size: `tuple`, optional (default: `(4, 3)`)
         The plot size (width, height) in inches.
     left: `float`, optional (default: `0.15`)
-        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+        This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: `float`, optional (default: `0.15`)
-        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+        This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.3`)
-        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+        This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     hspace: `float`, optional (defualt: `0.15`)
-        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+        This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
