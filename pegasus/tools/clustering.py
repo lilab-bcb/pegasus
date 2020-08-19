@@ -2,14 +2,10 @@ import time
 import numpy as np
 import pandas as pd
 from pegasusio import MultimodalData
-from joblib import effective_n_jobs
 from natsort import natsorted
 
-import ctypes
-import ctypes.util
-
 from sklearn.cluster import KMeans
-from typing import List
+from typing import List, Optional
 
 from pegasus.tools import construct_graph
 
@@ -19,6 +15,7 @@ logger = logging.getLogger(__name__)
 from pegasusio import timer
 
 
+@timer(logger=logger)
 def louvain(
     data: MultimodalData,
     rep: str = "pca",
@@ -62,8 +59,6 @@ def louvain(
     except ImportError:
         print("Need louvain! Try 'pip install louvain-github'.")
 
-    start = time.perf_counter()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -80,15 +75,11 @@ def louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Louvain clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Louvain clustering is done. Get {cluster} clusters.")
 
 
+@timer(logger=logger)
 def leiden(
     data: MultimodalData,
     rep: str = "pca",
@@ -136,8 +127,6 @@ def leiden(
     except ImportError:
         print("Need leidenalg! Try 'pip install leidenalg'.")
 
-    start = time.perf_counter()
-
     rep_key = "W_" + rep
     if rep_key not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -158,36 +147,28 @@ def leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Leiden clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Leiden clustering is done. Get {cluster} clusters.")
 
 
-@timer(logger=logger)
 def partition_cells_by_kmeans(
-    data: MultimodalData,
-    rep: str,
-    n_jobs: int,
+    X: np.ndarray,
     n_clusters: int,
     n_clusters2: int,
     n_init: int,
     random_state: int,
+    min_avg_cells_per_final_cluster: Optional[int] = 10,
 ) -> List[int]:
 
-    rep_key = "X_" + rep
-    X = data.obsm[rep_key].astype("float64")
+    n_clusters = min(n_clusters, max(X.shape[0] // min_avg_cells_per_final_cluster, 1))
+    if n_clusters == 1:
+        return np.zeros(X.shape[0], dtype = np.int32)
 
     kmeans_params = {
         'n_clusters': n_clusters,
         'n_init': n_init,
         'random_state': random_state,
     }
-    if n_jobs != -1:
-        kmeans_params['n_jobs'] = effective_n_jobs(n_jobs)
 
     km = KMeans(**kmeans_params)
     km.fit(X)
@@ -198,15 +179,19 @@ def partition_cells_by_kmeans(
     base_sum = 0
     for i in range(n_clusters):
         idx = coarse == i
-        nc = min(n_clusters2, idx.sum())
-        km.set_params(n_clusters=nc)
-        km.fit(X[idx, :])
-        labels[idx] = base_sum + km.labels_
+        nc = min(n_clusters2, max(idx.sum() // min_avg_cells_per_final_cluster, 1))
+        if nc == 1:
+            labels[idx] = base_sum
+        else:
+            km.set_params(n_clusters=nc)
+            km.fit(X[idx, :])
+            labels[idx] = base_sum + km.labels_
         base_sum += nc
 
     return labels
 
 
+@timer(logger=logger)
 def spectral_louvain(
     data: MultimodalData,
     rep: str = "pca",
@@ -215,7 +200,6 @@ def spectral_louvain(
     n_clusters: int = 30,
     n_clusters2: int = 50,
     n_init: int = 10,
-    n_jobs: int = -1,
     random_state: int = 0,
     class_label: str = "spectral_louvain_labels",
 ) -> None:
@@ -244,9 +228,6 @@ def spectral_louvain(
     n_init: ``int``, optional, default: ``10``
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
 
-    n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
-
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
 
@@ -270,8 +251,6 @@ def spectral_louvain(
     except ImportError:
         print("Need louvain! Try 'pip install louvain-github'.")
 
-    start = time.perf_counter()
-
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning(
             "{} is not calculated, switch to pca instead.".format(rep_kmeans)
@@ -283,7 +262,7 @@ def spectral_louvain(
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
-        data, rep_kmeans, n_jobs, n_clusters, n_clusters2, n_init, random_state,
+        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, random_state,
     )
 
     W = data.uns["W_" + rep]
@@ -304,15 +283,11 @@ def spectral_louvain(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Spectral Louvain clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Spectral Louvain clustering is done. Get {cluster} clusters.")
 
 
+@timer(logger=logger)
 def spectral_leiden(
     data: MultimodalData,
     rep: str = "pca",
@@ -321,7 +296,6 @@ def spectral_leiden(
     n_clusters: int = 30,
     n_clusters2: int = 50,
     n_init: int = 10,
-    n_jobs: int = -1,
     random_state: int = 0,
     class_label: str = "spectral_leiden_labels",
 ) -> None:
@@ -350,9 +324,6 @@ def spectral_leiden(
     n_init: ``int``, optional, default: ``10``
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
 
-    n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
-
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
 
@@ -376,8 +347,6 @@ def spectral_leiden(
     except ImportError:
         print("Need leidenalg! Try 'pip install leidenalg'.")
 
-    start = time.perf_counter()
-
     if "X_" + rep_kmeans not in data.obsm.keys():
         logger.warning(
             "{} is not calculated, switch to pca instead.".format(rep_kmeans)
@@ -389,7 +358,7 @@ def spectral_leiden(
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
-        data, rep_kmeans, n_jobs, n_clusters, n_clusters2, n_init, random_state,
+        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, random_state,
     )
 
     W = data.uns["W_" + rep]
@@ -410,13 +379,8 @@ def spectral_leiden(
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
-    end = time.perf_counter()
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(
-        "Spectral Leiden clustering is done. Get {cluster} clusters. Time spent = {duration:.2f}s.".format(
-            cluster=n_clusters, duration=end - start
-        )
-    )
+    logger.info(f"Spectral Leiden clustering is done. Get {cluster} clusters.")
 
 
 def cluster(
@@ -431,7 +395,6 @@ def cluster(
     n_clusters: int = 30,
     n_clusters2: int = 50,
     n_init: int = 10,
-    n_jobs: int = -1,
 ) -> None:
     """Cluster the data using the chosen algorithm. Candidates are louvain, leiden, spectral_louvain and spectral_leiden. If data have < 1000 cells and there are clusters with sizes of 1, resolution is automatically reduced until no cluster of size 1 appears.
 
@@ -470,9 +433,6 @@ def cluster(
     n_init: ``int``, optional, default: ``10``
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
 
-    n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
-
     Returns
     -------
     ``None``
@@ -507,7 +467,6 @@ def cluster(
                 "n_clusters": n_clusters,
                 "n_clusters2": n_clusters2,
                 "n_init": n_init,
-                "n_jobs": n_jobs,
             }
         )
 

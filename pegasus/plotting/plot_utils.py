@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 from collections import namedtuple
 import matplotlib.pyplot as plt
-from typing import List, Tuple
+from typing import List, Union, Tuple
 
 
 def _transform_basis(basis: str) -> str:
@@ -272,26 +273,26 @@ godsnot_64 = [
 ]
 
 
-def _get_palettes(n_labels: int, with_background: bool = False, show_background: bool = False):
+def _get_palette(n_labels: int, with_background: bool = False, show_background: bool = False):
     if with_background:
         n_labels -= 1
 
     if n_labels <= 20:
-        palettes = pegasus_20
+        palette = pegasus_20
     elif n_labels <= 26:
-        palettes = zeileis_26
+        palette = zeileis_26
     else:
         assert n_labels <= 64
-        palettes = godsnot_64
+        palette = godsnot_64
 
     if with_background:
-        palettes = np.array(
-            ["gainsboro" if show_background else "white"] + palettes[:n_labels]
+        palette = np.array(
+            ["gainsboro" if show_background else "white"] + palette[:n_labels]
         )
     else:
-        palettes = np.array(palettes[:n_labels])
+        palette = np.array(palette[:n_labels])
 
-    return palettes
+    return palette
 
 def _plot_cluster_labels_in_heatmap(ax, ids, orientation):
     pos_acc = 0
@@ -327,60 +328,123 @@ def _plot_cluster_labels_in_heatmap(ax, ids, orientation):
 
 Restriction = namedtuple("Restriction", ["negation", "values"])
 
-
 class RestrictionParser:
     def __init__(self, restrictions: List[str]):
-        self.restrs = {}
+        self.restrs = {} # default restriction
+        self.attr_restrs = {} # restriction for each attribute
+        self.selected = None # True if satisfy all default restrictions
 
         if restrictions is None:
             return None
 
+        if isinstance(restrictions, str):
+            restrictions = [restrictions]
+
         for restr_str in restrictions:
-            attr, value_str = restr_str.split(":")
-            negation = False
-            if value_str[0] == "~":
-                negation = True
-                value_str = value_str[1:]
-            self.restrs[attr] = Restriction(negation=negation, values=value_str.split(","))
-
-
-    def contains(self, attr: str) -> bool:
-        return attr in self.restrs
-
-    def get_attrs(self) -> List[str]:
-        return self.restrs.keys()
-
-    def get_satisfied(self, data: "AnnData") -> List[bool]:
-        selected = np.ones(data.shape[0], dtype=bool)
-        for attr, restr in self.restrs.items():
-            labels = data.obs[attr].astype(str)
-            if restr.negation:
-                selected = selected & (~np.isin(labels, restr.values))
+            fields = restr_str.split(":")
+            n_fields = len(fields)
+            assert n_fields == 2 or n_fields == 3
+            if n_fields == 2:
+                # default
+                self.restrs[fields[0]] = self._parse_restriction(fields[1])
             else:
-                selected = selected & np.isin(labels, restr.values)
+                restr_dict = self.attr_restrs.get(fields[0], None)
+                if restr_dict is None:
+                    restr_dict = {}
+                    self.attr_restrs[fields[0]] = restr_dict
+                if fields[1] == ".":
+                    fields[1] = fields[0]
+                restr_dict[fields[1]] = self._parse_restriction(fields[2])
+
+    def _parse_restriction(self, value_str: str) -> Restriction:
+        negation = False
+        if value_str[0] == "~":
+            negation = True
+            value_str = value_str[1:]
+        return Restriction(negation=negation, values=value_str.split(","))
+
+    def _calc_satisfied(self, data: "MultimodalData, UnimodalData or anndata.AnnData", restr_dict: dict, selected: List[bool]):
+        for attr, restr in restr_dict.items():
+            labels = data.obs[attr].values
+            from pandas.api.types import is_numeric_dtype
+            if is_numeric_dtype(labels):
+                labels = labels.astype(str)
+            if restr.negation:
+                selected[:] = selected & (~np.isin(labels, restr.values))
+            else:
+                selected[:] = selected & np.isin(labels, restr.values)
+
+    def calc_default(self, data: "MultimodalData, UnimodalData or anndata.AnnData") -> None:
+        self.selected = np.ones(data.shape[0], dtype = bool)
+        self._calc_satisfied(data, self.restrs, self.selected)
+
+    def get_satisfied(self, data: "MultimodalData, UnimodalData or anndata.AnnData", attr: str = None) -> List[bool]:
+        restr_dict = None if attr is None else self.attr_restrs.get(attr, None)
+        if restr_dict is None:
+            return self.selected
+        selected = self.selected.copy()
+        self._calc_satisfied(data, restr_dict, selected)
         return selected
 
-    def get_unsatisfied(self, data: "AnnData", apply_to_all: bool) -> List[bool]:
-        unsel = np.zeros(data.shape[0], dtype=bool)
-        if apply_to_all:
-            for attr, restr in self.restrs.items():
-                labels = data.obs[attr].astype(str)
-                if restr.negation:
-                    unsel = unsel | np.isin(labels, restr.values)
-                else:
-                    unsel = unsel | (~np.isin(labels, restr.values))
-        return unsel
+    def next_category(self, groups: pd.Categorical) -> Tuple[str, List[str]]:
+    # Used only for categories option in scatter_groups
+        for attr, restr in self.restrs.items():
+            if restr.negation:
+                yield attr, ~np.isin(groups, restr.values)
+            else:
+                yield attr, np.isin(groups, restr.values)
 
-    def get_satisfied_per_attr(self, labels: List[str], attr: str) -> List[bool]:
-        one_restr = self.restrs[attr]
-        if one_restr.negation:
-            return ~np.isin(labels, rest_vec)
-        else:
-            return np.isin(labels, rest_vec)
 
-    def get_unsatisfied_per_attr(self, labels: List[str], attr: str) -> List[bool]:
-        one_restr = self.restrs[attr]
-        if one_restr.negation:
-            return np.isin(labels, rest_vec)
-        else:
-            return ~np.isin(labels, rest_vec)
+class DictWithDefault:
+    ### Used for parsing mito prefix
+    def __init__(self, strlist: Union[str, List[str]]):
+        self.mapping = {}
+        self.default = None
+
+        if strlist is None:
+            return None
+
+        if isinstance(strlist, str):
+            strlist = [strlist]
+
+        for string in strlist:
+            if string.find(':') >= 0:
+                key, values = string.split(':')
+                self.mapping[key] = values.split(',')
+            else:
+                self.default = string.split(',')
+
+    def get(self, key: str, squeeze: bool = False) -> str:
+        values = self.mapping.get(key, self.default)
+        if squeeze and (values is not None) and len(values) == 1:
+            values = values[0]
+        return values
+
+
+def _generate_categories(values: Union[pd.Categorical, np.ndarray], selected: List[bool]) -> Tuple[pd.Categorical, bool]:
+    from pandas.api.types import is_categorical_dtype
+    with_background = selected.sum() < selected.size
+    if is_categorical_dtype(values):
+        if not with_background:
+            return values, with_background
+        categories = [''] + values.categories.tolist()
+        codes = values.codes + 1
+        codes[~selected] = 0
+        return pd.Categorical.from_codes(codes, categories = categories), with_background
+    else:
+        labels = values.astype(str)
+        labels[~selected] = ''
+        from natsort import natsorted
+        return pd.Categorical(labels, categories=natsorted(np.unique(labels))), with_background
+
+
+def _plot_corners(ax: "matplotlib.axes.Axes", corners: np.ndarray, marker_size: float) -> None:
+    ax.scatter(
+        corners[:, 0],
+        corners[:, 1],
+        c="white",
+        s=marker_size,
+        marker=".",
+        edgecolors="none",
+        rasterized=True,
+    )

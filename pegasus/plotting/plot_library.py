@@ -4,8 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from scipy.sparse import issparse
-from pandas.api.types import is_numeric_dtype, is_list_like, is_categorical
-
+from pandas.api.types import is_numeric_dtype, is_categorical_dtype, is_list_like
 from scipy.stats import zscore
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
@@ -20,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasus.tools import X_from_rep
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palettes, _plot_cluster_labels_in_heatmap, RestrictionParser
+from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palette, _plot_cluster_labels_in_heatmap, RestrictionParser, DictWithDefault, _generate_categories, _plot_corners
 
 
 def scatter(
@@ -28,14 +27,13 @@ def scatter(
     attrs: Union[str, List[str]],
     basis: Optional[str] = "umap",
     matkey: Optional[str] = None,
-    alpha: Optional[Union[float, List[float]]] = 1.0,
-    legend_loc: Optional[str] = "right margin",
-    legend_ncol: Optional[str] = None,
-    restrictions: Optional[List[str]] = None,
-    apply_to_all: Optional[bool] = True,
+    restrictions: Optional[Union[str, List[str]]] = None,
     show_background: Optional[bool] = False,
-    palettes: Optional[str] = None,
-    cmap: Optional[str] = "YlOrRd",
+    alpha: Optional[Union[float, List[float]]] = 1.0,
+    legend_loc: Optional[Union[str, List[str]]] = "right margin",
+    legend_ncol: Optional[str] = None,
+    palettes: Optional[Union[str, List[str]]] = None,
+    cmaps: Optional[Union[str, List[str]]] = "YlOrRd",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     nrows: Optional[int] = None,
@@ -61,26 +59,24 @@ def scatter(
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
-    alpha: ``float`` or ``List[float], optional, default: ``1.0``
-        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
-    legend_loc: ``str``, optional, default: ``right margin``
-        Legend location. Can be either "right margin" or "on data".
-    legend_ncol: ``str``, optional, default: None
-        Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
-    restrictions: ``List[str]``, optional, default: None
-        A list of restrictions to subset data for plotting. Each restriction takes the format of 'attr:value,value', or 'attr:~value,value...", where '~' refers to exclude values.
-    apply_to_all: ``bool``, optional, default: True
-        If restrictions apply to all subplots or each restriction corresponds to each subplot.
+    restrictions: ``str`` or ``List[str]``, optional, default: None
+        A list of restrictions to subset data for plotting. There are two types of restrictions: global restriction and attribute-specific restriction. Global restriction appiles to all attributes in ``attrs`` and takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows). Attribute-specific restriction takes the format of 'attr:key:value,value...', or 'attr:key:~value,value...'. It only applies to one attribute 'attr'. If 'attr' and 'key' are the same, one can use '.' to replace 'key' (e.g. ``cluster_labels:.:value1,value2``).
     show_background: ``bool``, optional, default: False
         Only applicable if `restrictions` is set. By default, only data points selected are shown. If show_background is True, data points that are not selected will also be shown.
-    palettes: ``str``, optional, default: None
-        Only used for plotting categorical attributes. palettes is a comma-separated string representing colors for each category. For example, palettes="black,blue,red,...,yellow".
-    cmap: ``str``, optional, default: ``YlOrRd``
-        Only used for plotting continuous attributes. Set colormap for the attributes.
+    alpha: ``float`` or ``List[float]``, optional, default: ``1.0``
+        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
+    legend_loc: ``str`` or ``List[str]``, optional, default: ``right margin``
+        Legend location. Can be either "right margin" or "on data". If a list is provided, set 'legend_loc' for each attribute in 'attrs' separately.
+    legend_ncol: ``str``, optional, default: None
+        Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
+    palettes: ``str`` or ``List[str]``, optional, default: None
+        Used for setting colors for every categories in categorical attributes. Each string in ``palettes`` takes the format of 'attr:color1,color2,...,colorn'. 'attr' is the categorical attribute and 'color1' - 'colorn' are the colors for each category in 'attr' (e.g. 'cluster_labels:black,blue,red,...,yellow'). If there is only one categorical attribute in 'attrs', ``palletes`` can be set as a single string and the 'attr' keyword can be omitted (e.g. "blue,yellow,red").
+    cmaps: ``str`` or ``List[str]``, optional, default: ``YlOrRd``
+        Used for setting colormap for numeric attributes. Each string in ``cmaps`` takes the format of 'colormap' or 'attr:colormap'. 'colormap' sets the default colormap for all numeric attributes. 'attr:colormap' overwrites attribute 'attr's colormap as 'colormap'.
     vmin: ``float``, optional, default: None
-        Minimum value to show on a continuous scatter plot (feature plot).
+        Minimum value to show on a numeric scatter plot (feature plot).
     vmax: ``float``, optional, default: None
-        Maximum value to show on a continuous scatter plot (feature plot).
+        Maximum value to show on a numeric scatter plot (feature plot).
     nrows: ``int``, optional, default: None
         Number of rows in the figure. If not set, pegasus will figure it out automatically.
     ncols: ``int``, optional, default: None
@@ -114,9 +110,7 @@ def scatter(
     if not is_list_like(attrs):
         attrs = [attrs]
     nattrs = len(attrs)
-    if not is_list_like(alpha):
-        alpha = [alpha] * nattrs
-
+    
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
 
@@ -127,15 +121,27 @@ def scatter(
     x = data.obsm[f"X_{basis}"][:, 0]
     y = data.obsm[f"X_{basis}"][:, 1]
 
+    # four corners of the plot
+    corners = np.array(np.meshgrid([x.min(), x.max()], [y.min(), y.max()])).T.reshape(-1, 2)
+
+
     basis = _transform_basis(basis)
     marker_size = _get_marker_size(x.size)
     nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
-    restr_obj = RestrictionParser(restrictions)
-    unsel = restr_obj.get_unsatisfied(data, apply_to_all)
 
-    legend_fontsize = 5 if legend_loc == 'on data' else 10
+    if not is_list_like(alpha):
+        alpha = [alpha] * nattrs
+
+    if not is_list_like(legend_loc):
+        legend_loc = [legend_loc] * nattrs
+    legend_fontsize = [5 if x == 'on data' else 10 for x in legend_loc]
+
+    palettes = DictWithDefault(palettes)
+    cmaps = DictWithDefault(cmaps)
+    restr_obj = RestrictionParser(restrictions)
+    restr_obj.calc_default(data)
 
     for i in range(nrows):
         for j in range(ncols):
@@ -145,81 +151,93 @@ def scatter(
             ax.set_yticks([])
 
             if i * ncols + j < nattrs:
-                attr = attrs[i * ncols + j]
-                alpha_value = alpha[i * ncols + j]
+                pos = i * ncols + j
+                attr = attrs[pos]
 
                 if attr in data.obs:
                     values = data.obs[attr].values
                 else:
                     try:
-                        pos = data.var_names.get_loc(attr)
+                        loc = data.var_names.get_loc(attr)
                     except KeyError:
                         raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
-                    values = data.X[:, pos].toarray().ravel() if issparse(data.X) else data.X[:, pos]
+                    values = data.X[:, loc].toarray().ravel() if issparse(data.X) else data.X[:, loc]
+
+                selected = restr_obj.get_satisfied(data, attr)
 
                 if is_numeric_dtype(values):
-                    assert apply_to_all or (not restr_obj.contains(attr))
-                    values[unsel] = 0 # 0 is good for both integer and float data types
+                    cmap = cmaps.get(attr, squeeze = True)
+                    if cmap is None:
+                        raise KeyError(f"Please set colormap for attribute {attr} or set a default colormap!")
+
+                    _plot_corners(ax, corners, marker_size)
 
                     img = ax.scatter(
-                        x,
-                        y,
-                        c=values,
+                        x[selected],
+                        y[selected],
+                        c=values[selected],
                         s=marker_size,
                         marker=".",
-                        alpha=alpha_value,
+                        alpha=alpha[pos],
                         edgecolors="none",
                         cmap=cmap,
                         vmin=vmin,
                         vmax=vmax,
                         rasterized=True,
                     )
+
                     left, bottom, width, height = ax.get_position().bounds
                     rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
                     ax_colorbar = fig.add_axes(rect)
                     fig.colorbar(img, cax=ax_colorbar)
 
                 else:
-                    labels = values.astype(str)
-                    idx = restr_obj.get_unsatisfied_per_attr(labels, attr) if (not apply_to_all) and restr_obj.contains(attr) else unsel
-                    labels[idx] = ""
-                    labels = pd.Categorical(labels, categories=natsorted(np.unique(labels)))
+                    labels, with_background = _generate_categories(values, restr_obj.get_satisfied(data, attr))
                     label_size = labels.categories.size
 
-                    palettes_list = _get_palettes(label_size, with_background=idx.sum() > 0, show_background=show_background) if palettes is None else np.array(palettes.split(","))
+                    palette = palettes.get(attr)
+                    if palette is None:
+                        palette = _get_palette(label_size, with_background=with_background, show_background=show_background)
+                    elif with_background:
+                        palette = ["gainsboro" if show_background else "white"] + list(palette)
 
                     text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
-                        scatter_kwargs = {"marker": ".", "alpha": alpha_value, "edgecolors": "none", "rasterized": True}
+                        if idx.sum() > 0:
+                            scatter_kwargs = {"marker": ".", "alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
 
-                        if legend_loc != "on data":
-                            scatter_kwargs["label"] = cat
-                        else:
-                            text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
+                            if cat != "":
+                                if legend_loc[pos] != "on data":
+                                    scatter_kwargs["label"] = cat
+                                else:
+                                    text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
 
-                        ax.scatter(
-                            x[idx],
-                            y[idx],
-                            c=palettes_list[k],
-                            s=marker_size,
-                            **scatter_kwargs,
-                        )
+                            if cat != "" or (cat == "" and show_background):
+                                ax.scatter(
+                                    x[idx],
+                                    y[idx],
+                                    c=palette[k],
+                                    s=marker_size,
+                                    **scatter_kwargs,
+                                )
+                            else:
+                                _plot_corners(ax, corners, marker_size)
 
-                    if legend_loc == "right margin":
+                    if legend_loc[pos] == "right margin":
                         legend = ax.legend(
                             loc="center left",
                             bbox_to_anchor=(1, 0.5),
                             frameon=False,
-                            fontsize=legend_fontsize,
+                            fontsize=legend_fontsize[pos],
                             ncol=_get_legend_ncol(label_size, legend_ncol),
                         )
                         for handle in legend.legendHandles:
                             handle.set_sizes([300.0])
-                    elif legend_loc == "on data":
+                    elif legend_loc[pos] == "on data":
                         texts = []
                         for px, py, txt in text_list:
-                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, fontweight = "bold", ha = "center", va = "center"))
+                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize[pos], fontweight = "bold", ha = "center", va = "center"))
                         # from adjustText import adjust_text
                         # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
@@ -246,12 +264,13 @@ def scatter_groups(
     groupby: str,
     basis: Optional[str] = "umap",
     matkey: Optional[str] = None,
+    restrictions: Optional[Union[str, List[str]]] = None,
+    show_full: Optional[bool] = True,
+    categories: Optional[List[str]] = None,
     alpha: Optional[float] = 1.0,
     legend_loc: Optional[str] = "right margin",
     legend_ncol: Optional[str] = None,
-    show_full: Optional[bool] = True,
-    categories: Optional[List[str]] = None,
-    palettes: Optional[List[str]] = None,
+    palette: Optional[str] = None,
     cmap: Optional[str] = "YlOrRd",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
@@ -280,24 +299,26 @@ def scatter_groups(
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
-    alpha: ``float`` or ``List[float], optional, default: ``1.0``
-        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
+    restrictions: ``str`` or ``List[str]``, optional, default: None
+        A list of restrictions to subset data for plotting. Each restriction takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows).
+    show_full: ``bool``, optional, default: True
+        Show the scatter plot with all categories in 'groupby' as the first plot.
+    categories: ``List[str]``, optional, default: None
+        Redefine group structure based on attribute 'groupby'. If 'categories' is not None, each string in the list takes the format of 'category_name:value,value', or 'category_name:~value,value...", where 'category_name' refers to new category name, 'value' refers to one of the category in 'groupby' and '~' refers to exclude values.
+    alpha: ``float``, optional, default: ``1.0``
+        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque).
     legend_loc: ``str``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data".
     legend_ncol: ``str``, optional, default: None
         Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
-    show_full: ``bool``, optional, default: True
-        Show the scatter plot with all categories in 'group' as the first plot.
-    categories: ``List[str]``, optional, default: None
-        Redefine group structure based on attribute 'group'. If 'categories' is not None, each string in the list takes the format of 'category_name:value,value', or 'category_name:~value,value...", where 'category_name' refers to new category name, 'value' refers to one of the category in 'group and ~' refers to exclude values.
-    palettes: ``str``, optional, default: None
-        Only used for plotting categorical attributes. palettes is a comma-separated string representing colors for each category. For example, palettes="black,blue,red,...,yellow".
+    palette: ``str``, optional, default: None
+        Used for setting colors for one categorical attribute (e.g. "black,blue,red,...,yellow").
     cmap: ``str``, optional, default: ``YlOrRd``
-        Only used for plotting continuous attributes. Set colormap for the attributes.
+        Used for setting colormap for one numeric attribute.
     vmin: ``float``, optional, default: None
-        Minimum value to show on a continuous scatter plot (feature plot).
+        Minimum value to show on a numeric scatter plot (feature plot).
     vmax: ``float``, optional, default: None
-        Maximum value to show on a continuous scatter plot (feature plot).
+        Maximum value to show on a numeric scatter plot (feature plot).
     nrows: ``int``, optional, default: None
         Number of rows in the figure. If not set, pegasus will figure it out automatically.
     ncols: ``int``, optional, default: None
@@ -325,8 +346,8 @@ def scatter_groups(
 
     Examples
     --------
-    >>> pg.scatter_groups(data, attr='louvain_labels', group='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
-    >>> pg.scatter_groups(data, attr='anno', group='Channel', basis='umap', categories=['new_cat1:channel1,channel2', 'new_cat2:channel3'])
+    >>> pg.scatter_groups(data, attr='louvain_labels', groupby='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
+    >>> pg.scatter_groups(data, attr='anno', groupby='Channel', basis='umap', categories=['new_cat1:channel1,channel2', 'new_cat2:channel3'])
     """
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
@@ -337,48 +358,63 @@ def scatter_groups(
     x = data.obsm[f"X_{basis}"][:, 0]
     y = data.obsm[f"X_{basis}"][:, 1]
 
+    # four corners of the plot
+    corners = np.array(np.meshgrid([x.min(), x.max()], [y.min(), y.max()])).T.reshape(-1, 2)
+
     basis = _transform_basis(basis)
     marker_size = _get_marker_size(x.size)
 
+    if attr in data.obs:
+        values = data.obs[attr].values
+    else:
+        try:
+            loc = data.var_names.get_loc(attr)
+        except KeyError:
+            raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
+        values = data.X[:, loc].toarray().ravel() if issparse(data.X) else data.X[:, loc]
+
+    is_cat = is_categorical_dtype(values)
+    if (not is_cat) and (not is_numeric_dtype(values)):
+        values = pd.Categorical(values, categories=natsorted(np.unique(values)))
+        is_cat = True
+
     assert groupby in data.obs
     groups = data.obs[groupby].values
-    if not is_categorical(groups):
+    if not is_categorical_dtype(groups):
         groups = pd.Categorical(groups, categories=natsorted(np.unique(groups)))
+
+
+    restr_obj = RestrictionParser(restrictions)
+    restr_obj.calc_default(data)
+    selected = restr_obj.get_satisfied(data)
+    nsel = selected.sum()
+
+    if nsel < data.shape[0]:
+        x = x[selected]
+        y = y[selected]        
+        values = values[selected]
+        groups = groups[selected]
 
     df_g = pd.DataFrame()
     if show_full:
-        df_g["All"] = np.ones(data.shape[0], dtype=bool)
+        df_g["All"] = np.ones(nsel, dtype=bool)
     if categories is None:
         for cat in groups.categories:
             df_g[cat] = groups == cat
     else:
         cat_obj = RestrictionParser(categories)
-        for key in restr_obj.get_attrs():
-            df_g[key] = restr_ojb.get_satisfied_per_attr(groups, key)
+        for cat, idx in cat_obj.next_category(groups):
+            df_g[cat] = idx
 
     nrows, ncols = _get_nrows_and_ncols(df_g.shape[1], nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
     legend_fontsize = 5 if legend_loc == 'on data' else 10
 
-    if attr in data.obs:
-        values = data.obs[attr].values
-    else:
-        try:
-            pos = data.var_names.get_loc(attr)
-        except KeyError:
-            raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
-        values = data.X[:, pos].toarray().ravel() if issparse(data.X) else data.X[:, pos]
-
-    is_cat = is_categorical(values)
-    if (not is_cat) and (not is_numeric_dtype(values)):
-        values = pd.Categorical(values, categories=natsorted(np.unique(values)))
-        is_cat = True
-
     if is_cat:
         labels = values
         label_size = labels.categories.size
-        palettes = _get_palettes(label_size) if palettes is None else np.array(palettes.split(","))
+        palette = _get_palette(label_size) if palette is None else np.array(palette.split(","))
         legend_ncol = _get_legend_ncol(label_size, legend_ncol)
 
     for i in range(nrows):
@@ -394,20 +430,22 @@ def scatter_groups(
                     text_list = []
                     for k, cat in enumerate(labels.categories):
                         idx = np.logical_and(df_g.iloc[:, gid].values, labels == cat)
-                        scatter_kwargs = {"marker": ".", "alpha": alpha, "edgecolors": "none", "rasterized": True}
+                        _plot_corners(ax, corners, marker_size)
+                        if idx.sum() > 0:
+                            scatter_kwargs = {"marker": ".", "alpha": alpha, "edgecolors": "none", "rasterized": True}
 
-                        if legend_loc != "on data":
-                            scatter_kwargs["label"] = str(cat)
-                        else:
-                            text_list.append((np.median(x[idx]), np.median(y[idx]), str(cat)))
+                            if legend_loc != "on data":
+                                scatter_kwargs["label"] = str(cat)
+                            else:
+                                text_list.append((np.median(x[idx]), np.median(y[idx]), str(cat)))
 
-                        ax.scatter(
-                            x[idx],
-                            y[idx],
-                            c=palettes[k],
-                            s=marker_size,
-                            **scatter_kwargs,
-                        )
+                            ax.scatter(
+                                x[idx],
+                                y[idx],
+                                c=palette[k],
+                                s=marker_size,
+                                **scatter_kwargs,
+                            )
 
                     if legend_loc == "right margin":
                         legend = ax.legend(
@@ -424,6 +462,8 @@ def scatter_groups(
                         for px, py, txt in text_list:
                             texts.append(ax.text(px, py, txt, fontsize=legend_fontsize, fontweight = "bold", ha = "center", va = "center"))
                 else:
+                    _plot_corners(ax, corners, marker_size)
+
                     idx_g = df_g.iloc[:, gid].values
                     img = ax.scatter(
                         x[idx_g],
@@ -464,7 +504,7 @@ def compo_plot(
     groupby: str,
     condition: str,
     style: Optional[str] = "frequency",
-    restrictions: Optional[List[str]] = None,
+    restrictions: Optional[Union[str, List[str]]] = None,
     xlabel: Optional[str] = None,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     left: Optional[float] = 0.15,
@@ -490,8 +530,8 @@ def compo_plot(
         A categorical variable in data.obs that is used to calculate frequency within each category defined by 'groupby', e.g. Cell type.
     style: `str`, optional (default: `frequency`)
         Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each 'condition' within each category in 'groupby' (stacked), the `normalized` style shows for each category in 'groupby' the percentage of cells that are also in each 'condition' over all cells that are in the same 'condition' (not stacked).
-    restrictions: `list[str]`, optional (default: None)
-        A list of restrictions to subset data for plotting. Each restriction takes the format of 'attr:value,value', or 'attr:~value,value...", where '~' refers to exclude values.
+    restrictions: ``str`` or ``List[str]``, optional, default: None
+        A list of restrictions to subset data for plotting. Each restriction takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows).
     xlabel: `str`, optional (default None)
         Label for the horizontal axis. If None, use 'groupby'.
     panel_size: `tuple`, optional (default: `(6, 4)`)
@@ -525,6 +565,7 @@ def compo_plot(
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace) # default nrows = 1 & ncols = 1
 
     restr_obj = RestrictionParser(restrictions)
+    restr_obj.calc_default(data)
     selected = restr_obj.get_satisfied(data)
 
     df = pd.crosstab(data.obs.loc[selected, groupby], data.obs.loc[selected, condition])
@@ -542,7 +583,7 @@ def compo_plot(
         kind = "bar",
         stacked = style == "frequency",
         legend = False,
-        color = _get_palettes(df.shape[1]),
+        color = _get_palette(df.shape[1]),
         ax = ax,
     )
 
@@ -783,10 +824,10 @@ def heatmap(
         df.drop(columns=['cluster_name'], inplace=True)
 
         cell_colors = np.zeros(df.shape[0], dtype=object)
-        palettes = _get_palettes(cluster_ids.categories.size)
+        palette = _get_palette(cluster_ids.categories.size)
         cluster_ids = cluster_ids[idx]
         for k, cat in enumerate(cluster_ids.categories):
-            cell_colors[np.isin(cluster_ids, cat)] = palettes[k]
+            cell_colors[np.isin(cluster_ids, cat)] = palette[k]
 
     if not switch_axes:
         cg = sns.clustermap(
@@ -1678,3 +1719,130 @@ def ridgeplot(
     sns.reset_orig()
 
     return g.fig if return_fig else None
+
+
+
+def doublet_plot(
+    scores: List[float],
+    codes: List[int],
+    code_names: Optional[List[str]] = ["singlet", "singlet2", "doublet"],
+    panel_size: Optional[Tuple[float, float]] = (4, 3),
+    left: Optional[float] = 0.2,
+    bottom: Optional[float] = 0.2,
+    wspace: Optional[float] = 0.2,
+    hspace: Optional[float] = 0.2,
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Generate KDE for doublet predictions
+
+    Parameters
+    ----------
+    scores: `List[float]`,
+        Doublet scores.
+    codes: `List[int]`
+        Doublet type codes.
+    code_names: `List[str]`, optional (default: `["singlet", "singlet2", "doublet"]`)
+        Doublet type names.
+    panel_size: `tuple`, optional (default: `(4, 3)`)
+        The plot size (width, height) in inches.
+    left: `float`, optional (default: `0.15`)
+        This parameter sets the figure's left margin as a fraction of subplot's width (left * panel_size[0]).
+    bottom: `float`, optional (default: `0.15`)
+        This parameter sets the figure's bottom margin as a fraction of subplot's height (bottom * panel_size[1]).
+    wspace: `float`, optional (default: `0.3`)
+        This parameter sets the width between subplots and also the figure's right margin as a fraction of subplot's width (wspace * panel_size[0]).
+    hspace: `float`, optional (defualt: `0.15`)
+        This parameter sets the height between subplots and also the figure's top margin as a fraction of subplot's height (hspace * panel_size[1]).
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    """
+    from scipy.stats import gaussian_kde
+
+    # constants
+    alpha = 0.7
+    eps = 1e-6
+
+    fig, axes = _get_subplot_layouts(nrows = 2, ncols = 2, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, sharex=False, sharey=False)
+
+    # Panel 1, KDE of scores
+    ax = axes[0, 0]
+    x = np.linspace(scores.min() - 0.05, scores.max() + 0.05, 200) # generate x coordinates
+    kde = gaussian_kde(scores)
+    y = kde(x)
+    ax.plot(x, y, '-', c='k')
+    ax.set_ylim(bottom = 0.0)
+    ax.set_xlabel('doublet score')
+    ax.set_ylabel('density')
+
+    # Panel 2, KDE of log-transformed scores
+    ax = axes[0, 1]
+    scores = np.log(scores)
+    x = np.linspace(scores.min() - 0.5, scores.max() + 0.5, 200) # generate x coordinates
+    kde = gaussian_kde(scores)
+    y = kde(x)
+    ax.plot(x, y, '-', c='k')
+    ax.set_ylim(bottom = 0.0)
+    ax.set_xlabel('log doublet score')
+    ax.set_ylabel('density')
+
+    # Panel 3, KDE of each cluster
+    ax = axes[1, 0]
+    # Partition by clusters
+    idx1 = codes == 0
+    idx2 = codes == 1
+    idx3 = codes == 2
+    # Get scale factor for each cluster
+    scale1 = idx1.sum() * 1.0 / codes.size
+    scale2 = idx2.sum() * 1.0 / codes.size
+    scale3 = idx3.sum() * 1.0 / codes.size
+    # kde for singlets1
+    kde1 = gaussian_kde(scores[idx1])
+    y1 = kde1(x) * scale1
+    idxs1 = y1 > eps
+    ax.plot(x[idxs1], y1[idxs1], '-', c = 'orange', label = code_names[0])
+    # kde for singlets2
+    kde2 = gaussian_kde(scores[idx2])
+    y2 = kde2(x) * scale2
+    idxs2 = y2 > eps
+    ax.plot(x[idxs2], y2[idxs2], '-', c = 'green', label = code_names[1])
+    # kde for doublets
+    if idx3.sum() > 0:
+        scores3 = scores[idx3]
+        if np.std(scores3) < eps: # if too small, add jitters
+            scores3 += np.random.normal(scale = 0.01, size = scores3.size)
+        kde3 = gaussian_kde(scores3)
+        y3 = kde3(x) * scale3
+        idxs3 = y3 > eps
+        ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', label = code_names[2])
+    # Set ylim bottom to 0 and show legend
+    ax.set_ylim(bottom = 0)
+    ax.set_xlabel('log doublet score')
+    ax.set_ylabel('density')
+    ax.legend(loc = 'best')
+
+    # Panel 4, overlay the overall KDE with cluster-specific KDEs
+    ax = axes[1, 1]
+    ax.plot(x, y, '-', c='k', label = 'overall')
+    ax.plot(x[idxs1], y1[idxs1], '-', c = 'orange', alpha = alpha, label = 'singlet1')
+    ax.plot(x[idxs2], y2[idxs2], '-', c = 'green', alpha = alpha, label = 'singlet2')
+    if idx3.sum() > 0:
+        ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', alpha = alpha, label = 'doublet')
+    ax.set_ylim(bottom = 0)
+    ax.set_xlabel('log doublet score')
+    ax.set_ylabel('density')
+    ax.legend(loc = 'best')
+
+    return fig if return_fig else None

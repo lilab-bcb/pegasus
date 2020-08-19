@@ -32,7 +32,7 @@ requires = [
     "pybind11",
     "python-igraph",
     "scanorama",
-    "scikit-learn>=0.21.3",
+    "scikit-learn>=0.23.2",
     "scikit-misc",
     "scipy",
     "seaborn",
