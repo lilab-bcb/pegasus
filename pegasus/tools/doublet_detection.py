@@ -182,31 +182,35 @@ def infer_doublets(
         for channel in channels:
             idx = (data.obs[channel_attr] == channel).values
             dbl_scores = data.obs.loc[idx, dbl_attr].values
+
             # Cell-level doublet
             dblc_codes = _identify_cell_doublets(dbl_scores, alpha = alpha, random_state = random_state) # dblc doublet at cell level
-            # Sample-level test
-            # Truncated SVD including all genes
-            tsvd = TruncatedSVD(n_components = n_components + 1, algorithm = 'arpack' if robust else 'randomized', random_state = random_state)
-            X_tpca = np.ascontiguousarray(tsvd.fit_transform(data.X[idx]))
 
-            clusters = partition_cells_by_kmeans(X_tpca, n_clusters, n_clusters2, n_init, random_state, min_avg_cells_per_final_cluster)
-
-            sigs = _identify_doublets_fisher(clusters, dblc_codes, alpha = alpha) # significant clusters
-            
-            freqs = []
             idx_dblc = dblc_codes == 2
             idx_dblnc = ~idx_dblc
-            for cluster in sigs['cluster']:
-                idxc = clusters == cluster
-                idx_dbls = idxc & idx_dblnc
-                dblc_codes[idx_dbls] = 3
-                freqs.append(1.0 - idx_dbls.sum() / idxc.sum())
+            ncdbl = idx_dblc.sum()
+            freqs = []
+
+            # Sample-level test
+            # Truncated SVD including all genes
+            if ncdbl > 0:
+                tsvd = TruncatedSVD(n_components = n_components + 1, algorithm = 'arpack' if robust else 'randomized', random_state = random_state)
+                X_tpca = np.ascontiguousarray(tsvd.fit_transform(data.X[idx]))
+
+                clusters = partition_cells_by_kmeans(X_tpca, n_clusters, n_clusters2, n_init, random_state, min_avg_cells_per_final_cluster)
+
+                sigs = _identify_doublets_fisher(clusters, dblc_codes, alpha = alpha) # significant clusters
+            
+                for cluster in sigs['cluster']:
+                    idxc = clusters == cluster
+                    idx_dbls = idxc & idx_dblnc
+                    dblc_codes[idx_dbls] = 3
+                    freqs.append(1.0 - idx_dbls.sum() / idxc.sum())
             
             # assign channel predictions to dbl_codes
             dbl_codes[idx] = dblc_codes
 
             # QC statistics
-            ncdbl = idx_dblc.sum()
             nsdbl = (dblc_codes == 3).sum()
             min_score = dbl_scores[idx_dblc].min() if ncdbl > 0 else None
             min_freq = min(freqs) if len(freqs) > 0 else None
@@ -214,7 +218,7 @@ def infer_doublets(
             if verbose:
                 fig = doublet_plot(dbl_scores, dblc_codes, return_fig = True)
                 fig.savefig(f"{channel}.dbl.png")
-                logger.info(f"Channel {channel}: {ncdbl} cell-evel doublets and {nsdbl} sample-level doublets were detected!")
+                logger.info(f"Channel {channel}: {ncdbl} cell-level doublets and {nsdbl} sample-level doublets were detected!")
                 if min_score is not None:
                     logger.info(f"Doublet score cutoff for cell-level duoblets is {min_score:.3f}.")
                 if min_freq is not None:

@@ -1819,10 +1819,14 @@ def doublet_plot(
     idxs2 = y2 > eps
     ax.plot(x[idxs2], y2[idxs2], '-', c = 'green', label = code_names[1])
     # kde for doublets
-    kde3 = gaussian_kde(scores[idx3])
-    y3 = kde3(x) * scale3
-    idxs3 = y3 > eps
-    ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', label = code_names[2])
+    if idx3.sum() > 0:
+        scores3 = scores[idx3]
+        if np.std(scores3) < eps: # if too small, add jitters
+            scores3 += np.random.normal(scale = 0.01, size = scores3.size)
+        kde3 = gaussian_kde(scores3)
+        y3 = kde3(x) * scale3
+        idxs3 = y3 > eps
+        ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', label = code_names[2])
     # Set ylim bottom to 0 and show legend
     ax.set_ylim(bottom = 0)
     ax.set_xlabel('log doublet score')
@@ -1834,7 +1838,8 @@ def doublet_plot(
     ax.plot(x, y, '-', c='k', label = 'overall')
     ax.plot(x[idxs1], y1[idxs1], '-', c = 'orange', alpha = alpha, label = 'singlet1')
     ax.plot(x[idxs2], y2[idxs2], '-', c = 'green', alpha = alpha, label = 'singlet2')
-    ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', alpha = alpha, label = 'doublet')
+    if idx3.sum() > 0:
+        ax.plot(x[idxs3], y3[idxs3], '-', c = 'red', alpha = alpha, label = 'doublet')
     ax.set_ylim(bottom = 0)
     ax.set_xlabel('log doublet score')
     ax.set_ylabel('density')
