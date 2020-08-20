@@ -273,4 +273,12 @@ def mark_singlets(
         cluster, value_str = dbl_clusts.split(':')
         idx = np.isin(data.obs[cluster], value_str.split(','))
         data.obs.loc[idx, demux_attr] = 'doublet'
+
+        codes = data.obs['pred_dbl_type'].values.codes
+        idx_4 = idx & (codes < 2)
+        if idx_4.sum() > 0:
+            codes = codes.copy()
+            codes[idx_4] = 4
+            data.obs['pred_dbl_type'] = pd.Categorical.from_codes(codes, categories = ['singlet', 'singlet-2', 'doublet-cell', 'doublet-sample', 'doublet-cluster'])
+    
     data.obs[demux_attr] = pd.Categorical(data.obs[demux_attr], categories = ['singlet', 'doublet'])
