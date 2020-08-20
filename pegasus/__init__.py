@@ -30,6 +30,7 @@ from .tools import (
     log_norm,
     select_features,
     pca,
+    pc_regress_out,
     highly_variable_features,
     set_group_attribute,
     correct_batch,

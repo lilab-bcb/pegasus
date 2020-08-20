@@ -7,7 +7,6 @@ from sklearn.mixture import GaussianMixture
 
 from scipy.stats import norm
 from statsmodels.stats.multitest import fdrcorrection as fdr
-import fisher
 
 from typing import List, Optional, Union
 
@@ -24,7 +23,7 @@ def _one_tail_test(scores: List[float], mean: float, std: float, alpha: float = 
     idx = scores > mean
     pvals = 1.0 - norm.cdf(scores[idx], loc = mean, scale = std)
     passed, qvals = fdr(pvals, alpha = alpha)
-    
+
     outliers = np.zeros(scores.size, dtype = bool)
     outliers[idx] = passed
 
@@ -34,7 +33,7 @@ def _one_tail_test(scores: List[float], mean: float, std: float, alpha: float = 
 def _identify_cell_doublets(scores: List[float], alpha: float = 0.05, random_state: int = 0):
     scores = np.log(scores) # log transformed
     scores_reshaped = scores.reshape(-1, 1)
-    # First fit three normal distributions 
+    # First fit three normal distributions
     gm = GaussianMixture(n_components = 3, random_state = random_state)
     gm.fit(scores_reshaped)
     means = gm.means_.ravel()
@@ -85,6 +84,7 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
     avg_dblr = ndbl / dbl_codes.size
     freqs = a / (a + b)
 
+    import fisher
     pvals = fisher.pvalue_npy(a, b, c, d)[2]
     passed, qvals = fdr(pvals, alpha = alpha)
 
@@ -116,7 +116,7 @@ def infer_doublets(
 ) -> None:
     """Infer doublets based on i.e. Scrublet scores.
     Inspired by Pijuan-Sala et al. Nature 2019 and Popescu et al. Nature 2019.
-    
+
     Parameters
     ----------
     data: ``pegasusio.MultimodalData``
@@ -151,7 +151,7 @@ def infer_doublets(
 
     alpha: ``float``, optional, default: ``0.05``
         FDR significant level for statistical tests.
-        
+
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
 
@@ -165,7 +165,7 @@ def infer_doublets(
     Update ``data.obs``:
         * ``data.obs['pred_dbl_type']``: Predicted singlet/doublet types.
 
-        * ``data.uns['pred_dbl_cluster']``: Only generated if 'clust_attr' is not None. This is a dataframe with two columns, 'Cluster' and 'Qval'. Only clusters with significantly more doublets than expected will be recorded here. 
+        * ``data.uns['pred_dbl_cluster']``: Only generated if 'clust_attr' is not None. This is a dataframe with two columns, 'Cluster' and 'Qval'. Only clusters with significantly more doublets than expected will be recorded here.
 
     Examples
     --------
@@ -200,13 +200,13 @@ def infer_doublets(
                 clusters = partition_cells_by_kmeans(X_tpca, n_clusters, n_clusters2, n_init, random_state, min_avg_cells_per_final_cluster)
 
                 sigs = _identify_doublets_fisher(clusters, dblc_codes, alpha = alpha) # significant clusters
-            
+
                 for cluster in sigs['cluster']:
                     idxc = clusters == cluster
                     idx_dbls = idxc & idx_dblnc
                     dblc_codes[idx_dbls] = 3
                     freqs.append(1.0 - idx_dbls.sum() / idxc.sum())
-            
+
             # assign channel predictions to dbl_codes
             dbl_codes[idx] = dblc_codes
 
