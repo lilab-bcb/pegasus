@@ -278,7 +278,7 @@ def calc_t(
     # recover sparse matrix
     mat = csr_matrix((data, indices, indptr), shape=shape)
     pvals = np.full(shape[1], 1.0)
-    tscores = np.full(shape[1], 0)
+    tscores = np.full(shape[1], 0.0)
     mask = cluster_labels == clust_id
     mat_clust = mat[mask]
 
