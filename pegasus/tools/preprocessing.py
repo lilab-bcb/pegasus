@@ -363,13 +363,13 @@ def select_features(data: MultimodalData, features: str = "highly_variable_featu
     >>> pg.select_features(data)
     """
     keyword = "fmat_" + str(features)  # fmat: feature matrix
-    if keyword not in data.uns:
-        if features is not None:
-            assert features in data.var
-            X = data.X[:, data.var[features].values]
-        else:
-            X = data.X
-        data.uns[keyword] = X.toarray() if issparse(X) else X.copy()
+
+    if features is not None:
+        assert features in data.var
+        X = data.X[:, data.var[features].values]
+    else:
+        X = data.X
+    data.uns[keyword] = X.toarray() if issparse(X) else X.copy()
 
     if standardize or (max_value is not None):
         X = data.uns[keyword]
