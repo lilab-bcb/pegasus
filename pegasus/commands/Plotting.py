@@ -46,7 +46,7 @@ Options:
 
 Examples:
   pegasus plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad scatter.pdf
-  pegasus plot composition --groupby louvain_labels --yattr Donor example.zarr.zip compo.pdf
+  pegasus plot compo --groupby louvain_labels --condition Donor example.zarr.zip compo.pdf
     """
     def execute(self):
         kwargs = {
@@ -70,8 +70,6 @@ Examples:
             "return_fig": True,
             "dpi": int(self.args["--dpi"]),
         }
-
-        print(kwargs)
 
         for key in ["nrows", "ncols", "panel_size", "left", "bottom", "wspace", "hspace"]:
             if kwargs[key] is None:
