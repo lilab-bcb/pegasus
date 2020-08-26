@@ -1,8 +1,11 @@
-from setuptools import setup, find_packages
+from setuptools import dist, setup, find_packages
 from setuptools.extension import Extension
-from Cython.Build import cythonize
 from codecs import open
 from os import path
+
+dist.Distribution().fetch_build_eggs(['Cython'])
+
+from Cython.Build import cythonize
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), encoding="utf-8") as f:
