@@ -584,6 +584,51 @@ def write_results_to_excel(
     import xlsxwriter
     from natsort import natsorted
 
+    # Need to make sure tab characters < 32 see here: https://xlsxwriter.readthedocs.io/workbook.html#:~:text=The%20worksheet%20name%20must%20be,be%20less%20than%2032%20characters.
+    def compute_abbrevs(clust_ids: List[str], clust_de: bool, cond_ids: List[str], clust_abbrevs: List[str], cond_abbrevs: List[str]) -> None:
+        COND_MLEN=7 # condition name should take at most 7 characters
+        TOTAL_LEN=28 # excluding the last 3 |up or |dn
+
+        clust_mlen = TOTAL_LEN
+        if not clust_de:
+            max_cond_len = max([len(x) for x in cond_ids])
+            max_cond_len = min(max_cond_len, COND_MLEN)
+            for cond_id in cond_ids:
+                cond_abbrevs.append(cond_id[:max_cond_len])
+            clust_mlen -= max_cond_len + 1
+
+        for clust_id in clust_ids:
+            if len(clust_id) <= clust_mlen:
+                clust_abbrevs.append(clust_id)
+            else:
+                # Extract suffix like '-2', in which Pegasus uses to distinguish clusters with the same cell type.
+                import re
+                suf = ""
+                match = re.search("\-\d+$", clust_id)
+                if match is not None:
+                    suf = match.group()
+                    clust_id = clust_id[:match.start()]
+                # Split by space 
+                fields = re.split("\s+", clust_id)
+                if fields[-1].lower() in ["cell", "cells"]:
+                    fields = fields[:-1]
+                abbr = " ".join(fields) + suf
+                if len(abbr) <= clust_mlen:
+                    clust_abbrevs.append(abbr)
+                else:
+                    fsize = len(fields)
+                    len_left = clust_mlen - len(suf) - (fsize - 1)
+                    assert len_left >= fsize
+                    endpos = [0] * fsize
+                    while len_left > 0:
+                        for i in range(fsize-1, -1, -1):
+                            if endpos[i] < len(fields[i]):
+                                endpos[i] += 1
+                                len_left -= 1
+                                if len_left == 0:
+                                    break
+                    clust_abbrevs.append(" ".join([fields[i][:endpos[i]] for i in range(fsize)]) + suf)
+
     def format_short_output_cols(
         df_orig: pd.DataFrame, ndigits: int = 3
     ) -> pd.DataFrame:
@@ -599,7 +644,7 @@ def write_results_to_excel(
         df.loc[:, cols] = df.loc[:, cols].round(ndigits)
         return df
 
-    # Need to make sure tab characters < 32 see here: https://xlsxwriter.readthedocs.io/workbook.html#:~:text=The%20worksheet%20name%20must%20be,be%20less%20than%2032%20characters.
+    
     def add_worksheet(
         workbook: "workbook", df_orig: pd.DataFrame, sheet_name: str
     ) -> None:
@@ -629,16 +674,22 @@ def write_results_to_excel(
     workbook = xlsxwriter.Workbook(output_file, {"nan_inf_to_errors": True})
     workbook.formats[0].set_font_size(9)
 
+    clust_ids = natsorted(results.keys())
     clust_de = isinstance(results.values()[0].values()[0], pd.DataFrame)
-    for clust_id in natsorted(results.keys()):
+    cond_ids = natsorted(results.values()[0].keys()) if not clust_de else None
+    clust_abbrevs = []
+    cond_abbrevs = [] if not clust_de else None
+    compute_abbrevs(clust_ids, clust_de, cond_ids, clust_abbrevs, cond_abbrevs)
+
+    for clust_id, clust_abbr in zip(clust_ids, clust_abbrevs):
         if clust_de:
-            add_worksheet(workbook, results[clust_id]["up"], f"{clust_id}:up")
-            add_worksheet(workbook, results[clust_id]["down"], f"{clust_id}:dn")
+            add_worksheet(workbook, results[clust_id]["up"], f"{clust_abbr}|up")
+            add_worksheet(workbook, results[clust_id]["down"], f"{clust_abbr}|dn")
         else:
             cond_dict = results[clust_id]
-            for cond_id in natsorted(cond_dict.keys()):
-                add_worksheet(workbook, cond_dict[cond_id]["up"], f"{clust_id}:{cond_id}:up")
-                add_worksheet(workbook, cond_dict[cond_id]["down"], f"{clust_id}:{cond_id}:dn")
+            for cond_id, cond_abbr in zip(cond_ids, cond_abbrevs):
+                add_worksheet(workbook, cond_dict[cond_id]["up"], f"{clust_abbr}|{cond_abbr}|up")
+                add_worksheet(workbook, cond_dict[cond_id]["down"], f"{clust_abbr}|{cond_abbr}|dn")
 
     workbook.close()
     logger.info("Excel spreadsheet is written.")
