@@ -5,7 +5,7 @@ import scipy.stats as ss
 cimport cython
 
 from libc.math cimport sqrt, log2, M_LOG2E, fabs
-from libc.stdio cimport printf
+# from libc.stdio cimport printf
 
 
 

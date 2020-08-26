@@ -16,7 +16,6 @@ requires = [
     "anndata>=0.7.1",
     "Cython",
     "docopt",
-    "fisher>=0.1.9",
     "forceatlas2-python",
     "gprofiler-official",
     "harmony-pytorch",
@@ -50,7 +49,8 @@ requires = [
 ]
 
 extensions = [
-    Extension("pegasus.cylib", ["ext_modules/*.pyx"]),
+    Extension("pegasus.cylib.cfisher", ["ext_modules/cfisher.pyx"]),
+    Extension("pegasus.cylib.de_utils", ["ext_modules/diff_expr_utils.pyx"]),
 ]
 
 setup(
