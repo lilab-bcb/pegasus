@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+from setuptools.extension import Extension
+from Cython.Build import cythonize
 from codecs import open
 from os import path
 
@@ -44,6 +46,10 @@ requires = [
     "xlsxwriter"
 ]
 
+extensions = [
+    Extension("pegasus.cylib", ["ext_modules/*.pyx"]),
+]
+
 setup(
     name="pegasuspy",
     use_scm_version=True,
@@ -71,10 +77,11 @@ setup(
     keywords="single cell/nucleus genomics analysis",
     packages=find_packages(),
     install_requires=requires,
-    setup_requires=['setuptools_scm'],
+    ext_modules=cythonize(extensions),
+    setup_requires=["Cython", "setuptools_scm"],
     extras_require=dict(
         fitsne=["fitsne"],
-        leiden=['leidenalg'],
+        leiden=["leidenalg"],
         mkl=["mkl"]
     ),
     python_requires="~=3.6",
