@@ -18,7 +18,7 @@ Arguments:
 
 Options:
   --marker-file <file>                    JSON file for markers. Could also be human_immune/mouse_immune/human_brain/mouse_brain/human_lung, which triggers pegasus to markers included in the package. [default: human_immune]
-  --de-test <test>                        DE test to use to infer cell types. [default: t]
+  --de-test <test>                        DE test to use to infer cell types. [default: mwu]
   --de-alpha <alpha>                      False discovery rate to control family-wise error rate. [default: 0.05]
   --de-key <key>                          Keyword where the DE results store in varm. [default: de_res]
   --minimum-report-score <score>          Minimum cell type score to report a potential cell type. [default: 0.5]

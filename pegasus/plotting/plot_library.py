@@ -1436,7 +1436,7 @@ def qcviolin(
 def volcano(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     cluster_id: str,
-    de_result_key: str = "de_res",
+    de_key: str = "de_res",
     de_test: str = 'mwu',
     qval_threshold: float = 0.05,
     log2fc_threshold: float = 1.0,
@@ -1455,8 +1455,8 @@ def volcano(
         Single cell expression data.
     cluster_id: ``str``
         Cluster ID for the cluster we want to show DE results.
-    de_result_key: ``str``, optional, default: ``de_res``
-        The varm keyword for DE results. data.varm[de_result_key] should store the full DE result table.
+    de_key: ``str``, optional, default: ``de_res``
+        The varm keyword for DE results. data.varm[de_key] should store the full DE result table.
     de_test: ``str``, optional, default: ``mwu``
         Which DE test results to show.
     qval_threshold: ``float``, optional, default: 0.05.
@@ -1482,11 +1482,11 @@ def volcano(
     ---------
     >>> pg.volcano(data, cluster_id = '1', dpi=200)
     """
-    if de_result_key not in data.varm:
-        logger.warning(f"Cannot find DE results '{de_result_key}'. Please conduct DE analysis first!")
+    if de_key not in data.varm:
+        logger.warning(f"Cannot find DE results '{de_key}'. Please conduct DE analysis first!")
         return None
 
-    de_res = data.varm[de_result_key]
+    de_res = data.varm[de_key]
 
     fcstr = f"{cluster_id}:log2FC"
     pstr = f"{cluster_id}:{de_test}_pval"

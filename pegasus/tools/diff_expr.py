@@ -212,6 +212,8 @@ def _perform_de_cond(
     """
     df_res_list = []
 
+    from pegasus.cylib.de_utils import calc_mwu, calc_stat
+
     ngene = indptr_list[0].size - 1
     for i, clust_id in enumerate(clust_ids):
         nclust = cond_n1arr_list[i].size
@@ -222,7 +224,7 @@ def _perform_de_cond(
             first_j = posvec[0]
             second_j = posvec[1]
 
-        U_stats, pvals, aurocs = diff_expr_utils.calc_mwu(0, ngene, data_list[i], indices_list[i], indptr_list[i], cond_n1arr_list[i], cond_n2arr_list[i], cond_cumsum_list[i], first_j, second_j, False)
+        U_stats, pvals, aurocs = calc_mwu(0, ngene, data_list[i], indices_list[i], indptr_list[i], cond_n1arr_list[i], cond_n2arr_list[i], cond_cumsum_list[i], first_j, second_j, False)
         qvals = _calc_qvals(nclust, pvals, first_j, second_j)
 
         dfU = pd.DataFrame(U_stats, index = gene_names, columns = [f"{clust_id}:{x}:mwu_U" for x in cond_labels.categories])
@@ -230,7 +232,7 @@ def _perform_de_cond(
         dfUq = pd.DataFrame(qvals, index = gene_names, columns = [f"{clust_id}:{x}:mwu_qval" for x in cond_labels.categories])
         dfUa = pd.DataFrame(aurocs, index = gene_names, columns = [f"{clust_id}:{x}:auroc" for x in cond_labels.categories])
 
-        results = diff_expr_utils.calc_stat(data_list[i], indices_list[i], indptr_list[i], cond_n1arr_list[i], cond_n2arr_list[i], cond_cumsum_list[i], first_j, second_j, t, fisher, False)
+        results = calc_stat(data_list[i], indices_list[i], indptr_list[i], cond_n1arr_list[i], cond_n2arr_list[i], cond_cumsum_list[i], first_j, second_j, t, fisher, False)
         dfl2M = pd.DataFrame(results[0][0], index = gene_names, columns = [f"{clust_id}:{x}:log2Mean" for x in cond_labels.categories])
         dfl2Mo = pd.DataFrame(results[0][1], index = gene_names, columns = [f"{clust_id}:{x}:log2Mean_other" for x in cond_labels.categories])
         dfl2FC = pd.DataFrame(results[0][2], index = gene_names, columns = [f"{clust_id}:{x}:log2FC" for x in cond_labels.categories])
@@ -250,11 +252,13 @@ def _perform_de_cond(
         if fisher:
             a_true, a_false, b_true, b_false = results[2]
 
+            from pegasus.cylib.cfisher import fisher_exact
+
             oddsratios = np.zeros((ngene, nclust), dtype = np.float32)
             pvals = np.ones((ngene, nclust), dtype = np.float32)
 
             if second_j > 0:
-                oddsratio, pval = cfisher.fisher_exact(a_true[first_j], a_false[first_j], b_true[first_j], b_false[first_j])
+                oddsratio, pval = fisher_exact(a_true[first_j], a_false[first_j], b_true[first_j], b_false[first_j])
                 oddsratios[:, first_j] = oddsratio
                 idx1 = oddsratio > 0.0
                 idx2 = oddsratio < 1e30
@@ -263,7 +267,7 @@ def _perform_de_cond(
                 pvals[:, first_j] = pvals[:, second_j] = pval
             else:
                 for j in posvec:
-                    oddsratios[:, j], pvals[:, j] = cfisher.fisher_exact(a_true[j], a_false[j], b_true[j], b_false[j])
+                    oddsratios[:, j], pvals[:, j] = fisher_exact(a_true[j], a_false[j], b_true[j], b_false[j])
 
             qvals = _calc_qvals(nclust, pvals, first_j, second_j)
             dff = pd.DataFrame(oddsratios, index = gene_names, columns = [f"{clust_id}:{x}:fisher_oddsratio" for x in cond_labels.categories])
@@ -301,7 +305,9 @@ def _de_test_cond(
     cluster_cnts = df_cross.values.sum(axis = 1)
     cluster_cumsum = cluster_cnts.cumsum()
 
-    data_list, indices_list, indptrs = diff_expr_utils.csr_to_csc_cond(X.data, X.indices, X.indptr, X.shape[1], ords, cluster_cumsum)
+    from pegasus.cylib.de_utils import csr_to_csc_cond
+
+    data_list, indices_list, indptrs = csr_to_csc_cond(X.data, X.indices, X.indptr, X.shape[1], ords, cluster_cumsum)
 
     if verbose:
         end = time.perf_counter()
@@ -468,7 +474,7 @@ def de_analysis(
     if cond_labels is None:
         df = _de_test(X, cluster_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
     else:
-        df = _de_test(X, cluster_labels, cond_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
+        df = _de_test_cond(X, cluster_labels, cond_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
 
     data.varm[de_key] = df.to_records(index=False)
 
@@ -552,15 +558,16 @@ def markers(
                          head=head,
                     )
     else:
-        clust2cond2cols = defaultdict(defaultdict(list))
+        clust2cond2cols = defaultdict(lambda: defaultdict(list))
         for name in rec_array.dtype.names:
             clust_id, cond_id, col_name = name.split(":")
             clust2cond2cols[clust_id][cond_id].append(col_name)
+        results = defaultdict(lambda: defaultdict(dict))
         for clust_id, cond2cols in clust2cond2cols.items():
             for cond_id, col_names in cond2cols.items():
                 _assemble_df(res_dict=results[clust_id][cond_id],
                              rec_array=rec_array,
-                             prefix=clust_id,
+                             prefix=":".join([clust_id, cond_id]),
                              col_names=col_names,
                              gene_names=gene_names,
                              alpha=alpha,
@@ -624,7 +631,7 @@ def write_results_to_excel(
                 if match is not None:
                     suf = match.group()
                     clust_id = clust_id[:match.start()]
-                # Split by space 
+                # Split by space
                 fields = re.split("\s+", clust_id)
                 if fields[-1].lower() in ["cell", "cells"]:
                     fields = fields[:-1]
@@ -660,7 +667,7 @@ def write_results_to_excel(
         df.loc[:, cols] = df.loc[:, cols].round(ndigits)
         return df
 
-    
+
     def add_worksheet(
         workbook: "workbook", df_orig: pd.DataFrame, sheet_name: str
     ) -> None:
@@ -691,8 +698,8 @@ def write_results_to_excel(
     workbook.formats[0].set_font_size(9)
 
     clust_ids = natsorted(results.keys())
-    clust_de = isinstance(results.values()[0].values()[0], pd.DataFrame)
-    cond_ids = natsorted(results.values()[0].keys()) if not clust_de else None
+    clust_de = isinstance(list(list(results.values())[0].values())[0], pd.DataFrame)
+    cond_ids = natsorted(list(results.values())[0].keys()) if not clust_de else None
     clust_abbrevs = []
     cond_abbrevs = [] if not clust_de else None
     compute_abbrevs(clust_ids, clust_de, cond_ids, clust_abbrevs, cond_abbrevs)
@@ -748,7 +755,7 @@ def run_de_analysis(
     )
 
     write_output(data, input_file)
-    logger.info("Differential expression results are written to varm/{de_key}.")
+    logger.info(f"Differential expression results are written to varm/{de_key}.")
 
     results = markers(data, de_key=de_key, alpha=alpha)
     write_results_to_excel(results, output_excel_file, ndigits=ndigits)

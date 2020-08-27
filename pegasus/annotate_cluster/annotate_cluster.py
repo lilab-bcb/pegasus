@@ -286,7 +286,7 @@ def infer_cell_types(
 
     Examples
     --------
-    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune', de_test = 't')
+    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune', de_test = 'mwu')
     """
 
     if output_file is not None:
@@ -311,25 +311,25 @@ def infer_cell_types(
 
     clusts = natsorted(
         [
-            x.rpartition(":")[2]
+            x.rpartition(":")[0]
             for x in data.varm[de_key].dtype.names
-            if x.startswith("WAD_score:")
+            if x.endswith(":auroc")
         ]
     )
     cell_type_results = {}
     for clust_id in clusts:
-        idx = data.varm[de_key]["{0}_qval:{1}".format(de_test, clust_id)] <= de_alpha
+        idx = data.varm[de_key]["{0}:{1}_qval".format(clust_id, de_test)] <= de_alpha
 
-        idx_up = idx & (data.varm[de_key]["log_fold_change:{0}".format(clust_id)] > 0.0)
+        idx_up = idx & (data.varm[de_key]["{0}:log2FC".format(clust_id)] > 0.0)
         idx_down = idx & (
-            data.varm[de_key]["log_fold_change:{0}".format(clust_id)] < 0.0
+            data.varm[de_key]["{0}:log2FC".format(clust_id)] < 0.0
         )
         assert idx_up.sum() + idx_down.sum() == idx.sum()
 
         cols = [
-            "{0}:{1}".format(x, clust_id)
+            "{0}:{1}".format(clust_id, x)
             for x in [
-                "percentage_fold_change" if de_test == "fisher" else "log_fold_change",
+                "percentage_fold_change" if de_test == "fisher" else "log2FC",
                 "percentage",
             ]
         ]
