@@ -110,7 +110,7 @@ def scatter(
     if not is_list_like(attrs):
         attrs = [attrs]
     nattrs = len(attrs)
-    
+
     if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
         cur_matkey = data.current_matrix()
 
@@ -391,7 +391,7 @@ def scatter_groups(
 
     if nsel < data.shape[0]:
         x = x[selected]
-        y = y[selected]        
+        y = y[selected]
         values = values[selected]
         groups = groups[selected]
 
@@ -1436,8 +1436,8 @@ def qcviolin(
 def volcano(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     cluster_id: str,
-    de_result_key: str = "de_res",
-    de_test: str = 't',
+    de_key: str = "de_res",
+    de_test: str = 'mwu',
     qval_threshold: float = 0.05,
     log2fc_threshold: float = 1.0,
     top_n: int = 20,
@@ -1455,8 +1455,8 @@ def volcano(
         Single cell expression data.
     cluster_id: ``str``
         Cluster ID for the cluster we want to show DE results.
-    de_result_key: ``str``, optional, default: ``de_res``
-        The varm keyword for DE results. data.varm[de_result_key] should store the full DE result table.
+    de_key: ``str``, optional, default: ``de_res``
+        The varm keyword for DE results. data.varm[de_key] should store the full DE result table.
     de_test: ``str``, optional, default: ``mwu``
         Which DE test results to show.
     qval_threshold: ``float``, optional, default: 0.05.
@@ -1482,22 +1482,22 @@ def volcano(
     ---------
     >>> pg.volcano(data, cluster_id = '1', dpi=200)
     """
-    if de_result_key not in data.varm:
-        logger.warning(f"Cannot find DE results '{de_result_key}'. Please conduct DE analysis first!")
+    if de_key not in data.varm:
+        logger.warning(f"Cannot find DE results '{de_key}'. Please conduct DE analysis first!")
         return None
 
-    de_res = data.varm[de_result_key]
+    de_res = data.varm[de_key]
 
-    fcstr = f"fold_change:{cluster_id}"
-    pstr = f"{de_test}_pval:{cluster_id}"
-    qstr = f"{de_test}_qval:{cluster_id}"
+    fcstr = f"{cluster_id}:log2FC"
+    pstr = f"{cluster_id}:{de_test}_pval"
+    qstr = f"{cluster_id}:{de_test}_qval"
 
     columns = de_res.dtype.names
     if (fcstr not in columns) or (pstr not in columns) or (qstr not in columns):
         logger.warning(f"Please conduct DE test {de_test} first!")
         return None
 
-    log2fc = np.log2(de_res[fcstr])
+    log2fc = de_res[fcstr]
     pvals = de_res[pstr]
     pvals[pvals == 0.0] = 1e-45 # very small pvalue to avoid log10 0
     neglog10p = -np.log10(pvals)
