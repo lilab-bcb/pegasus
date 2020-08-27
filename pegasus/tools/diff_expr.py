@@ -152,10 +152,10 @@ def _de_test(
     if fisher:
         from pegasus.cylib.cfisher import fisher_exact
         a_true, a_false, b_true, b_false = results[2]
-        
+
         oddsratios = np.zeros((ngene, n1arr.size), dtype = np.float32)
         pvals = np.ones((ngene, n1arr.size), dtype = np.float32)
-        
+
         if second_j > 0:
             oddsratio, pval = fisher_exact(a_true[first_j], a_false[first_j], b_true[first_j], b_false[first_j])
             oddsratios[:, first_j] = oddsratio
@@ -224,7 +224,7 @@ def _perform_de_cond(
 
         U_stats, pvals, aurocs = diff_expr_utils.calc_mwu(0, ngene, data_list[i], indices_list[i], indptr_list[i], cond_n1arr_list[i], cond_n2arr_list[i], cond_cumsum_list[i], first_j, second_j, False)
         qvals = _calc_qvals(nclust, pvals, first_j, second_j)
-        
+
         dfU = pd.DataFrame(U_stats, index = gene_names, columns = [f"{clust_id}:{x}:mwu_U" for x in cond_labels.categories])
         dfUp = pd.DataFrame(pvals, index = gene_names, columns = [f"{clust_id}:{x}:mwu_pval" for x in cond_labels.categories])
         dfUq = pd.DataFrame(qvals, index = gene_names, columns = [f"{clust_id}:{x}:mwu_qval" for x in cond_labels.categories])
@@ -249,10 +249,10 @@ def _perform_de_cond(
 
         if fisher:
             a_true, a_false, b_true, b_false = results[2]
-            
+
             oddsratios = np.zeros((ngene, nclust), dtype = np.float32)
             pvals = np.ones((ngene, nclust), dtype = np.float32)
-            
+
             if second_j > 0:
                 oddsratio, pval = cfisher.fisher_exact(a_true[first_j], a_false[first_j], b_true[first_j], b_false[first_j])
                 oddsratios[:, first_j] = oddsratio
@@ -318,10 +318,10 @@ def _de_test_cond(
     for i in range(neff):
         intervals.append([])
         datalists.append([])
-        indiceslists.append([]) 
+        indiceslists.append([])
 
     pos = 0
-    sign = 1    
+    sign = 1
     for i in range(nclust):
         intervals[pos].append(ords[i])
         datalists[pos].append(data_list[ords[i]])
@@ -411,7 +411,7 @@ def de_analysis(
     ``None``
 
     Update ``data.varm``:
-        ``data.varm[result_key]``: DE analysis result.
+        ``data.varm[de_key]``: DE analysis result.
 
     Examples
     --------
@@ -470,7 +470,7 @@ def de_analysis(
     else:
         df = _de_test(X, cluster_labels, cond_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
 
-    data.varm[result_key] = df.to_records(index=False)
+    data.varm[de_key] = df.to_records(index=False)
 
     logger.info("Differential expression analysis is finished.")
 
@@ -484,11 +484,11 @@ def _assemble_df(res_dict: dict, rec_array: np.ndarray, prefix: str, col_names: 
     idx = df["mwu_qval"] <= alpha
     idx_up = idx & (df["log2FC"].values > 0)
     df_up = df.loc[idx_up].sort_values(by="auroc", ascending=False, inplace=False)
-    results[clust_id]["up"] = pd.DataFrame(df_up if head is None else df_up.iloc[0:head])
+    res_dict["up"] = pd.DataFrame(df_up if head is None else df_up.iloc[0:head])
 
     idx_down = idx & (df["log2FC"].values < 0)
     df_down = df.loc[idx_down].sort_values(by="auroc", ascending=True, inplace=False)
-    results[clust_id]["down"] = pd.DataFrame(df_down if head is None else df_down.iloc[0:head])
+    res_dict["down"] = pd.DataFrame(df_down if head is None else df_down.iloc[0:head])
 
 
 
@@ -534,6 +534,8 @@ def markers(
 
     de_clust = len(rec_array.dtype.names[0].split(":")) == 2
 
+    from collections import defaultdict
+
     if de_clust:
         clust2cols = defaultdict(list)
         for name in rec_array.dtype.names:
@@ -541,7 +543,14 @@ def markers(
             clust2cols[clust_id].append(col_name)
         results = defaultdict(dict)
         for clust_id, col_names in clust2cols.items():
-            _assemble_df(results[clust_id], rec_array, [f"{clust_id}:{x}" for x in col_names], gene_names)
+            _assemble_df(res_dict=results[clust_id],
+                         rec_array=rec_array,
+                         prefix=clust_id,
+                         col_names=col_names,
+                         gene_names=gene_names,
+                         alpha=alpha,
+                         head=head,
+                    )
     else:
         clust2cond2cols = defaultdict(defaultdict(list))
         for name in rec_array.dtype.names:
@@ -549,7 +558,14 @@ def markers(
             clust2cond2cols[clust_id][cond_id].append(col_name)
         for clust_id, cond2cols in clust2cond2cols.items():
             for cond_id, col_names in cond2cols.items():
-                _assemble_df(results[clust_id][cond_id], rec_array, [f"{clust_id}:{cond_id}:{x}" for x in col_names], gene_names)
+                _assemble_df(res_dict=results[clust_id][cond_id],
+                             rec_array=rec_array,
+                             prefix=clust_id,
+                             col_names=col_names,
+                             gene_names=gene_names,
+                             alpha=alpha,
+                             head=head,
+                    )
 
     return results
 
@@ -672,7 +688,7 @@ def run_de_analysis(
         data,
         cluster,
         condition=condition,
-        de_key=result_key,
+        de_key=de_key,
         n_jobs=n_jobs,
         t=t,
         fisher=fisher,
