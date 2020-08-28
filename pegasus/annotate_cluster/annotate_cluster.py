@@ -237,7 +237,7 @@ def infer_cluster_names(
 def infer_cell_types(
     data: Union[MultimodalData, UnimodalData, AnnData],
     markers: Union[str, Dict],
-    de_test: str,
+    de_test: str = "mwu",
     de_alpha: float = 0.05,
     de_key: str = "de_res",
     threshold: float = 0.5,
@@ -261,8 +261,9 @@ def infer_cell_types(
             * ``'mouse_brain'`` for mouse brain cells.
         * If ``Dict``, it refers to a Python dictionary describing the markers.
 
-    de_test: ``str``
+    de_test: ``str``, optional, default: ``"mwu"``
         pegasus determines cell types using DE test results. This argument indicates which DE test result to use, can be either ``'t'``, ``'fisher'`` or ``'mwu'``.
+        By default, it uses ``'mwu'``.
 
     de_alpha: ``float``, optional, default: ``0.05``
         False discovery rate for controling family-wide error.
@@ -286,7 +287,7 @@ def infer_cell_types(
 
     Examples
     --------
-    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune', de_test = 'mwu')
+    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune')
     """
 
     if output_file is not None:

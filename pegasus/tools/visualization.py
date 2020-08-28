@@ -257,7 +257,9 @@ def tsne(
     random_state: int = 0,
     out_basis: str = "tsne",
 ) -> None:
-    """Calculate tSNE embedding using MulticoreTSNE_ package.
+    """Calculate tSNE embedding of cells.
+
+    This function uses MulticoreTSNE_ package. See [Maaten08]_ for details on tSNE.
 
     .. _MulticoreTSNE: https://github.com/DmitryUlyanov/Multicore-TSNE
 
@@ -328,7 +330,9 @@ def fitsne(
     random_state: int = 0,
     out_basis: str = "fitsne",
 ) -> None:
-    """Calculate FIt-SNE embedding using fitsne_ package.
+    """Calculate FIt-SNE embedding of cells.
+
+    This function uses fitsne_ package. See [Linderman19]_ for details on FIt-SNE.
 
     .. _fitsne: https://github.com/KlugerLab/FIt-SNE
 
@@ -398,7 +402,9 @@ def umap(
     random_state: int = 0,
     out_basis: str = "umap",
 ) -> None:
-    """Calculate UMAP embedding using umap-learn_ package.
+    """Calculate UMAP embedding of cells.
+
+    This function uses umap-learn_ package. See [McInnes18]_ for details on UMAP.
 
     .. _umap-learn: https://github.com/lmcinnes/umap
 
@@ -485,10 +491,14 @@ def fle(
     random_state: int = 0,
     out_basis: str = "fle",
 ) -> None:
-    """Construct the Force-directed (FLE) graph using ForceAtlas2_ implementation, with Python wrapper as forceatlas2-python_.
+    """Construct the Force-directed (FLE) graph.
 
-    .. _ForceAtlas2: https://github.com/klarman-cell-observatory/forceatlas2
+    This implementation uses forceatlas2-python_ package, which is a Python wrapper of ForceAtlas2_.
+
+    See [Jacomy14]_ for details on FLE.
+
     .. _forceatlas2-python: https://github.com/klarman-cell-observatory/forceatlas2-python
+    .. _ForceAtlas2: https://github.com/klarman-cell-observatory/forceatlas2
 
     Parameters
     ----------
@@ -623,9 +633,13 @@ def net_tsne(
     polish_n_iter: int = 150,
     out_basis: str = "net_tsne",
 ) -> None:
-    """Calculate approximated tSNE embedding using Deep Learning model to improve the speed.
+    """Calculate Net-tSNE embedding of cells.
+
+    Net-tSNE is an approximated tSNE embedding using Deep Learning model to improve the calculation speed.
 
     In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    See [Li20]_ for details.
 
     .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
 
@@ -764,7 +778,9 @@ def net_fitsne(
     polish_n_iter: int = 150,
     out_basis: "str" = "net_fitsne",
 ) -> None:
-    """Calculate approximated FI-tSNE embedding using Deep Learning model to improve the speed.
+    """Calculate Net-FI-tSNE embedding of cells.
+
+    Net-FI-tSNE is an approximated FI-tSNE embedding using Deep Learning model to improve the speed.
 
     In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
 
@@ -906,9 +922,13 @@ def net_umap(
     polish_n_epochs: int = 30,
     out_basis: str = "net_umap",
 ) -> None:
-    """Calculate approximated UMAP embedding using Deep Learning model to improve the speed.
+    """Calculate Net-UMAP embedding of cells.
+
+    Net-UMAP is an approximated UMAP embedding using Deep Learning model to improve the speed.
 
     In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    See [Li20]_ for details.
 
     .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
 
@@ -1077,9 +1097,13 @@ def net_fle(
     polish_target_steps: int = 1500,
     out_basis: str = "net_fle",
 ) -> None:
-    """Construct the approximated Force-directed (FLE) graph using Deep Learning model to improve the speed.
+    """Construct Net-Force-directed (FLE) graph.
+
+    Net-FLE is an approximated FLE graph using Deep Learning model to improve the speed.
 
     In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
+
+    See [Li20]_ for details.
 
     .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
 

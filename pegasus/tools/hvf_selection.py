@@ -360,6 +360,10 @@ def highly_variable_features(
 
     Returns
     -------
+    ``None``
+
+    Update ``data.var``:
+        * ``highly_variable_features``: replace with Boolean type array indicating the selected highly variable features.
 
     Examples
     --------
