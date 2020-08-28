@@ -76,7 +76,7 @@ def louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(f"Louvain clustering is done. Get {cluster} clusters.")
+    logger.info(f"Louvain clustering is done. Get {n_clusters} clusters.")
 
 
 @timer(logger=logger)
@@ -148,7 +148,7 @@ def leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(f"Leiden clustering is done. Get {cluster} clusters.")
+    logger.info(f"Leiden clustering is done. Get {n_clusters} clusters.")
 
 
 def partition_cells_by_kmeans(
@@ -284,7 +284,7 @@ def spectral_louvain(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(f"Spectral Louvain clustering is done. Get {cluster} clusters.")
+    logger.info(f"Spectral Louvain clustering is done. Get {n_clusters} clusters.")
 
 
 @timer(logger=logger)
@@ -380,7 +380,7 @@ def spectral_leiden(
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
     n_clusters = data.obs[class_label].cat.categories.size
-    logger.info(f"Spectral Leiden clustering is done. Get {cluster} clusters.")
+    logger.info(f"Spectral Leiden clustering is done. Get {n_clusters} clusters.")
 
 
 def cluster(
