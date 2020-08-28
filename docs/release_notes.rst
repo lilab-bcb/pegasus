@@ -1,4 +1,4 @@
-Version 1.0.0rc `August 27, 2020`
+Version 1.0.0 `August 28, 2020`
 --------------------------------
 
 * New features:
@@ -16,7 +16,7 @@ Version 1.0.0rc `August 27, 2020`
 * Deprecations:
     * No longer support ``h5sc`` file format, which was the output format of ``aggregate_matrix`` command in Pegasus version ``0.x``.
 * API changes:
-    * In cell quality-control, percent of mitochondrial genes is changed from ``10.0`` to ``20.0`` by default. (``percent_mito`` argument in `qc_metrics <api/pegasus.qc_metrics.html>`_; ``--percent-mito`` option in ``cluster`` command)
+    * In cell quality-control, default percent of mitochondrial genes is changed from **10.0** to **20.0**. (``percent_mito`` argument in `qc_metrics <api/pegasus.qc_metrics.html>`_; ``--percent-mito`` option in ``cluster`` command)
     * Move gene quality-control out of ``filter_data`` function to be a separate step. (`identify_robust_genes <api/pegasus.identify_robust_genes.html>`_)
     * DE analysis now uses MWU test by default, not t test. (`de_analysis <api/pegasus.de_analysis.html>`_)
     * `infer_cell_types <api/pegasus.infer_cell_types.html>`_ uses MWU test as the default ``de_test``.

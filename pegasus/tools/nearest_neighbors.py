@@ -204,7 +204,7 @@ def neighbors(
 ) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
-    The kNN calculation uses hnswlib introduced by [Malkov16]_.
+    The kNN calculation uses `hnswlib <https://github.com/nmslib/hnswlib>`_ introduced by [Malkov16]_.
 
     Parameters
     ----------
@@ -290,9 +290,9 @@ def calc_kBET(
     random_state: int = 0,
     temp_folder: str = None,
 ) -> Tuple[float, float, float]:
-    """Calculate the kBET metric of the data w.r.t. a specific sample attribute and embedding.
+    """Calculate the kBET metric of the data regarding a specific sample attribute and embedding.
 
-    This kBET metric is based on paper "A test metric for assessing single-cell RNA-seq batch correction" [Büttner18]_ in Nature Methods, 2018.
+    The kBET metric is defined in [Büttner18]_, which measures if cells from different samples mix well in their local neighborhood.
 
     Parameters
     ----------
@@ -393,9 +393,9 @@ def calc_kSIM(
     n_jobs: int = -1,
     random_state: int = 0,
 ) -> Tuple[float, float]:
-    """Calculate the kSIM metric of the data w.r.t. a specific sample attribute and embedding.
+    """Calculate the kSIM metric of the data regarding a specific sample attribute and embedding.
 
-    This kSIM metric measures if attr are not diffused too much.
+    The kSIM metric is defined in [Li20]_, which measures if a sample attribute is not diffused too much in each cell's local neighborhood.
 
     Parameters
     ----------
