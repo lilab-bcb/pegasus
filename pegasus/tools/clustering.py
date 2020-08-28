@@ -23,7 +23,7 @@ def louvain(
     random_state: int = 0,
     class_label: str = "louvain_labels",
 ) -> None:
-    """Cluster the cells using Louvain algorithm.
+    """Cluster the cells using Louvain algorithm. [Blondel08]_
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ def leiden(
     random_state: int = 0,
     class_label: str = "leiden_labels",
 ) -> None:
-    """Cluster the data using Leiden algorithm.
+    """Cluster the data using Leiden algorithm. [Traag19]_
 
     Parameters
     ----------
@@ -203,7 +203,7 @@ def spectral_louvain(
     random_state: int = 0,
     class_label: str = "spectral_louvain_labels",
 ) -> None:
-    """ Cluster the data using Spectral Louvain algorithm.
+    """ Cluster the data using Spectral Louvain algorithm. [Li20]_
 
     Parameters
     ----------
@@ -299,7 +299,7 @@ def spectral_leiden(
     random_state: int = 0,
     class_label: str = "spectral_leiden_labels",
 ) -> None:
-    """Cluster the data using Spectral Leiden algorithm.
+    """Cluster the data using Spectral Leiden algorithm. [Li20]_
 
     Parameters
     ----------
@@ -396,7 +396,10 @@ def cluster(
     n_clusters2: int = 50,
     n_init: int = 10,
 ) -> None:
-    """Cluster the data using the chosen algorithm. Candidates are louvain, leiden, spectral_louvain and spectral_leiden. If data have < 1000 cells and there are clusters with sizes of 1, resolution is automatically reduced until no cluster of size 1 appears.
+    """Cluster the data using the chosen algorithm.
+
+    Candidates are *louvain*, *leiden*, *spectral_louvain* and *spectral_leiden*.
+    If data have < 1000 cells and there are clusters with sizes of 1, resolution is automatically reduced until no cluster of size 1 appears.
 
     Parameters
     ----------

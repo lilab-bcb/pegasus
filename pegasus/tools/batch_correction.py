@@ -143,7 +143,7 @@ def correct_batch_effects(data: MultimodalData, keyword: str, features: str = No
 
 
 def correct_batch(data: MultimodalData, features: str = None) -> None:
-    """Batch correction on data.
+    """Batch correction on data using Location-Scale (L/S) Adjustment method. ([Li-and-Wong03]_, [Li20]_)
 
     Parameters
     ----------
@@ -195,7 +195,9 @@ def run_harmony(
     n_clusters: int = None,
     random_state: int = 0,
 ) -> str:
-    """Batch correction PCs using Harmony
+    """Batch correction PCs using Harmony.
+
+    This is a wrapper of `harmony-pytorch <https://github.com/lilab-bcb/harmony-pytorch>`_ package, which is a Python implementation of Harmony algorithm [Korsunsky19]_.
 
     Parameters
     ----------
@@ -258,13 +260,13 @@ def run_scanorama(
     max_value: float = 10,
     random_state: int = 0,
 ) -> str:
-    """Batch correction using Scanorama
+    """Batch correction using `Scanorama <https://github.com/brianhie/scanorama>`_. [Hie19]_
 
     Parameters
     ----------
     data: ``MultimodalData``.
         Annotated data matrix with rows for cells and columns for genes.
-    
+
     n_components: ``int``, optional default: ``50``.
         Number of integrated embedding components to keep. This sets Scanorama's dimred parameter.
 
@@ -318,7 +320,7 @@ def run_scanorama(
         assert idx.sum() > 0
         datasets.append(X[idx, :])
     genes_list = [[str(i) for i in range(X.shape[1])]] * data.obs['Channel'].cat.categories.size
-    
+
     integrated, genes = integrate(datasets, genes_list, dimred = n_components, seed = random_state)
     data.obsm[f'X_{rep}'] = np.concatenate(integrated, axis = 0)
 

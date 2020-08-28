@@ -287,7 +287,7 @@ def infer_cell_types(
 
     Examples
     --------
-    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune', de_test = 'mwu')
+    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune')
     """
 
     if output_file is not None:

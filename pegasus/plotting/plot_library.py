@@ -1120,6 +1120,13 @@ def dendrogram(
     """
     Generate a dendrogram on hierarchical clustering result.
 
+    The metrics used here are consistent with SCANPY's dendrogram_ implementation.
+
+    *scikit-learn* `Agglomerative Clustering`_ implementation is used for hierarchical clustering.
+
+    .. _dendrogram: https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.dendrogram.html
+    .. _Agglomerative Clustering: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
+
     Parameters
     ----------
 
@@ -1454,11 +1461,17 @@ def volcano(
     data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
         Single cell expression data.
     cluster_id: ``str``
-        Cluster ID for the cluster we want to show DE results.
+        Cluster ID for the cluster we want to show DE results. There are two cases:
+            * If ``condition`` is ``None`` in ``pg.de_analysis``: Just specify one cluster
+              label in the cluster attribute used in ``pg.de_analysis``.
+            * If ``condition`` is not ``None`` in ``pg.de_analysis``: Specify cluster ID in
+              this format: **"cluster_label:cond_level"**, where **cluster_label** is the
+              cluster label, and **cond_level** is the condition ID. And this shows result of
+              cells within the cluster under the specific condition.
     de_key: ``str``, optional, default: ``de_res``
         The varm keyword for DE results. data.varm[de_key] should store the full DE result table.
     de_test: ``str``, optional, default: ``mwu``
-        Which DE test results to show.
+        Which DE test results to show. Use MWU test result by default.
     qval_threshold: ``float``, optional, default: 0.05.
         Selected FDR rate. A horizontal line indicating this rate will be shown in the figure.
     log2fc_threshold: ``float``, optional, default: 1.0

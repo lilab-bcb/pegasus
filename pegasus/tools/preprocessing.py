@@ -470,7 +470,7 @@ def pc_regress_out(
     data: Union[MultimodalData, UnimodalData],
     attrs: List[str],
     rep: str = 'pca',
-) -> None:
+) -> str:
     """Regress out effects due to specific observational attributes at Principal Component level.
 
     Parameters
