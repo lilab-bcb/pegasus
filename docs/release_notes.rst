@@ -1,4 +1,4 @@
-Version 1.0.0 `August 28, 2020`
+Version 1.0.0 `August 31, 2020`
 --------------------------------
 
 * New features:

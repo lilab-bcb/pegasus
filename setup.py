@@ -14,6 +14,7 @@ requires = [
     "anndata>=0.7.1",
     "Cython",
     "docopt",
+    "demuxEM",
     "forceatlas2-python",
     "gprofiler-official",
     "harmony-pytorch",

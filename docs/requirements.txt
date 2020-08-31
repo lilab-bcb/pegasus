@@ -17,3 +17,4 @@ umap-learn
 forceatlas2-python
 pyarrow
 pegasusio
+demuxEM
