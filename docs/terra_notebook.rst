@@ -16,13 +16,43 @@ On top-right panel of your workspace, click the following button within red circ
 
 Then you'll need to set the configuration of your runtime environment in the pop-out dialog (see image below):
 
+.. image:: images/runtime_menu.png
+   :scale: 50 %
+   :align: center
+
+There are 2 ways of creating a runtime environment for Pegasus.
+
+1.1. Create from Terra official environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Terra maintains a list of runtimes for users to quickly create an environment.
+
+In *ENVIRONMENT* field, select ``Pegasus`` from the drop-down menu:
+
+.. image:: images/dropdown.png
+   :scale: 50 %
+   :align: center
+
+After that set other fields in the pop-out dialog:
+
+* In *Runtime type* field, choose ``Standard VM`` (see the third red rectangle above), as this is the cheapest type and is enough to use Pegasus.
+* In *COMPUTE POWER* field, you can set the computing resources you want to use.
+
+Now click ``CREATE`` button to start the creation. After waiting for 1-2 minutes, your runtime environment will be ready to use, and it's started automatically.
+
+In this way, you can create your environment with the most updated version of Pegasus.
+
+1.2. Create from custom environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another is to create your environment directly from *Pegasus* docker image which is maintained by Cumulus team. If you want to use an older version of Pegasus, this is way to create your environment.
+
 .. image:: images/runtime_setting.png
    :align: center
 
-Here are the key settings:
-
 * In *ENVIRONMENT* field, choose ``Custom Environment`` (see the first red rectangle above).
-* In *CONTAINER IMAGE* field, type ``cumulusprod/pegasus-terra:<version>`` (see the second red rectangle above), where ``<version>`` should be chosen from `this list <https://github.com/klarman-cell-observatory/cumulus/blob/master/docker/pegasus-terra/CHANGELOG.md>`_. All the tags are for different minor versions of Pegasus. For example, if you want to use Pegasus version ``0.16.x``, you should type ``cumulusprod/pegasus-terra:0.16``.
+* In *CONTAINER IMAGE* field, type ``cumulusprod/pegasus-terra:<version>`` (see the second red rectangle above), where ``<version>`` should be chosen from `this list <https://github.com/klarman-cell-observatory/cumulus/blob/master/docker/pegasus-terra/CHANGELOG.md>`_.
+  All the tags are for different versions of Pegasus.
 * In *Runtime type* field, choose ``Standard VM`` (see the third red rectangle above), as this is the cheapest type and is enough to use Pegasus.
 * In *COMPUTE POWER* field, you can set the computing resources you want to use.
 
@@ -31,7 +61,10 @@ Here are the key settings:
 
 Now click ``CREATE`` button to start the creation. After waiting for 1-2 minutes, your runtime environment will be ready to use, and it's started automatically.
 
-This runtime environment is associated with your workspace. You can start the same environment anytime in your workspace by clicking the following button within red circle on top-right panel:
+1.3. Start an environment already created
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After creation, this runtime environment is associated with your workspace. You can start the same environment anytime in your workspace by clicking the following button within red circle on top-right panel:
 
 .. image:: images/start_runtime.png
    :scale: 80 %

@@ -195,7 +195,7 @@ def run_harmony(
     n_clusters: int = None,
     random_state: int = 0,
 ) -> str:
-    """Batch correction PCs using Harmony.
+    """Batch correction on PCs using Harmony.
 
     This is a wrapper of `harmony-pytorch <https://github.com/lilab-bcb/harmony-pytorch>`_ package, which is a Python implementation of Harmony algorithm [Korsunsky19]_.
 
@@ -260,7 +260,9 @@ def run_scanorama(
     max_value: float = 10,
     random_state: int = 0,
 ) -> str:
-    """Batch correction using `Scanorama <https://github.com/brianhie/scanorama>`_. [Hie19]_
+    """Batch correction using Scanorama.
+
+    This is a wrapper of `Scanorama <https://github.com/brianhie/scanorama>`_ package. See [Hie19]_ for details on the algorithm.
 
     Parameters
     ----------
