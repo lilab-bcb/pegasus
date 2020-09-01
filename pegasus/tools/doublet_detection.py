@@ -106,6 +106,10 @@ def run_scrublet(
 ) -> None:
     """Calculate doublet scores using Scrublet.
 
+    This is a wrapper of `Scrublet <https://github.com/AllonKleinLab/scrublet>`_ package.
+
+    See [Wolock18]_ for details on this method.
+
     Parameters
     -----------
     data: ``MultimodalData`` object.
@@ -175,8 +179,9 @@ def infer_doublets(
     random_state: Optional[int] = 0,
     verbose: Optional[bool] = False,
 ) -> None:
-    """Infer doublets based on i.e. Scrublet scores.
-    Inspired by Pijuan-Sala et al. Nature 2019 and Popescu et al. Nature 2019.
+    """Infer doublets based on Scrublet scores.
+
+    This implementation is inspired by [Pijuan-Sala19]_ and [Popescu19]_.
 
     Parameters
     ----------
@@ -303,7 +308,9 @@ def mark_singlets(
     demux_attr: Optional[str] = 'demux_type',
     dbl_clusts: Optional[str] = None,
 ) -> None:
-    """Convert doublet prediction into doublet annotations that Pegasus can recognize. Must run infer_doublets first.
+    """Convert doublet prediction into doublet annotations that Pegasus can recognize.
+
+    Must run ``infer_doublets`` first.
 
     Parameters
     ----------

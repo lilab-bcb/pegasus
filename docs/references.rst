@@ -49,6 +49,18 @@ References
    "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction",
    Preprint at `arXiv <https://arxiv.org/abs/1802.03426>`_, 2018.
 
+.. [Pijuan-Sala19] B. Pijuan-Sala, et al.,
+   "A single-cell molecular map of mouse gastrulation and early organogenesis",
+   In `Nature <https://www.nature.com/articles/s41586-019-0933-9>`_, 2019.
+
+.. [Popescu19] D-M. Popescu, et al.,
+   "Decoding human fetal liver haematopoiesis",
+   In `Nature <https://www.nature.com/articles/s41586-019-1652-y>`_, 2019.
+
 .. [Traag19] V. A. Traag, L. Waltman, and N. J. van Eck,
    "From Louvain to Leiden: guaranteeing well-connected communities",
    In `Scientific Reports <https://www.nature.com/articles/s41598-019-41695-z>`_, 2019.
+
+.. [Wolock18] S.L. Wolock, R. Lopez, and A.M. Klein,
+   "Scrublet: computational identification of cell doublets in single-cell transcriptomic Data",
+   In `Cell Systems <https://www.sciencedirect.com/science/article/pii/S2405471218304745>`_, 2018.
