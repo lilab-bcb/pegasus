@@ -96,7 +96,68 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
 
     return result
 
+@timer(logger=logger)
+def run_scrublet(
+    data: MultimodalData,
+    expected_doublet_rate: float = 0.1,
+    nPC: int = 30,
+    random_state: int = 0,
+    verbose: bool = True,
+) -> None:
+    """Calculate doublet scores using Scrublet.
 
+    Parameters
+    -----------
+    data: ``MultimodalData`` object.
+        Annotated data matrix with rows for cells and columns for genes.
+
+    expected_doublet_rate: ``float``, optional, default: ``0.1``
+        The expected doublet rate for the experiment.
+
+    nPC: ``int``, optional, default: ``30``
+        Number of principal components used to embed the transcriptomes prior to k-nearest-neighbor graph construction.
+
+    random_state: ``int``, optional, default: ``0``
+        Random state for doublet simulation, approximate nearest neighbor search, and PCA/TruncatedSVD if needed.
+
+    verbose: ``bool``, optional, default: ``True``
+        If True, print progress updates.
+
+    Returns
+    --------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs['scrublet_scores']``: The calculated doublet scores on cells.
+
+    Update ``data.uns``:
+        * ``data.uns['scrublet_stats']``: Overall stats during the calculation.
+
+    Save doublet histogram as a PDF file named ``scrublet_hist.pdf``.
+
+    Examples
+    --------
+    >>> pg.run_scrublet(data)
+    """
+
+    import scrublet as scr
+
+    scrub = scr.Scrublet(data.X, expected_doublet_rate=expected_doublet_rate, random_state=random_state)
+    doublet_scores, predicted_doublets = scrub.scrub_doublets(n_prin_comps=nPC, verbose=verbose)
+    fig, axs = scrub.plot_histogram()
+    fig.savefig("scrublet_hist.pdf")
+    logger.info("Doublet score histogram is saved as 'scrublet_hist.pdf'.")
+
+    data.obs['scrublet_scores'] = doublet_scores
+
+    scrublet_info = dict()
+    scrublet_info['threshold'] = scrub.threshold_
+    scrublet_info['detected_doublet_rate'] = scrub.detected_doublet_rate_
+    scrublet_info['detectable_doublet_fraction'] = scrub.detectable_doublet_fraction_
+    scrublet_info['overall_doublet_rate'] = scrub.overall_doublet_rate_
+    data.uns['scrublet_stats'] = scrublet_info
+
+    logger.info("Doublet scores are calculated.")
 
 @timer(logger=logger)
 def infer_doublets(
@@ -280,5 +341,5 @@ def mark_singlets(
             codes = codes.copy()
             codes[idx_4] = 4
             data.obs['pred_dbl_type'] = pd.Categorical.from_codes(codes, categories = ['singlet', 'singlet-2', 'doublet-cell', 'doublet-sample', 'doublet-cluster'])
-    
+
     data.obs[demux_attr] = pd.Categorical(data.obs[demux_attr], categories = ['singlet', 'doublet'])

@@ -152,6 +152,16 @@ Demultiplexing
     demultiplex
     attach_demux_results
 
+Doublet Detection
+-------------------
+
+.. autosummary::
+    :toctree: .
+
+    run_scrublet
+    infer_doublets
+    mark_singlets
+
 Miscellaneous
 -------------
 
