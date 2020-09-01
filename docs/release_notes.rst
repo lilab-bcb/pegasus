@@ -1,4 +1,4 @@
-Version 1.0.0 `August 31, 2020`
+Version 1.0.0 `September 1, 2020`
 --------------------------------
 
 * New features:
@@ -27,7 +27,9 @@ Version 1.0.0 `August 31, 2020`
     * Make I/O and count matrices aggregation a dedicated package `PegasusIO <https://pegasusio.readthedocs.io>`_.
     * Tutorials:
         * Update `Analysis tutorial <_static/tutorials/pegasus_analysis.html>`_;
-        * Add two more tutorials: one on `plotting library <_static/tutorials/plotting_tutorial.html>`_, and one for `batch correction and data integration <_static/tutorials/batch_correction.html>`_.
+        * Add 3 more tutorials: one on `plotting library <_static/tutorials/plotting_tutorial.html>`_,
+          one on `batch correction and data integration <_static/tutorials/batch_correction.html>`_,
+          and one on `regress out <_static/tutorials/regress_out.html>`_.
 
 Version 0.17.2 `June 26, 2020`
 --------------------------------
