@@ -21,7 +21,8 @@ warnings.filterwarnings("ignore", category=UserWarning,  module='lightgbm')
 warnings.filterwarnings("ignore", category=FutureWarning, module='anndata')
 
 
-from pegasusio import infer_file_type, read_input, write_output
+from pegasusio import infer_file_type, read_input, write_output, aggregate_matrices
+from demuxEM import estimate_background_probs, demultiplex, attach_demux_results
 from .tools import (
     qc_metrics,
     get_filter_stats,

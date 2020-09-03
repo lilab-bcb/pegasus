@@ -19,6 +19,7 @@ Read and Write
 
 	read_input
 	write_output
+    aggregate_matrices
 
 Preprocess
 ~~~~~~~~~~
@@ -140,6 +141,16 @@ Plotting
     hvfplot
     qcviolin
     volcano
+
+Demultiplexing
+---------------
+
+.. autosummary::
+    :toctree: .
+
+    estimate_background_probs
+    demultiplex
+    attach_demux_results
 
 Miscellaneous
 -------------

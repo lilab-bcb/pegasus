@@ -30,11 +30,11 @@ Options:
   -h, --help                       Print out help information.
 
 Outputs:
-  input_data_file        DE results would be written back to the 'varm' field with name set by --result-key <key>.
+  input_data_file        DE results would be written back to the 'varm' field with name set by --de-key <key>.
   output_spreadsheet     An excel spreadsheet containing DE results. Each cluster has two tabs in the spreadsheet. One is for up-regulated genes and the other is for down-regulated genes. If DE was performed on conditions within each cluster. Each cluster will have number of conditions tabs and each condition tab contains two spreadsheet: up for up-regulated genes and down for down-regulated genes.
 
 Examples:
-  pegasus de_analysis -p 26 --labels louvain_labels --auc --t --fisher --mwu manton_bm.zarr.zip manton_bm_de.xlsx
+  pegasus de_analysis -p 26 --labels louvain_labels --t --fisher manton_bm.zarr.zip manton_bm_de.xlsx
     """
 
     def execute(self):
