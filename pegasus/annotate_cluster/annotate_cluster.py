@@ -152,14 +152,14 @@ class Annotator:
         results = []
         for celltype in obj["cell_types"]:
             ct = CellType(celltype["name"], ignore_nonde=ignore_nonde)
-            ct.evaluate(celltype, de_up, de_down, thre)
+            ct.evaluate(celltype, de_up, de_down, threshold)
             if ct.score >= threshold:
                 sub_obj = celltype.get("subtypes", None)
                 if sub_obj is not None:
                     ct.subtypes = self.evaluate(
                         de_up,
                         de_down,
-                        fc_thre=thre,
+                        fc_thre=threshold,
                         ignore_nonde=ignore_nonde,
                         obj=sub_obj,
                     )

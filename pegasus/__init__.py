@@ -64,7 +64,7 @@ from .tools import (
     calc_signature_score,
     run_scrublet,
     infer_doublets,
-    mark_singlets,
+    mark_doublets,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes
