@@ -1630,17 +1630,13 @@ def ridgeplot(
     data: Union[MultimodalData, UnimodalData],
     features: Union[str, List[str]],
     qc_attr: Optional[str] = None,
-    with_control: Optional[bool] = False,
     overlap: Optional[float] = 0.5,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
 ) -> Union[plt.Figure, None]:
-    """Generate ridge plots
-
-    If with_control = True, only one feature is allowed and signal/control/normalized will be shown.
-    If with_control = False, up to 8 features can be allowed.
+    """Generate ridge plots, up to 8 features can be shown in one figure.
 
     Parameters
     ----------
@@ -1651,8 +1647,6 @@ def ridgeplot(
         One or more features to display.
     qc_attr: `str`, optional, default None
         If not None, only data.obs[qc_attr] == True are used.
-    with_control: `bool`, optional, default False
-        If show control ridgeplot.
     overlap: `float`, default 0.5
         Overlap between adjacent ridge plots (top and bottom).
     panel_size: `tuple`, optional (default: `(6, 4)`)
@@ -1676,36 +1670,22 @@ def ridgeplot(
 
     idx = data.obs[qc_attr].values if qc_attr is not None else np.ones(data.shape[0], dtype = bool)
 
-    df = None
-    if with_control:
-        if not isinstance(features, str):
-            logger.warning("With with_control == True, only one feature is allowed!")
-            return None
+    if isinstance(features, str):
+        features = [features]
+    if len(features) > 8:
+        logger.warning("With with_control == False, only up to 8 features are allowed!")
+        return None
 
-        fid = data.var_names.get_loc(features)
-        cid = data.var.loc[features, "_control_id"]
+    exprs = []
+    feats = []
 
-        arr1 = data.get_matrix("arcsinh.signal")[idx, fid].toarray()[:, 0]
-        arr2 = data.uns["_control_arcsinh"][idx, cid].toarray()[:, 0]
-        arr3 = data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0]
-        df = pd.DataFrame({"expression": np.concatenate((arr1, arr2, arr3)), "feature": np.concatenate((np.repeat("Signal", arr1.size), np.repeat("Control", arr2.size), np.repeat("Normalized", arr3.size)))})
-    else:
-        if isinstance(features, str):
-            features = [features]
-        if len(features) > 8:
-            logger.warning("With with_control == False, only up to 8 features are allowed!")
-            return None
+    size = idx.sum()
+    for feature in features:
+        fid = data.var_names.get_loc(feature)
+        exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
+        feats.append(np.repeat(feature, size))
 
-        exprs = []
-        feats = []
-
-        size = idx.sum()
-        for feature in features:
-            fid = data.var_names.get_loc(feature)
-            exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
-            feats.append(np.repeat(feature, size))
-
-        df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
+    df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
 
     g = sns.FacetGrid(df, row="feature", hue="feature", aspect=8, height=1.0)
     g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5)
