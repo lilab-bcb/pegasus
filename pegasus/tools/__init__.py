@@ -40,4 +40,4 @@ from .diff_expr import de_analysis, markers, write_results_to_excel, run_de_anal
 from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import get_anndata_for_subclustering
 from .signature_score import calc_signature_score
-from .doublet_detection import run_scrublet, infer_doublets, mark_singlets
+from .doublet_detection import run_scrublet, infer_doublets, mark_doublets
