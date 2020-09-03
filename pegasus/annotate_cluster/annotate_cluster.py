@@ -56,12 +56,12 @@ class CellType:
                         if fc >= thre:
                             numer += 2.0
                             self.strong_support.append(
-                                (marker, "{0:.2f}%".format(percent))
+                                (marker, f"{percent:.2f}%")
                             )
                         else:
                             numer += 1.0 + (fc - 1.0) / (thre - 1.0)
                             self.weak_support.append(
-                                (marker, "{0:.2f}%".format(percent))
+                                (marker, f"{percent:.2f}%")
                             )
                 else:
                     assert sign == "-"
@@ -76,12 +76,12 @@ class CellType:
                             if fc >= thre:
                                 numer += 2.0
                                 self.strong_support.append(
-                                    (marker, "{0:.2f}%".format(percent))
+                                    (marker, f"{percent:.2f}%")
                                 )
                             else:
                                 numer += 1.0 + (fc - 1.0) / (thre - 1.0)
                                 self.weak_support.append(
-                                    (marker, "{0:.2f}%".format(percent))
+                                    (marker, f"{percent:.2f}%")
                                 )
                         elif not self.ignore_nonde:
                             numer += 1.0
@@ -96,16 +96,14 @@ class CellType:
             self.avgp /= nump
 
     def __repr__(self):
-        res = "name: {0}; score: {1:.2f}; average marker percentage: {2:.2f}%".format(
-            self.name, self.score, self.avgp
-        )
+        res = f"name: {self.name}; score: {self.score:.2f}; average marker percentage: {self.avgp:.2f}%"
         if len(self.strong_support) > 0:
             res += "; strong support: {0}".format(
-                ",".join(["({0},{1})".format(x[0], x[1]) for x in self.strong_support])
+                ",".join([f"({x[0]},{x[1]})" for x in self.strong_support])
             )
         if len(self.weak_support) > 0:
             res += "; weak support: {0}".format(
-                ",".join(["({0},{1})".format(x[0], x[1]) for x in self.weak_support])
+                ",".join([f"({x[0]},{x[1]})" for x in self.weak_support])
             )
 
         return res
@@ -141,7 +139,8 @@ class Annotator:
         self,
         de_up: pd.DataFrame,
         de_down: pd.DataFrame,
-        thre: float = 1.5,
+        fc_thre: float = 1.5,
+        threshold: float = 0.5,
         ignore_nonde: bool = False,
         obj: "json object" = None,
     ):
@@ -154,17 +153,17 @@ class Annotator:
         for celltype in obj["cell_types"]:
             ct = CellType(celltype["name"], ignore_nonde=ignore_nonde)
             ct.evaluate(celltype, de_up, de_down, thre)
-            if ct.score >= 0.5:
+            if ct.score >= threshold:
                 sub_obj = celltype.get("subtypes", None)
                 if sub_obj is not None:
                     ct.subtypes = self.evaluate(
                         de_up,
                         de_down,
-                        thre=thre,
+                        fc_thre=thre,
                         ignore_nonde=ignore_nonde,
                         obj=sub_obj,
                     )
-            results.append(ct)
+                results.append(ct)
 
         results.sort(key=lambda x: x.score, reverse=True)
 
@@ -174,16 +173,14 @@ class Annotator:
         self,
         fout: "output stream",
         ct_list: List["CellType"],
-        thre: float,
         space: int = 4,
     ) -> None:
         """ Write putative cell type reports to fout.
         """
         for ct in ct_list:
-            if ct.score >= thre:
-                fout.write(" " * space + str(ct) + "\n")
-                if ct.subtypes is not None:
-                    self.report(fout, ct.subtypes, 0.5, space + 4)
+            fout.write(" " * space + str(ct) + "\n")
+            if ct.subtypes is not None:
+                self.report(fout, ct.subtypes, space + 4)
 
 
 def infer_cluster_names(
@@ -319,16 +316,16 @@ def infer_cell_types(
     )
     cell_type_results = {}
     for clust_id in clusts:
-        idx = data.varm[de_key]["{0}:{1}_qval".format(clust_id, de_test)] <= de_alpha
+        idx = data.varm[de_key][f"{clust_id}:{de_test}_qval"] <= de_alpha
 
-        idx_up = idx & (data.varm[de_key]["{0}:log2FC".format(clust_id)] > 0.0)
+        idx_up = idx & (data.varm[de_key][f"{clust_id}:log2FC"] > 0.0)
         idx_down = idx & (
-            data.varm[de_key]["{0}:log2FC".format(clust_id)] < 0.0
+            data.varm[de_key][f"{clust_id}:log2FC"] < 0.0
         )
         assert idx_up.sum() + idx_down.sum() == idx.sum()
 
         cols = [
-            "{0}:{1}".format(clust_id, x)
+            f"{clust_id}:{x}"
             for x in [
                 "percentage_fold_change" if de_test == "fisher" else "log2FC",
                 "percentage",
@@ -344,14 +341,14 @@ def infer_cell_types(
         de_down.rename(columns={cols[0]: "fc", cols[1]: "percent"}, inplace=True)
 
         if de_test != "fisher":
-            de_up["fc"] = np.exp(de_up["fc"])
-            de_down["fc"] = np.exp(de_down["fc"])
+            de_up["fc"] = 2.0 ** de_up["fc"]
+            de_down["fc"] = 2.0 ** de_down["fc"]
 
-        results = anno.evaluate(de_up, de_down, ignore_nonde=ignore_nonde)
+        results = anno.evaluate(de_up, de_down, threshold=threshold, ignore_nonde=ignore_nonde)
 
         if output_file is not None:
-            fout.write("Cluster {}:\n".format(clust_id))
-            anno.report(fout, results, threshold)
+            fout.write(f"Cluster {clust_id}:\n")
+            anno.report(fout, results)
 
         cell_type_results[clust_id] = results
 
