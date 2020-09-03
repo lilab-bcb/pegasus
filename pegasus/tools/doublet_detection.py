@@ -19,6 +19,76 @@ from pegasusio import timer
 from .clustering import partition_cells_by_kmeans
 
 
+
+@timer(logger=logger)
+def run_scrublet(
+    data: MultimodalData,
+    expected_doublet_rate: float = 0.1,
+    nPC: int = 30,
+    random_state: int = 0,
+    verbose: bool = True,
+) -> None:
+    """Calculate doublet scores using Scrublet.
+
+    This is a wrapper of `Scrublet <https://github.com/AllonKleinLab/scrublet>`_ package.
+
+    See [Wolock18]_ for details on this method.
+
+    Parameters
+    -----------
+    data: ``MultimodalData`` object.
+        Annotated data matrix with rows for cells and columns for genes.
+
+    expected_doublet_rate: ``float``, optional, default: ``0.1``
+        The expected doublet rate for the experiment.
+
+    nPC: ``int``, optional, default: ``30``
+        Number of principal components used to embed the transcriptomes prior to k-nearest-neighbor graph construction.
+
+    random_state: ``int``, optional, default: ``0``
+        Random state for doublet simulation, approximate nearest neighbor search, and PCA/TruncatedSVD if needed.
+
+    verbose: ``bool``, optional, default: ``True``
+        If True, print progress updates.
+
+    Returns
+    --------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs['scrublet_scores']``: The calculated doublet scores on cells.
+
+    Update ``data.uns``:
+        * ``data.uns['scrublet_stats']``: Overall stats during the calculation.
+
+    Save doublet histogram as a PDF file named ``scrublet_hist.pdf``.
+
+    Examples
+    --------
+    >>> pg.run_scrublet(data)
+    """
+
+    import scrublet as scr
+
+    scrub = scr.Scrublet(data.X, expected_doublet_rate=expected_doublet_rate, random_state=random_state)
+    doublet_scores, predicted_doublets = scrub.scrub_doublets(n_prin_comps=nPC, verbose=verbose)
+    fig, axs = scrub.plot_histogram()
+    fig.savefig("scrublet_hist.pdf")
+    logger.info("Doublet score histogram is saved as 'scrublet_hist.pdf'.")
+
+    data.obs['scrublet_score'] = doublet_scores
+
+    scrublet_info = dict()
+    scrublet_info['threshold'] = scrub.threshold_
+    scrublet_info['detected_doublet_rate'] = scrub.detected_doublet_rate_
+    scrublet_info['detectable_doublet_fraction'] = scrub.detectable_doublet_fraction_
+    scrublet_info['overall_doublet_rate'] = scrub.overall_doublet_rate_
+    data.uns['scrublet_stats'] = scrublet_info
+
+    logger.info("Scrublet is finished.")
+
+
+
 def _one_tail_test(scores: List[float], mean: float, std: float, alpha: float = 0.05) -> List[bool]:
     idx = scores > mean
     pvals = 1.0 - norm.cdf(scores[idx], loc = mean, scale = std)
@@ -84,8 +154,8 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
     avg_dblr = ndbl / dbl_codes.size
     freqs = a / (a + b)
 
-    import fisher
-    pvals = fisher.pvalue_npy(a, b, c, d)[2]
+    from pegasus.cylib.cfisher import fisher_exact
+    _, pvals = fisher_exact(a, b, c, d)
     passed, qvals = fdr(pvals, alpha = alpha)
 
     posvec = np.where(passed)[0][freqs[passed] > avg_dblr]
@@ -96,77 +166,12 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
 
     return result
 
-@timer(logger=logger)
-def run_scrublet(
-    data: MultimodalData,
-    expected_doublet_rate: float = 0.1,
-    nPC: int = 30,
-    random_state: int = 0,
-    verbose: bool = True,
-) -> None:
-    """Calculate doublet scores using Scrublet.
 
-    This is a wrapper of `Scrublet <https://github.com/AllonKleinLab/scrublet>`_ package.
-
-    See [Wolock18]_ for details on this method.
-
-    Parameters
-    -----------
-    data: ``MultimodalData`` object.
-        Annotated data matrix with rows for cells and columns for genes.
-
-    expected_doublet_rate: ``float``, optional, default: ``0.1``
-        The expected doublet rate for the experiment.
-
-    nPC: ``int``, optional, default: ``30``
-        Number of principal components used to embed the transcriptomes prior to k-nearest-neighbor graph construction.
-
-    random_state: ``int``, optional, default: ``0``
-        Random state for doublet simulation, approximate nearest neighbor search, and PCA/TruncatedSVD if needed.
-
-    verbose: ``bool``, optional, default: ``True``
-        If True, print progress updates.
-
-    Returns
-    --------
-    ``None``
-
-    Update ``data.obs``:
-        * ``data.obs['scrublet_scores']``: The calculated doublet scores on cells.
-
-    Update ``data.uns``:
-        * ``data.uns['scrublet_stats']``: Overall stats during the calculation.
-
-    Save doublet histogram as a PDF file named ``scrublet_hist.pdf``.
-
-    Examples
-    --------
-    >>> pg.run_scrublet(data)
-    """
-
-    import scrublet as scr
-
-    scrub = scr.Scrublet(data.X, expected_doublet_rate=expected_doublet_rate, random_state=random_state)
-    doublet_scores, predicted_doublets = scrub.scrub_doublets(n_prin_comps=nPC, verbose=verbose)
-    fig, axs = scrub.plot_histogram()
-    fig.savefig("scrublet_hist.pdf")
-    logger.info("Doublet score histogram is saved as 'scrublet_hist.pdf'.")
-
-    data.obs['scrublet_scores'] = doublet_scores
-
-    scrublet_info = dict()
-    scrublet_info['threshold'] = scrub.threshold_
-    scrublet_info['detected_doublet_rate'] = scrub.detected_doublet_rate_
-    scrublet_info['detectable_doublet_fraction'] = scrub.detectable_doublet_fraction_
-    scrublet_info['overall_doublet_rate'] = scrub.overall_doublet_rate_
-    data.uns['scrublet_stats'] = scrublet_info
-
-    logger.info("Doublet scores are calculated.")
 
 @timer(logger=logger)
 def infer_doublets(
     data: MultimodalData,
-    dbl_attr: Optional[str] = 'scrublet_scores',
+    dbl_attr: Optional[str] = 'scrublet_score',
     channel_attr: Optional[str] = None,
     clust_attr: Optional[str] = None,
     n_components: Optional[int] = 50,
@@ -303,7 +308,7 @@ def infer_doublets(
 
 
 
-def mark_singlets(
+def mark_doublets(
     data: MultimodalData,
     demux_attr: Optional[str] = 'demux_type',
     dbl_clusts: Optional[str] = None,
