@@ -1,5 +1,5 @@
-Version 1.0.0 `September 1, 2020`
---------------------------------
+On Master branch `September 3, 2020`
+--------------------------------------
 
 * New features:
 
@@ -9,7 +9,7 @@ Version 1.0.0 `September 1, 2020`
         * Data are manipulated in Multi-modal structure in memory.
         * Support focus analysis on Unimodal data, and appending other Unimodal data to it. (``--focus`` and ``--append`` options in ``cluster`` command)
     * Calculate signature / gene module scores. (`calc_signature_score <api/pegasus.calc_signature_score.html>`_)
-    * `Doublet detection <api/index.html#doublet-detection>`_ based on `Scrublet <https://github.com/AllonKleinLab/scrublet>`_: ``run_scrublet``, ``infer_doublets``, and ``mark_singlets``.
+    * `Doublet detection <api/index.html#doublet-detection>`_ based on `Scrublet <https://github.com/AllonKleinLab/scrublet>`_: ``run_scrublet``, ``infer_doublets``, and ``mark_doublets``.
     * Principal-Component-level regress out. (`pc_regress_out <api/pegasus.pc_regress_out.html>`_)
     * Batch correction using `Scanorama <https://github.com/brianhie/scanorama>`_. (`run_scanorama <api/pegasus.run_scanorama.html>`_)
     * Allow DE analysis with sample attribute as condition. (Set ``condition`` argument in `de_analysis <api/pegasus.de_analysis.html>`_)
@@ -34,7 +34,7 @@ Version 1.0.0 `September 1, 2020`
 
     * Make I/O and count matrices aggregation a dedicated package `PegasusIO <https://pegasusio.readthedocs.io>`_.
     * Tutorials:
-    
+
         * Update `Analysis tutorial <_static/tutorials/pegasus_analysis.html>`_;
         * Add 3 more tutorials: one on `plotting library <_static/tutorials/plotting_tutorial.html>`_,
           one on `batch correction and data integration <_static/tutorials/batch_correction.html>`_,
