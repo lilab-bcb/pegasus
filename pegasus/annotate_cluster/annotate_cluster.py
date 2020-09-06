@@ -216,7 +216,7 @@ def infer_cluster_names(
             cell_name = cluster_id
         else:
             ct = ct_list[0]
-            while ct.subtypes is not None and ct.subtypes[0].score >= threshold:
+            while ct.subtypes is not None and len(ct.subtypes) > 0 and ct.subtypes[0].score >= threshold:
                 ct = ct.subtypes[0]
             cell_name = ct.name
 
@@ -362,7 +362,7 @@ def annotate(
     data: Union[MultimodalData, UnimodalData,AnnData],
     name: str,
     based_on: str,
-    anno_dict: Dict[str, str],
+    anno_dict: Union[Dict[str, str], List[str]],
 ) -> None:
     """Add annotation to AnnData obj.
 
@@ -375,8 +375,9 @@ def annotate(
         Name of the new annotation in data.obs.
     based_on : `str`
         Name of the attribute the cluster ids coming from.
-    anno_dict : `Dict[str, str]`
+    anno_dict : `Dict[str, str]` or `List[str]`
         Dictionary mapping from cluster id to cell type.
+        If it is a List, map cell types to cluster ids one to one in correspondence.
 
     Returns
     -------
@@ -385,8 +386,13 @@ def annotate(
 
     Examples
     --------
-    >>> annotate_cluster.annotate(data, 'anno', 'spectral_louvain_labels', {'1': 'T cell', '2': 'B cell'})
+    >>> pg.annotate(data, 'anno', 'spectral_louvain_labels', {'1': 'T cell', '2': 'B cell'})
+    >>> pg.annotate(data, 'anno', 'louvain_labels', ['T cell', 'B cell'])
     """
+    if isinstance(anno_dict, list):
+        cluster_ids = data.obs[based_on].cat.categories.values.astype('str')
+        anno_dict = dict(zip(cluster_ids, anno_dict))
+
     data.obs[name] = [anno_dict[x] for x in data.obs[based_on]]
 
 @timer(logger=logger)
