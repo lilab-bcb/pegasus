@@ -166,7 +166,7 @@ def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
     --------
     >>> pg.filter_data(data)
     """
-    data.filter_data(focus_list = focus_list)
+    data.filter_data(focus_list = focus_list, cache_passqc = True)
 
 
 def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> None:
@@ -295,7 +295,7 @@ def _run_filter_data(
 
 @timer(logger=logger)
 @run_gc
-def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
+def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str = "raw.X") -> None:
     """Normalization, and then apply natural logarithm to the data.
 
     Parameters
@@ -306,11 +306,14 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
     norm_count: ``int``, optional, default: ``1e5``.
         Total count of cells after normalization.
 
+    backup_matrix: ``str``, optional, default: ``raw.X``.
+        Where to back up the count matrix.
+
     Returns
     -------
     ``None``
 
-    Update ``data.X`` with count matrix after log-normalization.
+    Update ``data.X`` with count matrix after log-normalization. In addition, back up the original count matrix as ``backup_matrix``.
 
     Examples
     --------
@@ -321,7 +324,7 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5) -> None:
 
     assert data.get_modality() == "rna"
 
-    data.add_matrix("raw.X", data.X)
+    data.add_matrix(backup_matrix, data.X)
     data.X = data.get_matrix("X").astype(np.float32)
 
     mat = data.X[:, data.var["robust"].values]
