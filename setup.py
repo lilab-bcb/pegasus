@@ -2,51 +2,13 @@ from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
 from codecs import open
+from pathlib import Path
 from os import path
 
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
-
-requires = [
-    "adjustText",
-    "anndata>=0.7.1",
-    "Cython",
-    "docopt",
-    "demuxEM",
-    "forceatlas2-python",
-    "gprofiler-official",
-    "harmony-pytorch",
-    "hnswlib",
-    "importlib-metadata",
-    "joblib",
-    "lightgbm>=2.2.1",
-    "loompy",
-    "louvain>=0.7.0",
-    "matplotlib>=2.0.0",
-    "MulticoreTSNE-modified",
-    "natsort",
-    "numba",
-    "numpy",
-    "pandas>=0.24",
-    "pegasusio",
-    "pyarrow",
-    "pybind11",
-    "python-igraph",
-    "scanorama",
-    "scikit-learn>=0.23.2",
-    "scikit-misc",
-    "scipy",
-    "scrublet",
-    "seaborn",
-    "setuptools",
-    "statsmodels",
-    "torch",
-    "umap-learn>=0.4",
-    "xlrd",
-    "xlsxwriter"
-]
 
 extensions = [
     Extension("pegasus.cylib.cfisher", ["ext_modules/cfisher.pyx"]),
@@ -79,7 +41,9 @@ setup(
     ],
     keywords="single cell/nucleus genomics analysis",
     packages=find_packages(),
-    install_requires=requires,
+    install_requires=[
+        l.strip() for l in Path("requirements.txt").read_text("utf-8").splitlines()
+    ],
     ext_modules=cythonize(extensions),
     setup_requires=["Cython", "setuptools_scm"],
     extras_require=dict(

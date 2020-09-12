@@ -7,4 +7,6 @@ exclude Dockerfile
 exclude Guide_containerized_vm.rst
 exclude requirements.txt
 exclude pyproject.toml
+exclude build_linux.sh
+exclude wheel_build/*
 exclude .*
