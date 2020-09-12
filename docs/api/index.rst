@@ -160,7 +160,7 @@ Doublet Detection
 
     run_scrublet
     infer_doublets
-    mark_singlets
+    mark_doublets
 
 Miscellaneous
 -------------
