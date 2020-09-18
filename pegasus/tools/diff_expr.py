@@ -386,6 +386,8 @@ def de_analysis(
 
     Mann-Whitney U test and AUROC are calculated by default. Welch's T test and Fisher's Exact test are optionally.
 
+    The scalability performance on calculating all the test statistics is improved by the inspiration from `Presto <https://github.com/immunogenomics/presto>`_.
+
     Parameters
     ----------
     data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData``
@@ -396,6 +398,7 @@ def de_analysis(
 
     condition: ``str``, optional, default: ``None``
         Sample attribute used as condition in DE analysis. If ``None``, no condition is considered; otherwise, must exist in ``data.obs``.
+        If ``condition`` is used, the DE analysis will be performed on cells of each level of ``data.obs[condition]`` respectively, and collect the results after finishing.
 
     subset: ``List[str]``, optional, default: ``None``
         Perform DE analysis on only a subset of cluster IDs. Cluster ID subset is specified as a list of strings, such as ``[clust_1,clust_3,clust_5]``, where all IDs must exist in ``data.obs[cluster]``.
@@ -427,7 +430,8 @@ def de_analysis(
 
     Examples
     --------
-    >>> pg.de_analysis(data, cluster = 'spectral_leiden_labels')
+    >>> pg.de_analysis(data, cluster='spectral_leiden_labels')
+    >>> pg.de_analysis(data, cluster='louvain_labels', condition='anno')
     """
     if cluster not in data.obs:
         raise ValueError("Cannot find cluster label!")
@@ -619,6 +623,9 @@ def write_results_to_excel(
         * If ``condition`` is not ``None`` in ``pg.de_analysis``: Each tab stores DE result
           of up/down-regulated genes of cells within one cluster under one condition level. The tab's
           name follows the pattern: **"cluster_id|cond_level|up"** or **"cluster_id|cond_level|dn"**.
+
+        * Notice that the tab name in Excel only allows at most 31 characters. Therefore, some of the
+          resulting tab names may be truncated if their names are longer than this threshold.
 
     Examples
     --------

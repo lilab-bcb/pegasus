@@ -197,7 +197,7 @@ def run_harmony(
 ) -> str:
     """Batch correction on PCs using Harmony.
 
-    This is a wrapper of `harmony-pytorch <https://github.com/lilab-bcb/harmony-pytorch>`_ package, which is a Python implementation of Harmony algorithm [Korsunsky19]_.
+    This is a wrapper of `harmony-pytorch <https://github.com/lilab-bcb/harmony-pytorch>`_ package, which is a Pytorch implementation of Harmony algorithm [Korsunsky19]_.
 
     Parameters
     ----------
