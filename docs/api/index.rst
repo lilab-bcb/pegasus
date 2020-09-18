@@ -161,12 +161,19 @@ Doublet Detection
     infer_doublets
     mark_doublets
 
+Gene Module Score
+-------------------
+
+.. autosummary::
+    :toctree: .
+
+    calc_signature_score
+
 Miscellaneous
 -------------
 
 .. autosummary::
 	:toctree: .
 
-	calc_signature_score
 	search_genes
 	search_de_genes
