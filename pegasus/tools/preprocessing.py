@@ -216,7 +216,7 @@ def _generate_filter_plots(
 
     from pegasus.plotting import qcviolin
 
-    kwargs = {"return_fig": False, "dpi": 500}
+    kwargs = {"return_fig": True, "dpi": 500}
     if plot_filt_figsize is not None:
         width, height = plot_filt_figsize.split(",")
         kwargs["panel_size"] = (int(width), int(height))
