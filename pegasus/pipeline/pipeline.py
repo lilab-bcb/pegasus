@@ -43,7 +43,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             if kwargs["hvf_flavor"] == "pegasus":
                 if kwargs["plot_hvf"] is not None:
                     from pegasus.plotting import hvfplot
-                    fig = hvfplot(unidata, show = False)
+                    fig = hvfplot(unidata, return_fig = True)
                     fig.savefig(f"{kwargs['plot_hvf']}.hvf.pdf")
 
     # batch correction: L/S
