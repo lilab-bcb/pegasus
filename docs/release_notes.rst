@@ -1,4 +1,4 @@
-On Master branch `September 3, 2020`
+Version 1.0.0 `September 22, 2020`
 --------------------------------------
 
 * New features:
