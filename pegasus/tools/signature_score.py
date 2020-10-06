@@ -131,6 +131,7 @@ def calc_signature_score(
     """Calculate signature / gene module score.
 
     This is an improved version of implementation in [Jerby-Arnon18]_.
+    See `here <https://github.com/klarman-cell-observatory/pegasus/blob/master/signature_score.pdf>`_ for details on the method.
 
     Parameters
     ----------

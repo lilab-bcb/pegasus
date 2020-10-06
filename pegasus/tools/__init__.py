@@ -32,7 +32,6 @@ from .visualization import (
     umap,
     fle,
     net_tsne,
-    net_fitsne,
     net_umap,
     net_fle,
 )

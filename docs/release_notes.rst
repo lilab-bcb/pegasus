@@ -1,4 +1,4 @@
-On Master branch `September 3, 2020`
+Version 1.0.0 `September 22, 2020`
 --------------------------------------
 
 * New features:
@@ -20,6 +20,7 @@ On Master branch `September 3, 2020`
 * Deprecations:
 
     * No longer support ``h5sc`` file format, which was the output format of ``aggregate_matrix`` command in Pegasus version ``0.x``.
+    * Remove ``net_fitsne`` function.
 * API changes:
 
     * In cell quality-control, default percent of mitochondrial genes is changed from **10.0** to **20.0**. (``percent_mito`` argument in `qc_metrics <api/pegasus.qc_metrics.html>`_; ``--percent-mito`` option in ``cluster`` command)

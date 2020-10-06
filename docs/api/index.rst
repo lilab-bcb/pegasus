@@ -94,7 +94,6 @@ Visualization Algorithms
 	umap
 	fle
 	net_tsne
-    net_fitsne
 	net_umap
 	net_fle
 
@@ -160,7 +159,15 @@ Doublet Detection
 
     run_scrublet
     infer_doublets
-    mark_singlets
+    mark_doublets
+
+Gene Module Score
+-------------------
+
+.. autosummary::
+    :toctree: .
+
+    calc_signature_score
 
 Miscellaneous
 -------------
@@ -168,6 +175,5 @@ Miscellaneous
 .. autosummary::
 	:toctree: .
 
-	calc_signature_score
 	search_genes
 	search_de_genes
