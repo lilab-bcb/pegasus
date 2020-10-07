@@ -76,27 +76,18 @@
 			"name" : "B cell",
 			"markers" : [
 				{
-					"genes" : ["CD19+"],
-					"weight" : 0.17
+					"genes" : ["CD19+", "MS4A1+", "CD79A+", "CD79B+"],
+					"weight" : 0.7,
+					"comment" : "CD19, CD20 and CD79"
 				},
 				{
-					"genes" : ["MS4A1+"],
-					"weight" : 0.12,
-					"comment" : "CD20"
-				},
-				{
-					"genes" : ["CD79A+", "CD79B+"],
-					"weight" : 0.34,
-					"comment" : "CD79"
-				},
-				{
-					"genes" : ["MZB1+"],
-					"weight" : 0.17,
-					"comment" : ""
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
+					"genes" : ["BANK1+", "BLK+"],
 					"weight" : 0.2,
+					"comment" : "Extra B cell markers"
+				},
+				{
+					"genes" : ["CD74+", "HLA-DRA+", "HLA-DRB1+", "HLA-DPA1+", "HLA-DPB1+", "HLA-DQA1+", "HLA-DQB1+"],
+					"weight" : 0.1,
 					"comment" : "MHC II"
 				}
 			],
@@ -391,9 +382,14 @@
 			"name" : "Macrophage",
 			"markers" : [
 				{
-					"genes" : ["MRC1+", "CD68+", "CD163+", "ITGAM+", "RBPJ+", "MS4A4A+", "MS4A6A+", "LYZ+", "C1QA+", "MSR1+"],
-					"weight" : 1.0,
-					"comment" : "Markers from HTAPP paper"
+					"genes" : ["CD68+", "CD163+", "C1QA+", "MRC1+", "MS4A6A+", "MSR1+", "MERTK+"],
+					"weight" : 0.9,
+					"comment" : "High confident macrophage markers"
+				},
+				{
+					"genes" : ["SLC11A1+", "SLC8A1+", "CTSB+"],
+					"weight" : 0.1,
+					"comment" : "Low confident markers"
 				}
 			],
 			"subtypes" : {
@@ -403,7 +399,7 @@
 						"name" : "M1 macrophage",
 						"markers" : [
 							{
-								"genes" : ["FCGR2+", "FCGR1A+", "CD80+", "CD86+", "CXCL10+"],
+								"genes" : ["FCGR2A+", "FCGR1A+", "CD80+", "CD86+", "CXCL10+"],
 								"weight" : 1.0,
 								"comment" : "Markers from https://www.cusabio.com/c-20938.html and CellMarker"
  							}
@@ -427,9 +423,14 @@
 			"name" : "Mast cell",
 			"markers" : [
 				{
-					"genes" : ["TPSAB1+", "TPSB2+", "CPA3+", "KIT+", "FCER1G+"],
-					"weight" : 1.0,
-					"comment" : "Markers from HTAPP paper"
+					"genes" : ["KIT+", "CPA3+", "TPSB2+", "TPSAB1+", "AREG+", "RGS1+", "RGS2+"],
+					"weight" : 0.9,
+					"comment" : "Critical mast cell markers"
+				},
+				{
+					"genes" : ["SLC24A3+", "BMP2K+", "SAMSN1+"],
+					"weight" : 0.1,
+					"comment" : "Low confidence mast cell markers"
 				}
 			]
 		}

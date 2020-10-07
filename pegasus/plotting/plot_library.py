@@ -1629,8 +1629,10 @@ def rank_plot(
 def ridgeplot(
     data: Union[MultimodalData, UnimodalData],
     features: Union[str, List[str]],
+    donor_attr: Optional[str] = None,
     qc_attr: Optional[str] = None,
     overlap: Optional[float] = 0.5,
+    left_adjust: Optional[float] = 0.35,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
@@ -1645,10 +1647,14 @@ def ridgeplot(
         CITE-Seq or Cyto data.
     features : `str` or `List[str]`
         One or more features to display.
+    donor_attr: `str`, optional, default None
+        If not None, `features` must contain only one feature, plot this feature by donor indicated as `donor_attr`.
     qc_attr: `str`, optional, default None
         If not None, only data.obs[qc_attr] == True are used.
     overlap: `float`, default 0.5
         Overlap between adjacent ridge plots (top and bottom).
+    left_adjust: `float`, default 0.35
+        Left margin for displaying labels.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     return_fig: ``bool``, optional, default: ``False``
@@ -1665,6 +1671,7 @@ def ridgeplot(
     Examples
     --------
     >>> fig = pg.ridgeplot(data, features = ['CD8', 'CD4', 'CD3'], show = False, dpi = 500)
+    >>> fig = pg.ridgeplot(data, features = 'CD3', donor_attr = 'assignment', show = False, dpi = 500)
     """
     sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
 
@@ -1673,23 +1680,45 @@ def ridgeplot(
     if isinstance(features, str):
         features = [features]
     if len(features) > 8:
-        logger.warning("With with_control == False, only up to 8 features are allowed!")
+        logger.warning("At most 8 features are allowed to be plotted together!")
         return None
 
-    exprs = []
-    feats = []
+    df = None
+    if donor_attr is None:
+        exprs = []
+        feats = []
 
-    size = idx.sum()
-    for feature in features:
-        fid = data.var_names.get_loc(feature)
-        exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
-        feats.append(np.repeat(feature, size))
+        size = idx.sum()
+        for feature in features:
+            fid = data.var_names.get_loc(feature)
+            exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
+            feats.append(np.repeat(feature, size))
 
-    df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
+        df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
+    else:
+        if len(features) != 1:
+            logger.warning("When donor_attr is set, only one feature can be provided!")
+            return None
+        if donor_attr not in data.obs:
+            logger.warning(f"{donor_attr} is not in data.obs!")
+            return None
+        feature = features[0]
+        if feature not in data.var_names:
+            logger.warning(f"Feature {feature} is not included in data.var_names!")
+            return None
+        fid = data.var_names.get_loc(features[0])
+        df = pd.DataFrame({"expression": data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0], "feature": data.obs.loc[idx, donor_attr]})
 
     g = sns.FacetGrid(df, row="feature", hue="feature", aspect=8, height=1.0)
-    g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5)
-    g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1)
+    try:
+        g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5)
+        g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1)
+    except RuntimeError as re:
+        if str(re).startswith("Selected KDE bandwidth is 0. Cannot estimate density."):
+            g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5, bw=0.1)
+            g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1, bw=0.1)       
+        else:
+            raise re
     g.map(plt.axhline, y=0, lw=1, clip_on=False)
 
     def _set_label(value, color, label):
@@ -1698,13 +1727,15 @@ def ridgeplot(
 
     g.map(_set_label, "expression")
 
-    g.fig.subplots_adjust(hspace=-overlap)
+    g.fig.subplots_adjust(hspace=-overlap, left=left_adjust)
 
     g.set_titles("")
     g.set_xlabels("")
     g.set(yticks=[])
     g.despine(bottom=True, left=True)
 
+    if donor_attr is not None:
+        g.fig.suptitle(features[0], x = 0.0, y = 0.98, ha = "left")
     g.fig.set_dpi(dpi)
     g.fig.set_figwidth(panel_size[0])
     g.fig.set_figheight(panel_size[1])
