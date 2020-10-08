@@ -689,7 +689,7 @@ def violin(
             obs_keys.append(key)
         else:
             if key not in data.var_names:
-                logger.warning("Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
+                logger.warning(f"Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
                 return None
             genes.append(key)
 
@@ -738,7 +738,7 @@ def violin(
 
 def heatmap(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    genes: Union[str, List[str]],
+    attrs: Union[str, List[str]],
     groupby: str,
     matkey: Optional[str] = None,
     on_average: bool = True,
@@ -758,6 +758,10 @@ def heatmap(
 
     data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
         Single-cell expression data.
+    attrs: ``str`` or ``List[str]``
+        Cell attributes or features to plot.
+        Cell attributes must exist in ``data.obs`` and must be numeric.
+        Features must exist in ``data.var``.
     genes: ``str`` or ``List[str]``
         Features to plot.
     groupby: ``str``
@@ -806,8 +810,25 @@ def heatmap(
     if col_cluster is None:
         col_cluster = True if not switch_axes else False
 
-    df = pd.DataFrame(data[:, genes].X.toarray(), index=data.obs.index, columns=genes)
-    df['cluster_name'] = data.obs[groupby]
+    obs_keys = []
+    genes = []
+    for key in attrs:
+        if key in data.obs:
+            assert is_numeric_dtype(data.obs[key])
+            obs_keys.append(key)
+        else:
+            if key not in data.var_names:
+                logger.warning(f"Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
+                return None
+            genes.append(key)
+
+    df_list = [pd.DataFrame({'cluster_name': data.obs[groupby].values})]
+    if len(obs_keys) > 0:
+        df_list.append(data.obs[obs_keys].reset_index(drop=True))
+    if len(genes) > 0:
+        expr_mat = data[:, genes].X.toarray()
+        df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
+    df = pd.concat(df_list, axis = 1)
 
     if on_average:
         if not 'cmap' in kwargs.keys():
@@ -1282,7 +1303,7 @@ def hvfplot(
 
     ax.scatter(x[hvg_index], y[hvg_index], s=5, c='b', marker='o', linewidth=0.5, alpha=0.5, label='highly variable features')
     ax.scatter(x[~hvg_index], y[~hvg_index], s=5, c='k', marker='o', linewidth=0.5, alpha=0.5, label = 'other features')
-    ax.legend(loc = 'upper right', fontsize = 5)
+    ax.legend(loc = 'best', fontsize = 5)
     ax.set_xlabel("Mean log expression")
     ax.set_ylabel("Variance of log expression")
 

@@ -197,13 +197,17 @@ def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> 
     if isinstance(data, MultimodalData):
         data = data.current_data()
 
-    data.var["n_cells"] = data.X.getnnz(axis=0)
-    data.var["percent_cells"] = (data.var["n_cells"] / data.shape[0]) * 100
-    data.var["robust"] = data.var["percent_cells"] >= percent_cells
-    data.var["highly_variable_features"] = data.var["robust"]  # default all robust genes are "highly" variable
-
     prior_n = data.shape[1]
-    data._inplace_subset_var(data.var["n_cells"] > 0)
+
+    if issparse(data.X):
+        data.var["n_cells"] = data.X.getnnz(axis=0)
+        data._inplace_subset_var(data.var["n_cells"] > 0)
+        data.var["percent_cells"] = (data.var["n_cells"] / data.shape[0]) * 100
+        data.var["robust"] = data.var["percent_cells"] >= percent_cells
+    else:
+        data.var["robust"] = True
+
+    data.var["highly_variable_features"] = data.var["robust"]  # default all robust genes are "highly" variable
     logger.info(f"After filtration, {data.shape[1]}/{prior_n} genes are kept. Among {data.shape[1]} genes, {data.var['robust'].sum()} genes are robust.")
 
 

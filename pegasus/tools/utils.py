@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
+from typing import Union, List
 
 
 def update_rep(rep: str) -> str:
@@ -41,3 +42,20 @@ def knn_is_cached(
         and data.uns[indices_key].shape[0] == data.shape[0]
         and (K <= data.uns[indices_key].shape[1] + 1)
     )
+
+
+def slicing(X: Union[csr_matrix, np.ndarray], idx: int) -> np.ndarray:
+    result = X[idx].toarray() if issparse(X) else X[idx]
+    if result.ndim == 2 and result.shape[0] == 1:
+        result = result[0]
+    return result
+
+def calc_mean(X: Union[csr_matrix, np.ndarray], axis: int) -> np.ndarray:
+    result = X.mean(axis = axis)
+    return result.A1 if issparse(X) else result
+
+def calc_moment2(X: Union[csr_matrix, np.ndarray], axis: int) -> np.ndarray:
+    return X.power(2).sum(axis = axis).A1 if issparse(X) else np.power(X, 2).sum(axis = axis)
+
+def calc_expm1(X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
+    return X.copy().expm1() if issparse(X) else np.expm1(X)
