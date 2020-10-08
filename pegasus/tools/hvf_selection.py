@@ -1,14 +1,17 @@
 import time
 import numpy as np
 import pandas as pd
+from typing import Union
 from pandas.api.types import is_categorical_dtype
 
-from scipy.sparse import issparse
+from scipy.sparse import csr_matrix
 from collections import defaultdict
 from joblib import Parallel, delayed
 import skmisc.loess as sl
 from typing import List
 from pegasusio import MultimodalData
+
+from pegasus.tools import slicing, calc_mean, calc_moment2, calc_expm1
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,8 +22,6 @@ from pegasusio import timer
 def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
-    assert issparse(data.X)
-
     if consider_batch:
         start = time.perf_counter()
         # The reason that we test if 'Channel' and 'Channels' exist in addition to the highly_variable_features function is for the case that we do not perform feature selection but do batch correction
@@ -56,10 +57,10 @@ def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> N
                 continue
 
             if ncells[i] == 1:
-                means[:, i] = mat.toarray()[0]
+                means[:, i] = slicing(mat, 0)
             else:
-                means[:, i] = mat.mean(axis=0).A1
-                m2 = mat.power(2).sum(axis=0).A1
+                means[:, i] = calc_mean(mat, axis=0)
+                m2 = calc_moment2(mat, axis=0)
                 partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
 
             group = data.obs["Group"][idx.nonzero()[0][0]]
@@ -108,8 +109,8 @@ def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> N
             )
         )
     else:
-        mean = data.X.mean(axis=0).A1
-        m2 = data.X.power(2).sum(axis=0).A1
+        mean = calc_mean(data.X, axis=0)
+        m2 = calc_moment2(data.X, axis=0)
         var = (m2 - data.X.shape[0] * (mean ** 2)) / (data.X.shape[0] - 1)
 
         data.var["mean"] = mean
@@ -131,7 +132,7 @@ def select_hvf_pegasus(
     """ Select highly variable features using the pegasus method
     """
     if "robust" not in data.var:
-        raise ValueError("Please run `qc_metrics` to identify robust genes")
+        raise ValueError("Please run `identify_robust_genes` to identify robust genes")
 
     estimate_feature_statistics(data, consider_batch)
 
@@ -172,7 +173,7 @@ def select_hvf_pegasus(
 
 
 def select_hvf_seurat_single(
-    X: "csr_matrix",
+    X: Union[csr_matrix, np.ndarray],
     n_top: int,
     min_disp: float,
     max_disp: float,
@@ -181,9 +182,9 @@ def select_hvf_seurat_single(
 ) -> List[int]:
     """ HVF selection for one channel using Seurat method
     """
-    X = X.copy().expm1()
-    mean = X.mean(axis=0).A1
-    m2 = X.power(2).sum(axis=0).A1
+    X = calc_expm1(X)
+    mean = calc_mean(X, axis=0)
+    m2 = calc_moment2(X, axis=0)
     var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
 
     dispersion = np.full(X.shape[1], np.nan)
@@ -223,7 +224,7 @@ def select_hvf_seurat_single(
 
 
 def select_hvf_seurat_multi(
-    X: "csr_matrix",
+    X: Union[csr_matrix, np.ndarray],
     channels: List[str],
     cell2channel: List[str],
     n_top: int,

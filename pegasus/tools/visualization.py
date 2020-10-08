@@ -453,7 +453,11 @@ def umap(
 
     X = X_from_rep(data, rep)
     if not knn_is_cached(data, indices_key, distances_key, n_neighbors):
-        raise ValueError("Please run neighbors first!")
+        if indices_key in data.uns and n_neighbors > data.uns[indices_key].shape[1] + 1:
+            logger.warning(f"Reduce K for neighbors in UMAP from {n_neighbors} to {data.uns[indices_key].shape[1] + 1}")
+            n_neighbors = data.uns[indices_key].shape[1] + 1
+        else:
+            raise ValueError("Please run neighbors first!")
 
     knn_indices = np.insert(
         data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
