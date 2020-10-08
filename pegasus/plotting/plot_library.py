@@ -762,8 +762,6 @@ def heatmap(
         Cell attributes or features to plot.
         Cell attributes must exist in ``data.obs`` and must be numeric.
         Features must exist in ``data.var``.
-    genes: ``str`` or ``List[str]``
-        Features to plot.
     groupby: ``str``
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
     matkey: ``str``, optional, default: ``None``
@@ -771,7 +769,7 @@ def heatmap(
     on_average: ``bool``, optional, default: ``True``
         If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
     switch_axes: ``bool``, optional, default: ``False``
-        By default, X axis is for genes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
+        By default, X axis is for attributes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
     row_cluster: ``bool``, optional, default: ``False``
         Cluster rows and generate a row-wise dendrogram.
@@ -829,6 +827,7 @@ def heatmap(
         expr_mat = data[:, genes].X.toarray()
         df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
     df = pd.concat(df_list, axis = 1)
+    attr_names = df.columns[1:].values
 
     if on_average:
         if not 'cmap' in kwargs.keys():
@@ -859,7 +858,7 @@ def heatmap(
             col_cluster=col_cluster,
             linewidths=0,
             yticklabels=cluster_ids if on_average else [],
-            xticklabels=genes,
+            xticklabels=attr_names,
             figsize=panel_size,
             **kwargs,
         )
@@ -872,7 +871,7 @@ def heatmap(
             row_cluster=row_cluster,
             col_cluster=col_cluster,
             linewidths=0,
-            yticklabels=genes,
+            yticklabels=attr_names,
             xticklabels=cluster_ids if on_average else [],
             figsize=panel_size,
             **kwargs,
@@ -1737,7 +1736,7 @@ def ridgeplot(
     except RuntimeError as re:
         if str(re).startswith("Selected KDE bandwidth is 0. Cannot estimate density."):
             g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5, bw=0.1)
-            g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1, bw=0.1)       
+            g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1, bw=0.1)
         else:
             raise re
     g.map(plt.axhline, y=0, lw=1, clip_on=False)

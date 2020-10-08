@@ -315,7 +315,7 @@ def _plot_cluster_labels_in_heatmap(ax, ids, orientation):
     else:
         color_box = ax.get_position()
         ax.set_xticks(ticks)
-        ax.set_xticklabels(labels, rotation=90, y=color_box.y1+max_label_len/100)
+        ax.set_xticklabels(labels, rotation=90, y=color_box.y1+max_label_len/plt.rcParams['font.size'])
         ax.xaxis.set_ticks_position('top')
         ax.tick_params(axis='x', top=False)
 
