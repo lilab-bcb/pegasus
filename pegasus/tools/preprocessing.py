@@ -376,7 +376,9 @@ def select_features(data: MultimodalData, features: str = "highly_variable_featu
         X = data.X[:, data.var[features].values]
     else:
         X = data.X
-    data.uns[keyword] = X.toarray() if issparse(X) else X.copy()
+
+    from pegasus.tools import slicing
+    data.uns[keyword] = slicing(X, copy = True)
 
     if standardize or (max_value is not None):
         X = data.uns[keyword]

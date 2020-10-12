@@ -44,10 +44,17 @@ def knn_is_cached(
     )
 
 
-def slicing(X: Union[csr_matrix, np.ndarray], idx: int) -> np.ndarray:
-    result = X[idx].toarray() if issparse(X) else X[idx]
-    if result.ndim == 2 and result.shape[0] == 1:
-        result = result[0]
+# slicing is not designed to work at extracting one element
+def slicing(X: Union[csr_matrix, np.ndarray], row: Union[List[bool], List[int], int] = slice(None), col: Union[List[bool], List[int], int] = slice(None), copy: bool = False, squeeze: bool = True) -> np.ndarray:
+    result = X[row, col]
+    if issparse(X):
+        result = result.toarray()
+    elif copy:
+        result = result.copy()
+    if squeeze:
+        result = np.squeeze(result)
+        if result.ndim == 0:
+            result = result.item()
     return result
 
 def calc_mean(X: Union[csr_matrix, np.ndarray], axis: int) -> np.ndarray:
