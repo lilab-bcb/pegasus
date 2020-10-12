@@ -18,7 +18,7 @@ from typing import List, Tuple, Union, Optional, Callable
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasus.tools import X_from_rep
+from pegasus.tools import X_from_rep, slicing
 from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palette, _plot_cluster_labels_in_heatmap, RestrictionParser, DictWithDefault, _generate_categories, _plot_corners
 
 
@@ -161,7 +161,7 @@ def scatter(
                         loc = data.var_names.get_loc(attr)
                     except KeyError:
                         raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
-                    values = data.X[:, loc].toarray().ravel() if issparse(data.X) else data.X[:, loc]
+                    values = slicing(data.X, col = loc)
 
                 selected = restr_obj.get_satisfied(data, attr)
 
@@ -371,7 +371,7 @@ def scatter_groups(
             loc = data.var_names.get_loc(attr)
         except KeyError:
             raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
-        values = data.X[:, loc].toarray().ravel() if issparse(data.X) else data.X[:, loc]
+        values = slicing(data.X, col = loc)
 
     is_cat = is_categorical_dtype(values)
     if (not is_cat) and (not is_numeric_dtype(values)):
@@ -700,7 +700,7 @@ def violin(
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
-        expr_mat = data[:, genes].X.toarray()
+        expr_mat = slicing(data[:, genes].X)
         df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
     df = pd.concat(df_list, axis = 1)
 
@@ -824,7 +824,7 @@ def heatmap(
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
-        expr_mat = data[:, genes].X.toarray()
+        expr_mat = slicing(data[:, genes].X)
         df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
     df = pd.concat(df_list, axis = 1)
     attr_names = df.columns[1:].values
@@ -989,9 +989,7 @@ def dotplot(
     keywords.update(kwds)
 
     from scipy.sparse import issparse
-    X = data[:, genes].X
-    if issparse(X):
-        X = X.toarray()
+    X = slicing(data[:, genes].X)
     df = pd.DataFrame(data=X, columns=genes)
     df[groupby] = data.obs[groupby].values
 
@@ -1211,8 +1209,7 @@ def dendrogram(
         embed_df = pd.DataFrame(X_from_rep(data, rep))
         embed_df.set_index(data.obs[groupby], inplace=True)
     else:
-        sub_data = data[:, genes]
-        X = sub_data.X.toarray() if issparse(sub_data.X) else sub_data.X
+        X = slicing(data[:, genes].X)
         embed_df = pd.DataFrame(X)
         embed_df.set_index(data.obs[groupby], inplace=True)
 
@@ -1711,7 +1708,7 @@ def ridgeplot(
         size = idx.sum()
         for feature in features:
             fid = data.var_names.get_loc(feature)
-            exprs.append(data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0])
+            exprs.append(slicing(data.get_matrix("arcsinh.transformed"), idx, fid))
             feats.append(np.repeat(feature, size))
 
         df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
@@ -1727,7 +1724,7 @@ def ridgeplot(
             logger.warning(f"Feature {feature} is not included in data.var_names!")
             return None
         fid = data.var_names.get_loc(features[0])
-        df = pd.DataFrame({"expression": data.get_matrix("arcsinh.transformed")[idx, fid].toarray()[:, 0], "feature": data.obs.loc[idx, donor_attr]})
+        df = pd.DataFrame({"expression": slicing(data.get_matrix("arcsinh.transformed"), idx, fid), "feature": data.obs.loc[idx, donor_attr]})
 
     g = sns.FacetGrid(df, row="feature", hue="feature", aspect=8, height=1.0)
     try:
