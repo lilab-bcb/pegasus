@@ -339,7 +339,13 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str =
 
 
 @run_gc
-def select_features(data: MultimodalData, features: str = "highly_variable_features", standardize: bool = True, max_value: float = 10.0) -> str:
+def select_features(
+    data: MultimodalData,
+    features: str = "highly_variable_features",
+    standardize: bool = True,
+    max_value: float = 10.0,
+    use_cache: bool = True,
+) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix, with the option of standardization and truncating based on max_value. `'fmat_*'` will be removed before writing out the disk.
 
     Parameters
@@ -356,12 +362,15 @@ def select_features(data: MultimodalData, features: str = "highly_variable_featu
     max_value: ``float``, optional, default: ``10``.
         The threshold to truncate data after scaling. If ``None``, do not truncate.
 
+    use_cache: ``bool``, optional, default: ``False``.
+        Whether to use precalculated subset matrix if exists.
+
     Returns
     -------
     keyword: ``str``
         The keyword in ``data.uns`` referring to the features selected.
 
-    Update ``data.uns``:
+    Update ``data.uns`` if needed:
 
         * ``data.uns[keyword]``: A submatrix of the data containing features selected.
 
@@ -371,14 +380,15 @@ def select_features(data: MultimodalData, features: str = "highly_variable_featu
     """
     keyword = "fmat_" + str(features)  # fmat: feature matrix
 
-    if features is not None:
-        assert features in data.var
-        X = data.X[:, data.var[features].values]
-    else:
-        X = data.X
+    if (not use_cache) or (use_cache and (keyword not in data.uns)):
+        if features is not None:
+            assert features in data.var
+            X = data.X[:, data.var[features].values]
+        else:
+            X = data.X
 
-    from pegasus.tools import slicing
-    data.uns[keyword] = slicing(X, copy = True)
+        from pegasus.tools import slicing
+        data.uns[keyword] = slicing(X, copy=True)
 
     if standardize or (max_value is not None):
         X = data.uns[keyword]
@@ -406,6 +416,7 @@ def pca(
     max_value: float = 10,
     robust: bool = False,
     random_state: int = 0,
+    use_cache: bool = True,
 ) -> None:
     """Perform Principle Component Analysis (PCA) to the data.
 
@@ -434,6 +445,8 @@ def pca(
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
 
+    use_cache: ``bool``, optional, default: ``True``.
+        Whether to use precalculated subset feature matrix if exists.
 
     Returns
     -------
@@ -455,7 +468,7 @@ def pca(
     --------
     >>> pg.pca(data)
     """
-    keyword = select_features(data, features = features, standardize = standardize, max_value = max_value)
+    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value, use_cache=use_cache)
     X = data.uns[keyword]
 
     pca = PCA(n_components=n_components, random_state=random_state)

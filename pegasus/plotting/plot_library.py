@@ -1048,7 +1048,7 @@ def dotplot(
     summarized_df = df.groupby(groupby).aggregate([reduce_function, non_zero])
     if sort_function is not None:
         row_indices = sort_function(summarized_df)
-        summarized_df = summarized_df.iloc[row_indices]
+        summarized_df = summarized_df.loc[row_indices]
     else:
         summarized_df = summarized_df.loc[natsorted(summarized_df.index, reverse=True)]
 
