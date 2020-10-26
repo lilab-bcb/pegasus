@@ -396,6 +396,8 @@ def highly_variable_features(
             n_jobs=n_jobs,
         )
 
+    data.uns.pop("_tmp_fmat_highly_variable_features", None) # Pop up cached feature matrix
+
     logger.info(
         "{} highly variable features have been selected.".format(
             data.var["highly_variable_features"].sum()

@@ -139,7 +139,6 @@ def correct_batch_effects(data: MultimodalData, keyword: str, features: str = No
         X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(
             plus[:, i], newshape=(1, m)
         )
-    # X[X < 0.0] = 0.0
 
 
 def correct_batch(data: MultimodalData, features: str = None) -> None:
