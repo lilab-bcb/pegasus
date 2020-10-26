@@ -346,7 +346,7 @@ def select_features(
     max_value: float = 10.0,
     use_cache: bool = True,
 ) -> str:
-    """ Subset the features and store the resulting matrix in dense format in data.uns with `'fmat_'` prefix, with the option of standardization and truncating based on max_value. `'fmat_*'` will be removed before writing out the disk.
+    """ Subset the features and store the resulting matrix in dense format in data.uns with `'_tmp_fmat_'` prefix, with the option of standardization and truncating based on max_value. `'_tmp_fmat_*'` will be removed before writing out the disk.
 
     Parameters
     ----------
@@ -378,7 +378,7 @@ def select_features(
     --------
     >>> pg.select_features(data)
     """
-    keyword = "fmat_" + str(features)  # fmat: feature matrix
+    keyword = "_tmp_fmat_" + str(features)  # fmat: feature matrix
 
     if (not use_cache) or (use_cache and (keyword not in data.uns)):
         if features is not None:

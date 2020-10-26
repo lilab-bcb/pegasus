@@ -317,7 +317,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
-        adata.uns["scale.data"] = adata.uns.pop("fmat_highly_variable_features")  # assign by reference
+        adata.uns["scale.data"] = adata.uns.pop("_tmp_fmat_highly_variable_features")  # assign by reference
         adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
         adata.write(f"{output_name}.h5ad", compression="gzip")
         del adata
@@ -331,9 +331,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if unidata.uns["genome"] != genome:
         unidata.uns["genome"] = genome
     # Eliminate objects starting with fmat_ from uns
-    for key in list(unidata.uns):
-        if key.startswith("fmat_"):
-            unidata.uns.pop(key)
+    unidata.uns.pop("_tmp_fmat_highly_variable_features", None)
 
 
 

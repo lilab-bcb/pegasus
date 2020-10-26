@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasus.tools import X_from_rep, slicing
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palette, _plot_cluster_labels_in_heatmap, RestrictionParser, DictWithDefault, _generate_categories, _plot_corners
+from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palette, RestrictionParser, DictWithDefault, _generate_categories, _plot_corners
 
 
 def scatter(
@@ -111,11 +111,11 @@ def scatter(
         attrs = [attrs]
     nattrs = len(attrs)
 
-    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+    if not isinstance(data, anndata.AnnData):
         cur_matkey = data.current_matrix()
 
     if matkey is not None:
-        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
     x = data.obsm[f"X_{basis}"][:, 0]
@@ -251,7 +251,7 @@ def scatter(
                 ax.set_ylabel(f"{basis}2")
 
     # Reset current matrix if needed.
-    if (not isinstance(data, anndata.AnnData)):
+    if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
@@ -349,10 +349,10 @@ def scatter_groups(
     >>> pg.scatter_groups(data, attr='louvain_labels', groupby='Individual', basis='tsne', nrows = 2, ncols = 4, alpha = 0.5)
     >>> pg.scatter_groups(data, attr='anno', groupby='Channel', basis='umap', categories=['new_cat1:channel1,channel2', 'new_cat2:channel3'])
     """
-    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+    if not isinstance(data, anndata.AnnData):
         cur_matkey = data.current_matrix()
     if matkey is not None:
-        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
     x = data.obsm[f"X_{basis}"][:, 0]
@@ -671,10 +671,10 @@ def violin(
     if not is_list_like(attrs):
         attrs = [attrs]
 
-    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+    if not isinstance(data, anndata.AnnData):
         cur_matkey = data.current_matrix()
     if matkey is not None:
-        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
     nrows = len(attrs)
@@ -743,8 +743,13 @@ def heatmap(
     matkey: Optional[str] = None,
     on_average: bool = True,
     switch_axes: bool = False,
-    row_cluster: Optional[bool] = None,
-    col_cluster: Optional[bool] = None,
+    attrs_cluster: Optional[bool] = False,
+    attrs_dendrogram: Optional[bool] = True,
+    groupby_cluster: Optional[bool] = True,
+    groupby_dendrogram: Optional[bool] = True,
+    attrs_labelsize: Optional[float] = 10.0,
+    groupby_labelsize: Optional[float] = 10.0,
+    cbar_labelsize: Optional[float] = 10.0,
     panel_size: Tuple[float, float] = (10, 10),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
@@ -762,8 +767,10 @@ def heatmap(
         Cell attributes or features to plot.
         Cell attributes must exist in ``data.obs`` and must be numeric.
         Features must exist in ``data.var``.
+        By default, attrs are plotted as columns.
     groupby: ``str``
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
+        By default, data.obs['groupby'] is plotted as rows.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     on_average: ``bool``, optional, default: ``True``
@@ -771,10 +778,20 @@ def heatmap(
     switch_axes: ``bool``, optional, default: ``False``
         By default, X axis is for attributes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
-    row_cluster: ``bool``, optional, default: ``False``
-        Cluster rows and generate a row-wise dendrogram.
-    col_cluster: ``bool``, optional, default: ``True``
-        Cluster columns and generate a column-wise dendrogram.
+    attrs_cluster: ``bool``, optional, default: ``False``
+        Cluster attributes and generate a attribute-wise dendrogram.
+    attrs_dendrogram: ``bool``, optional, default: ``True``
+        Only matters if attrs_cluster is True. Show the dendrogram if this option is True.
+    groupby_cluster: ``bool``, optional, default: ``True``
+        Cluster data.obs['groupby'] and generate a cluster-wise dendrogram.
+    groupby_dendrogram: ``bool``, optional, default: ``True``
+        Only matters if groupby_cluster is True. Show the dendrogram if this option is True.
+    attrs_labelsize: ``float``, optional, default: 10.0
+        Fontsize for labels of attrs.
+    groupby_labelsize: ``float``, optional, default: 10.0
+        Fontsize for labels of data.obs['groupby'].
+    cbar_labelsize: ``float``, optional, default: 10.0
+        Fontsize of the color bar.
     panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
         Overall size of the heatmap in ``(width, height)`` form.
     return_fig: ``bool``, optional, default: ``False``
@@ -796,17 +813,14 @@ def heatmap(
     >>> pg.heatmap(data, genes=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
 
     """
-    if isinstance(data, MultimodalData) or isinstance(data, UnimodalData):
+    if not isinstance(data, anndata.AnnData):
         cur_matkey = data.current_matrix()
     if matkey is not None:
-        assert isinstance(data, MultimodalData) or isinstance(data, UnimodalData)
+        assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
-    if row_cluster is None:
-        row_cluster = True if switch_axes else False
-
-    if col_cluster is None:
-        col_cluster = True if not switch_axes else False
+    if isinstance(attrs, str):
+        attrs = [attrs]
 
     obs_keys = []
     genes = []
@@ -820,7 +834,13 @@ def heatmap(
                 return None
             genes.append(key)
 
-    df_list = [pd.DataFrame({'cluster_name': data.obs[groupby].values})]
+    clusters = data.obs[groupby].values
+    if not is_categorical_dtype(clusters):
+        clusters = pd.Categorical(clusters)
+    else:
+        clusters.remove_unused_categories(inplace = True)
+    df_list = [pd.DataFrame({'cluster_name': clusters})]
+
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
@@ -835,27 +855,25 @@ def heatmap(
         df = df.groupby('cluster_name').mean()
         cluster_ids = df.index
     else:
-        row_cluster = False if not switch_axes else row_cluster
-        col_cluster = False if switch_axes else col_cluster
-
-        cluster_ids = pd.Categorical(data.obs[groupby])
-        idx = cluster_ids.argsort()
-        df = df.iloc[idx, :]  # organize df by category order
-        df.drop(columns=['cluster_name'], inplace=True)
+        cluster_ids = df.pop('cluster_name').values
+        if not groupby_cluster:
+            idx = cluster_ids.argsort(kind = 'mergesort')
+            df = df.iloc[idx, :]  # organize df by category order
+            cluster_ids = cluster_ids[idx]
 
         cell_colors = np.zeros(df.shape[0], dtype=object)
         palette = _get_palette(cluster_ids.categories.size)
-        cluster_ids = cluster_ids[idx]
+        
         for k, cat in enumerate(cluster_ids.categories):
-            cell_colors[np.isin(cluster_ids, cat)] = palette[k]
+            cell_colors[cluster_ids == cat] = palette[k]
 
     if not switch_axes:
         cg = sns.clustermap(
             data=df,
             row_colors=cell_colors if not on_average else None,
             col_colors=None,
-            row_cluster=row_cluster,
-            col_cluster=col_cluster,
+            row_cluster=groupby_cluster,
+            col_cluster=attrs_cluster,
             linewidths=0,
             yticklabels=cluster_ids if on_average else [],
             xticklabels=attr_names,
@@ -863,13 +881,15 @@ def heatmap(
             **kwargs,
         )
         cg.ax_heatmap.set_ylabel("")
+        if attrs_labelsize is not None:
+            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize)
     else:
         cg = sns.clustermap(
             data=df.T,
             row_colors=None,
             col_colors=cell_colors if not on_average else None,
-            row_cluster=row_cluster,
-            col_cluster=col_cluster,
+            row_cluster=attrs_cluster,
+            col_cluster=groupby_cluster,
             linewidths=0,
             yticklabels=attr_names,
             xticklabels=cluster_ids if on_average else [],
@@ -877,36 +897,65 @@ def heatmap(
             **kwargs,
         )
         cg.ax_heatmap.set_xlabel("")
+        if attrs_labelsize is not None:
+            cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize)
 
-    if row_cluster:
+    show_row_dendrogram = (attrs_cluster and attrs_dendrogram) if switch_axes else (groupby_cluster and groupby_dendrogram)
+    show_col_dendrogram = (groupby_cluster and groupby_dendrogram) if switch_axes else (attrs_cluster and attrs_dendrogram)
+
+    if show_row_dendrogram:
         cg.ax_heatmap.yaxis.tick_right()
-    else:
-        cg.ax_heatmap.yaxis.tick_left()
+        cg.ax_row_dendrogram.set_visible(True)
 
-    cg.ax_row_dendrogram.set_visible(row_cluster)
-    cg.cax.tick_params(labelsize=10)
-    cg.fig.dpi = dpi
-
-    if not row_cluster:
-        # Move the colorbar to the right-side.
-        color_box = cg.ax_heatmap.get_position()
-        color_box.x0 = color_box.x1 + 0.04
-        color_box.x1 = color_box.x0 + 0.02
-        cg.cax.set_position(color_box)
-        cg.cax.yaxis.set_ticks_position("right")
-    else:
         # Avoid overlap of colorbar and row dendrogram.
-        color_box = cg.cax.get_position()
+        color_box = cg.ax_cbar.get_position()
         square_plot = cg.ax_heatmap.get_position()
         if square_plot.y1 > color_box.y0:
             y_diff = square_plot.y1 - color_box.y0
             color_box.y0 = square_plot.y1
             color_box.y1 += y_diff
-            cg.cax.set_position(color_box)
+            cg.ax_cbar.set_position(color_box)
+    else:
+        cg.ax_heatmap.yaxis.tick_left()
+        cg.ax_row_dendrogram.set_visible(False)
+
+        # Move the colorbar to the right-side.
+        color_box = cg.ax_heatmap.get_position()
+        color_box.x0 = color_box.x1 + 0.04
+        color_box.x1 = color_box.x0 + 0.02
+        cg.ax_cbar.set_position(color_box)
+        cg.ax_cbar.yaxis.set_ticks_position("right")
+
+
+    if show_col_dendrogram:
+        cg.ax_heatmap.xaxis.tick_bottom()
+        cg.ax_col_dendrogram.set_visible(True)
+    else:
+        cg.ax_heatmap.xaxis.tick_top()
+        cg.ax_col_dendrogram.set_visible(False)
+    
+    cg.ax_cbar.tick_params(labelsize=cbar_labelsize)
+    cg.fig.dpi = dpi
 
     if not on_average:
-        orientation = 'left' if not switch_axes else 'top'
-        _plot_cluster_labels_in_heatmap(cg.ax_heatmap, cluster_ids, orientation)
+        if groupby_cluster:
+            from matplotlib.patches import Patch
+            legend_elements = [Patch(color = color, label = label) for color, label in zip(palette, cluster_ids.categories)]
+            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)           
+        else:
+            values = cluster_ids.value_counts().values
+            ticks = np.cumsum(values) - values / 2
+            labels = cluster_ids.categories
+            if not switch_axes:
+                cg.ax_row_colors.yaxis.tick_left()
+                cg.ax_row_colors.set_yticks(ticks)
+                cg.ax_row_colors.set_yticklabels(labels)
+                cg.ax_row_colors.tick_params(axis='y', left = False, length=10)
+            else:
+                cg.ax_col_colors.xaxis.tick_top()
+                cg.ax_col_colors.set_xticks(ticks)
+                cg.ax_col_colors.set_xticklabels(labels, rotation=45)
+                cg.ax_col_colors.tick_params(axis='x', top = False, labelsize = groupby_labelsize, length=10)
 
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
