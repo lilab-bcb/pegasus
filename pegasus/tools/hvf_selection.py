@@ -119,7 +119,7 @@ def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> N
 
 def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> object:
     try:
-        lobj = sl.loess(x, y, span=span, degree=2)
+        lobj = sl.loess(x, y, span=span, degree=degree)
         lobj.fit()
         return lobj
     except ValueError:
