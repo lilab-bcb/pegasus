@@ -298,7 +298,6 @@ def _run_filter_data(
 
 
 @timer(logger=logger)
-@run_gc
 def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str = "raw.X") -> None:
     """Normalization, and then apply natural logarithm to the data.
 
@@ -329,13 +328,10 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str =
     assert data.get_modality() == "rna"
 
     data.add_matrix(backup_matrix, data.X)
-    data.X = data.get_matrix("X").astype(np.float32)
+    data.X = data.X.astype(np.float32) # force copy
 
-    mat = data.X[:, data.var["robust"].values]
-    scale = norm_count / mat.sum(axis=1).A1
-    data.X.data *= np.repeat(scale, np.diff(data.X.indptr))
-    data.X.data = np.log1p(data.X.data) # faster than data.X.log1p()
-    data.obs["scale"] = scale
+    from pegasus.cylib.fast_utils import normalize_by_count
+    data.obs["scale"] = normalize_by_count(data.X, data.var["robust"].values, norm_count, True)
 
 
 @run_gc

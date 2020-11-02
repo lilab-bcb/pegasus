@@ -1,4 +1,3 @@
-import time
 import numpy as np
 import pandas as pd
 from typing import Union
@@ -11,7 +10,7 @@ import skmisc.loess as sl
 from typing import List
 from pegasusio import MultimodalData
 
-from pegasus.tools import slicing, calc_mean, calc_moment2, calc_expm1
+from pegasus.tools import calc_mean_and_var, calc_expm1
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,54 +18,51 @@ logger = logging.getLogger(__name__)
 from pegasusio import timer
 
 
+
+def _check_channel(data: MultimodalData) -> None:
+    if "Channel" not in data.obs:
+        data.obs["Channel"] = pd.Categorical.from_codes(codes = np.zeros(data.shape[0], dtype = np.int32), categories = [""])
+    elif not is_categorical_dtype(data.obs["Channel"]):
+        data.obs["Channel"] = pd.Categorical(data.obs["Channel"].values)
+
+    if "Channels" not in data.uns:
+        data.uns["Channels"] = data.obs["Channel"].cat.categories.values
+
+def _check_group(data: MultimodalData) -> None:
+    if "Group" not in data.obs:
+        data.obs["Group"] = pd.Categorical.from_codes(codes = np.zeros(data.shape[0], dtype = np.int32), categories = ["one_group"])
+    elif not is_categorical_dtype(data.obs["Group"]):
+        data.obs["Group"] = pd.Categorical(data.obs["Group"].values)
+
+    if "Groups" not in data.uns:
+        data.uns["Groups"] = data.obs["Group"].cat.categories.values
+
+@timer(logger=logger)
 def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
     if consider_batch:
-        start = time.perf_counter()
         # The reason that we test if 'Channel' and 'Channels' exist in addition to the highly_variable_features function is for the case that we do not perform feature selection but do batch correction
-        if "Channel" not in data.obs:
-            data.obs["Channel"] = ""
-
-        if "Channels" not in data.uns:
-            data.uns["Channels"] = data.obs["Channel"].cat.categories.values if is_categorical_dtype(data.obs["Channel"]) else data.obs["Channel"].unique()
-
+        _check_channel(data)
         if data.uns["Channels"].size == 1:
             return None
-
-        if "Group" not in data.obs:
-            data.obs["Group"] = "one_group"
-
-        if "Groups" not in data.uns:
-            data.uns["Groups"] = data.obs["Group"].cat.categories.values if is_categorical_dtype(data.obs["Group"]) else data.obs["Group"].unique()
+        _check_group(data)
 
         channels = data.uns["Channels"]
         groups = data.uns["Groups"]
 
-        ncells = np.zeros(channels.size)
-        means = np.zeros((data.shape[1], channels.size))
-        partial_sum = np.zeros((data.shape[1], channels.size))
+        from pegasus.cylib.fast_utils import calc_stat_per_batch
+        ncells, means, partial_sum = calc_stat_per_batch(data.X, data.obs["Channel"].values)
+        partial_sum[partial_sum < 1e-6] = 0.0
 
         group_dict = defaultdict(list)
-        for i, channel in enumerate(channels):
-            idx = np.isin(data.obs["Channel"], channel)
-            mat = data.X[idx].astype(np.float64)
-            ncells[i] = mat.shape[0]
-
-            if ncells[i] == 0:
-                continue
-
-            if ncells[i] == 1:
-                means[:, i] = slicing(mat, 0)
-            else:
-                means[:, i] = calc_mean(mat, axis=0)
-                m2 = calc_moment2(mat, axis=0)
-                partial_sum[:, i] = m2 - ncells[i] * (means[:, i] ** 2)
-
-            group = data.obs["Group"][idx.nonzero()[0][0]]
-            group_dict[group].append(i)
-
-        partial_sum[partial_sum < 1e-6] = 0.0
+        if groups.size == 1:
+            group_dict[groups[0]] = list(range(channels.size))
+        else:
+            for i, channel in enumerate(channels):
+                idx = np.isin(data.obs["Channel"], channel)
+                group = data.obs["Group"][idx.nonzero()[0][0]]
+                group_dict[group].append(i)
 
         overall_means = np.dot(means, ncells) / data.shape[0]
         batch_adjusted_vars = np.zeros(data.shape[1])
@@ -102,19 +98,8 @@ def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> N
         data.var["var"] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
             data.shape[0] - 1.0
         )
-        end = time.perf_counter()
-        logger.info(
-            "Estimation on feature statistics per channel is finished. Time spent = {:.2f}s.".format(
-                end - start
-            )
-        )
     else:
-        mean = calc_mean(data.X, axis=0)
-        m2 = calc_moment2(data.X, axis=0)
-        var = (m2 - data.X.shape[0] * (mean ** 2)) / (data.X.shape[0] - 1)
-
-        data.var["mean"] = mean
-        data.var["var"] = var
+        data.var["mean"], data.var["var"] = calc_mean_and_var(data.X, axis=0)
 
 
 def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> object:
@@ -183,9 +168,7 @@ def select_hvf_seurat_single(
     """ HVF selection for one channel using Seurat method
     """
     X = calc_expm1(X)
-    mean = calc_mean(X, axis=0)
-    m2 = calc_moment2(X, axis=0)
-    var = (m2 - X.shape[0] * (mean ** 2)) / (X.shape[0] - 1)
+    mean, var = calc_mean_and_var(X, axis=0)
 
     dispersion = np.full(X.shape[1], np.nan)
     idx_valid = (mean > 0.0) & (var > 0.0)
@@ -370,11 +353,7 @@ def highly_variable_features(
     --------
     >>> pg.highly_variable_features(data, consider_batch = False)
     """
-    if "Channels" not in data.uns:
-        if "Channel" not in data.obs:
-            data.obs["Channel"] = ""
-        data.uns["Channels"] = data.obs["Channel"].cat.categories.values if is_categorical_dtype(data.obs["Channel"]) else data.obs["Channel"].unique()
-
+    _check_channel(data)
     if data.uns["Channels"].size == 1 and consider_batch:
         consider_batch = False
         logger.warning(
