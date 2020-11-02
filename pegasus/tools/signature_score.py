@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 from pegasusio import timer
 
-
 import pkg_resources
 predefined_signatures = dict(
     cell_cycle_human=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_human.gmt"),
@@ -33,7 +32,7 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         data.var["mean"] = calc_mean(data.X, axis = 0)
 
     if data.uns.get("sig_n_bins", 0) != n_bins:
-        mean_vec = data.var["mean"]
+        mean_vec = data.var["mean"].values
         if mean_vec.size <= n_bins:
             logger.error(f"Number of bins {n_bins} is larger or equal to the total number of genes {mean_vec.size}! Please adjust n_bins and rerun this function!")
             return False
@@ -43,18 +42,14 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         except ValueError:
             logger.warning("Detected and dropped duplicate bin edges!")
             bins = pd.qcut(mean_vec, n_bins, duplicates = "drop")
-            n_bins = bins.cat.categories.size
         if bins.value_counts().min() == 1:
             logger.warning("Detected bins with only 1 gene!")
-        bins.cat.categories = bins.cat.categories.astype(str)
+        bins.categories = bins.categories.astype(str)
         data.var["bins"] = bins
+
         # calculate background expectations
-        sig_background = np.zeros((data.shape[0], n_bins))
-        for code in range(n_bins):
-            idx = (bins.cat.codes == code).values
-            base = mean_vec[idx].mean()
-            sig_background[:, code] = calc_mean(data.X[:, idx], axis = 1) - base
-        data.obsm["sig_background"] = sig_background
+        from pegasus.cylib.fast_utils import calc_sig_background
+        data.obsm["sig_background"] = calc_sig_background(data.X, bins, mean_vec)
 
     return True
 
@@ -86,7 +81,7 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
         else:
             if key in data.obs:
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
-            data.obs[key] = (calc_mean(data.X[:, idx], axis = 1) - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)
+            data.obs[key] = ((calc_mean(data.X[:, idx], axis = 1) - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)).astype(np.float32)
 
 
 def _estimate_null(maxvalues: List[float], right_cutoff: int = 0.2) -> List[bool]:

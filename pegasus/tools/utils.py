@@ -2,6 +2,8 @@ import numpy as np
 from scipy.sparse import issparse, csr_matrix
 from typing import Union, List
 
+from pegasus.cylib.fast_utils import calc_mean, calc_mean_and_var
+
 
 def update_rep(rep: str) -> str:
     """ If rep is None, return rep as mat, which refers to the whole expression matrix
@@ -44,7 +46,7 @@ def knn_is_cached(
     )
 
 
-# slicing is not designed to work at extracting one element
+# slicing is not designed to work at extracting one element, convert to dense matrix
 def slicing(X: Union[csr_matrix, np.ndarray], row: Union[List[bool], List[int], int] = slice(None), col: Union[List[bool], List[int], int] = slice(None), copy: bool = False, squeeze: bool = True) -> np.ndarray:
     result = X[row, col]
     if issparse(X):
@@ -57,12 +59,9 @@ def slicing(X: Union[csr_matrix, np.ndarray], row: Union[List[bool], List[int], 
             result = result.item()
     return result
 
-def calc_mean(X: Union[csr_matrix, np.ndarray], axis: int) -> np.ndarray:
-    result = X.mean(axis = axis)
-    return result.A1 if issparse(X) else result
-
-def calc_moment2(X: Union[csr_matrix, np.ndarray], axis: int) -> np.ndarray:
-    return X.power(2).sum(axis = axis).A1 if issparse(X) else np.power(X, 2).sum(axis = axis)
-
 def calc_expm1(X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
-    return X.copy().expm1() if issparse(X) else np.expm1(X)
+    if not issparse(X):
+        return np.expm1(X)
+    res = X.copy()
+    np.expm1(res.data, out = res.data)
+    return res
