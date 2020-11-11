@@ -298,7 +298,7 @@ def select_hvf_seurat(
 @timer(logger=logger)
 def highly_variable_features(
     data: MultimodalData,
-    consider_batch: bool,
+    consider_batch: bool = False,
     flavor: str = "pegasus",
     n_top: int = 2000,
     span: float = 0.02,
@@ -315,7 +315,7 @@ def highly_variable_features(
     data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
-    consider_batch: ``bool``.
+    consider_batch: ``bool``, optional, default: ``False``
         Whether consider batch effects or not.
 
     flavor: ``str``, optional, default: ``"pegasus"``

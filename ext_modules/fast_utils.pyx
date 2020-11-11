@@ -266,3 +266,110 @@ cpdef calc_sig_background(X: Union[csr_matrix, np.ndarray], bins, const double[:
             sig_back_view[i, j] = sig_back_view[i, j] / bin_count[j] - bin_avg[j]
 
     return sig_background
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef tuple simulate_doublets(X: Union[csr_matrix, np.ndarray], double sim_doublet_ratio, Py_ssize_t random_state = 0):
+    ### Also return simulated index in case there is a need
+    ### Assume X is ordered in ascending order
+    cdef Py_ssize_t i, j, k, u, v, u_up, v_up, size, counter
+
+    cdef int M = X.shape[0] # M rows
+    cdef int N = X.shape[1] # N columns
+
+    # simulate doublet indices
+    np.random.seed(random_state)
+    cdef Py_ssize_t n_sim = <int>(M * sim_doublet_ratio)
+    cdef int[:, :] doublet_indices = np.random.randint(0, M, size=(n_sim, 2), dtype = np.int32)
+
+    # if sparse
+    cdef const int[:] data
+    cdef const int[:] indices
+    cdef const long[:] indptr
+
+    cdef int[:] out_data
+    cdef int[:] out_indices
+    cdef long[:] out_indptr
+
+    # if not sparse
+    cdef const int[:, :] data_array
+    cdef int[:, :] out_array
+
+    # Generate new count matrix
+    if issparse(X):
+        data = X.data
+        indices = X.indices
+        indptr = X.indptr.astype(np.int64)
+
+        size = 0
+        for i in range(n_sim):
+            u = doublet_indices[i, 0]
+            v = doublet_indices[i, 1]
+            size += (indptr[u + 1] - indptr[u]) + (indptr[v + 1] - indptr[v])
+
+        out_data_buffer = np.zeros(size, dtype = np.int32)
+        out_indices_buffer = np.zeros(size, dtype = np.int32)
+        out_indptr_buffer = np.zeros(n_sim + 1, dtype = np.int64)
+        
+        out_data = out_data_buffer
+        out_indices = out_indices_buffer
+        out_indptr = out_indptr_buffer
+
+        counter = 0
+        for i in range(n_sim):
+            out_indptr[i] = counter
+
+            u = doublet_indices[i, 0]
+            v = doublet_indices[i, 1]
+            
+            j = indptr[u]
+            u_up = indptr[u + 1]
+            k = indptr[v]
+            v_up = indptr[v + 1]
+
+            while j < u_up and k < v_up:
+                if indices[j] < indices[k]:
+                    out_indices[counter] = indices[j]
+                    out_data[counter] = data[j]
+                    j += 1
+                elif indices[j] == indices[k]:
+                    out_indices[counter] = indices[j]
+                    out_data[counter] = data[j] + data[k]
+                    j += 1
+                    k += 1
+                else:
+                    out_indices[counter] = indices[k]
+                    out_data[counter] = data[k]
+                    k += 1
+                counter += 1
+
+            while j < u_up:
+                out_indices[counter] = indices[j]
+                out_data[counter] = data[j]
+                counter += 1
+                j += 1
+
+            while k < v_up:
+                out_indices[counter] = indices[k]
+                out_data[counter] = data[k]
+                counter += 1
+                k += 1
+        out_indptr[n_sim] = counter
+
+        out_data_buffer.resize(out_indptr[n_sim], refcheck=False)
+        out_indices_buffer.resize(out_indptr[n_sim], refcheck=False)
+
+        results = csr_matrix((out_data_buffer, out_indices_buffer, out_indptr_buffer), shape = (n_sim, N), copy = False)
+    else:
+        results = np.zeros((n_sim, N), dtype = np.int32)
+        data_array = X
+        out_array = results
+
+        for i in range(n_sim):
+            u = doublet_indices[i, 0]
+            v = doublet_indices[i, 1]
+            for j in range(N):
+                out_array[i, j] = data_array[u, j] + data_array[v, j]
+
+    return results, np.asarray(doublet_indices)
