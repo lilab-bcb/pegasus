@@ -10,8 +10,6 @@ logger = logging.getLogger(__name__)
 from pegasusio import UnimodalData, MultimodalData
 from pegasusio import timer
 
-from pegasus.tools import log_norm, select_features
-
 
 
 def _f1(f, x, h): # calculated using five-point stencil
@@ -424,6 +422,8 @@ def infer_doublets(
             fig.savefig(f"{plot_hist}.png")
     else:
         from pandas.api.types import is_categorical_dtype
+        from pegasus.tools import identify_robust_genes, log_norm, highly_variable_features
+
         assert is_categorical_dtype(data.obs[channel_attr])
         genome = data.get_genome()
         modality = data.get_modality()
@@ -440,9 +440,9 @@ def infer_doublets(
                                    {"X": rawX[idx]},
                                    {"genome": genome, "modality": modality})
             # Identify robust genes, count and log normalized and select top 2,000 highly variable features
-            pg.identify_robust_genes(unidata)
-            pg.log_norm(unidata)
-            pg.highly_variable_features(unidata)
+            identify_robust_genes(unidata)
+            log_norm(unidata)
+            highly_variable_features(unidata)
             # Run _run_scrublet
             fig = _run_scrublet(unidata, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
                                 n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
