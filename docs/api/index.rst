@@ -157,7 +157,6 @@ Doublet Detection
 .. autosummary::
     :toctree: .
 
-    run_scrublet
     infer_doublets
     mark_doublets
 

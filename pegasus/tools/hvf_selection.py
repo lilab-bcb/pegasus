@@ -10,7 +10,7 @@ import skmisc.loess as sl
 from typing import List
 from pegasusio import MultimodalData
 
-from pegasus.tools import calc_mean_and_var, calc_expm1
+from pegasus.tools import calc_expm1
 
 import logging
 logger = logging.getLogger(__name__)
@@ -99,6 +99,7 @@ def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> N
             data.shape[0] - 1.0
         )
     else:
+        from pegasus.cylib.fast_utils import calc_mean_and_var
         data.var["mean"], data.var["var"] = calc_mean_and_var(data.X, axis=0)
 
 
@@ -168,6 +169,8 @@ def select_hvf_seurat_single(
     """ HVF selection for one channel using Seurat method
     """
     X = calc_expm1(X)
+
+    from pegasus.cylib.fast_utils import calc_mean_and_var
     mean, var = calc_mean_and_var(X, axis=0)
 
     dispersion = np.full(X.shape[1], np.nan)
