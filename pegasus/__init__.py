@@ -31,6 +31,9 @@ from .tools import (
     log_norm,
     select_features,
     pca,
+    pc_transform,
+    tsvd,
+    tsvd_transform,
     pc_regress_out,
     highly_variable_features,
     set_group_attribute,
@@ -61,7 +64,6 @@ from .tools import (
     find_markers,
     infer_path,
     calc_signature_score,
-    run_scrublet,
     infer_doublets,
     mark_doublets,
 )

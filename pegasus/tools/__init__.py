@@ -9,6 +9,9 @@ from .preprocessing import (
     log_norm,
     select_features,
     pca,
+    pc_transform,
+    tsvd,
+    tsvd_transform,
     pc_regress_out,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
@@ -39,4 +42,4 @@ from .diff_expr import de_analysis, markers, write_results_to_excel, run_de_anal
 from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import get_anndata_for_subclustering
 from .signature_score import calc_signature_score
-from .doublet_detection import run_scrublet, infer_doublets, mark_doublets
+from .doublet_detection import infer_doublets, mark_doublets

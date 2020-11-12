@@ -2,9 +2,9 @@ import time
 import numpy as np
 import pandas as pd
 
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
@@ -332,6 +332,7 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str =
 
     from pegasus.cylib.fast_utils import normalize_by_count
     data.obs["scale"] = normalize_by_count(data.X, data.var["robust"].values, norm_count, True)
+    data.uns["norm_count"] = norm_count
 
 
 @run_gc
@@ -395,7 +396,10 @@ def select_features(
             std[std == 0] = 1
             X -= m1
             X /= std
+            data.uns["stdzn_mean"] = m1
+            data.uns["stdzn_std"] = std
         if max_value is not None:
+            data.uns["stdzn_max_value"] = max_value
             X[X > max_value] = max_value
             X[X < -max_value] = -max_value
         data.uns[keyword] = X
@@ -409,7 +413,7 @@ def pca(
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
-    max_value: float = 10,
+    max_value: float = 10.0,
     robust: bool = False,
     random_state: int = 0,
     use_cache: bool = True,
@@ -436,7 +440,7 @@ def pca(
         The threshold to truncate data after scaling. If ``None``, do not truncate.
 
     robust: ``bool``, optional, default: ``False``.
-        If true, use 'arpack' instead of 'randomized' for large sparse matrices (i.e. max(X.shape) > 500 and n_components < 0.8 * min(X.shape))
+        If true, use 'arpack' instead of 'randomized' for large matrices (i.e. max(X.shape) > 500 and n_components < 0.8 * min(X.shape))
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -475,12 +479,64 @@ def pca(
     X_pca = pca.fit_transform(X)
 
     data.obsm["X_pca"] = np.ascontiguousarray(X_pca)
-    data.uns[
-        "PCs"
-    ] = pca.components_.T  # cannot be varm because numbers of features are not the same
+    data.uns["PCs"] = np.ascontiguousarray(pca.components_.T)  # cannot be varm because numbers of features are not the same
     data.uns["pca"] = {}
     data.uns["pca"]["variance"] = pca.explained_variance_
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
+    data.uns["pca_features"] = features # record which feature to use
+
+
+@timer(logger=logger)
+def pc_transform(
+    data: MultimodalData,
+    X: Union[csr_matrix, np.ndarray]
+) -> np.ndarray:
+    """Transform a new count matrix X using existing PCs contained in data.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with PCs calculated
+    
+    X: ``Union[csr_matrix, np.ndarray]``
+        New input count matrix to be transformed. Number of genes must be the same as in data
+
+    Returns
+    -------
+    Transformed PC coordinates for X.
+
+    Examples
+    --------
+    >>> pg.pc_transform(data, X_new)
+    """
+    assert data.shape[1] == X.shape[1]
+    if ("norm_count" not in data.uns) or ("robust" not in data.var) or ("pca_features" not in data.uns) or ("PCs" not in data.uns):
+        raise ValueError("pc_transform cannot be applied before identify_robust_gene, highly_variable_features and pca are called!")
+
+    # normalize and log transform X
+    X = X.astype(np.float32) # convert to float
+    from pegasus.cylib.fast_utils import normalize_by_count
+    _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"], True)
+
+    # select features
+    if data.uns["pca_features"] is not None:
+        X = X[:, data.var[data.uns["pca_features"]].values]
+    from pegasus.tools import slicing
+    X = slicing(X, copy=True)
+
+    # standardization
+    if "stdzn_mean" in data.uns:
+        assert "stdzn_std" in data.uns
+        X -= data.uns["stdzn_mean"]
+        X /= data.uns["stdzn_std"]
+    if "stdzn_max_value" in data.uns:
+        max_value = data.uns["stdzn_max_value"]
+        X[X > max_value] = max_value
+        X[X < -max_value] = -max_value
+
+    # transform to PC coordinates
+    X_pca = np.matmul(X, data.uns["PCs"])
+    return X_pca
 
 
 @timer(logger=logger)
@@ -538,3 +594,105 @@ def pc_regress_out(
     data.obsm[f'X_{pca_key}'] = np.vstack(response_list).T.astype(data.obsm[f'X_{rep}'].dtype)
 
     return pca_key
+
+
+@timer(logger=logger)
+def tsvd(
+    data: MultimodalData,
+    n_components: int = 51,
+    features: str = "robust",
+    robust: bool = False,
+    random_state: int = 0,
+) -> None:
+    """Perform Truncated Singular Value Decomposition (TSVD) to the data.
+
+    The calculation uses *scikit-learn* implementation.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    n_components: ``int``, optional, default: ``51``.
+        Number of components to compute. Because we do not remove means, the first component might be related to the mean values and thus we ask for one more component than PCA as default (i.e. 51).
+
+    features: ``str``, optional, default: ``"robust"``.
+        Keyword in ``data.var`` to specify features used for TSVD.
+
+    robust: ``bool``, optional, default: ``False``.
+        If true, use 'arpack' instead of 'randomized'.
+
+    random_state: ``int``, optional, default: ``0``.
+        Random seed to be set for reproducing result.
+
+    Returns
+    -------
+    ``None``.
+
+    Update ``data.obsm``:
+
+        * ``data.obsm["X_tsvd"]``: TSVD coordinates of the data.
+
+    Update ``data.uns``:
+
+        * ``data.uns["TSVDs"]``: The TSVD components containing the loadings.
+
+    Examples
+    --------
+    >>> pg.tsvd(data)
+    """
+    X = data.X
+    if (features is not None) and (data.var[features].sum() < data.shape[1]):
+        X = X[:, data.var[features].values]
+
+    tsvd = TruncatedSVD(n_components = n_components, algorithm = 'arpack' if robust else 'randomized', random_state = random_state)
+    X_tsvd = tsvd.fit_transform(X)
+
+    data.obsm["X_tsvd"] = np.ascontiguousarray(X_tsvd)
+    data.uns["TSVDs"] = np.ascontiguousarray(tsvd.components_.T)  # cannot be varm because numbers of features are not the same
+    data.uns["tsvd"] = {}
+    data.uns["tsvd"]["variance"] = tsvd.explained_variance_
+    data.uns["tsvd"]["variance_ratio"] = tsvd.explained_variance_ratio_
+    data.uns["tsvd_features"] = features # record which feature to use
+
+
+@timer(logger=logger)
+def tsvd_transform(
+    data: MultimodalData,
+    X: Union[csr_matrix, np.ndarray]
+) -> np.ndarray:
+    """Transform a new count matrix X using existing TSVD components contained in data.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with PCs calculated
+    
+    X: ``Union[csr_matrix, np.ndarray]``
+        New input count matrix to be transformed. Number of genes must be the same as in data
+
+    Returns
+    -------
+    Transformed TSVD coordinates for X.
+
+    Examples
+    --------
+    >>> pg.tsvd_transform(data, X_new)
+    """
+    assert data.shape[1] == X.shape[1]
+    if ("norm_count" not in data.uns) or ("robust" not in data.var) or ("tsvd_features" not in data.uns) or ("TSVDs" not in data.uns):
+        raise ValueError("tsvd_transform cannot be applied before identify_robust_gene, and tsvd are called!")
+
+    # normalize and log transform X
+    X = X.astype(np.float32) # convert to float
+    from pegasus.cylib.fast_utils import normalize_by_count
+    _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"], True)
+
+    # select features
+    if (data.uns["tsvd_features"] is not None) and (data.var[data.uns["tsvd_features"]].sum() < X.shape[1]):
+        X = X[:, data.var[data.uns["tsvd_features"]].values]
+
+    # transform to TSVD coordinates
+    from sklearn.utils.extmath import safe_sparse_dot
+    X_tsvd = safe_sparse_dot(X, data.uns["TSVDs"])
+    return X_tsvd
