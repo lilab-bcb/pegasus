@@ -298,7 +298,11 @@ cpdef tuple simulate_doublets(X: Union[csr_matrix, np.ndarray], double sim_doubl
 
     # Generate new count matrix
     if issparse(X):
-        data = X.data
+        Xdata = X.data
+        if Xdata.dtype != np.int32:
+            Xdata = Xdata.astype(np.int32)
+
+        data = Xdata
         indices = X.indices
         indptr = X.indptr.astype(np.int64)
 

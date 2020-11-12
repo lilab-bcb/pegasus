@@ -1,12 +1,6 @@
 import time
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_categorical_dtype
-from sklearn.decomposition import TruncatedSVD
-from sklearn.mixture import GaussianMixture
-
-from scipy.stats import norm
-from statsmodels.stats.multitest import fdrcorrection as fdr
 
 from typing import List, Optional, Union
 
@@ -31,7 +25,7 @@ def _f2(f, x, h): # calculated using five-point stencil
     return (-f[x + 2] + 16 * f[x + 1] - 30 * f[x] + 16 * f[x - 1] - f[x - 2]) / 12 / h / h
 
 def _curvature(f, x, h): # calculated curvature
-    return f2(f, x, h) / (1.0 + f1(f, x, h) ** 2) ** 1.5
+    return _f2(f, x, h) / (1.0 + _f1(f, x, h) ** 2) ** 1.5
 
 def _calc_vec_f(func, size, f, h): # convenient function to vetorize the above functions
     res = np.zeros(size)
@@ -39,7 +33,7 @@ def _calc_vec_f(func, size, f, h): # convenient function to vetorize the above f
         res[i] = func(f, i, h)
     return res
 
-def _find_local_maxima(y, grad, fc = 6.6): # find local maxima that has a magnitude no smaller than the global maxima / fc. 
+def _find_local_maxima(y, fc = 6.6): # find local maxima that has a magnitude no smaller than the global maxima / fc. 
     lower_bound = 0.0
     posvec = np.argsort(y[2:y.size - 2])[::-1] + 2
 
@@ -47,35 +41,30 @@ def _find_local_maxima(y, grad, fc = 6.6): # find local maxima that has a magnit
     for i in posvec:
         if y[i] < lower_bound:
             break
-
-        if (grad[i - 2] > 0.0 and grad[i - 1] > 0.0) and \
-           (grad[i + 1] < 0.0 and grad[i + 2] < 0.0) and \
-           (y[i - 1] <= y[i] and y[i] > y[i + 1]):
-
+        if (y[i - 1] == y[i] and y[i - 2] < y[i - 1] and y[i] > y[i + 1]) or (y[i - 2] < y[i - 1] and y[i - 1] < y[i] and y[i] > y[i + 1] and y[i + 1] > y[i + 2]):
             if lower_bound == 0.0: # y[i] is the maximum value
                 lower_bound = y[i] / fc
-            maxima.push_back(i)
+            maxima.append(i)
 
-    return maxima
+    return np.array(maxima)
 
-def _find_cutoff(pos1, pos2, y): # find the minimal point between two local maxima
-    if pos1 > pos2:
-        pos1, pos2 = pos2, pos1
-    values = y[pos1 + 1: pos2]
-    return pos1 + 1 + np.where(values == values.min())[0]
+def _find_pos_curv(curv, start, dir):
+    RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
+    for pos in RANGE:
+        if curv[pos] > 0.0:
+            break
+    return pos
 
-def _find_cutoff_curvature(start, curv):
-    size = curv.size - 2
-    pos = start + 1
-    while pos < size and curv[pos] < 0.0:
-        pos += 1
-    max_curv = -1.0
-    max_pos = pos
-    while pos < size and curv[pos] >= 0.0:
-        if max_curv < curv[pos]:
-            max_curv = curv[pos]
-            max_pos = pos
-    return max_pos
+def _find_curv_local_minima(curv, start, dir, thre = -1.0):
+    """ find a negative curvature value that is a local minima and no larger than thre
+        from "max(start, 2)" to "curv.size - 2", making sure curvature is not nan
+        dir '+' or '-'
+    """
+    RANGE = range(max(start, 2), curv.size - 2) if dir == '+' else range(min(start, curv.size - 3), 1, -1)
+    for pos in RANGE:
+        if curv[pos] <= thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
+            break
+    return pos
 
 def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_size = (8,6), dpi = 300):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
@@ -87,8 +76,9 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_
     import matplotlib.pyplot as plt
     fig, axes = plt.subplots(2, 2, figsize = fig_size, dpi = dpi)
 
+    x = np.linspace(0, 1, nbin)
     ax = axes[0, 0]
-    ax.hist(obs_scores, np.linspace(0, 1, nbin), color="gray", linewidth=0, density=True)
+    ax.hist(obs_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
     ax.set_title('Observed cells')
@@ -96,7 +86,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_
     ax.set_ylabel('Density')
 
     ax = axes[0, 1]
-    ax.hist(sim_scores, np.linspace(0, 1, nbin), color="gray", linewidth=0, density=True)
+    ax.hist(sim_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
     ax.set_title('Simulated doublets')
@@ -106,10 +96,9 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_
     ax = axes[1, 0]
     from scipy.stats import gaussian_kde
     kde = gaussian_kde(sim_scores)
-    y = kde(sim_x)
-    ax.plot(sim_x, y, '-', c='k', lw = 1)
+    y = kde(x)
+    ax.plot(x, y, '-', c='k', lw = 1)
     ax.set_ylim(bottom = 0.0)
-    ax.axvline(x = threshold, ls = "--", c="k", lw=1)
     ax.set_title('KDE of simulated doublets')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -200,6 +189,7 @@ def _run_scrublet(
     from pegasus.tools import calculate_nearest_neighbors
     from pegasus.cylib.fast_utils import simulate_doublets
     from sklearn.decomposition import PCA
+    from sklearn.mixture import GaussianMixture
     from scipy.stats import gaussian_kde
 
     if "highly_variable_features" not in data.var:
@@ -264,12 +254,20 @@ def _run_scrublet(
     # log transformed 
     sim_scores_log = np.log(sim_scores)
     sslog_reshaped = sim_scores_log.reshape(-1, 1)
+
+    # Gaussian Mixture
+    gm = GaussianMixture(n_components = 3, random_state = random_state)
+    gm.fit(sslog_reshaped)
+    preds = gm.predict(sslog_reshaped)
+    dbl_code = np.argmax(gm.means_.ravel())
+    gm_thre = (sim_scores_log[preds != dbl_code].max() + sim_scores_log[preds == dbl_code].min()) / 2.0 # boundary between singlets and doublets as inferred by the GM model
+
     # Estimate KDE
     min_score = sim_scores_log.min()
     max_score = sim_scores_log.max()
     min_gap = np.diff(np.unique(np.sort(sim_scores_log))).min()
     from math import ceil
-    n_gap = int(ceil((max_score - min_score) / min_gap))
+    n_gap = max(int(ceil((max_score - min_score) / min_gap)), 200) # minimum is 200
     gap = (max_score - min_score) / n_gap
 
     n_ext = 5
@@ -278,20 +276,30 @@ def _run_scrublet(
     x = np.linspace(min_score, max_score, n_gap + 1 + n_ext * 2) # generate x coordinates
     kde = gaussian_kde(sim_scores_log)
     y = kde(x)
-    grad = _calc_vec_f(_f1, x.size, y, gap) # gradient
 
-    # Find peaks
-    maxima = _find_local_maxima(x, y, grad)
+    # Find local maxima
+    maxima = _find_local_maxima(y)
+    assert maxima.size > 0
 
-    assert len(maxima) > 0
-    if len(maxima) > 2:
-        logger.warning("This is an interesting case: detecting more than 2 peaks! Please consider to contact Pegasus dev team to report this case!")
+    slt_maxima = maxima[x[maxima] < gm_thre]
+    dbl_maxima = maxima[x[maxima] > gm_thre]
 
-    if len(maxima) >= 2:
-        pos = _find_cutoff(maxima[0], maxima[1], y)
+    if slt_maxima.size > 0 and dbl_maxima.size > 0:
+        # We have peaks in both singlet and doublet portions
+        pos = y[slt_maxima.max()+1:dbl_maxima.min()].argmin() + (slt_maxima.max()+1)
     else:
         curv = _calc_vec_f(_curvature, x.size, y, gap)
-        pos = _find_cutoff_curvature(maxima[0], curv)
+        if slt_maxima.size > 0:
+            # We have only one peak and peak is in the singlet portion
+            leftmost_dbl = np.where(x > gm_thre)[0][0]     
+            start = _find_pos_curv(curv, max(slt_maxima.max(), _find_curv_local_minima(curv, leftmost_dbl-1, '-'))+1, '+')
+            end = _find_pos_curv(curv, _find_curv_local_minima(curv, leftmost_dbl, '+')-1, '-')
+        else:
+            # We have only one peak and peak is in the doublet portion
+            start = _find_pos_curv(curv, dbl_maxima.min()+1, '+')
+            end = _find_pos_curv(curv, _find_curv_local_minima(curv, start+1, '+')-1, '-')
+        assert start <= end
+        pos = np.abs(curv[start:end+1]).argmax() + start
 
     threshold = np.exp(x[pos])
 
@@ -318,6 +326,7 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
     freqs = a / (a + b)
 
     from pegasus.cylib.cfisher import fisher_exact
+    from statsmodels.stats.multitest import fdrcorrection as fdr
     _, pvals = fisher_exact(a, b, c, d)
     passed, qvals = fdr(pvals, alpha = alpha)
 
@@ -414,6 +423,7 @@ def infer_doublets(
         if if_plot:
             fig.savefig(f"{plot_hist}.png")
     else:
+        from pandas.api.types import is_categorical_dtype
         assert is_categorical_dtype(data.obs[channel_attr])
         genome = data.get_genome()
         modality = data.get_modality()
