@@ -318,9 +318,9 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
     a = df[True].values.astype(np.int32)
     b = df[False].values.astype(np.int32)
     c = ndbl - a
-    d = (dbl_codes.size - ndbl) - b
+    d = (pred_dbl.size - ndbl) - b
 
-    avg_dblr = ndbl / dbl_codes.size
+    avg_dblr = ndbl / pred_dbl.size
     freqs = a / (a + b)
 
     from pegasus.cylib.cfisher import fisher_exact
@@ -361,10 +361,10 @@ def infer_doublets(
         Annotated data matrix with rows for cells and columns for genes.
 
     channel_attr: ``str``, optional, default: None
-        Attribute indicating sample channels. If None, assuming cell-level and sample-level doublets are already calculated and saved in 'data.obs[pred_dbl_type]'.
+        Attribute indicating sample channels. If set, calculate scrublet-like doublet scores per channel.
 
     clust_attr: ``str``, optional, default: None
-        Attribute indicating cluster labels. If None, does not perform cluster-level doublet detection.
+        Attribute indicating cluster labels. If set, estimate proportion of doublets in each cluster and statistical significance.
 
     expected_doublet_rate: ``float``, optional, default: ``None``
         The expected doublet rate for the experiment. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table
