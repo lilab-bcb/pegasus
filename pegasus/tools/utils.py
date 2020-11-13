@@ -2,8 +2,6 @@ import numpy as np
 from scipy.sparse import issparse, csr_matrix
 from typing import Union, List
 
-from pegasus.cylib.fast_utils import calc_mean, calc_mean_and_var
-
 
 def update_rep(rep: str) -> str:
     """ If rep is None, return rep as mat, which refers to the whole expression matrix
@@ -13,7 +11,7 @@ def update_rep(rep: str) -> str:
 
 def X_from_rep(data: "AnnData", rep: str) -> np.array:
     """
-    If rep is not mat, first check if X_rep is in data.obsm. If not, raise an error. 
+    If rep is not mat, first check if X_rep is in data.obsm. If not, raise an error.
     If rep is None, return data.X as a numpy array
     """
     if rep != "mat":
