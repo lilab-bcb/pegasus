@@ -137,7 +137,7 @@ def calc_umap(
     embedding = None
     if X.shape[0] < 4096 or knn_indices is None:
         embedding = umap_obj.fit_transform(X)
-        logger.info("using umap kNN graph {}".format(X.shape[0]))
+        logger.info(f"Using umap kNN graph because number of cells {X.shape[0]} is smaller than 4096.")
     else:
         assert knn_dists is not None
         # preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
