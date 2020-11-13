@@ -110,12 +110,8 @@ class CellType:
 
 
 class Annotator:
-    def __init__(self, marker_file: Union[str, Dict], genes: List[str]) -> None:
-        if type(marker_file) != dict:
-            with open(marker_file) as fin:
-                self.object = json.load(fin)
-        else:
-            self.object = marker_file
+    def __init__(self, markers: Dict, genes: List[str]) -> None:
+        self.object = markers
         self.recalibrate(self.object, genes)
 
     def recalibrate(self, obj: "json object", genes: List[str]) -> None:
@@ -250,7 +246,7 @@ def infer_cell_types(
         Data structure of count matrix and DE analysis results.
 
     markers : ``str`` or ``Dict``
-        * If ``str``, it
+        * If ``str``, it is a string representing a comma-separated list; each element in the list
             * either refers to a JSON file containing legacy markers, or
             * ``'human_immune'`` for predefined pegasus markers on human immune cells;
             * ``'mouse_immune'`` for mouse immune cells;
@@ -284,12 +280,13 @@ def infer_cell_types(
 
     Examples
     --------
-    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune')
+    >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune,human_brain')
     """
 
     if output_file is not None:
         fout = open(output_file, "w")
 
+    import pkg_resources
     predefined_markers = dict(
         human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
@@ -298,13 +295,23 @@ def infer_cell_types(
         human_lung="human_lung_cell_markers.json",
     )
 
-    if markers in predefined_markers:
-        import pkg_resources
+    if isinstance(markers, str):
+        tokens = markers.split(',')
+        markers = None
+        for token in tokens:
+            if token in predefined_markers:
+                token = pkg_resources.resource_filename(
+                    "pegasus.annotate_cluster", predefined_markers[token]
+                )
+            with open(token) as fin:
+                tmp_dict = json.load(fin)
+            if markers is None:
+                markers = tmp_dict
+            else:
+                markers["title"] = f"{markers['title']}/{tmp_dict['title']}"
+                markers["cell_types"].extend(tmp_dict["cell_types"])
 
-        markers = pkg_resources.resource_filename(
-            "pegasus.annotate_cluster", predefined_markers[markers]
-        )
-
+    assert isinstance(markers, dict)
     anno = Annotator(markers, data.var_names)
 
     clusts = natsorted(
