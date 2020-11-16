@@ -31,7 +31,7 @@ def _calc_vec_f(func, size, f, h): # convenient function to vetorize the above f
         res[i] = func(f, i, h)
     return res
 
-def _find_local_maxima(y, fc = 6.6): # find local maxima that has a magnitude no smaller than the global maxima / fc. 
+def _find_local_maxima(y, fc = 6.6): # find local maxima that has a magnitude no smaller than the global maxima / fc.
     lower_bound = 0.0
     posvec = np.argsort(y[2:y.size - 2])[::-1] + 2
 
@@ -114,7 +114,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_
 
 def _calc_expected_doublet_rate(ncells):
     """ Calculate expected doublet rate based number of cells using 10x Genomics' doublet table [https://kb.10xgenomics.com/hc/en-us/articles/360001378811-What-is-the-maximum-number-of-cells-that-can-be-profiled-].
-        Poisson lambda estimated from table is lambda = 0.00785 
+        Poisson lambda estimated from table is lambda = 0.00785
     """
     ncell_base = 500.0
     lmd_base = 0.00785
@@ -138,7 +138,7 @@ def _run_scrublet(
     plot_hist: Optional[bool] = True
 ) -> Union[None, "Figure"]:
     """Calculate doublet scores using Scrublet-like [Wolock18]_ strategy for the current data.X; determine a right threshold using Gaussian Mixture model.
-       This function should be called after highly_variable_gene selection. 
+       This function should be called after highly_variable_gene selection.
 
     Parameters
     -----------
@@ -147,9 +147,9 @@ def _run_scrublet(
 
     expected_doublet_rate: ``float``, optional, default: ``None``
         The expected doublet rate for the experiment. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table
-    
+
     sim_doublet_ratio: ``float``, optional, default: ``2.0``
-        The ratio between synthetic doublets and observed cells. 
+        The ratio between synthetic doublets and observed cells.
 
     n_prin_comps: ``int``, optional, default: ``30``
         Number of principal components.
@@ -171,7 +171,7 @@ def _run_scrublet(
 
     Returns
     --------
-    ``None`` or a ``matplotlib Figure object`` if 
+    ``None`` or a ``matplotlib Figure object`` if
 
     Update ``data.obs``:
         * ``data.obs['doublet_score']``: The calculated doublet scores on cells.
@@ -201,7 +201,7 @@ def _run_scrublet(
     # subset the raw count matrix
     rawX = data.get_matrix("raw.X")
     obs_umis = rawX.sum(axis = 1, dtype = np.int32).A1
-    rawX = rawX[:, data.var["highly_variable_features"].values] 
+    rawX = rawX[:, data.var["highly_variable_features"].values]
     # Simulate synthetic doublets
     sim_rawX, pair_idx = simulate_doublets(rawX, r, random_state)
     sim_umis = obs_umis[pair_idx].sum(axis = 1, dtype = np.int32)
@@ -249,7 +249,7 @@ def _run_scrublet(
     sim_scores = doublet_scores[obsX.shape[0]:]
 
     # Determine a scrublet score threshold
-    # log transformed 
+    # log transformed
     sim_scores_log = np.log(sim_scores)
     sslog_reshaped = sim_scores_log.reshape(-1, 1)
 
@@ -289,7 +289,7 @@ def _run_scrublet(
         curv = _calc_vec_f(_curvature, x.size, y, gap)
         if slt_maxima.size > 0:
             # We have only one peak and peak is in the singlet portion
-            leftmost_dbl = np.where(x > gm_thre)[0][0]     
+            leftmost_dbl = np.where(x > gm_thre)[0][0]
             start = _find_pos_curv(curv, max(slt_maxima.max(), _find_curv_local_minima(curv, leftmost_dbl-1, '-'))+1, '+')
             end = _find_pos_curv(curv, _find_curv_local_minima(curv, leftmost_dbl, '+')-1, '-')
         else:
@@ -353,7 +353,9 @@ def infer_doublets(
     random_state: Optional[int] = 0,
     plot_hist: Optional[str] = "dbl",
 ) -> None:
-    """Infer doublets using a Scrublet-like strategy. This function must be called after clustering. 
+    """Infer doublets using a Scrublet-like strategy. [Li20-2]_
+
+    This function must be called after clustering. 
 
     Parameters
     ----------
@@ -368,9 +370,9 @@ def infer_doublets(
 
     expected_doublet_rate: ``float``, optional, default: ``None``
         The expected doublet rate for the experiment. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table
-    
+
     sim_doublet_ratio: ``float``, optional, default: ``2.0``
-        The ratio between synthetic doublets and observed cells. 
+        The ratio between synthetic doublets and observed cells.
 
     n_prin_comps: ``int``, optional, default: ``30``
         Number of principal components.
@@ -435,7 +437,7 @@ def infer_doublets(
         for channel in channels:
             # Generate a new unidata object for the channel
             idx = np.where(data.obs[channel_attr] == channel)[0]
-            unidata = UnimodalData({"barcodekey": data.obs_names[idx]}, 
+            unidata = UnimodalData({"barcodekey": data.obs_names[idx]},
                                    {"featurekey": data.var_names},
                                    {"X": rawX[idx]},
                                    {"genome": genome, "modality": modality})
