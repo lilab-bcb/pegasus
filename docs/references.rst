@@ -29,6 +29,14 @@ References
    "Cumulus provides cloud-based data analysis for large-scale single-cell and single-nucleus RNA-seq",
    In `Nature Methods <https://www.nature.com/articles/s41592-020-0905-x>`_, 2020.
 
+.. [Li20-1] B. Li,
+   "A streamlined method for signature score calculation",
+   In `Pegasus repository <https://github.com/klarman-cell-observatory/pegasus/raw/master/signature_score.pdf>`_, 2020.
+
+.. [Li20-2] B. Li,
+   "Doublet detection in Pegasus",
+   In `Pegasus repository <https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf>`_, 2020.
+
 .. [Linderman19] G.C. Linderman, et al.,
    "Fast interpolation-based t-SNE for improved visualization of single-cell RNA-seq data",
    In `Nature Methods <https://www.nature.com/articles/s41592-018-0308-4>`_, 2019.
