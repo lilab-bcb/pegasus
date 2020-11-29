@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 import logging
 logger = logging.getLogger(__name__)
@@ -31,40 +31,103 @@ def _calc_vec_f(func, size, f, h): # convenient function to vetorize the above f
         res[i] = func(f, i, h)
     return res
 
-def _find_local_maxima(y, fc = 6.6): # find local maxima that has a magnitude no smaller than the global maxima / fc.
-    lower_bound = 0.0
-    posvec = np.argsort(y[2:y.size - 2])[::-1] + 2
-
-    maxima = []
-    for i in posvec:
-        if y[i] < lower_bound:
-            break
-        if (y[i - 1] == y[i] and y[i - 2] < y[i - 1] and y[i] > y[i + 1]) or (y[i - 2] < y[i - 1] and y[i - 1] < y[i] and y[i] > y[i + 1] and y[i + 1] > y[i + 2]):
-            if lower_bound == 0.0: # y[i] is the maximum value
-                lower_bound = y[i] / fc
-            maxima.append(i)
-
-    return np.array(maxima)
-
-def _find_pos_curv(curv, start, dir):
-    RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
-    for pos in RANGE:
-        if curv[pos] > 0.0:
-            break
-    return pos
-
-def _find_curv_local_minima(curv, start, dir, thre = -1.0):
-    """ find a negative curvature value that is a local minima and no larger than thre
-        from "max(start, 2)" to "curv.size - 2", making sure curvature is not nan
-        dir '+' or '-'
+def _find_local_maxima(y: List[float], frac: float = 1.0 / 3.0, merge_peak_frac: float = 0.06) -> Tuple[List[int], List[int], List[int]]:
+    """ find local maxima that has a magnitude no smaller than the frac * global maxima. 
+        Then merge adjacent peaks, where the maximal height and minimal height between the two peaks are within merge_peak_frac of the maximal height.
     """
-    RANGE = range(max(start, 2), curv.size - 2) if dir == '+' else range(min(start, curv.size - 3), 1, -1)
+    lower_bound = y.max() * frac
+    maxima_by_x = []
+    filtered_maxima = []
+    for i in range(2, y.size - 2):
+        if (y[i - 1] == y[i] and y[i - 2] < y[i - 1] and y[i] > y[i + 1]) or (y[i - 2] < y[i - 1] and y[i - 1] < y[i] and y[i] > y[i + 1] and y[i + 1] > y[i + 2]):
+            # i is a local maxima
+            if y[i] >= lower_bound:
+                maxima_by_x.append(i)
+            else:
+                filtered_maxima.append(i)
+    maxima_by_x = np.array(maxima_by_x)
+    filtered_maxima = np.array(filtered_maxima)
+    n_max = maxima_by_x.size
+
+    curr_peak = 0
+    merged_peaks = []
+    for i in range(n_max - 1):
+        min_value = y[maxima_by_x[i]+1:maxima_by_x[i + 1]].min()
+        max_value = max(y[maxima_by_x[i]], y[maxima_by_x[i + 1]])
+        if (max_value - min_value) / max_value > merge_peak_frac: # do not merge i + 1
+            merged_peaks.append(maxima_by_x[curr_peak])
+            curr_peak = i + 1
+        else:
+            if y[maxima_by_x[i + 1]] > y[maxima_by_x[curr_peak]]:
+                curr_peak = i + 1
+    merged_peaks.append(maxima_by_x[curr_peak])
+    merged_peaks = np.array(merged_peaks)
+    maxima = merged_peaks[np.argsort(y[merged_peaks])[::-1]]
+
+    return maxima, maxima_by_x, filtered_maxima
+
+def _find_pos_curv(curv, start, dir, thre = 0.06):
+    RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
+    assert (RANGE.stop - RANGE.start) * RANGE.step > 0
     for pos in RANGE:
-        if curv[pos] <= thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
+        if curv[pos] > thre:
             break
     return pos
 
-def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_size = (8,6), dpi = 300):
+def _find_curv_minima_at_peak(curv, peak_pos):
+    start = peak_pos
+    while start > 1 and curv[start] < 0.0:
+        start -= 1
+    start += 1
+    end = peak_pos
+    while end < curv.size - 2 and curv[end] < 0.0:
+        end += 1
+    return curv[start:end].min()
+
+def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, rel_thre = 0.4, minima_dir_thre = -0.25):
+    """ Find a negative curvature value that is a local minima or a filtered local maxima with respect to density value.
+        dir represents the direction of search, choosing from '+' or '-'.
+        Beside being a local minima, the value must also satisfy the rel_thre requirement.
+        rel_thre requires that the curvature value must smaller than rel_thre fraction of the max of minimal curvature value of the peak and the minimal curvature value since start at direction dir.
+    """
+    if dir == '+':
+        pos_from = max(start, 2)
+        pos_to = curv.size - 2
+        tmp_arr = filtered_maxima[filtered_maxima > start]
+        if tmp_arr.size > 0:
+            lmax = tmp_arr.min()
+            pos_to = _find_pos_curv(curv, lmax-1, '-') + 1
+        assert pos_from < pos_to
+        minima_with_dir = curv[pos_from:pos_to].min()
+        if minima_with_dir >= minima_dir_thre:
+            # No other local minima
+            return pos_to # return right end
+        thre = max(peak_curv_value, minima_with_dir) * rel_thre
+        assert thre < 0.0
+        for pos in range(pos_from, pos_to):
+            if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
+                return pos
+        assert False
+    else:
+        assert dir == '-'
+        pos_from = min(start, curv.size - 3)
+        pos_to = 1
+        tmp_arr = filtered_maxima[filtered_maxima < start]
+        if tmp_arr.size > 0:
+            lmax = tmp_arr.max()
+            pos_to = _find_pos_curv(curv, lmax+1, '+') - 1
+        assert pos_from > pos_to
+        minima_with_dir = curv[pos_to+1:pos_from+1].min()
+        if minima_with_dir >= minima_dir_thre:
+            return pos_to
+        thre = max(peak_curv_value, minima_with_dir) * rel_thre
+        assert thre < 0.0
+        for pos in range(pos_from, pos_to, -1):
+            if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
+                return pos
+        assert False
+
+def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
         (A) top left: histogram of observed cells;
         (B) top right: histogram of simulated doublets;
@@ -91,23 +154,30 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, nbin = 100, fig_
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
 
-    ax = axes[1, 0]
-    from scipy.stats import gaussian_kde
-    kde = gaussian_kde(sim_scores)
-    y = kde(x)
-    ax.plot(x, y, '-', c='k', lw = 1)
-    ax.set_ylim(bottom = 0.0)
-    ax.set_title('KDE of simulated doublets')
-    ax.set_xlabel('Doublet score')
-    ax.set_ylabel('Density')
+    # ax = axes[1, 0]
+    # from scipy.stats import gaussian_kde
+    # kde = gaussian_kde(sim_scores)
+    # y = kde(x)
+    # ax.plot(x, y, '-', c='k', lw = 1)
+    # ax.set_ylim(bottom = 0.0)
+    # ax.set_title('KDE of simulated doublets')
+    # ax.set_xlabel('Doublet score')
+    # ax.set_ylabel('Density')
 
-    ax = axes[1, 1]
+    ax = axes[1, 0]
     ax.plot(sim_x, sim_y, '-', c='k', lw = 1)
     ax.set_ylim(bottom = 0.0)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
-    ax.set_title('KDE of simulated doublets (log scale)')
-    ax.set_xlabel('Doublet score')
+    ax.set_title('KDE of simulated doublets')
+    ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Density')
+
+    ax = axes[1, 1]
+    ax.plot(sim_x, curv, '-', c='k', lw = 1)
+    ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
+    ax.set_title('Curvature of simulated doublets')
+    ax.set_xlabel('Log doublet score')
+    ax.set_ylabel('Curvature')
 
     fig.tight_layout()
     return fig
@@ -128,6 +198,7 @@ def _calc_expected_doublet_rate(ncells):
 @timer(logger=logger)
 def _run_scrublet(
     data: Union[MultimodalData, UnimodalData],
+    name: Optional[str] = '',
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
     n_prin_comps: Optional[int] = 30,
@@ -144,6 +215,9 @@ def _run_scrublet(
     -----------
     data: ``Union[MultimodalData, UnimodalData]`` object.
         Annotated data matrix with rows for cells and columns for genes. Data must be low quality cell and gene filtered and log-transformed. Assume 'raw.X' stores the raw count matrix.
+
+    name: ``str``, optional, default: ``''``
+        Name of the sample.
 
     expected_doublet_rate: ``float``, optional, default: ``None``
         The expected doublet rate for the experiment. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table
@@ -187,7 +261,6 @@ def _run_scrublet(
     from pegasus.tools import calculate_nearest_neighbors
     from pegasus.cylib.fast_utils import simulate_doublets
     from sklearn.decomposition import PCA
-    from sklearn.mixture import GaussianMixture
     from scipy.stats import gaussian_kde
 
     if "highly_variable_features" not in data.var:
@@ -251,14 +324,6 @@ def _run_scrublet(
     # Determine a scrublet score threshold
     # log transformed
     sim_scores_log = np.log(sim_scores)
-    sslog_reshaped = sim_scores_log.reshape(-1, 1)
-
-    # Gaussian Mixture
-    gm = GaussianMixture(n_components = 3, random_state = random_state)
-    gm.fit(sslog_reshaped)
-    preds = gm.predict(sslog_reshaped)
-    dbl_code = np.argmax(gm.means_.ravel())
-    gm_thre = (sim_scores_log[preds != dbl_code].max() + sim_scores_log[preds == dbl_code].min()) / 2.0 # boundary between singlets and doublets as inferred by the GM model
 
     # Estimate KDE
     min_score = sim_scores_log.min()
@@ -276,28 +341,48 @@ def _run_scrublet(
     y = kde(x)
 
     # Find local maxima
-    maxima = _find_local_maxima(y)
+    maxima, maxima_by_x, filtered_maxima = _find_local_maxima(y)
     assert maxima.size > 0
+    curv = _calc_vec_f(_curvature, x.size, y, gap) # calculate curvature
 
-    slt_maxima = maxima[x[maxima] < gm_thre]
-    dbl_maxima = maxima[x[maxima] > gm_thre]
-
-    if slt_maxima.size > 0 and dbl_maxima.size > 0:
-        # We have peaks in both singlet and doublet portions
-        pos = y[slt_maxima.max()+1:dbl_maxima.min()].argmin() + (slt_maxima.max()+1)
-    else:
-        curv = _calc_vec_f(_curvature, x.size, y, gap)
-        if slt_maxima.size > 0:
-            # We have only one peak and peak is in the singlet portion
-            leftmost_dbl = np.where(x > gm_thre)[0][0]
-            start = _find_pos_curv(curv, max(slt_maxima.max(), _find_curv_local_minima(curv, leftmost_dbl-1, '-'))+1, '+')
-            end = _find_pos_curv(curv, _find_curv_local_minima(curv, leftmost_dbl, '+')-1, '-')
+    if maxima.size >= 2:
+        if maxima[0] < maxima[1]:
+            start = maxima[0]
+            end = maxima[1]
         else:
-            # We have only one peak and peak is in the doublet portion
-            start = _find_pos_curv(curv, dbl_maxima.min()+1, '+')
-            end = _find_pos_curv(curv, _find_curv_local_minima(curv, start+1, '+')-1, '-')
-        assert start <= end
-        pos = np.abs(curv[start:end+1]).argmax() + start
+            start = maxima[1]
+            end = maxima[0]
+        pos = y[start+1:end].argmin() + (start+1)
+    else:
+        frac_right_thre = 0.42
+        frac_left_thre = 0.4
+
+        pos = -1
+        for i in range(maxima_by_x.size):
+            frac_right = (sim_scores_log > x[maxima_by_x[i]]).sum() / sim_scores.size
+            if frac_right < frac_right_thre: # peak might represent a doublet peak, try to find a cutoff at the left side
+                if i == 0:
+                    peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[i])
+                    end = _find_pos_curv(curv, maxima_by_x[i]-1, '-')
+                    start = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, end-1, '-')+1, '+')
+                    assert start <= end
+                    pos = curv[start:end+1].argmax() + start
+                else:
+                    pos = y[maxima_by_x[i-1]+1:maxima_by_x[i]].argmin() + (maxima_by_x[i-1]+1)
+
+                frac_left = (sim_scores_log < x[pos]).sum() / sim_scores.size    
+                if frac_left < frac_left_thre:
+                    pos = maxima_by_x[i]
+
+                break
+
+        if pos < 0:
+            # peak represents singlet, find a cutoff at the right side
+            peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[-1])
+            start = _find_pos_curv(curv, maxima_by_x[-1]+1, '+')
+            end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-')
+            assert start <= end
+            pos = curv[start:end+1].argmax() + start
 
     threshold = np.exp(x[pos])
 
@@ -305,9 +390,10 @@ def _run_scrublet(
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}")
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv)
     return fig
 
 
@@ -343,6 +429,7 @@ def infer_doublets(
     data: MultimodalData,
     channel_attr: Optional[str] = None,
     clust_attr: Optional[str] = None,
+    min_cell: Optional[int] = 100,
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
     n_prin_comps: Optional[int] = 30,
@@ -367,6 +454,9 @@ def infer_doublets(
 
     clust_attr: ``str``, optional, default: None
         Attribute indicating cluster labels. If set, estimate proportion of doublets in each cluster and statistical significance.
+
+    min_cell: ``int``, optional, default: 100
+        Minimum number of cells per sample to calculate doublet scores. For samples having less than 'min_cell' cells, doublet score calculation will be skipped.
 
     expected_doublet_rate: ``float``, optional, default: ``None``
         The expected doublet rate for the experiment. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table
@@ -417,11 +507,16 @@ def infer_doublets(
     if_plot = plot_hist is not None
 
     if channel_attr is None:
-        fig = _run_scrublet(data, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
-                            n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
-                            plot_hist = if_plot)
-        if if_plot:
-            fig.savefig(f"{plot_hist}.png")
+        if data.shape[0] >= min_cell:
+            fig = _run_scrublet(data, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
+                                n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
+                                plot_hist = if_plot)
+            if if_plot:
+                fig.savefig(f"{plot_hist}.png")
+        else:
+            logger.warning(f"Data has {data.shape[0]} < {min_cell} cells and thus doublet score calculation is skipped!")
+            data.obs["doublet_score"] = 0.0
+            data.obs["pred_dbl"] = False
     else:
         from pandas.api.types import is_categorical_dtype
         from pegasus.tools import identify_robust_genes, log_norm, highly_variable_features
@@ -437,24 +532,27 @@ def infer_doublets(
         for channel in channels:
             # Generate a new unidata object for the channel
             idx = np.where(data.obs[channel_attr] == channel)[0]
-            unidata = UnimodalData({"barcodekey": data.obs_names[idx]},
-                                   {"featurekey": data.var_names},
-                                   {"X": rawX[idx]},
-                                   {"genome": genome, "modality": modality})
-            # Identify robust genes, count and log normalized and select top 2,000 highly variable features
-            identify_robust_genes(unidata)
-            log_norm(unidata)
-            highly_variable_features(unidata)
-            # Run _run_scrublet
-            fig = _run_scrublet(unidata, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
-                                n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
-                                plot_hist = if_plot)
-            if if_plot:
-                fig.savefig(f"{plot_hist}.{channel}.png")
+            if idx.size >= min_cell:
+                unidata = UnimodalData({"barcodekey": data.obs_names[idx]}, 
+                                       {"featurekey": data.var_names},
+                                       {"X": rawX[idx]},
+                                       {"genome": genome, "modality": modality})
+                # Identify robust genes, count and log normalized and select top 2,000 highly variable features
+                identify_robust_genes(unidata)
+                log_norm(unidata)
+                highly_variable_features(unidata)
+                # Run _run_scrublet
+                fig = _run_scrublet(unidata, name = channel, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
+                                    n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
+                                    plot_hist = if_plot)
+                if if_plot:
+                    fig.savefig(f"{plot_hist}.{channel}.png")
 
-            dbl_score[idx] = unidata.obs["doublet_score"].values
-            pred_dbl[idx] = unidata.obs["pred_dbl"].values
-            thresholds[channel] = unidata.uns["doublet_threshold"]
+                dbl_score[idx] = unidata.obs["doublet_score"].values
+                pred_dbl[idx] = unidata.obs["pred_dbl"].values
+                thresholds[channel] = unidata.uns["doublet_threshold"]
+            else:
+                logger.warning(f"Channel {channel} has {idx.size} < {min_cell} cells and thus doublet score calculation is skipped!")
 
         data.obs["doublet_score"] = dbl_score
         data.obs["pred_dbl"] = pred_dbl
