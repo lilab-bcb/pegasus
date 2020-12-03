@@ -208,7 +208,7 @@ def _run_scrublet(
     random_state: Optional[int] = 0,
     plot_hist: Optional[bool] = True
 ) -> Union[None, "Figure"]:
-    """Calculate doublet scores using Scrublet-like [Wolock18]_ strategy for the current data.X; determine a right threshold using Gaussian Mixture model.
+    """Calculate doublet scores using Scrublet-like [Wolock18]_ strategy for the current data.X; determine a right threshold based on the KDE curve.
        This function should be called after highly_variable_gene selection.
 
     Parameters
@@ -241,7 +241,7 @@ def _run_scrublet(
         Random state for doublet simulation, PCA and approximate nearest neighbor search.
 
     plot_hist: ``bool``, optional, default: ``True``
-        If True, plot diagnostic histogram.
+        If True, plot diagnostic histograms. Each sample would have a figure consisting of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets.
 
     Returns
     --------
@@ -377,7 +377,7 @@ def _run_scrublet(
                 break
 
         if pos < 0:
-            # peak represents singlet, find a cutoff at the right side
+            # peak represents embedded doublets, find a cutoff at the right side
             peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[-1])
             start = _find_pos_curv(curv, maxima_by_x[-1]+1, '+')
             end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-')
