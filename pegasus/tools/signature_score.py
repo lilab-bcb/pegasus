@@ -22,6 +22,8 @@ predefined_signatures = dict(
     mitochondrial_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_mouse.gmt"),
     ribosomal_genes_human=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_human.gmt"),
     ribosomal_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_mouse.gmt"),
+    apoptosis_human=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_human.gmt"),
+    apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),
 )
 
 
@@ -139,13 +141,14 @@ def calc_signature_score(
         This argument accepts either a dictionary or a string.
         If ``signatures`` is a dictionary, it can contain multiple signature score calculation requests. Each key in the dictionary represents a separate signature score calculation and its corresponding value contains a list of gene symbols. Each score will be stored in data.obs field with key as the keyword.
         If ``signatures`` is a string, it should refer to a Gene Matrix Transposed (GMT)-formatted file. Pegasus will load signatures from the GMT file.
-        Pegasus also provide 4 default signature panels for each of human and mouse. They are ``cell_cycle_human``, ``gender_human``, ``mitochondrial_genes_human`` and ``ribosomal_genes_human`` for human; ``cell_cycle_mouse``, ``gender_mouse``, ``mitochondrial_genes_mouse`` and ``ribosomal_genes_mouse`` for mouse.
+        Pegasus also provide 5 default signature panels for each of human and mouse. They are ``cell_cycle_human``, ``gender_human``, ``mitochondrial_genes_human``, ``ribosomal_genes_human`` and ``apoptosis_human`` for human; ``cell_cycle_mouse``, ``gender_mouse``, ``mitochondrial_genes_mouse``, ``ribosomal_genes_mouse`` and ``apoptosis_mouse`` for mouse.
             * ``cell_cycle_human`` contains two cell-cycle signatures, ``G1/S`` and ``G2/M``, obtained from Tirosh et al. 2016. We also updated gene symbols according to Seurat's ``cc.genes.updated.2019`` vector. We additionally calculated signature score ``cycle_diff``, which is ``G2/M`` - ``G1/S``. We provide predicted cell cycle phases in ``data.obs['predicted_phase']`` in case it is useful. ``predicted_phase`` is predicted based on ``G1/S`` and ``G2/M`` scores. First, we identify ``G0`` cells. We calculate vector ``maxvalues`` as the maximum score of ``G1/S`` and ``G2/M`` for each cell and then estimate the distribution underneath ``maxvalues`` using scipy.stats.gaussian_kde. Based on the estimated density function we can identify the peak(s) (i.e. mu) and estimate standard deviation (i.e. sigma) of the null (``G0``) distribution. We set any cell with maxvalues <= mu + 3 * sigma as ``G0`` cells. For each other cell, if ``G1/S`` > ``G2/M``, it is a ``G1/S`` cell, otherwise it is a ``G2/M`` cell.
             * ``gender_human`` contains two gender-specific signatures, ``female_score`` and ``male_score``. Genes were selected based on DE analysis between genders based on 8 channels of bone marrow data from HCA Census of Immune Cells and the brain nuclei data from Gaublomme and Li et al, 2019, Nature Communications. After calculation, three signature scores will be calculated: ``female_score``, ``male_score`` and ``gender_score``. ``female_score`` and ``male_score`` are calculated based on female and male signatures respectively and a larger score represent a higher likelihood of that gender. ``gender_score`` is calculated as ``male_score`` - ``female_score``. A large positive score likely represents male and a large negative score likely represents female. Pegasus also provides predicted gender for each cell based on ``gender_score``, which is stored in ``data.obs['predicted_gender']``. To predict genders, we apply the KMeans algorithm to the ``gender_score`` and ask for 3 clusters. The clusters with a minimum and maximum clauster centers are predicted as ``female`` and ``male`` respectively and the cluster in the middle is predicted as ``uncertain``. Note that this approach is conservative and it is likely that users can predict genders based on ``gender_score`` for cells in the ``uncertain`` cluster with a reasonable accuracy.
             * ``mitochondrial_genes_human`` contains two signatures, ``mito_genes`` and ``mito_ribo``. ``mito_genes`` contains 13 mitocondrial genes from chrM and ``mito_ribo`` contains mitocondrial ribosomal genes that are not from chrM. Note that ``mito_genes`` correlates well with percent of mitocondrial UMIs and ``mito_ribo`` does not.
-            * ``ribosomal_genes_human`` contains one signature, ``ribo_genes``, which are ribosomal genes from both large and small units.
+            * ``ribosomal_genes_human`` contains one signature, ``ribo_genes``, which includes ribosomal genes from both large and small units.
+            * ``apoptosis_human`` contains one signature, ``apoptosis``, which includes apoptosis-related genes from the KEGG pathway.
 
-            * ``cell_cycle_mouse``, ``gender_mouse``, ``mitochondrial_genes_mouse`` and ``ribosomal_genes_mouse`` are the corresponding signatures for mouse. Gene symbols are directly translated from human genes.
+            * ``cell_cycle_mouse``, ``gender_mouse``, ``mitochondrial_genes_mouse``, ``ribosomal_genes_mouse`` and ``apoptosis_mouse`` are the corresponding signatures for mouse. Gene symbols are directly translated from human genes.
 
     n_bins: ``int``, optional, default: 50
         Number of bins on expression levels for grouping genes
@@ -223,6 +226,8 @@ def calc_signature_score(
                 _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
             elif sig_string.startswith("ribosomal_genes"):
                 del signatures["ribo_like"]
+                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
+            elif sig_string.startswith("apoptosis"):
                 _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
             else:
                 assert False
