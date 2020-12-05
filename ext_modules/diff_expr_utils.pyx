@@ -11,9 +11,16 @@ from libc.math cimport sqrt, log2, M_LOG2E, fabs
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef tuple csr_to_csc(const float[:] input_data, const int[:] input_indices, input_indptr_arr, int M, int N, const long[:] ords):
+cpdef tuple csr_to_csc(
+    const float[:] input_data,
+    const long[:] input_indices,
+    const long[:] input_indptr_arr,
+    long M,
+    long N,
+    const long[:] ords
+):
     cdef Py_ssize_t i, j, pos, col
-    cdef const long[:] input_indptr = input_indptr_arr.astype(np.int64)
+    cdef const long[:] input_indptr = input_indptr_arr# .astype(np.int64)
 
     output_indptr = np.zeros(N+1, dtype = np.int64)
     cdef long[:] indptr = output_indptr
@@ -27,9 +34,9 @@ cpdef tuple csr_to_csc(const float[:] input_data, const int[:] input_indices, in
         indptr[i + 1] += indptr[i]
 
     output_data = np.zeros(indptr[N], dtype = np.float32)
-    output_indices = np.zeros(indptr[N], dtype = np.int32)
+    output_indices = np.zeros(indptr[N], dtype = np.int64)
     cdef float[:] data = output_data
-    cdef int[:] indices = output_indices
+    cdef long[:] indices = output_indices
 
     for i in range(M):
         for j in range(input_indptr[ords[i]], input_indptr[ords[i]+1]):
@@ -100,7 +107,7 @@ cpdef tuple csr_to_csc_cond(const float[:] input_data, const int[:] input_indice
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void partition_indices(const int[:] indices, const long[:] cumsum, long[:] posarr):
+cdef void partition_indices(const long[:] indices, const long[:] cumsum, long[:] posarr):
     cdef Py_ssize_t i, j, s
 
     posarr[0] = 0
@@ -116,7 +123,19 @@ cdef void partition_indices(const int[:] indices, const long[:] cumsum, long[:] 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const int[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint verbose):
+cpdef tuple calc_mwu(
+    int start_pos,
+    int end_pos,
+    const float[:] data,
+    const long[:] indices,
+    const long[:] indptr,
+    const long[:] n1arr,
+    const long[:] n2arr,
+    const long[:] cumsum,
+    int first_j,
+    int second_j,
+    bint verbose
+):
     """ Run Mann-Whitney U test for all clusters in cluster_labels, focusing only on genes in [start_pos, end_pos)
         P values are calculated based on normal distribution approximation, accurate when each cluster has > 20 samples
     """
@@ -219,7 +238,19 @@ cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const int[
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef list calc_stat(const float[:] data, const int[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint t_test, bint fisher_test, bint verbose):
+cpdef list calc_stat(
+    const float[:] data,
+    const long[:] indices,
+    const long[:] indptr,
+    const long[:] n1arr,
+    const long[:] n2arr,
+    const long[:] cumsum,
+    long first_j,
+    long second_j,
+    bint t_test,
+    bint fisher_test,
+    bint verbose
+):
 #     """ Collect sufficient statistcs and optionally run Welch's T test and Fisher's exact test
 #     """
     cdef Py_ssize_t ngene, ncluster, buffer_size
@@ -251,7 +282,7 @@ cpdef list calc_stat(const float[:] data, const int[:] indices, const long[:] in
     cdef double[:] tscore, upsilon
     cdef double[:] buffer_pvals
     #Fisher's exact test
-    cdef int[:,:] a_true, a_false, b_true, b_false
+    cdef long[:,:] a_true, a_false, b_true, b_false
 
 
     if t_test:
@@ -261,10 +292,10 @@ cpdef list calc_stat(const float[:] data, const int[:] indices, const long[:] in
         upsilon = np.zeros(buffer_size, dtype = np.float64)
 
     if fisher_test:
-        a_true_np = np.zeros((ncluster, ngene), dtype = np.int32)
-        a_false_np = np.zeros((ncluster, ngene), dtype = np.int32)
-        b_true_np = np.zeros((ncluster, ngene), dtype = np.int32)
-        b_false_np = np.zeros((ncluster, ngene), dtype = np.int32)
+        a_true_np = np.zeros((ncluster, ngene), dtype = np.int64)
+        a_false_np = np.zeros((ncluster, ngene), dtype = np.int64)
+        b_true_np = np.zeros((ncluster, ngene), dtype = np.int64)
+        b_false_np = np.zeros((ncluster, ngene), dtype = np.int64)
         a_true = a_true_np
         a_false = a_false_np
         b_true = b_true_np
