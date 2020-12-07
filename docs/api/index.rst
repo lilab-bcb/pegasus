@@ -139,6 +139,7 @@ Plotting
     dendrogram
     hvfplot
     qcviolin
+    ridgeplot
     volcano
 
 Demultiplexing
