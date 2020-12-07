@@ -25,6 +25,7 @@ Options:
   --remap-singlets <remap_string>                  Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2". In this way, the new singlet names will be in metadata field with key 'assignment', while the old names will be kept in metadata field with key 'assignment.orig'.
   --subset-singlets <subset_string>                If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
 
+  --genome <genome_name>                           If sample count matrix is in either DGE, mtx, csv, tsv or loom format, use <genome_name> as the genome reference name.
   --focus <keys>                                   Focus analysis on Unimodal data with <keys>. <keys> is a comma-separated list of keys. If None, the self._selected will be the focused one.
   --append <key>                                   Append Unimodal data <key> to any <keys> in --focus.
 
@@ -166,6 +167,7 @@ Examples:
             "select_singlets": self.args["--select-singlets"],
             "remap_singlets": self.args["--remap-singlets"],
             "subset_singlets": self.args["--subset-singlets"],
+            "genome": self.args["--genome"],
             "focus": self.split_string(self.args["--focus"]),
             "append": self.args["--append"],
             "output_h5ad": self.args["--output-h5ad"],
