@@ -342,8 +342,12 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     if kwargs["black_list"] is not None:
         black_list = set(kwargs["black_list"].split(","))
 
+    genome = None
+    if kwargs["genome"] is not None:
+        genome = kwargs["genome"]
+
     # load input data
-    data = read_input(input_file, black_list = black_list)
+    data = read_input(input_file, black_list=black_list, genome=genome)
 
     # process focus_list
     focus_list = kwargs["focus"]
