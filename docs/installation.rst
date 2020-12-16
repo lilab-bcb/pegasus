@@ -6,7 +6,7 @@ Pegasus works with Python 3 only (Python 3.5 or above).
 Linux
 ^^^^^
 
-The installation has been tested on Ubuntu (18.04 and 19.04).
+The installation has been tested on Ubuntu (18.04 or later).
 
 Prerequisites
 #############
@@ -70,7 +70,9 @@ In addition, remember to type ``yes`` when asked if you wish the installer to in
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-	conda create -n pegasus -y pip
+	conda create -n pegasus -y python=3.8
+
+Also notice that Python ``3.8`` is used in this tutorial. To choose a different version of Python, simply change the version number in the command above.
 
 3. Enter ``pegasus`` environment by activating::
 
@@ -171,7 +173,9 @@ Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
-	conda create -n pegasus -y pip
+	conda create -n pegasus -y python=3.8
+
+Also notice that Python ``3.8`` is used in this tutorial. To choose a different version of Python, simply change the version number in the command above.
 
 3. Enter ``pegasus`` environment by activating::
 
