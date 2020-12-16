@@ -34,7 +34,7 @@ from .tools import (
     pc_transform,
     tsvd,
     tsvd_transform,
-    pc_regress_out,
+    regress_out,
     highly_variable_features,
     set_group_attribute,
     correct_batch,
