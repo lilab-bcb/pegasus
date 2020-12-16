@@ -35,7 +35,7 @@ Preprocess
 	highly_variable_features
 	select_features
 	pca
-    pc_regress_out
+    regress_out
 
 
 Batch Correction
