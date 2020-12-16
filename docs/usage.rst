@@ -784,8 +784,8 @@ to see the usage information::
 
 * Options:
 
-	-\\-marker-file <file>
-		JSON file for markers. Could also be ``human_immune``/``mouse_immune``/``mouse_brain``/``human_brain``/``human_lung``, which triggers pegasus to markers included in the package. [default: human_immune]
+	-\\-markers <str>
+		<str> is a comma-separated list. Each element in the list either refers to a JSON file containing legacy markers, or 'human_immune'/'mouse_immune'/'human_brain'/'mouse_brain'/'human_lung' for predefined markers. [default: human_immune]
 
 	-\\-de-test <test>
 		DE test to use to infer cell types. [default: mwu]
@@ -817,6 +817,7 @@ to see the usage information::
 * Examples::
 
 	pegasus annotate_cluster example.zarr.zip example.anno.txt
+	pegasus annotate_cluster --markers human_immune,human_lung lung.zarr.zip lung.anno.txt
 	pegasus annotate_cluster --annotation "anno:louvain_labels:T cells;B cells;NK cells;Monocytes" example.zarr.zip
 
 
