@@ -16,77 +16,83 @@ logger = logging.getLogger("pegasus")
 def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, append_data: UnimodalData, **kwargs) -> None:
     print()
     logger.info(f"Begin to analyze UnimodalData {unidata.get_uid()}.")
-    if kwargs["channel_attr"] is not None:
-        unidata.obs["Channel"] = unidata.obs[kwargs["channel_attr"]]
 
     if is_raw:
+        if kwargs["channel_attr"] is not None:
+            unidata.obs["Channel"] = unidata.obs[kwargs["channel_attr"]]
+
+        if "Channel" in unidata.obs:
+            from pandas.api.types import is_categorical_dtype
+            if not is_categorical_dtype(unidata.obs["Channel"]):
+                unidata.obs["Channel"] = pd.Categorical(unidata.obs["Channel"])
+
         # normailize counts and then transform to log space
         tools.log_norm(unidata, kwargs["norm_count"])
         # set group attribute
         if kwargs["batch_correction"] and kwargs["group_attribute"] is not None:
             tools.set_group_attribute(unidata, kwargs["group_attribute"])
 
-    # select highly variable features
-    standardize = False # if no select HVF, False
-    if kwargs["select_hvf"]:
-        if unidata.shape[1] <= kwargs["hvf_ngenes"]:
-            logger.warning(f"Number of genes {unidata.shape[1]} is no greater than the target number of highly variable features {kwargs['hvf_ngenes']}. HVF selection is omitted.")
-        else:
-            standardize = True
-            tools.highly_variable_features(
-                unidata,
-                kwargs["batch_correction"],
-                flavor=kwargs["hvf_flavor"],
-                n_top=kwargs["hvf_ngenes"],
-                n_jobs=kwargs["n_jobs"],
-            )
-            if kwargs["hvf_flavor"] == "pegasus":
-                if kwargs["plot_hvf"] is not None:
-                    from pegasus.plotting import hvfplot
-                    fig = hvfplot(unidata, return_fig = True)
-                    fig.savefig(f"{kwargs['plot_hvf']}.hvf.pdf")
+        # select highly variable features
+        standardize = False # if no select HVF, False
+        if kwargs["select_hvf"]:
+            if unidata.shape[1] <= kwargs["hvf_ngenes"]:
+                logger.warning(f"Number of genes {unidata.shape[1]} is no greater than the target number of highly variable features {kwargs['hvf_ngenes']}. HVF selection is omitted.")
+            else:
+                standardize = True
+                tools.highly_variable_features(
+                    unidata,
+                    kwargs["batch_correction"],
+                    flavor=kwargs["hvf_flavor"],
+                    n_top=kwargs["hvf_ngenes"],
+                    n_jobs=kwargs["n_jobs"],
+                )
+                if kwargs["hvf_flavor"] == "pegasus":
+                    if kwargs["plot_hvf"] is not None:
+                        from pegasus.plotting import hvfplot
+                        fig = hvfplot(unidata, return_fig = True)
+                        fig.savefig(f"{kwargs['plot_hvf']}.hvf.pdf")
 
-    # batch correction: L/S
-    if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
-        tools.correct_batch(unidata, features="highly_variable_features")
+        # batch correction: L/S
+        if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
+            tools.correct_batch(unidata, features="highly_variable_features")
+
+        n_pc = min(kwargs["pca_n"], unidata.shape[0], unidata.shape[1])
+        if n_pc < kwargs["pca_n"]:
+            logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
+
+        if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
+            pca_key = tools.run_scanorama(unidata, n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
+        else:
+            # PCA
+            tools.pca(
+                unidata,
+                n_components=n_pc,
+                features="highly_variable_features",
+                standardize=standardize,
+                robust=kwargs["pca_robust"],
+                random_state=kwargs["random_state"],
+            )
+            pca_key = "pca"
+
+        # batch correction: Harmony
+        if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
+            pca_key = tools.run_harmony(unidata, rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
+
+        # Find K neighbors
+        tools.neighbors(
+            unidata,
+            K=kwargs["K"],
+            rep=pca_key,
+            n_jobs=kwargs["n_jobs"],
+            random_state=kwargs["random_state"],
+            full_speed=kwargs["full_speed"],
+        )
+
 
     if kwargs["calc_sigscore"] is not None:
         sig_files = kwargs["calc_sigscore"].split(",")
         for sig_file in sig_files:
             tools.calc_signature_score(unidata, sig_file)
-
-    n_pc = min(kwargs["pca_n"], unidata.shape[0], unidata.shape[1])
-    if n_pc < kwargs["pca_n"]:
-        logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
-
-
-    if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
-        pca_key = tools.run_scanorama(unidata, n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
-    else:
-        # PCA
-        tools.pca(
-            unidata,
-            n_components=n_pc,
-            features="highly_variable_features",
-            standardize=standardize,
-            robust=kwargs["pca_robust"],
-            random_state=kwargs["random_state"],
-        )
-        pca_key = "pca"
-
-    # batch correction: Harmony
-    if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
-        pca_key = tools.run_harmony(unidata, rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
-
-    # Find K neighbors
-    tools.neighbors(
-        unidata,
-        K=kwargs["K"],
-        rep=pca_key,
-        n_jobs=kwargs["n_jobs"],
-        random_state=kwargs["random_state"],
-        full_speed=kwargs["full_speed"],
-    )
 
     # calculate diffmap
     if (
@@ -273,6 +279,38 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             memory=kwargs["fle_memory"],
             random_state=kwargs["random_state"],
         )
+
+    if kwargs["infer_doublets"]:
+        channel_attr = "Channel"
+        if (channel_attr not in unidata.obs) or (unidata.obs["Channel"].cat.categories.size == 1):
+            channel_attr = None
+        clust_attr = kwargs["dbl_cluster_attr"]
+        if (clust_attr is None) or (clust_attr not in unidata.obs):
+            clust_attr = None
+            for value in ["leiden_labels", "louvain_labels", "spectral_leiden_labels", "spectral_louvain_labels"]:
+                if value in unidata.obs:
+                    clust_attr = value
+                    break
+        
+        if channel_attr is not None:
+            logger.info(f"For doublet inference, channel_attr={channel_attr}.")
+        if clust_attr is not None:
+            logger.info(f"For doublet inference, clust_attr={clust_attr}.")
+
+        tools.infer_doublets(unidata, channel_attr = channel_attr, clust_attr = clust_attr, expected_doublet_rate = kwargs["expected_doublet_rate"], robust = True, n_jobs = kwargs["n_jobs"], random_state = kwargs["random_state"], plot_hist = output_name)
+        
+        dbl_clusts = None
+        if clust_attr is not None:
+            clusts = []
+            for idx, row in unidata.uns["pred_dbl_cluster"].iterrows():
+                if row["percentage"] >= 50.0:
+                    logger.info(f"{cluster}(percentage={row['percentage']}, q value={row['qval']}) is identified as a doublet cluster.")
+                    clusts.append(row["cluster"])
+            if len(clusts) > 0:
+                dbl_clusts = f"{clust_attr}:{','.join(clusts)}"
+
+        tools.mark_doublets(unidata, dbl_clusts = dbl_clusts)
+
 
     # calculate diffusion-based pseudotime from roots
     if len(kwargs["pseudotime"]) > 0:
