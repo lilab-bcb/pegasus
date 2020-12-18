@@ -497,7 +497,7 @@ def pc_transform(
     ----------
     data: ``pegasusio.MultimodalData``
         Annotated data matrix with PCs calculated
-    
+
     X: ``Union[csr_matrix, np.ndarray]``
         New input count matrix to be transformed. Number of genes must be the same as in data
 
@@ -539,12 +539,12 @@ def pc_transform(
 
 
 @timer(logger=logger)
-def pc_regress_out(
+def regress_out(
     data: Union[MultimodalData, UnimodalData],
     attrs: List[str],
     rep: str = 'pca',
 ) -> str:
-    """Regress out effects due to specific observational attributes at Principal Component level.
+    """Regress out effects due to specific observational attributes.
 
     Parameters
     ----------
@@ -560,7 +560,7 @@ def pc_regress_out(
 
     Returns
     -------
-    pca_key: ``str``
+    res_key: ``str``
         The key to the resulting new embedding matrix in ``data.obsm``. It's ``'X_'+rep+'_regressed'``.
 
     Update ``data.obsm``:
@@ -568,7 +568,7 @@ def pc_regress_out(
 
     Examples
     --------
-    >>> pg.pc_regress(data, attrs=['G1/S', 'G2/M'])
+    >>> pg.regress_out(data, attrs=['G1/S', 'G2/M'])
     """
     n_components = data.obsm[f'X_{rep}'].shape[1]
 
@@ -666,7 +666,7 @@ def tsvd_transform(
     ----------
     data: ``pegasusio.MultimodalData``
         Annotated data matrix with PCs calculated
-    
+
     X: ``Union[csr_matrix, np.ndarray]``
         New input count matrix to be transformed. Number of genes must be the same as in data
 

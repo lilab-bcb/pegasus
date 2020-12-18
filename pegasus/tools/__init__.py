@@ -12,7 +12,7 @@ from .preprocessing import (
     pc_transform,
     tsvd,
     tsvd_transform,
-    pc_regress_out,
+    regress_out,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
 from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
