@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
+from pegasus.tools import normalize_by_count
 
 import logging
 logger = logging.getLogger(__name__)
@@ -330,7 +331,6 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str =
     data.add_matrix(backup_matrix, data.X)
     data.X = data.X.astype(np.float32) # force copy
 
-    from pegasus.cylib.fast_utils import normalize_by_count
     data.obs["scale"] = normalize_by_count(data.X, data.var["robust"].values, norm_count, True)
     data.uns["norm_count"] = norm_count
 
@@ -515,7 +515,6 @@ def pc_transform(
 
     # normalize and log transform X
     X = X.astype(np.float32) # convert to float
-    from pegasus.cylib.fast_utils import normalize_by_count
     _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"], True)
 
     # select features
@@ -685,7 +684,6 @@ def tsvd_transform(
 
     # normalize and log transform X
     X = X.astype(np.float32) # convert to float
-    from pegasus.cylib.fast_utils import normalize_by_count
     _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"], True)
 
     # select features

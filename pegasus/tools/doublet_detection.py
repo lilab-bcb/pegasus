@@ -258,8 +258,7 @@ def _run_scrublet(
     --------
     >>> pg.run_scrublet(data)
     """
-    from pegasus.tools import calculate_nearest_neighbors
-    from pegasus.cylib.fast_utils import simulate_doublets
+    from pegasus.tools import calculate_nearest_neighbors, simulate_doublets
     from sklearn.decomposition import PCA
     from scipy.stats import gaussian_kde
 
@@ -438,7 +437,7 @@ def infer_doublets(
     n_jobs: Optional[int] = -1,
     alpha: Optional[float] = 0.05,
     random_state: Optional[int] = 0,
-    plot_hist: Optional[str] = "dbl",
+    plot_hist: Optional[str] = "sample",
 ) -> None:
     """Infer doublets using a Scrublet-like strategy. [Li20-2]_
 
@@ -473,7 +472,7 @@ def infer_doublets(
     k: ``int``, optional, default: ``None``
         Number of observed cell neighbors. If None, k = round(0.5 * sqrt(number of observed cells)). Total neighbors k_adj = round(k * (1.0 + sim_doublet_ratio)).
 
-    n_job: ``int``, optional, default: ``-``
+    n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all available threads.
 
     alpha: ``float``, optional, default: ``0.05``
@@ -482,8 +481,8 @@ def infer_doublets(
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
 
-    plot_hist: ``str``, optional, default: ``dbl``
-        If not None, plot diagnostic histograms using ``plot_hist`` as the prefix. If `channel_attr` is None, ``plot_hist.png`` is generated; Otherwise, ``plot_hist.channel_name.png`` files are generated.
+    plot_hist: ``str``, optional, default: ``sample``
+        If not None, plot diagnostic histograms using ``plot_hist`` as the prefix. If `channel_attr` is None, ``plot_hist.dbl.png`` is generated; Otherwise, ``plot_hist.channel_name.dbl.png`` files are generated. Each figure consists of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets.
 
     Returns
     -------
@@ -512,7 +511,7 @@ def infer_doublets(
                                 n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
                                 plot_hist = if_plot)
             if if_plot:
-                fig.savefig(f"{plot_hist}.png")
+                fig.savefig(f"{plot_hist}.dbl.png")
         else:
             logger.warning(f"Data has {data.shape[0]} < {min_cell} cells and thus doublet score calculation is skipped!")
             data.obs["doublet_score"] = 0.0
@@ -546,7 +545,7 @@ def infer_doublets(
                                     n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
                                     plot_hist = if_plot)
                 if if_plot:
-                    fig.savefig(f"{plot_hist}.{channel}.png")
+                    fig.savefig(f"{plot_hist}.{channel}.dbl.png")
 
                 dbl_score[idx] = unidata.obs["doublet_score"].values
                 pred_dbl[idx] = unidata.obs["pred_dbl"].values

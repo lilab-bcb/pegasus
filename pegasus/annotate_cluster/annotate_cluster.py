@@ -247,11 +247,12 @@ def infer_cell_types(
 
     markers : ``str`` or ``Dict``
         * If ``str``, it is a string representing a comma-separated list; each element in the list
-            * either refers to a JSON file containing legacy markers, or
-            * ``'human_immune'`` for predefined pegasus markers on human immune cells;
+            * either refers to a JSON file containing legacy markers, or predefined markers
+            * ``'human_immune'`` for human immune cells;
             * ``'mouse_immune'`` for mouse immune cells;
             * ``'human_brain'`` for human brain cells;
-            * ``'mouse_brain'`` for mouse brain cells.
+            * ``'mouse_brain'`` for mouse brain cells;
+            * ``'human_lung'`` for human lung cells.
         * If ``Dict``, it refers to a Python dictionary describing the markers.
 
     de_test: ``str``, optional, default: ``"mwu"``
@@ -406,7 +407,7 @@ def annotate(
 def run_annotate_cluster(
     input_file: str,
     output_file: str,
-    marker_file: str,
+    markers: str,
     de_test: str,
     de_alpha: float = 0.05,
     de_key: str = "de_res",
@@ -420,7 +421,7 @@ def run_annotate_cluster(
     data = read_input(input_file, mode="r")
     infer_cell_types(
         data,
-        marker_file,
+        markers,
         de_test,
         de_alpha=de_alpha,
         de_key=de_key,

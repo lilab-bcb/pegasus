@@ -17,7 +17,7 @@ Arguments:
   output_file            Output annotation file.
 
 Options:
-  --marker-file <file>                    JSON file for markers. Could also be human_immune/mouse_immune/human_brain/mouse_brain/human_lung, which triggers pegasus to markers included in the package. [default: human_immune]
+  --markers <str>                         <str> is a comma-separated list. Each element in the list either refers to a JSON file containing legacy markers, or 'human_immune'/'mouse_immune'/'human_brain'/'mouse_brain'/'human_lung' for predefined markers. [default: human_immune]
   --de-test <test>                        DE test to use to infer cell types. [default: mwu]
   --de-alpha <alpha>                      False discovery rate to control family-wise error rate. [default: 0.05]
   --de-key <key>                          Keyword where the DE results store in varm. [default: de_res]
@@ -32,7 +32,8 @@ Outputs:
   output_file        This is a text file. For each cluster, all its putative cell types are listed in descending order of the cell type score. For each putative cell type, all markers support this cell type are listed. If one putative cell type has cell subtypes, all subtypes will be listed under this cell type.
 
 Examples:
-  pegasus annotate_cluster manton_bm.zarr.zip manton_bm.anno.txt
+  pegasus annotate_cluster --markers human_immune manton_bm.zarr.zip manton_bm.anno.txt
+  pegasus annotate_cluster --markers human_immune,human_lung lung.zarr.zip lung.anno.txt
   pegasus annotate_cluster --annotation "anno:louvain_labels:T cells;B cells;NK cells;Monocytes" manton_bm.zarr.zip
     """
 

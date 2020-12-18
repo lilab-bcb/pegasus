@@ -16,7 +16,7 @@ Arguments:
 
 Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
-  --processed                                      Input file is processed and thus no PCA & diffmap will be run.
+  --processed                                      Input file is processed. Assume quality control, data normalization and log transformation, highly variable gene selection, batch correction/PCA and kNN graph building is done.
 
   --channel <channel_attr>                         Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
   --black-list <black_list>                        Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
@@ -140,6 +140,10 @@ Options:
   --net-fle-polish-target-steps <steps>            After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
   --net-fle-out-basis <basis>                      Output basis for net-FLE. [default: net_fle]
 
+  --infer-doublets                                 Infer doublets using the method described in https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
+  --expected-doublet-rate <rate>                   The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.
+  --dbl-cluster-attr <attr>                        <attr> refers to a cluster attribute containing cluster labels (e.g. 'louvain_labels'). Doublet clusters will be marked based on <attr> with the following criteria: passing the Fisher's exact test and having >= 50% of cells identified as doublets. By default, the first computed cluster attribute in the list of leiden, louvain, spectral_ledein and spectral_louvain is used.
+
   -h, --help                                       Print out help information.
 
 Outputs:
@@ -151,6 +155,7 @@ Outputs:
   output_name.<group>.filt.UMI.pdf         Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting UMI count distributions before and after filtration per channel per focused <group>.
   output_name.<group>.filt.mito.pdf        Optional output. Only exists if '--plot-filtration-results' is set. This file contains violin plots contrasting mitochondrial rate distributions before and after filtration per channel per focused <group>.
   output_name.<group>.hvf.pdf              Optional output. Only exists if '--plot-hvf' is set. This file contains a scatter plot describing the highly variable gene selection procedure per focused <group>.
+  output_name.<group>.<channel>.dbl.png    Optional output. Only exists if '--infer-doublets' is set. Each figure consists of 4 panels showing diagnostic plots for doublet inference. If there is only one channel in <group>, file name becomes output_name.<group>.dbl.png.
 
 Examples:
   pegasus cluster -p 20 --correct-batch-effect --louvain --tsne manton_bm_10x.h5 manton_bm
@@ -279,6 +284,9 @@ Examples:
                 self.args["--net-fle-polish-target-steps"]
             ),
             "net_fle_basis": self.args["--net-fle-out-basis"],
+            "infer_doublets": self.args["--infer-doublets"],
+            "expected_doublet_rate": self.convert_to_float(self.args["--expected-doublet-rate"]),
+            "dbl_cluster_attr": self.args["--dbl-cluster-attr"],
         }
 
         import logging

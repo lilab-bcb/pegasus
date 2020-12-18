@@ -5,7 +5,7 @@ from pegasus.tools import run_de_analysis
 
 class DeAnalysis(Base):
     """
-Perform DE analysis.
+Perform DE analysis. Calculate Mann-Whitney U test and AUROC values by default.
 
 Usage:
   pegasus de_analysis [options] (--labels <attr>) <input_data_file> <output_spreadsheet>

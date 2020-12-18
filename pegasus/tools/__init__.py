@@ -1,4 +1,4 @@
-from .utils import update_rep, X_from_rep, W_from_rep, knn_is_cached, slicing, calc_expm1
+from .utils import update_rep, X_from_rep, W_from_rep, knn_is_cached, slicing, calc_mean, calc_mean_and_var, calc_expm1, calc_stat_per_batch, normalize_by_count, calc_sig_background, simulate_doublets
 
 from .preprocessing import (
     qc_metrics,

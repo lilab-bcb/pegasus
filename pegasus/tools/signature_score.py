@@ -6,6 +6,7 @@ from sklearn.cluster import KMeans
 
 import anndata
 from pegasusio import UnimodalData, MultimodalData
+from pegasus.tools import calc_mean, calc_sig_background
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +30,6 @@ predefined_signatures = dict(
 
 def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
     if "mean" not in data.var:
-        from pegasus.cylib.fast_utils import calc_mean
         data.var["mean"] = calc_mean(data.X, axis = 0)
 
     if data.uns.get("sig_n_bins", 0) != n_bins:
@@ -49,7 +49,6 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         data.var["bins"] = bins
 
         # calculate background expectations
-        from pegasus.cylib.fast_utils import calc_sig_background
         data.obsm["sig_background"] = calc_sig_background(data.X, bins, mean_vec)
 
     return True
@@ -83,7 +82,6 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             if key in data.obs:
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
 
-            from pegasus.cylib.fast_utils import calc_mean
             data.obs[key] = ((calc_mean(data.X[:, idx], axis = 1) - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)).astype(np.float32)
 
 

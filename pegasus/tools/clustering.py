@@ -31,7 +31,7 @@ def louvain(
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
-        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm`` and nearest neighbors must be calculated so that affinity matrix ``'W_' + rep`` exists in ``data.uns``. By default, use PCA coordinates.
 
     resolution: ``int``, optional, default: ``1.3``
         Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
@@ -96,7 +96,7 @@ def leiden(
         Annotated data matrix with rows for cells and columns for genes.
 
     rep: ``str``, optional, default: ``"pca"``
-        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+        The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm`` and nearest neighbors must be calculated so that affinity matrix ``'W_' + rep`` exists in ``data.uns``. By default, use PCA coordinates.
 
     resolution: ``int``, optional, default: ``1.3``
         Resolution factor. Higher resolution tends to find more clusters.
