@@ -1,6 +1,7 @@
 import numpy as np
+import pandas as pd
 from scipy.sparse import issparse, csr_matrix
-from typing import Union, List
+from typing import Union, List, Tuple
 
 
 def update_rep(rep: str) -> str:
@@ -57,9 +58,89 @@ def slicing(X: Union[csr_matrix, np.ndarray], row: Union[List[bool], List[int], 
             result = result.item()
     return result
 
+
+def calc_mean(X: Union[csr_matrix, np.ndarray], axis: int) -> np.ndarray:
+    if not issparse(X):
+        return X.mean(axis = axis, dtype = np.float64)
+
+    from pegasus.cylib.fast_utils import calc_mean_sparse
+    return calc_mean_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, axis)
+
+
+def calc_mean_and_var(X: Union[csr_matrix, np.ndarray], axis: int) -> Tuple[np.ndarray, np.ndarray]:
+    if issparse(X):
+        from pegasus.cylib.fast_utils import calc_mean_and_var_sparse
+        return calc_mean_and_var_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, axis)
+    else:
+        from pegasus.cylib.fast_utils import calc_mean_and_var_dense
+        return calc_mean_and_var_dense(X.shape[0], X.shape[1], X, axis)
+
+
 def calc_expm1(X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
     if not issparse(X):
         return np.expm1(X)
     res = X.copy()
     np.expm1(res.data, out = res.data)
     return res
+
+
+def calc_stat_per_batch(X: Union[csr_matrix, np.ndarray], batch: pd.Categorical) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    nbatch = batch.categories.size
+    codes = batch.codes.astype(np.int32)
+
+    if issparse(X):
+        from pegasus.cylib.fast_utils import calc_stat_per_batch_sparse
+        return calc_stat_per_batch_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, nbatch, codes)
+    else:
+        from pegasus.cylib.fast_utils import calc_stat_per_batch_dense
+        return calc_stat_per_batch_dense(X.shape[0], X.shape[1], X, nbatch, codes)
+
+
+def normalize_by_count(X: Union[csr_matrix, np.ndarray], robust: List[bool], norm_count: float, log_transform: bool) -> np.ndarray:
+    scale = None
+    if issparse(X):
+        from pegasus.cylib.fast_utils import normalize_by_count_sparse
+        scale = normalize_by_count_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, robust, norm_count)
+        if log_transform:
+            np.log1p(X.data, out = X.data)
+    else:
+        from pegasus.cylib.fast_utils import normalize_by_count_dense
+        scale = normalize_by_count_dense(X.shape[0], X.shape[1], X, robust, norm_count)
+        if log_transform:
+            np.log1p(X, out = X)
+    return scale
+
+
+def calc_sig_background(X: Union[csr_matrix, np.ndarray], bins: pd.Categorical, mean_vec: List[float]) -> np.ndarray:
+    n_bins = bins.categories.size
+    codes = bins.codes.astype(np.int32)
+
+    if issparse(X):
+        from pegasus.cylib.fast_utils import calc_sig_background_sparse
+        return calc_sig_background_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, n_bins, codes, mean_vec)
+    else:
+        from pegasus.cylib.fast_utils import calc_sig_background_dense
+        return calc_sig_background_dense(X.shape[0], X.shape[1], X, n_bins, codes, mean_vec)
+
+
+def simulate_doublets(X: Union[csr_matrix, np.ndarray], sim_doublet_ratio: float, random_state: int = 0) -> Tuple[Union[csr_matrix, np.ndarray], np.ndarray]:
+    # simulate doublet indices
+    np.random.seed(random_state)
+    n_sim = int(X.shape[0] * sim_doublet_ratio)
+    doublet_indices = np.random.randint(0, X.shape[0], size=(n_sim, 2), dtype = np.int32)
+
+    results = None
+    if issparse(X):
+        data = X.data
+        if data.dtype != np.int32:
+            data = data.astype(np.int32)
+        from pegasus.cylib.fast_utils import simulate_doublets_sparse
+        results = csr_matrix(simulate_doublets_sparse(n_sim, X.shape[1], data, X.indices, X.indptr, doublet_indices), shape = (n_sim, X.shape[1]), copy = False)
+    else:
+        data = X
+        if data.dtype != np.int32:
+            data = data.astype(np.int32)
+        from pegasus.cylib.fast_utils import simulate_doublets_dense
+        results = simulate_doublets_dense(n_sim, X.shape[1], data, doublet_indices)
+
+    return results, doublet_indices

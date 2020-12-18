@@ -258,8 +258,7 @@ def _run_scrublet(
     --------
     >>> pg.run_scrublet(data)
     """
-    from pegasus.tools import calculate_nearest_neighbors
-    from pegasus.cylib.fast_utils import simulate_doublets
+    from pegasus.tools import calculate_nearest_neighbors, simulate_doublets
     from sklearn.decomposition import PCA
     from scipy.stats import gaussian_kde
 

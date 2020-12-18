@@ -7,13 +7,20 @@ cimport cython
 from libc.math cimport sqrt, log2, M_LOG2E, fabs
 # from libc.stdio cimport printf
 
+ctypedef fused indices_type:
+    int
+    long
 
+ctypedef fused indptr_type:
+    int
+    long
+
+# Note that for now csr_to_csc or csr_to_csc_cond return long for indices and indptr; Once we update Cython to 3.0, we will use const fused memoryview instead!!!
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef tuple csr_to_csc(const float[:] input_data, const int[:] input_indices, input_indptr_arr, int M, int N, const long[:] ords):
+cpdef tuple csr_to_csc(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int M, int N, const long[:] ords):
     cdef Py_ssize_t i, j, pos, col
-    cdef const long[:] input_indptr = input_indptr_arr.astype(np.int64)
 
     output_indptr = np.zeros(N+1, dtype = np.int64)
     cdef long[:] indptr = output_indptr
@@ -27,9 +34,9 @@ cpdef tuple csr_to_csc(const float[:] input_data, const int[:] input_indices, in
         indptr[i + 1] += indptr[i]
 
     output_data = np.zeros(indptr[N], dtype = np.float32)
-    output_indices = np.zeros(indptr[N], dtype = np.int32)
+    output_indices = np.zeros(indptr[N], dtype = np.int64)
     cdef float[:] data = output_data
-    cdef int[:] indices = output_indices
+    cdef long[:] indices = output_indices
 
     for i in range(M):
         for j in range(input_indptr[ords[i]], input_indptr[ords[i]+1]):
@@ -45,10 +52,9 @@ cpdef tuple csr_to_csc(const float[:] input_data, const int[:] input_indices, in
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef tuple csr_to_csc_cond(const float[:] input_data, const int[:] input_indices, input_indptr_arr, int N, const long[:] ords, const long[:] cumsum):
+cpdef tuple csr_to_csc_cond(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int N, const long[:] ords, const long[:] cumsum):
     cdef Py_ssize_t i, j, k, pos, col
     cdef Py_ssize_t n, start, end, fr, to
-    cdef const long[:] input_indptr = input_indptr_arr.astype(np.int64)
 
     n = cumsum.size
 
@@ -57,7 +63,7 @@ cpdef tuple csr_to_csc_cond(const float[:] input_data, const int[:] input_indice
     output_indptrs = np.zeros((n, N+1), dtype = np.int64)
 
     cdef float[:] data
-    cdef int[:] indices
+    cdef long[:] indices
     cdef long[:] indptr
     cdef long[:] counter = np.zeros(N, dtype = np.int64)
 
@@ -79,7 +85,7 @@ cpdef tuple csr_to_csc_cond(const float[:] input_data, const int[:] input_indice
             indptr[j + 1] += indptr[j]
 
         output_data_list.append(np.zeros(indptr[N], dtype = np.float32))
-        output_indices_list.append(np.zeros(indptr[N], dtype = np.int32))
+        output_indices_list.append(np.zeros(indptr[N], dtype = np.int64))
 
         data = output_data_list[i]
         indices = output_indices_list[i]
@@ -97,10 +103,9 @@ cpdef tuple csr_to_csc_cond(const float[:] input_data, const int[:] input_indice
     return output_data_list, output_indices_list, output_indptrs
 
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void partition_indices(const int[:] indices, const long[:] cumsum, long[:] posarr):
+cdef void partition_indices(const long[:] indices, const long[:] cumsum, long[:] posarr):
     cdef Py_ssize_t i, j, s
 
     posarr[0] = 0
@@ -116,7 +121,7 @@ cdef void partition_indices(const int[:] indices, const long[:] cumsum, long[:] 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const int[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint verbose):
+cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint verbose):
     """ Run Mann-Whitney U test for all clusters in cluster_labels, focusing only on genes in [start_pos, end_pos)
         P values are calculated based on normal distribution approximation, accurate when each cluster has > 20 samples
     """
@@ -219,7 +224,7 @@ cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const int[
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef list calc_stat(const float[:] data, const int[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint t_test, bint fisher_test, bint verbose):
+cpdef list calc_stat(const float[:] data, const long[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint t_test, bint fisher_test, bint verbose):
 #     """ Collect sufficient statistcs and optionally run Welch's T test and Fisher's exact test
 #     """
     cdef Py_ssize_t ngene, ncluster, buffer_size
