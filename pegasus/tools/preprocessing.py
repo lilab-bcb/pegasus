@@ -147,6 +147,7 @@ def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> 
     return df_cells
 
 
+@timer(logger=logger)
 def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
@@ -170,6 +171,7 @@ def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
     data.filter_data(focus_list = focus_list, cache_passqc = True)
 
 
+@timer(logger=logger)
 def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> None:
     """ Identify robust genes as candidates for HVG selection and remove genes that are not expressed in any cells.
 
