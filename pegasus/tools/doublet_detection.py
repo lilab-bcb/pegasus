@@ -31,8 +31,8 @@ def _calc_vec_f(func, size, f, h): # convenient function to vetorize the above f
         res[i] = func(f, i, h)
     return res
 
-def _find_local_maxima(y: List[float], frac: float = 1.0 / 3.0, merge_peak_frac: float = 0.06) -> Tuple[List[int], List[int], List[int]]:
-    """ find local maxima that has a magnitude no smaller than the frac * global maxima. 
+def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: float = 0.06) -> Tuple[List[int], List[int], List[int]]:
+    """ find local maxima that has a magnitude larger than the frac * global maxima. 
         Then merge adjacent peaks, where the maximal height and minimal height between the two peaks are within merge_peak_frac of the maximal height.
     """
     lower_bound = y.max() * frac
@@ -41,7 +41,7 @@ def _find_local_maxima(y: List[float], frac: float = 1.0 / 3.0, merge_peak_frac:
     for i in range(2, y.size - 2):
         if (y[i - 1] == y[i] and y[i - 2] < y[i - 1] and y[i] > y[i + 1]) or (y[i - 2] < y[i - 1] and y[i - 1] < y[i] and y[i] > y[i + 1] and y[i + 1] > y[i + 2]):
             # i is a local maxima
-            if y[i] >= lower_bound:
+            if y[i] > lower_bound:
                 maxima_by_x.append(i)
             else:
                 filtered_maxima.append(i)
@@ -66,6 +66,34 @@ def _find_local_maxima(y: List[float], frac: float = 1.0 / 3.0, merge_peak_frac:
 
     return maxima, maxima_by_x, filtered_maxima
 
+def _locate_cutoff_among_peaks(y: List[float], maxima: List[float]) -> int:
+    """ Find two peaks with largest gap.
+    """
+    best_gap = 0
+    best_pos = -1
+
+    pos_12 = gap_12 = -1
+
+    for i in range(1, maxima.size):
+        if maxima[0] < maxima[i]:
+            start = maxima[0]
+            end = maxima[i]
+        else:
+            start = maxima[i]
+            end = maxima[0]
+        pos = y[start+1:end].argmin() + (start+1)
+        gap = y[maxima[i]] - y[pos]
+
+        if i == 1:
+            pos_12 = pos
+            gap_12 = y[maxima[0]] - y[pos]
+
+        if best_gap < gap:
+            best_gap = gap
+            best_pos = pos
+
+    return best_pos if best_gap > gap_12 else pos_12
+
 def _find_pos_curv(curv, start, dir, thre = 0.06):
     RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
     assert (RANGE.stop - RANGE.start) * RANGE.step > 0
@@ -84,7 +112,7 @@ def _find_curv_minima_at_peak(curv, peak_pos):
         end += 1
     return curv[start:end].min()
 
-def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, rel_thre = 0.4, minima_dir_thre = -0.25):
+def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, rel_thre = 0.45, minima_dir_thre = -0.25):
     """ Find a negative curvature value that is a local minima or a filtered local maxima with respect to density value.
         dir represents the direction of search, choosing from '+' or '-'.
         Beside being a local minima, the value must also satisfy the rel_thre requirement.
@@ -102,7 +130,7 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, 
         if minima_with_dir >= minima_dir_thre:
             # No other local minima
             return pos_to # return right end
-        thre = max(peak_curv_value, minima_with_dir) * rel_thre
+        thre = min(max(peak_curv_value, minima_with_dir) * rel_thre, minima_dir_thre)
         assert thre < 0.0
         for pos in range(pos_from, pos_to):
             if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
@@ -120,7 +148,7 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, 
         minima_with_dir = curv[pos_to+1:pos_from+1].min()
         if minima_with_dir >= minima_dir_thre:
             return pos_to
-        thre = max(peak_curv_value, minima_with_dir) * rel_thre
+        thre = min(max(peak_curv_value, minima_with_dir) * rel_thre, minima_dir_thre)
         assert thre < 0.0
         for pos in range(pos_from, pos_to, -1):
             if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
@@ -345,20 +373,15 @@ def _run_scrublet(
     curv = _calc_vec_f(_curvature, x.size, y, gap) # calculate curvature
 
     if maxima.size >= 2:
-        if maxima[0] < maxima[1]:
-            start = maxima[0]
-            end = maxima[1]
-        else:
-            start = maxima[1]
-            end = maxima[0]
-        pos = y[start+1:end].argmin() + (start+1)
+        pos = _locate_cutoff_among_peaks(y, maxima)
     else:
-        frac_right_thre = 0.42
-        frac_left_thre = 0.4
+        frac_right_thre = 0.41
+        frac_left_thre = 0.39
 
         pos = -1
         for i in range(maxima_by_x.size):
             frac_right = (sim_scores_log > x[maxima_by_x[i]]).sum() / sim_scores.size
+            print(f"frac_right = {frac_right}.")
             if frac_right < frac_right_thre: # peak might represent a doublet peak, try to find a cutoff at the left side
                 if i == 0:
                     peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[i])
@@ -372,6 +395,8 @@ def _run_scrublet(
                 frac_left = (sim_scores_log < x[pos]).sum() / sim_scores.size    
                 if frac_left < frac_left_thre:
                     pos = maxima_by_x[i]
+
+                print(f"frac_left = {frac_left}.")
 
                 break
 
