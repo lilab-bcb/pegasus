@@ -105,9 +105,9 @@ Options:
   --spectral-leiden-resolution <resolution>        Resolution parameter for leiden. [default: 1.3]
   --spectral-leiden-class-label <label>            Spectral-leiden label name in result. [default: spectral_leiden_labels]
 
-  --tsne                                           Run multi-core t-SNE for visualization.
-  --fitsne                                         Run FIt-SNE for visualization.
-  --tsne-perplexity <perplexity>                   t-SNE's perplexity parameter, used by both tSNE, FItSNE and net-tSNE. [default: 30]
+  --tsne                                           Run FIt-SNE package to compute t-SNE embeddings for visualization.
+  --tsne-perplexity <perplexity>                   t-SNE perplexity parameter. [default: 30]
+  --tsne-initialization <choice>                   <choice> can be either 'random' or 'pca'. 'random' refers to random initialization. 'pca' refers to PCA initialization as described in (CITE Kobak et al. 2019) [default: pca]
 
   --umap                                           Run umap for visualization.
   --umap-K <K>                                     K neighbors for umap. [default: 15]
@@ -126,11 +126,6 @@ Options:
 
   --net-regressor-L2-penalty <value>               L2 penalty parameter for the deep net regressor. [default: 0.1]
 
-  --net-tsne                                       Run net tSNE for visualization.
-  --net-tsne-polish-learning-frac <frac>           After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.33]
-  --net-tsne-polish-niter <niter>                  Number of iterations for polishing tSNE run. [default: 150]
-  --net-tsne-out-basis <basis>                     Output basis for net-tSNE. [default: net_tsne]
-
   --net-umap                                       Run net umap for visualization.
   --net-umap-polish-learning-rate <rate>           After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 1.0]
   --net-umap-polish-nepochs <nepochs>              Number of iterations for polishing UMAP run. [default: 40]
@@ -143,6 +138,10 @@ Options:
   --infer-doublets                                 Infer doublets using the method described in https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
   --expected-doublet-rate <rate>                   The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.
   --dbl-cluster-attr <attr>                        <attr> refers to a cluster attribute containing cluster labels (e.g. 'louvain_labels'). Doublet clusters will be marked based on <attr> with the following criteria: passing the Fisher's exact test and having >= 50% of cells identified as doublets. By default, the first computed cluster attribute in the list of leiden, louvain, spectral_ledein and spectral_louvain is used.
+
+  --citeseq                                        Input data contain both RNA and CITE-Seq modalities. This will set --focus to be the RNA modality and --append to be the CITE-Seq modality. In addition, 'ADT-' will be added in front of each antibody name to avoid name conflict with genes in the RNA modality.
+  --citeseq-umap                                   For high quality cells kept in the RNA modality, generate a UMAP based on their antibody expression. 
+  --citeseq-umap-exclude <list>                    <list> is a comma-separated list of antibodies to be excluded from the UMAP calculation (e.g. Mouse-IgG1,Mouse-IgG2a).
 
   -h, --help                                       Print out help information.
 
@@ -250,8 +249,8 @@ Examples:
             ),
             "spectral_leiden_class_label": self.args["--spectral-leiden-class-label"],
             "tsne": self.args["--tsne"],
-            "fitsne": self.args["--fitsne"],
             "tsne_perplexity": float(self.args["--tsne-perplexity"]),
+            "tsne_init": self.args["--tsne-initialization"],
             "umap": self.args["--umap"],
             "umap_K": int(self.args["--umap-K"]),
             "umap_min_dist": float(self.args["--umap-min-dist"]),
@@ -267,12 +266,6 @@ Examples:
             "net_ds_K": int(self.args["--net-down-sample-K"]),
             "net_ds_alpha": float(self.args["--net-down-sample-alpha"]),
             "net_l2": float(self.args["--net-regressor-L2-penalty"]),
-            "net_tsne": self.args["--net-tsne"],
-            "net_tsne_polish_learing_frac": float(
-                self.args["--net-tsne-polish-learning-frac"]
-            ),
-            "net_tsne_polish_niter": int(self.args["--net-tsne-polish-niter"]),
-            "net_tsne_basis": self.args["--net-tsne-out-basis"],
             "net_umap": self.args["--net-umap"],
             "net_umap_polish_learing_rate": float(
                 self.args["--net-umap-polish-learning-rate"]
@@ -287,6 +280,9 @@ Examples:
             "infer_doublets": self.args["--infer-doublets"],
             "expected_doublet_rate": self.convert_to_float(self.args["--expected-doublet-rate"]),
             "dbl_cluster_attr": self.args["--dbl-cluster-attr"],
+            "citeseq": self.args["--citeseq"],
+            "citeseq_umap": self.args["--citeseq-umap"],
+            "citeseq_umap_exclude": self.split_string(self.args["--citeseq-umap-exclude"]),
         }
 
         import logging

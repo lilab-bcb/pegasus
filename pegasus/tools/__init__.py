@@ -1,4 +1,4 @@
-from .utils import update_rep, X_from_rep, W_from_rep, knn_is_cached, slicing, calc_mean, calc_mean_and_var, calc_expm1, calc_stat_per_batch, normalize_by_count, calc_sig_background, simulate_doublets
+from .utils import update_rep, X_from_rep, W_from_rep, slicing, calc_mean, calc_mean_and_var, calc_expm1, calc_stat_per_batch, normalize_by_count, calc_sig_background, simulate_doublets
 
 from .preprocessing import (
     qc_metrics,
@@ -31,10 +31,8 @@ from .clustering import louvain, leiden, spectral_louvain, spectral_leiden, clus
 from .net_regressor import net_train_and_predict
 from .visualization import (
     tsne,
-    fitsne,
     umap,
     fle,
-    net_tsne,
     net_umap,
     net_fle,
 )

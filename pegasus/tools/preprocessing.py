@@ -473,10 +473,11 @@ def pca(
     keyword = select_features(data, features=features, standardize=standardize, max_value=max_value, use_cache=use_cache)
     X = data.uns[keyword]
 
-    pca = PCA(n_components=n_components, random_state=random_state)
     if robust:
         svd_solver = "arpack" if max(X.shape) > 500 and n_components < 0.8 * min(X.shape) else "full"
         pca = PCA(n_components=n_components, random_state=random_state, svd_solver=svd_solver)
+    else:
+        pca = PCA(n_components=n_components, random_state=random_state)
 
     X_pca = pca.fit_transform(X)
 

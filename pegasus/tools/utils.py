@@ -34,17 +34,6 @@ def W_from_rep(data: "AnnData", rep: str) -> "csr_matrix":
     return data.uns[rep_key]
 
 
-def knn_is_cached(
-    data: "AnnData", indices_key: str, distances_key: str, K: int
-) -> bool:
-    return (
-        (indices_key in data.uns)
-        and (distances_key in data.uns)
-        and data.uns[indices_key].shape[0] == data.shape[0]
-        and (K <= data.uns[indices_key].shape[1] + 1)
-    )
-
-
 # slicing is not designed to work at extracting one element, convert to dense matrix
 def slicing(X: Union[csr_matrix, np.ndarray], row: Union[List[bool], List[int], int] = slice(None), col: Union[List[bool], List[int], int] = slice(None), copy: bool = False, squeeze: bool = True) -> np.ndarray:
     result = X[row, col]

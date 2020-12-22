@@ -9,7 +9,7 @@ from pegasusio import MultimodalData
 from joblib import effective_n_jobs
 from typing import List, Tuple
 
-from pegasus.tools import update_rep, X_from_rep, knn_is_cached
+from pegasus.tools import update_rep, X_from_rep
 
 import logging
 logger = logging.getLogger(__name__)
@@ -41,11 +41,7 @@ def calculate_nearest_neighbors(
         method = "sklearn"
 
     if nsample < K:
-        logger.warning(
-            "Warning: in calculate_nearest_neighbors, number of samples = {} < K = {}!\n Set K to {}.".format(
-                nsample, K, nsample
-            )
-        )
+        logger.warning(f"Warning: in calculate_nearest_neighbors, number of samples = {nsample} < K = {K}!\n Set K to {nsample}.")
         K = nsample
 
     n_jobs = effective_n_jobs(n_jobs)
@@ -82,6 +78,17 @@ def calculate_nearest_neighbors(
         distances, indices = knn.kneighbors()
 
     return indices, distances
+
+
+def knn_is_cached(
+    data: MultimodalData, indices_key: str, distances_key: str, K: int
+) -> bool:
+    return (
+        (indices_key in data.uns)
+        and (distances_key in data.uns)
+        and data.uns[indices_key].shape[0] == data.shape[0]
+        and (K <= data.uns[indices_key].shape[1] + 1)
+    )
 
 
 @timer(logger=logger)
