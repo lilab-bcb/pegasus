@@ -7,16 +7,12 @@ import uuid
 
 from pegasusio import MultimodalData
 from joblib import effective_n_jobs
-try:
-    from MulticoreTSNE import MulticoreTSNE as TSNE
-except ImportError:
-    print("Need Multicore-TSNE!")
 
 from pegasus.tools import (
     update_rep,
     X_from_rep,
     W_from_rep,
-    knn_is_cached,
+    get_neighbors,
     neighbors,
     net_train_and_predict,
     calculate_nearest_neighbors,
@@ -29,41 +25,7 @@ logger = logging.getLogger(__name__)
 
 from pegasusio import timer
 
-
-
 def calc_tsne(
-    X,
-    n_jobs,
-    n_components,
-    perplexity,
-    early_exaggeration,
-    learning_rate,
-    random_state,
-    init="random",
-    n_iter=1000,
-    n_iter_early_exag=250,
-):
-    """
-    TODO: Typing
-    """
-    tsne = TSNE(
-        n_jobs=n_jobs,
-        n_components=n_components,
-        perplexity=perplexity,
-        early_exaggeration=early_exaggeration,
-        learning_rate=learning_rate,
-        random_state=random_state,
-        verbose=1,
-        init=init,
-        n_iter=n_iter,
-        n_iter_early_exag=n_iter_early_exag,
-    )
-    X_tsne = tsne.fit_transform(X)
-    logger.info("Final error = {}".format(tsne.kl_divergence_))
-    return X_tsne
-
-
-def calc_fitsne(
     X,
     nthreads,
     no_dims,
@@ -72,12 +34,12 @@ def calc_fitsne(
     learning_rate,
     rand_seed,
     initialization=None,
-    max_iter=1000,
+    max_iter=750,
     stop_early_exag_iter=250,
     mom_switch_iter=250,
 ):
     """
-    TODO: Typing
+    TODO: Calculate t-SNE embeddings using the FIt-SNE package
     """
     # FItSNE will change X content
 
@@ -91,7 +53,7 @@ def calc_fitsne(
     from fitsne import FItSNE
 
     return FItSNE(
-        X.astype("float64"),
+        X,
         nthreads=nthreads,
         no_dims=no_dims,
         perplexity=perplexity,
@@ -137,7 +99,7 @@ def calc_umap(
     embedding = None
     if X.shape[0] < 4096 or knn_indices is None:
         embedding = umap_obj.fit_transform(X)
-        logger.info(f"Using umap kNN graph because number of cells {X.shape[0]} is smaller than 4096.")
+        logger.info(f"Using umap kNN graph because number of cells {X.shape[0]} is smaller than 4096 or knn_indices is not provided.")
     else:
         assert knn_dists is not None
         # preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
@@ -253,84 +215,12 @@ def tsne(
     n_components: int = 2,
     perplexity: float = 30,
     early_exaggeration: int = 12,
-    learning_rate: float = 1000,
+    learning_rate: float = "auto",
+    initialization: str = "pca",
     random_state: int = 0,
     out_basis: str = "tsne",
 ) -> None:
-    """Calculate tSNE embedding of cells.
-
-    This function uses MulticoreTSNE_ package. See [Maaten08]_ for details on tSNE.
-
-    .. _MulticoreTSNE: https://github.com/DmitryUlyanov/Multicore-TSNE
-
-    Parameters
-    ----------
-    data: ``pegasusio.MultimodalData``
-        Annotated data matrix with rows for cells and columns for genes.
-
-    rep: ``str``, optional, default: ``"pca"``
-        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
-
-    n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
-
-    n_components: ``int``, optional, default: ``2``
-        Dimension of calculated tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
-
-    perplexity: ``float``, optional, default: ``30``
-        The perplexity is related to the number of nearest neighbors used in other manifold learning algorithms. Larger datasets usually require a larger perplexity.
-
-    early_exaggeration: ``int``, optional, default: ``12``
-        Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
-
-    learning_rate: ``float``, optional, default: ``1000``
-        The learning rate can be a critical parameter, which should be between 100 and 1000.
-
-    random_state: ``int``, optional, default: ``0``
-        Random seed set for reproducing results.
-
-    out_basis: ``str``, optional, default: ``"tsne"``
-        Key name for calculated tSNE coordinates to store.
-
-    Returns
-    -------
-    ``None``
-
-    Update ``data.obsm``:
-        * ``data.obsm['X_' + out_basis]``: tSNE coordinates of the data.
-
-    Examples
-    --------
-    >>> pg.tsne(data)
-    """
-
-    rep = update_rep(rep)
-    n_jobs = effective_n_jobs(n_jobs)
-
-    data.obsm["X_" + out_basis] = calc_tsne(
-        X_from_rep(data, rep),
-        n_jobs,
-        n_components,
-        perplexity,
-        early_exaggeration,
-        learning_rate,
-        random_state,
-    )
-
-
-@timer(logger=logger)
-def fitsne(
-    data: MultimodalData,
-    rep: str = "pca",
-    n_jobs: int = -1,
-    n_components: int = 2,
-    perplexity: float = 30,
-    early_exaggeration: int = 12,
-    learning_rate: float = 1000,
-    random_state: int = 0,
-    out_basis: str = "fitsne",
-) -> None:
-    """Calculate FIt-SNE embedding of cells.
+    """Calculate t-SNE embedding of cells using the FIt-SNE package.
 
     This function uses fitsne_ package. See [Linderman19]_ for details on FIt-SNE.
 
@@ -356,8 +246,11 @@ def fitsne(
     early_exaggeration: ``int``, optional, default: ``12``
         Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
 
-    learning_rate: ``float``, optional, default: ``1000``
-        The learning rate can be a critical parameter, which should be between 100 and 1000.
+    learning_rate: ``float``, optional, default: ``auto``
+        By default, the learning rate is determined automatically as max(data.shape[0] / early_exaggeration, 200) [CITE Belkina et al. Nat. Comm. 2019; Kobak et al. Nat. Comm. 2019].
+    
+    initialization: ``str``, optional, default: ``pca``
+        Initialization can be either ``pca`` or ``random`` or np.ndarray. By default, we use ``pca`` initialization according to [CITE Kobak et al. Nat. Comm. 2019].
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
@@ -379,15 +272,36 @@ def fitsne(
 
     rep = update_rep(rep)
     n_jobs = effective_n_jobs(n_jobs)
+    X = X_from_rep(data, rep).astype(np.float64)
 
-    data.obsm["X_" + out_basis] = calc_fitsne(
-        X_from_rep(data, rep),
+    if learning_rate == "auto":
+        learning_rate = max(X.shape[0] / early_exaggeration, 200.0)
+
+    if initialization == "random":
+        initialization = None
+    elif initialization == "pca":
+        if rep == "pca":
+            initialization = X[:, 0:n_components].copy()
+        else:
+            from sklearn.decomposition import PCA     
+            svd_solver = "arpack" if min(X.shape) > n_components else "full"
+            pca = PCA(n_components=n_components, random_state=random_state, svd_solver=svd_solver)
+            initialization = pca.fit_transform(X)
+        initialization = initialization / np.std(initialization[:, 0]) * 0.0001
+    else:
+        assert isinstance(initialization, np.ndarray) and initialization.ndim == 2 and initialization.shape[0] == X.shape[0] and initialization.shape[1] == n_components
+        if initialization.dtype != np.float64:
+            initialization = initialization.astype(np.float64)
+
+    data.obsm["X_" + out_basis] = calc_tsne(
+        X,
         n_jobs,
         n_components,
         perplexity,
         early_exaggeration,
         learning_rate,
         random_state,
+        initialization,
     )
 
 
@@ -399,6 +313,8 @@ def umap(
     n_neighbors: int = 15,
     min_dist: float = 0.5,
     spread: float = 1.0,
+    n_jobs: int = -1,
+    full_speed: bool = False,
     random_state: int = 0,
     out_basis: str = "umap",
 ) -> None:
@@ -428,6 +344,13 @@ def umap(
     spread: ``float``, optional, default: ``1.0``
         The effective scale of embedded data points.
 
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use for computing kNN graphs. If ``-1``, use all available threads.
+
+    full_speed: ``bool``, optional, default: ``False``
+        * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
+        * Otherwise, use only one thread to make sure results are reproducible.
+
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
 
@@ -445,26 +368,17 @@ def umap(
     --------
     >>> pg.umap(data)
     """
-    start = time.time()
-
     rep = update_rep(rep)
-    indices_key = rep + "_knn_indices"
-    distances_key = rep + "_knn_distances"
-
     X = X_from_rep(data, rep)
-    if not knn_is_cached(data, indices_key, distances_key, n_neighbors):
-        if indices_key in data.uns and n_neighbors > data.uns[indices_key].shape[1] + 1:
-            logger.warning(f"Reduce K for neighbors in UMAP from {n_neighbors} to {data.uns[indices_key].shape[1] + 1}")
-            n_neighbors = data.uns[indices_key].shape[1] + 1
-        else:
-            raise ValueError("Please run neighbors first!")
 
-    knn_indices = np.insert(
-        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
-    )
-    knn_dists = np.insert(
-        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
-    )
+    if data.shape[0] < n_neighbors:
+        logger.warning(f"Warning: Number of samples = {data.shape[0]} < K = {n_neighbors}!\n Set K to {data.shape[0]}.")
+        n_neighbors = data.shape[0]
+
+    knn_indices, knn_dists = get_neighbors(data, K = n_neighbors, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
+    knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
+
     data.obsm["X_" + out_basis] = calc_umap(
         X,
         n_components,
@@ -475,9 +389,6 @@ def umap(
         knn_indices=knn_indices,
         knn_dists=knn_dists,
     )
-
-    end = time.time()
-    logger.info("UMAP is calculated. Time spent = {:.2f}s.".format(end - start))
 
 
 @timer(logger=logger)
@@ -560,8 +471,8 @@ def fle(
 
         _, file_name = tempfile.mkstemp()
 
-    n_jobs = effective_n_jobs(n_jobs)
     rep = update_rep(rep)
+    n_jobs = effective_n_jobs(n_jobs)
 
     if ("W_" + rep) not in data.uns:
         neighbors(
@@ -590,24 +501,19 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     """
     TODO: documentation (not user API)
     """
-
     nsample = distances.shape[0]
-
-    if K > distances.shape[1]:
-        logger.info(
-            "Warning: in select_cells, K = {} > the number of calculated nearest neighbors!\nSet K to {}".format(
-                K, distances.shape[1]
-            )
-        )
-        K = distances.shape[1]
+    assert K >= 2
+    if K > distances.shape[1] + 1:
+        logger.info(f"Warning: in select_cells, K = {K} > the number of calculated nearest neighbors {distances.shape[1] + 1}!\nSet K to {distances.shape[1] + 1}")
+        K = distances.shape[1] + 1
 
     probs = np.zeros(nsample)
     if alpha == 0.0:
         probs[:] = 1.0  # uniform
     elif alpha == 1.0:
-        probs[:] = distances[:, K - 1]
+        probs[:] = distances[:, K - 2]
     else:
-        probs[:] = distances[:, K - 1] ** alpha
+        probs[:] = distances[:, K - 2] ** alpha
     probs /= probs.sum()
 
     np.random.seed(random_state)
@@ -617,151 +523,6 @@ def select_cells(distances, frac, K=25, alpha=1.0, random_state=0):
     ] = True
 
     return selected
-
-
-@timer(logger=logger)
-def net_tsne(
-    data: MultimodalData,
-    rep: str = "pca",
-    n_jobs: int = -1,
-    n_components: int = 2,
-    perplexity: float = 30,
-    early_exaggeration: int = 12,
-    learning_rate: float = 1000,
-    random_state: int = 0,
-    select_frac: float = 0.1,
-    select_K: int = 25,
-    select_alpha: float = 1.0,
-    net_alpha: float = 0.1,
-    polish_learning_frac: float = 0.33,
-    polish_n_iter: int = 150,
-    out_basis: str = "net_tsne",
-) -> None:
-    """Calculate Net-tSNE embedding of cells.
-
-    Net-tSNE is an approximated tSNE embedding using Deep Learning model to improve the calculation speed.
-
-    In specific, the deep model used is MLPRegressor_, the *scikit-learn* implementation of Multi-layer Perceptron regressor.
-
-    See [Li20]_ for details.
-
-    .. _MLPRegressor: https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
-
-    Parameters
-    ----------
-    data: ``pegasusio.MultimodalData``
-        Annotated data matrix with rows for cells (``n_obs``) and columns for genes (``n_feature``).
-
-    rep: ``str``, optional, default: ``"pca"``
-        Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
-
-    n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
-
-    n_components: ``int``, optional, default: ``2``
-        Dimension of calculated tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
-
-    perplexity: ``float``, optional, default: ``30``
-        The perplexity is related to the number of nearest neighbors used in other manifold learning algorithms. Larger datasets usually require a larger perplexity.
-
-    early_exaggeration: ``int``, optional, default: ``12``
-        Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
-
-    learning_rate: ``float``, optional, default: ``1000``
-        The learning rate can be a critical parameter, which should be between 100 and 1000.
-
-    random_state: ``int``, optional, default: ``0``
-        Random seed set for reproducing results.
-
-    select_frac: ``float``, optional, default: ``0.1``
-        Down sampling fraction on the cells.
-
-    select_K: ``int``, optional, default: ``25``
-        Number of neighbors to be used to estimate local density for each data point for down sampling.
-
-    select_alpha: ``float``, optional, default: ``1.0``
-        Weight the down sample to be proportional to ``radius ** select_alpha``.
-
-    net_alpha: ``float``, optional, default: ``0.1``
-        L2 penalty (regularization term) parameter of the deep regressor.
-
-    polish_learning_frac: ``float``, optional, default: ``0.33``
-        After running the deep regressor to predict new coordinates, use ``polish_learning_frac`` * ``n_obs`` as the learning rate to polish the coordinates.
-
-    polish_n_iter: ``int``, optional, default: ``150``
-        Number of iterations for polishing tSNE run.
-
-    out_basis: ``str``, optional, default: ``"net_tsne"``
-        Key name for the approximated tSNE coordinates calculated.
-
-    Returns
-    -------
-    ``None``
-
-    Update ``data.obsm``:
-        * ``data.obsm['X_' + out_basis]``: Net tSNE coordinates of the data.
-
-    Update ``data.obs``:
-        * ``data.obs['ds_selected']``: Boolean array to indicate which cells are selected during the down sampling phase.
-
-    Examples
-    --------
-    >>> pg.net_tsne(data)
-    """
-
-    rep = update_rep(rep)
-    indices_key = rep + "_knn_indices"
-    distances_key = rep + "_knn_distances"
-
-    if not knn_is_cached(data, indices_key, distances_key, select_K):
-        raise ValueError("Please run neighbors first!")
-
-    n_jobs = effective_n_jobs(n_jobs)
-
-    selected = select_cells(
-        data.uns[distances_key],
-        select_frac,
-        K=select_K,
-        alpha=select_alpha,
-        random_state=random_state,
-    )
-
-    X_full = X_from_rep(data, rep)
-    X = X_full[selected, :]
-    X_tsne = calc_tsne(
-        X,
-        n_jobs,
-        n_components,
-        perplexity,
-        early_exaggeration,
-        learning_rate,
-        random_state,
-    )
-
-    data.uns["X_" + out_basis + "_small"] = X_tsne
-    data.obs["ds_selected"] = selected
-
-    Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
-    Y_init[selected, :] = X_tsne
-    Y_init[~selected, :] = net_train_and_predict(
-        X, X_tsne, X_full[~selected, :], net_alpha, random_state, verbose=True
-    )
-
-    data.obsm["X_" + out_basis + "_pred"] = Y_init
-
-    polish_learning_rate = polish_learning_frac * data.shape[0]
-    data.obsm["X_" + out_basis] = calc_tsne(
-        X_full,
-        n_jobs,
-        n_components,
-        perplexity,
-        early_exaggeration,
-        polish_learning_rate,
-        random_state,
-        init=Y_init,
-        n_iter=polish_n_iter,
-        n_iter_early_exag=0,
-    )
 
 
 @timer(logger=logger)
@@ -857,16 +618,11 @@ def net_umap(
     """
 
     rep = update_rep(rep)
-    indices_key = rep + "_knn_indices"
-    distances_key = rep + "_knn_distances"
-
-    if not knn_is_cached(data, indices_key, distances_key, select_K):
-        raise ValueError("Please run neighbors first!")
-
     n_jobs = effective_n_jobs(n_jobs)
+    knn_indices, knn_dists = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
 
     selected = select_cells(
-        data.uns[distances_key],
+        knn_dists,
         select_frac,
         K=select_K,
         alpha=select_alpha,
@@ -874,6 +630,10 @@ def net_umap(
     )
     X_full = X_from_rep(data, rep)
     X = X_full[selected, :]
+
+    if data.shape[0] < n_neighbors:
+        logger.warning(f"Warning: Number of samples = {data.shape[0]} < K = {n_neighbors}!\n Set K to {data.shape[0]}.")
+        n_neighbors = data.shape[0]
 
     ds_indices_key = "ds_" + rep + "_knn_indices"  # ds refers to down-sampling
     ds_distances_key = "ds_" + rep + "_knn_distances"
@@ -916,12 +676,9 @@ def net_umap(
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
-    knn_indices = np.insert(
-        data.uns[indices_key][:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1
-    )
-    knn_dists = np.insert(
-        data.uns[distances_key][:, 0 : n_neighbors - 1], 0, 0.0, axis=1
-    )
+    knn_indices, knn_dists = get_neighbors(data, K = n_neighbors, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
+    knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
 
     data.obsm["X_" + out_basis] = calc_umap(
         X_full,
@@ -1043,8 +800,8 @@ def net_fle(
 
             _, file_name = tempfile.mkstemp()
 
-    n_jobs = effective_n_jobs(n_jobs)
     rep = update_rep(rep)
+    n_jobs = effective_n_jobs(n_jobs)
 
     if ("W_" + rep) not in data.uns:
         neighbors(
@@ -1056,14 +813,10 @@ def net_fle(
             full_speed=full_speed,
         )
 
-    indices_key = rep + "_knn_indices"
-    distances_key = rep + "_knn_distances"
-
-    if not knn_is_cached(data, indices_key, distances_key, select_K):
-        raise ValueError("Please run neighbors first!")
+    knn_indices, knn_dists = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
 
     selected = select_cells(
-        data.uns[distances_key],
+        knn_dists,
         select_frac,
         K=select_K,
         alpha=select_alpha,

@@ -183,22 +183,6 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         )
 
     # visualization
-    if kwargs["net_tsne"]:
-        tools.net_tsne(
-            unidata,
-            rep=pca_key,
-            n_jobs=kwargs["n_jobs"],
-            perplexity=kwargs["tsne_perplexity"],
-            random_state=kwargs["random_state"],
-            select_frac=kwargs["net_ds_frac"],
-            select_K=kwargs["net_ds_K"],
-            select_alpha=kwargs["net_ds_alpha"],
-            net_alpha=kwargs["net_l2"],
-            polish_learning_frac=kwargs["net_tsne_polish_learing_frac"],
-            polish_n_iter=kwargs["net_tsne_polish_niter"],
-            out_basis=kwargs["net_tsne_basis"],
-        )
-
     if kwargs["net_umap"]:
         tools.net_umap(
             unidata,
@@ -245,15 +229,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_jobs=kwargs["n_jobs"],
             perplexity=kwargs["tsne_perplexity"],
             random_state=kwargs["random_state"],
-        )
-
-    if kwargs["fitsne"]:
-        tools.fitsne(
-            unidata,
-            rep=pca_key,
-            n_jobs=kwargs["n_jobs"],
-            perplexity=kwargs["tsne_perplexity"],
-            random_state=kwargs["random_state"],
+            initialization=kwargs["tsne_init"],
         )
 
     if kwargs["umap"]:
@@ -263,6 +239,8 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_neighbors=kwargs["umap_K"],
             min_dist=kwargs["umap_min_dist"],
             spread=kwargs["umap_spread"],
+            n_jobs=kwargs["n_jobs"],
+            full_speed=kwargs["full_speed"],
             random_state=kwargs["random_state"],
         )
 
@@ -335,15 +313,24 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             else:
                 append_df = append_data.feature_metadata
 
+            if kwargs["citeseq"]:
+                append_df = append_df.copy()
+                append_df.index = append_df.index.map(lambda x: f"Ab-{x}")
+
             rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
 
             Zt = Z.astype(np.float32)
-            Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
-            Zt.data = np.log1p(Zt.data)
+            if not kwargs["citeseq"]:
+                Zt.data *= np.repeat(unidata.obs["scale"].values, np.diff(Zt.indptr))
+                Zt.data = np.log1p(Zt.data)
+            else:
+                Zt.data = np.arcsinh(Zt.data / 5.0, dtype = np.float32)
 
             X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
 
-            new_genome = unidata.get_genome() + "_and_" + append_data.get_genome()
+            new_genome = unidata.get_genome()
+            if new_genome != append_data.get_genome():
+                new_genome = f"{new_genome}_and_{append_data.get_genome()}" 
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
@@ -352,6 +339,20 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
             unidata.uns["genome"] = new_genome
 
+            if kwargs["citeseq"] and kwargs["citeseq_umap"]:
+                umap_index = append_df.index.difference([f"Ab-{x}" for x in kwargs["citeseq_umap_exclude"]])
+                unidata.obsm["X_citeseq"] = unidata.X[:, unidata.var_names.isin(umap_index)].toarray()
+                tools.umap(
+                    unidata,
+                    rep="citeseq",
+                    n_neighbors=kwargs["umap_K"],
+                    min_dist=kwargs["umap_min_dist"],
+                    spread=kwargs["umap_spread"],
+                    n_jobs=kwargs["n_jobs"],
+                    full_speed=kwargs["full_speed"],
+                    random_state=kwargs["random_state"],
+                    out_basis="citeseq_umap",
+                )
 
     if kwargs["output_h5ad"]:
         adata = unidata.to_anndata()
@@ -368,7 +369,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     # Change genome name back if append_data is True
     if unidata.uns["genome"] != genome:
         unidata.uns["genome"] = genome
-    # Eliminate objects starting with fmat_ from uns
+    # Eliminate objects starting with _tmp from uns
     unidata.uns.pop("_tmp_fmat_highly_variable_features", None)
 
 
@@ -387,15 +388,26 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     # load input data
     data = read_input(input_file, black_list=black_list, genome=genome)
 
-    # process focus_list
-    focus_list = kwargs["focus"]
-    if len(focus_list) == 0:
-        focus_list = [data.current_key()]
+    if kwargs["citeseq"]:
+        # temporary solution for CITE-Seq data
+        keys = list(data.data)
+        assert len(keys) == 2
+        if keys[0].endswith("-citeseq"):
+            keys = [keys[1], keys[0]]
+        assert keys[0].endswith("-rna") and keys[1].endswith("-citeseq")
+        focus_list = [keys[0]]
+        append_data = data.get_data(keys[1])
 
+        kwargs["output_h5ad"] = True
+    else:
+        # process focus_list
+        focus_list = kwargs["focus"]
+        if len(focus_list) == 0:
+            focus_list = [data.current_key()]
 
-    append_data = None
-    if kwargs["append"] is not None:
-        append_data = data.get_data(kwargs["append"])
+        append_data = None
+        if kwargs["append"] is not None:
+            append_data = data.get_data(kwargs["append"])
 
     logger.info("Inputs are loaded.")
 

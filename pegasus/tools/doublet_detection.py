@@ -381,7 +381,6 @@ def _run_scrublet(
         pos = -1
         for i in range(maxima_by_x.size):
             frac_right = (sim_scores_log > x[maxima_by_x[i]]).sum() / sim_scores.size
-            print(f"frac_right = {frac_right}.")
             if frac_right < frac_right_thre: # peak might represent a doublet peak, try to find a cutoff at the left side
                 if i == 0:
                     peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[i])
@@ -395,8 +394,6 @@ def _run_scrublet(
                 frac_left = (sim_scores_log < x[pos]).sum() / sim_scores.size    
                 if frac_left < frac_left_thre:
                     pos = maxima_by_x[i]
-
-                print(f"frac_left = {frac_left}.")
 
                 break
 

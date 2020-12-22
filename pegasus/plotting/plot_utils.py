@@ -6,11 +6,9 @@ from typing import List, Union, Tuple
 
 
 def _transform_basis(basis: str) -> str:
-    if basis == "tsne" or basis == "citeseq_tsne":
+    if basis == "tsne":
         return "tSNE"
-    elif basis == "fitsne":
-        return "FItSNE"
-    elif basis == "umap":
+    elif basis == "umap" or basis == "citeseq_umap":
         return "UMAP"
     elif basis == "diffmap":
         return "DC"
@@ -20,10 +18,6 @@ def _transform_basis(basis: str) -> str:
         return "DPC"
     elif basis == "fle":
         return "FLE"
-    elif basis == "net_tsne":
-        return "Net-tSNE"
-    elif basis == "net_fitsne":
-        return "Net-FItSNE"
     elif basis == "net_umap":
         return "Net-UMAP"
     elif basis == "net_fle":
