@@ -1,5 +1,21 @@
-Version 1.1.0 `December 7, 2020`
------------------------------------
+Release Notes
+---------------
+
+.. role:: small
+
+.. note::
+    Also see the release notes of `PegasusIO <https://pegasusio.readthedocs.io/en/latest/release_notes.html>`_.
+
+Version 1.2
+~~~~~~~~~~~~~
+
+.. include:: stable_release.rst
+
+Version 1.1
+~~~~~~~~~~~~~
+
+1.1.0 :small:`December 7, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Improve doublet detection in Scrublet-like way using automatic threshold selection strategy: ``infer_doublets``, and ``mark_doublets``. Remove *Scrublet* from dependency, and remove ``run_scrublet`` function.
 
@@ -15,9 +31,11 @@ Version 1.1.0 `December 7, 2020`
 
 * Bug fix.
 
+Version 1.0
+~~~~~~~~~~~~~~
 
-Version 1.0.0 `September 22, 2020`
---------------------------------------
+1.0.0 :small:`September 22, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * New features:
 
@@ -59,15 +77,18 @@ Version 1.0.0 `September 22, 2020`
           one on `batch correction and data integration <_static/tutorials/batch_correction.html>`_,
           and one on `regress out <_static/tutorials/regress_out.html>`_.
 
-Version 0.17.2 `June 26, 2020`
---------------------------------
+Version 0.x
+~~~~~~~~~~~~~~~
+
+0.17.2 :small:`June 26, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Make Pegasus compatible with *umap-learn* v0.4+.
 * Use *louvain* 0.7+ for Louvain clustering.
 * Update tutorial.
 
-Version 0.17.1 `April 6, 2020`
---------------------------------
+0.17.1 :small:`April 6, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Improve pegasus command-line tool log.
 * Add human lung markers.
@@ -76,8 +97,8 @@ Version 0.17.1 `April 6, 2020`
 * Add signature score calculation API.
 * Fix bugs.
 
-Version 0.17.0 `March 10, 2020`
---------------------------------
+0.17.0 :small:`March 10, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Support *anndata* 0.7 and *pandas* 1.0.
 
@@ -89,50 +110,50 @@ Version 0.17.0 `March 10, 2020`
 
 * Improve ``pegasus scp_output`` command.
 
-Version 0.16.11 `February 28, 2020`
-------------------------------------
+0.16.11 :small:`February 28, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Add ``--remap-singlets`` and ``--subset-singlets`` options to 'cluster' command.
 
 * Allow reading ``loom`` file with user-specified batch key and black list.
 
-Version 0.16.9 `February 17, 2020`
------------------------------------
+0.16.9 :small:`February 17, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allow reading ``h5ad`` file with user-specified batch key.
 
-Version 0.16.8 `January 30, 2020`
------------------------------------
+0.16.8 :small:`January 30, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allow input annotated ``loom`` file.
 
-Version 0.16.7 `January 28, 2020`
------------------------------------
+0.16.7 :small:`January 28, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allow input ``mtx`` files of more filename formats.
 
-Version 0.16.5 `January 23, 2020`
------------------------------------
+0.16.5 :small:`January 23, 2020`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Add Harmony algorithm for data integration.
 
-Version 0.16.3 `December 17, 2019`
------------------------------------
+0.16.3 :small:`December 17, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Add support for loading mtx files generated from BUStools.
 
-Version 0.16.2 `December 8, 2019`
------------------------------------
+0.16.2 :small:`December 8, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Fix bug in 'subcluster' command.
 
-Version 0.16.1 `December 4, 2019`
------------------------------------
+0.16.1 :small:`December 4, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Fix one bug in clustering pipeline.
 
-Version 0.16.0 `December 3, 2019`
------------------------------------
+0.16.0 :small:`December 3, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Change options in 'aggregate_matrix' command: remove '--google-cloud', add '--default-reference'.
 
@@ -142,25 +163,25 @@ Version 0.16.0 `December 3, 2019`
 
 * Use **fisher** package version 0.1.9 or above, as modifications in our forked **fisher-modified** package has been merged into it.
 
-Version 0.15.0 `October 2, 2019`
------------------------------------
+0.15.0 :small:`October 2, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Rename package to *PegasusPy*, with module name *pegasus*.
 
-Version 0.14.0 `September 17, 2019`
------------------------------------
+0.14.0 :small:`September 17, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Provide Python API for interactive analysis.
 
-Version 0.10.0 `January 31, 2019`
----------------------------------
+0.10.0 :small:`January 31, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Added 'find_markers' command to find markers using LightGBM.
 
 Improved file loading speed and enabled the parsing of channels from barcode strings for cellranger aggregated h5 files.
 
-Version 0.9.0 `January 17, 2019`
---------------------------------
+0.9.0 :small:`January 17, 2019`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In 'cluster' command, changed '--output-seurat-compatible' to '--make-output-seurat-compatible'. Do not generate output_name.seurat.h5ad.
 Instead, output_name.h5ad should be able to convert to a Seurat object directly. In the seurat object, raw.data slot refers to the filtered
@@ -175,38 +196,38 @@ Improved documentation on 'cluster command' outputs.
 
 Added 'parquet' command to transfer h5ad file into a parquet file for web-based interactive visualization.
 
-Version 0.8.0 `November 26, 2018`
----------------------------------
+0.8.0 :small:`November 26, 2018`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Added support for checking index collision for CITE-Seq/hashing experiments.
 
-Version 0.7.0 `October 26, 2018`
---------------------------------
+0.7.0 :small:`October 26, 2018`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Added support for CITE-Seq analysis.
 
-Version 0.6.0 `October 23, 2018`
---------------------------------
+0.6.0 :small:`October 23, 2018`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Renamed scrtools to scCloud.
 
 Added demuxEM module for cell/nuclei-hashing.
 
-Version 0.5.0 `August 21, 2018`
--------------------------------
+0.5.0 :small:`August 21, 2018`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Fixed a problem related AnnData.
 
 Added support for BigQuery.
 
-Version 0.4.0 `August 2, 2018`
-------------------------------
+0.4.0 :small:`August 2, 2018`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Added mouse brain markers.
 
 Allow aggregate matrix to take 'Sample' as attribute.
 
-Version 0.3.0 `June 26, 2018`
------------------------------
+0.3.0 :small:`June 26, 2018`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 scrtools supports fast preprocessing, batch-correction, dimension reduction, graph-based clustering, diffusion maps, force-directed layouts, and differential expression analysis, annotate clusters, and plottings.

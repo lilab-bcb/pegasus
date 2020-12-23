@@ -8,18 +8,18 @@ API
 
 	import pegasus as pg
 
-Analysis Tools
---------------
-
 Read and Write
-~~~~~~~~~~~~~~
+---------------
 
 .. autosummary::
 	:toctree: .
 
 	read_input
 	write_output
-    aggregate_matrices
+	aggregate_matrices
+
+Analysis Tools
+---------------
 
 Preprocess
 ~~~~~~~~~~
@@ -56,6 +56,7 @@ Nearest Neighbors
 	:toctree: .
 
 	neighbors
+	get_neighbors
 	calc_kBET
 	calc_kSIM
 
@@ -71,7 +72,7 @@ Diffusion Map
 	infer_path
 
 
-Cluster algorithms
+Cluster Algorithms
 ~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
@@ -90,15 +91,30 @@ Visualization Algorithms
 	:toctree: .
 
 	tsne
-	fitsne
 	umap
 	fle
-	net_tsne
 	net_umap
 	net_fle
 
+Doublet Detection
+~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    infer_doublets
+    mark_doublets
+
+Gene Module Score
+~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    calc_signature_score
+
 Differential Expression Analysis
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 .. autosummary::
 	:toctree: .
@@ -107,16 +123,8 @@ Differential Expression Analysis
 	markers
 	write_results_to_excel
 
-Marker Detection based on Gradient Boost Machine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-	:toctree: .
-
-	find_markers
-
-Annotate clusters:
-------------------
+Annotate clusters
+-------------------
 
 .. autosummary::
 	:toctree: .
@@ -152,23 +160,6 @@ Demultiplexing
     demultiplex
     attach_demux_results
 
-Doublet Detection
--------------------
-
-.. autosummary::
-    :toctree: .
-
-    infer_doublets
-    mark_doublets
-
-Gene Module Score
--------------------
-
-.. autosummary::
-    :toctree: .
-
-    calc_signature_score
-
 Miscellaneous
 -------------
 
@@ -177,3 +168,4 @@ Miscellaneous
 
 	search_genes
 	search_de_genes
+	find_markers

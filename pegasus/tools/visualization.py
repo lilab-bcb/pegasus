@@ -222,7 +222,7 @@ def tsne(
 ) -> None:
     """Calculate t-SNE embedding of cells using the FIt-SNE package.
 
-    This function uses fitsne_ package. See [Linderman19]_ for details on FIt-SNE.
+    This function uses fitsne_ package. See [Linderman19]_ for details on FIt-SNE algorithm.
 
     .. _fitsne: https://github.com/KlugerLab/FIt-SNE
 
@@ -247,10 +247,10 @@ def tsne(
         Controls how tight natural clusters in the original space are in the embedded space, and how much space will be between them.
 
     learning_rate: ``float``, optional, default: ``auto``
-        By default, the learning rate is determined automatically as max(data.shape[0] / early_exaggeration, 200) [CITE Belkina et al. Nat. Comm. 2019; Kobak et al. Nat. Comm. 2019].
+        By default, the learning rate is determined automatically as max(data.shape[0] / early_exaggeration, 200). See [Belkina19]_ and [Kobak19]_ for details.
     
     initialization: ``str``, optional, default: ``pca``
-        Initialization can be either ``pca`` or ``random`` or np.ndarray. By default, we use ``pca`` initialization according to [CITE Kobak et al. Nat. Comm. 2019].
+        Initialization can be either ``pca`` or ``random`` or np.ndarray. By default, we use ``pca`` initialization according to [Kobak19]_.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
@@ -267,7 +267,7 @@ def tsne(
 
     Examples
     --------
-    >>> pg.fitsne(data)
+    >>> pg.tsne(data)
     """
 
     rep = update_rep(rep)
@@ -286,7 +286,7 @@ def tsne(
             from sklearn.decomposition import PCA     
             svd_solver = "arpack" if min(X.shape) > n_components else "full"
             pca = PCA(n_components=n_components, random_state=random_state, svd_solver=svd_solver)
-            initialization = pca.fit_transform(X)
+            initialization = np.ascontiguousarray(pca.fit_transform(X))
         initialization = initialization / np.std(initialization[:, 0]) * 0.0001
     else:
         assert isinstance(initialization, np.ndarray) and initialization.ndim == 2 and initialization.shape[0] == X.shape[0] and initialization.shape[1] == n_components

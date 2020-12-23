@@ -12,7 +12,7 @@ to see the help information::
 		pegasus -h | --help
 		pegasus -v | --version
 
-``pegasus`` has 14 sub-commands in 8 groups.
+``pegasus`` has 9 sub-commands in 6 groups.
 
 * Preprocessing:
 
@@ -307,6 +307,9 @@ to see the usage information::
 	-\\-subset-singlets <subset_string>
 		If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
 
+	-\\-genome <genome_name>
+		If sample count matrix is in either DGE, mtx, csv, tsv or loom format, use <genome_name> as the genome reference name.
+
 	-\\-focus <keys>
 		Focus analysis on Unimodal data with <keys>. <keys> is a comma-separated list of keys. If None, the self._selected will be the focused one.
 
@@ -494,13 +497,13 @@ to see the usage information::
 		Spectral-leiden label name in result. [default: spectral_leiden_labels]
 
 	-\\-tsne
-		Run multi-core t-SNE for visualization.
-
-	-\\-fitsne
-  		Run FIt-SNE for visualization.
+		Run FIt-SNE package to compute t-SNE embeddings for visualization.
 
 	-\\-tsne-perplexity <perplexity>
-		t-SNE's perplexity parameter, used by both tSNE, FItSNE and net-tSNE. [default: 30]
+		t-SNE's perplexity parameter. [default: 30]
+
+	-\\-tsne-initialization <choice>
+		<choice> can be either 'random' or 'pca'. 'random' refers to random initialization. 'pca' refers to PCA initialization as described in (CITE Kobak et al. 2019) [default: pca]
 
   	-\\-umap
   		Run umap for visualization.
@@ -541,19 +544,7 @@ to see the usage information::
 	-\\-net-regressor-L2-penalty <value>
 		L2 penalty parameter for the deep net regressor. [default: 0.1]
 
-	-\\-net-tsne
-		Run net tSNE for visualization.
-
-	-\\-net-tsne-polish-learning-frac <frac>
-		After running the deep regressor to predict new coordinates, use <frac> * nsample as the learning rate to use to polish the coordinates. [default: 0.33]
-
-	-\\-net-tsne-polish-niter <niter>
-		Number of iterations for polishing tSNE run. [default: 150]
-
-	-\\-net-tsne-out-basis <basis>
-		Output basis for net-tSNE. [default: net_tsne]
-
-	-\\-run-net-umap
+	-\\-net-umap
 		Run net umap for visualization.
 
 	-\\-net-umap-polish-learning-rate <rate>
@@ -575,7 +566,7 @@ to see the usage information::
 		Output basis for net-FLE. [default: net_fle]
 
 	-\\-infer-doublets
-		Infer doublets using the method described in https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
+		Infer doublets using the method described `here <https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf>`_. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
   
  	-\\-expected-doublet-rate <rate>
  		The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.

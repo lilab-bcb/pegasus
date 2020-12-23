@@ -282,7 +282,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             clusts = []
             for idx, row in unidata.uns["pred_dbl_cluster"].iterrows():
                 if row["percentage"] >= 50.0:
-                    logger.info(f"{cluster}(percentage={row['percentage']}, q value={row['qval']}) is identified as a doublet cluster.")
+                    logger.info(f"Cluster {row['cluster']} (percentage={row['percentage']:.2f}%, q-value={row['qval']:.6g}) is identified as a doublet cluster.")
                     clusts.append(row["cluster"])
             if len(clusts) > 0:
                 dbl_clusts = f"{clust_attr}:{','.join(clusts)}"
