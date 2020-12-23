@@ -7,7 +7,7 @@ forceatlas2-python
 gprofiler-official
 harmony-pytorch
 hnswlib
-importlib-metadata
+importlib_metadata>=0.7; python_version < '3.8'
 joblib
 lightgbm>=2.2.1
 loompy
