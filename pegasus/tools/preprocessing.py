@@ -339,10 +339,10 @@ def log_norm(
         if backup_matrix not in data.list_keys():
             data.add_matrix(backup_matrix, data.X)
         else:
-            raise ValueError(f"Backup matrix with key '{backup_matrix}' already exists. Please choose a different key name!")
+            raise ValueError(f"Backup matrix with key '{backup_matrix}' already exists. Please choose a different backup matrix key name!")
     else:
         logger.warning("Log-normalization without backing up the original count matrix.")
-
+    
     data.X = data.X.astype(np.float32) # force copy
 
     data.obs["scale"] = normalize_by_count(data.X, data.var["robust"].values, norm_count, True)
