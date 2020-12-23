@@ -48,7 +48,7 @@ setup(
     ext_modules=cythonize(extensions),
     setup_requires=["Cython", "setuptools_scm"],
     extras_require=dict(
-        fitsne=["fitsne"],
+        tsne=["fitsne"],
         leiden=["leidenalg"],
         mkl=["mkl"]
     ),
