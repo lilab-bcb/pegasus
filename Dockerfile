@@ -6,11 +6,9 @@ SHELL ["/bin/bash", "-c"]
 RUN mkdir -p /usr/share/man/man1 && \
     apt-get update && apt-get install -y \
 		build-essential \
-		automake \
 		zlib1g-dev \
 		python3-igraph \
 		libxml2-dev \
-		cmake \
 		libfftw3-dev \
 		default-jdk \
 		git \
