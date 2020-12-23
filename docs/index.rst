@@ -3,9 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. role:: small
 
 .. include:: ../README.rst
-.. include:: release_notes.rst
+
+Current Stable
+~~~~~~~~~~~~~~~~~
+
+.. include:: stable_release.rst
 
 .. toctree::
    :maxdepth: 1
@@ -17,5 +22,6 @@
    tutorials
    api/index
    references
+   release_notes
    contributors
    contact

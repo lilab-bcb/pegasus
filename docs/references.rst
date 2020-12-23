@@ -1,6 +1,10 @@
 References
 ----------
 
+.. [Belkina19] A. C. Belkina, C. O. Ciccolella, R. Anno, R. Halpert, J. Spidlen, and J. E. Snyder-Cappione,
+   "Automated optimized parameters for T-distributed stochastic neighbor embedding improve visualization and analysis of large datasets",
+   In `Nature Communications <https://www.nature.com/articles/s41467-019-13055-y>`_, 2019.
+
 .. [Blondel08] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre,
    "Fast unfolding of communities in large networks",
    In `Journal of Statistical Mechanics: Theory and Experiment <https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta>`_, 2008.
@@ -16,6 +20,10 @@ References
 .. [Jacomy14] M. Jacomy, T. Venturini, S. Heymann, and M. Bastian,
    "ForceAtlas2, a continuous graph layout algorithm for handy network visualization designed for the Gephi software",
    In `PLoS ONE <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0098679>`_, 2014.
+
+.. [Kobak19] D. Kobak, and P. Berens,
+   "Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell transcriptomics",
+   In `Nature Communications <https://www.nature.com/articles/s41467-019-13056-x>`_, 2019.
 
 .. [Korsunsky19] I. Korsunsky, et al.,
    "Fast, sensitive and accurate integration of single-cell data with Harmony",
