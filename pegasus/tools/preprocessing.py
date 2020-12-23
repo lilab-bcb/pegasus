@@ -6,7 +6,7 @@ from scipy.sparse import issparse, csr_matrix
 
 from sklearn.decomposition import PCA, TruncatedSVD
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
 from pegasus.tools import normalize_by_count
 
@@ -301,7 +301,11 @@ def _run_filter_data(
 
 
 @timer(logger=logger)
-def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str = "raw.X") -> None:
+def log_norm(
+    data: MultimodalData, 
+    norm_count: float = 1e5, 
+    backup_matrix: Optional[str] = "raw.X",
+) -> None:
     """Normalization, and then apply natural logarithm to the data.
 
     Parameters
@@ -313,24 +317,32 @@ def log_norm(data: MultimodalData, norm_count: float = 1e5, backup_matrix: str =
         Total count of cells after normalization.
 
     backup_matrix: ``str``, optional, default: ``raw.X``.
-        Where to back up the count matrix.
+        The key name of the backup count matrix. If ``None``, don't back up the original count matrix.
 
     Returns
     -------
     ``None``
 
-    Update ``data.X`` with count matrix after log-normalization. In addition, back up the original count matrix as ``backup_matrix``.
+    Update ``data.X`` with count matrix after log-normalization. In addition, if specified, back up the original count matrix as ``backup_matrix``.
 
     Examples
     --------
     >>> pg.log_norm(data)
+    >>> pg.log_norm(data, norm_count=1e4, backup_matrix=None)
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
 
     assert data.get_modality() == "rna"
 
-    data.add_matrix(backup_matrix, data.X)
+    if backup_matrix is not None:
+        if backup_matrix not in data.list_keys():
+            data.add_matrix(backup_matrix, data.X)
+        else:
+            raise ValueError(f"Backup matrix with key '{backup_matrix}' already exists. Please choose a different key name!")
+    else:
+        logger.warning("Log-normalization without backing up the original count matrix.")
+
     data.X = data.X.astype(np.float32) # force copy
 
     data.obs["scale"] = normalize_by_count(data.X, data.var["robust"].values, norm_count, True)
