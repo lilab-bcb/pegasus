@@ -8,7 +8,7 @@ class AnnotateCluster(Base):
 Annotate potential cell types for each cluster. This command has two forms: the first form generates putative annotations and the second form write annotations into the data object.
 
 Usage:
-  pegasus annotate_cluster [--marker-file <file> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_data_file> <output_file>
+  pegasus annotate_cluster [--markers <str> --de-test <test> --de-alpha <alpha> --de-key <key> --minimum-report-score <score> --do-not-use-non-de-genes] <input_data_file> <output_file>
   pegasus annotate_cluster --annotation <annotation_string> <input_data_file>
   pegasus annotate_cluster -h
 
@@ -42,7 +42,7 @@ Examples:
             run_annotate_cluster(
                 self.args["<input_data_file>"],
                 self.args["<output_file>"],
-                self.args["--marker-file"],
+                self.args["--markers"],
                 de_test=self.args["--de-test"],
                 de_alpha=float(self.args["--de-alpha"]),
                 de_key=self.args["--de-key"],
