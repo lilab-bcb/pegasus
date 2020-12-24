@@ -11,23 +11,14 @@ function repair_wheel {
     fi
 }
 
-if [[ $PLAT =~ .*_x86_64 ]]; then
-    declare -a PythonVersions=("cp36-cp36m" "cp37-cp37m" "cp38-cp38")
-else
-    declare -a PythonVersions=("cp36-cp36m" "cp37-cp37m")
-fi
+declare -a PythonVersions=("cp36-cp36m" "cp37-cp37m" "cp38-cp38")
 
 for val in ${PythonVersions[@]}; do
     /opt/python/$val/bin/pip install -r /src/requirements.txt
     /opt/python/$val/bin/pip wheel /src/ --no-deps -w /wheelhouse/
 done
 
-
-if [[ $PLAT =~ .*_x86_64 ]]; then
-    suffix=*_x86_64.whl
-else
-    suffix=*_i686.whl
-fi
+suffix=*_x86_64.whl
 
 for whl in /wheelhouse/$suffix; do
     repair_wheel "$whl"
