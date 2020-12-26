@@ -17,7 +17,7 @@ natsort
 numba
 numpy
 pandas>=0.24
-pegasusio>=0.2.8
+pegasusio>=0.2.9
 pyarrow
 pybind11
 python-igraph
