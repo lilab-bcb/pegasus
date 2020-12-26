@@ -13,7 +13,7 @@ Prerequisites
 
 First, install the following dependencies by::
 
-	sudo apt install build-essential cmake libxml2-dev zlib1g-dev wget
+	sudo apt install build-essential libxml2-dev zlib1g-dev
 
 Next, you can install Pegasus system-wide by PyPI (see `Linux Install via PyPI`_), or within a Miniconda environment (see `Linux Install via Miniconda`_).
 
@@ -58,6 +58,7 @@ You can also choose to install pegasus in a dedicated Conda environment without 
 
 1. Use the following commands to install a Miniconda on your system::
 
+	sudo apt install wget
 	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh .
 	export CONDA_PATH=/home/foo
 	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
@@ -107,7 +108,7 @@ Prerequisites
 
 First, install Homebrew by following the instruction on its website: https://brew.sh/. Then install the following dependencies::
 
-	brew install cmake libxml2 curl libomp
+	brew install libxml2 libomp
 
 And install macOS command line tools::
 
@@ -163,6 +164,7 @@ Install via Miniconda
 
 1. Use the following commands to install a Miniconda on your system::
 
+	brew install curl
 	curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 	export CONDA_PATH=/Users/foo
 	bash Miniconda3-latest-MacOSX-x86_64.sh -p $CONDA_PATH/miniconda3

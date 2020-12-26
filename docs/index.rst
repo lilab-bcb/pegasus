@@ -7,10 +7,10 @@
 
 .. include:: ../README.rst
 
-Current Stable
-~~~~~~~~~~~~~~~~~
+Release Highlights in Current Stable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. include:: stable_release.rst
+.. include:: release_notes/version_1_2.rst
 
 .. toctree::
    :maxdepth: 1
@@ -21,7 +21,7 @@ Current Stable
    terra_notebook
    tutorials
    api/index
-   references
    release_notes
+   references
    contributors
    contact

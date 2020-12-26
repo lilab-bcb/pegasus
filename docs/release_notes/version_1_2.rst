@@ -1,4 +1,4 @@
-1.2.0 :small:`December 22, 2020`
+1.2.0 :small:`December 25, 2020`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * tSNE support: 
@@ -15,6 +15,7 @@
 
     * Add automated doublet cutoff inference to ``infer_doublets`` function in API. ([Li20-2]_)
     * Expose doublet detection to command-line tool: ``--infer-doublets``, ``--expected-doublet-rate``, and ``--dbl-cluster-attr`` in **pegasus cluster** command.
+    * Add doublet detection tutorial.
 
 * Allow multiple marker files used in cell type annotation: ``annotate`` function in API; ``--markers`` option in **pegasus annotate_cluster** command.
 
