@@ -1,65 +1,117 @@
 Installation
 ------------
 
-Pegasus works with Python 3 only (Python 3.5 or above).
+Pegasus works with Python 3.6, 3.7, and 3.8.
 
 Linux
 ^^^^^
 
-The installation has been tested on Ubuntu (18.04 or later).
+Ubuntu/Debian
+###############
 
 Prerequisites
-#############
++++++++++++++++
 
-First, install the following dependencies by::
+On Ubuntu/Debian Linux, first install the following dependency by::
 
-	sudo apt install build-essential libxml2-dev zlib1g-dev
+	sudo apt install build-essential
 
-Next, you can install Pegasus system-wide by PyPI (see `Linux Install via PyPI`_), or within a Miniconda environment (see `Linux Install via Miniconda`_).
+Next, you can install Pegasus system-wide by PyPI (see `Ubuntu/Debian install via PyPI`_), or within a Miniconda environment (see `Linux install via Miniconda`_).
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK which is included in Ubuntu official repository::
 
 	sudo apt install default-jdk
 
-.. _Linux Install via PyPI: ./installation.html#install-via-pypi
-.. _Linux Install via Miniconda: ./installation.html#install-via-miniconda
-.. _Oracle JDK: https://www.oracle.com/java/
-
-Install via PyPI
-################
+Ubuntu/Debian install via PyPI
++++++++++++++++++++++++++++++++++
 
 First, install Python 3 and *pip* tool for Python 3::
 
 	sudo apt install python3 python3-pip
+	python3 -m pip install --upgrade pip
 
 Now install Pegasus via *pip*::
 
-	pip3 install pegasuspy
+	python3 -m pip install pegasuspy
 
 There are optional packages that you can install:
 
 - **mkl**: This package improves math routines for science and engineering applications::
 
-	pip3 install mkl
+	python3 -m pip install mkl
 
-- **fitsne**: This package is to calculate t-SNE plots using a faster algorithm FIt-SNE::
+- **fitsne**: This package is to calculate t-SNE plots using a fast algorithm FIt-SNE::
 
 	sudo apt install libfftw3-dev
-	pip3 install fitsne
+	python3 -m pip install fitsne
 
 - **leiden**: This package provides Leiden clustering algorithm, besides the default Louvain algorithm in Pegasus::
 
-	pip3 install leidenalg
+	python3 -m pip install leidenalg
 
-Install via Miniconda
-#####################
+--------------------------
+
+Fedora
+########
+
+Prerequisites
+++++++++++++++
+
+On Fedora Linux, first install the following dependency by::
+
+	sudo dnf install gcc gcc-c++
+
+Next, you can install Pegasus system-wide by PyPI (see `Fedora install via PyPI`_), or within a Miniconda environment (see `Linux install via Miniconda`_).
+
+To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK which is included in Fedora official repository (e.g. ``java-latest-openjdk``)::
+
+	sudo dnf install java-latest-openjdk
+
+or other OpenJDK version chosen from the searching result of command::
+
+	dnf search openjdk
+
+Fedora install via PyPI
++++++++++++++++++++++++++
+
+Fedora 33+ has set Python 3.9 as the default Python 3 version. However, Pegasus has not supported it yet. So we'll use Python 3.8 in this tutorial.
+
+First, install Python 3 and *pip* tool for Python 3::
+
+	sudo dnf install python3.8
+	python3.8 -m ensurepip --user
+	python3.8 -m pip install --upgrade pip
+
+Now install Pegasus via *pip*::
+
+	python3.8 -m pip install pegasuspy
+
+There are optional packages that you can install:
+
+- **mkl**: This package improves math routines for science and engineering applications::
+
+	python3.8 -m pip install mkl
+
+- **fitsne**: This package is to calculate t-SNE plots using a faster algorithm FIt-SNE::
+
+	sudo dnf install fftw-devel
+	python3.8 -m pip install fitsne
+
+- **leiden**: This package provides Leiden clustering algorithm, besides the default Louvain algorithm in Pegasus::
+
+	python3.8 -m pip install leidenalg
+
+-------------------------------
+
+Linux install via Miniconda
+#############################
 
 You can also choose to install pegasus in a dedicated Conda environment without affecting your OS settings.
 
-1. Use the following commands to install a Miniconda on your system::
+1. Download Miniconda_ to your computer. We use the Python 3 latest installer (``Miniconda3-latest-Linux-x86_64.sh``) in this tutorial
 
-	sudo apt install wget
-	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh .
+1. In the same directory where your Miniconda installer lives, use the following commands to install Miniconda environment on your computer::
+
 	export CONDA_PATH=/home/foo
 	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
 	mv Miniconda3-latest-Linux-x86_64.sh $CONDA_PATH/miniconda3
@@ -89,14 +141,19 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 6. (Optional) You can install the following optional features:
 
-	- **fitsne**: Generate t-SNE plot by a faster algorithm FIt-SNE::
+	- **fitsne**: Add t-SNE plotting feature with a fast algorithm FIt-SNE. First install **fftw3** library (``libfftw3-dev`` on Ubuntu/Debian; ``fftw-devel`` on Fedora). Then install ``fitsne`` package::
 
-		sudo apt install libfftw3-dev
 		pip install fitsne
 
 	- **leiden**: Leiden clustering algorithm::
 
 		pip install leidenalg
+
+
+.. _Linux install via Miniconda: ./installation.html#linux-install-via-miniconda
+.. _Ubuntu/Debian install via PyPI: ./installation.html#ubuntu-debian-install-via-pypi
+.. _Fedora install via PyPI: ./installation.html#fedora-install-via-pypi
+.. _Miniconda: https://docs.conda.io/en/latest/miniconda.html#linux-installers
 
 ---------------
 
@@ -108,23 +165,23 @@ Prerequisites
 
 First, install Homebrew by following the instruction on its website: https://brew.sh/. Then install the following dependencies::
 
-	brew install libxml2 libomp
+	brew install libomp
 
 And install macOS command line tools::
 
 	xcode-select --install
 
-Next, you can install Pegasus system-wide by PyPI (see `macOS Installation via PyPI`_), or within a Miniconda environment (see `macOS Installation via Miniconda`_).
+Next, you can install Pegasus system-wide by PyPI (see `macOS installation via PyPI`_), or within a Miniconda environment (see `macOS installation via Miniconda`_).
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK via Homebrew::
 
 	brew cask install java
 
-.. _macOS Installation via PyPI: ./installation.html#id2
-.. _macOS Installation via Miniconda: ./installation.html#id3
+.. _macOS installation via PyPI: ./installation.html#macos-install-via-pypi
+.. _macOS installation via Miniconda: ./installation.html#macos-install-via-miniconda
 
-Install via PyPI
-################
+macOS install via PyPI
+#######################
 
 1. You need to install Python first::
 
@@ -159,8 +216,8 @@ Then install *fitsne* by::
 
 	pip3 install leidenalg
 
-Install via Miniconda
-#####################
+macOS install via Miniconda
+##############################
 
 1. Use the following commands to install a Miniconda on your system::
 
@@ -226,3 +283,6 @@ To install Pegasus development version directly from `its GitHub respository <ht
 	pip install -e .
 
 where ``-e`` option of ``pip`` means to install in editing mode, so that your Pegasus installation will be automatically updated upon modifications in source code.
+
+
+.. _Oracle JDK: https://www.oracle.com/java/
