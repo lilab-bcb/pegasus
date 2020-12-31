@@ -2,12 +2,14 @@
 Pegasus for Single Cell Analysis
 ====================================
 
-|PyPI| |PyPIDownload| |Python| |License| |Docs|
+|PyPI| |PyPIDownload| |Conda| |Python| |License| |Docs|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pegasuspy.svg
    :target: https://pypi.org/project/pegasuspy
 .. |PyPIDownload| image:: https://pepy.tech/badge/pegasuspy
    :target: https://pepy.tech/project/pegasuspy
+.. |Conda| image:: https://img.shields.io/conda/v/bioconda/pegasuspy
+   :target: https://anaconda.org/bioconda/pegasuspy
 .. |Python| image:: https://img.shields.io/pypi/pyversions/pegasuspy
    :target: https://pypi.org/project/pegasuspy
 .. |License| image:: https://img.shields.io/github/license/klarman-cell-observatory/pegasus
