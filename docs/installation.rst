@@ -199,7 +199,7 @@ Install via Singularity
 
 Singularity_ is a container engine similar to Docker. Its main difference from Docker is that Singularity can be used with unprivileged permissions. 
 
-We maintain Singularity container of Pegasus current stable version (Pegasus 1.2 on Ubuntu 18.04 with Python 3.8) on `Singularity Hub`_. On your server or machine where Singularity has been installed, pull this container using::
+We maintain Singularity container of Pegasus current stable version (Pegasus 1.2.0 on Ubuntu 20.04 with Python 3.8) on `Singularity Hub`_. On your server or machine where Singularity has been installed, pull this container using::
 
 	singularity pull shub://klarman-cell-observatory/pegasus
 
