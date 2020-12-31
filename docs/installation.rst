@@ -194,6 +194,24 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 --------------------------
 
+Install via Singularity
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Singularity_ is a container engine similar to Docker. Its main difference from Docker is that Singularity can be used with unprivileged permissions. 
+
+We maintain Singularity container of Pegasus current stable version (Pegasus 1.2 on Ubuntu 18.04 with Python 3.8) on `Singularity Hub`_. On your server or machine where Singularity has been installed, pull this container using::
+
+	singularity pull shub://klarman-cell-observatory/pegasus
+
+This will fetch a 2.4GB container file ``pegasus_latest.sif`` on your machine. Then interact with it, e.g.::
+
+	singularity run pegasus_latest.sif
+
+Please refer to `Singularity image interaction guide`_ for details.
+
+
+--------------------------
+
 Development Version
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -216,3 +234,6 @@ where ``-e`` option of ``pip`` means to install in editing mode, so that your Pe
 .. _Anaconda: https://www.anaconda.com/products/individual#Downloads
 .. _Miniconda: https://docs.conda.io/en/latest/index.html
 .. _Miniconda installer: https://docs.conda.io/en/latest/miniconda.html
+.. _Singularity: http://singularity.lbl.gov/
+.. _Singularity Hub: https://singularity-hub.org/collections/5065
+.. _Singularity image interaction guide: https://singularityhub.github.io/singularityhub-docs/docs/interact
