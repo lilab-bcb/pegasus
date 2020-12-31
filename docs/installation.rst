@@ -16,7 +16,7 @@ On Ubuntu/Debian Linux, first install the following dependency by::
 
 	sudo apt install build-essential
 
-Next, you can install Pegasus system-wide by PyPI (see `Ubuntu/Debian install via PyPI`_), or within a Miniconda environment (see `Linux install via Miniconda`_).
+Next, you can install Pegasus system-wide by PyPI (see `Ubuntu/Debian install via PyPI`_), or within a Miniconda environment (see `Install via Conda`_).
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK which is included in Ubuntu official repository::
 
@@ -61,7 +61,7 @@ On Fedora Linux, first install the following dependency by::
 
 	sudo dnf install gcc gcc-c++
 
-Next, you can install Pegasus system-wide by PyPI (see `Fedora install via PyPI`_), or within a Miniconda environment (see `Linux install via Miniconda`_).
+Next, you can install Pegasus system-wide by PyPI (see `Fedora install via PyPI`_), or within a Miniconda environment (see `Install via Conda`_).
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK which is included in Fedora official repository (e.g. ``java-latest-openjdk``)::
 
@@ -101,59 +101,9 @@ There are optional packages that you can install:
 
 	python3.8 -m pip install leidenalg
 
--------------------------------
 
-Linux install via Miniconda
-#############################
-
-You can also choose to install pegasus in a dedicated Conda environment without affecting your OS settings.
-
-1. Download Miniconda_ to your computer. We use the Python 3 latest installer (``Miniconda3-latest-Linux-x86_64.sh``) in this tutorial
-
-1. In the same directory where your Miniconda installer lives, use the following commands to install Miniconda environment on your computer::
-
-	export CONDA_PATH=/home/foo
-	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
-	mv Miniconda3-latest-Linux-x86_64.sh $CONDA_PATH/miniconda3
-	source ~/.bashrc
-
-Feel free to change ``/home/foo`` to your own directory on handling Miniconda.
-
-In addition, remember to type ``yes`` when asked if you wish the installer to initialize Miniconda3 by running conda init.
-
-2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
-
-	conda create -n pegasus -y python=3.8
-
-Also notice that Python ``3.8`` is used in this tutorial. To choose a different version of Python, simply change the version number in the command above.
-
-3. Enter ``pegasus`` environment by activating::
-
-	source activate pegasus
-
-4. (Optional) Install the following dependency if you want *mkl* to for optimized math routines::
-
-	conda install -y -c anaconda numpy
-
-5. Install pegasus::
-
-	pip install pegasuspy
-
-6. (Optional) You can install the following optional features:
-
-	- **fitsne**: Add t-SNE plotting feature with a fast algorithm FIt-SNE. First install **fftw3** library (``libfftw3-dev`` on Ubuntu/Debian; ``fftw-devel`` on Fedora). Then install ``fitsne`` package::
-
-		pip install fitsne
-
-	- **leiden**: Leiden clustering algorithm::
-
-		pip install leidenalg
-
-
-.. _Linux install via Miniconda: ./installation.html#linux-install-via-miniconda
 .. _Ubuntu/Debian install via PyPI: ./installation.html#ubuntu-debian-install-via-pypi
 .. _Fedora install via PyPI: ./installation.html#fedora-install-via-pypi
-.. _Miniconda: https://docs.conda.io/en/latest/miniconda.html#linux-installers
 
 ---------------
 
@@ -171,38 +121,31 @@ And install macOS command line tools::
 
 	xcode-select --install
 
-Next, you can install Pegasus system-wide by PyPI (see `macOS installation via PyPI`_), or within a Miniconda environment (see `macOS installation via Miniconda`_).
+Next, you can install Pegasus system-wide by PyPI (see `macOS installation via PyPI`_), or within a Miniconda environment (see `Install via Conda`_).
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK via Homebrew::
 
 	brew cask install java
 
 .. _macOS installation via PyPI: ./installation.html#macos-install-via-pypi
-.. _macOS installation via Miniconda: ./installation.html#macos-install-via-miniconda
 
 macOS install via PyPI
 #######################
 
-1. You need to install Python first::
+1. You need to install Python and *pip* tool first::
 
 	brew install python3
+	python3 -m pip install --upgrade pip
 
-2. Starting from macOS Mojave (i.e. 10.14), *python-igraph*, one of the dependencies of Pegasus, needs to set the following environment variable before installation::
+2. Now install Pegasus::
 
-	export MACOSX_DEPLOYMENT_TARGET=10.14
-	pip3 install python-igraph
-
-You should change ``10.14`` to your macOS version number. For example, ``10.15`` is the number for Catalina.
-
-3. Now install Pegasus::
-
-	pip3 install pegasuspy
+	python3 -m pip install pegasuspy
 
 There are optional packages that you can install:
 
 - **mkl**: This package improves math routines for science and engineering applications::
 
-	pip3 install mkl
+	python3 -m pip install mkl
 
 - **fitsne**: This package is to calculate t-SNE plots using a faster algorithm FIt-SNE. First, you need to install its dependency *fftw*::
 
@@ -210,62 +153,46 @@ There are optional packages that you can install:
 
 Then install *fitsne* by::
 
-	pip3 install fitsne
+	python3 -m pip install fitsne
 
 - **leiden**: This package provides Leiden clustering algorithm, besides the default Louvain algorithm in Pegasus::
 
-	pip3 install leidenalg
+	python3 -m pip install leidenalg
 
-macOS install via Miniconda
-##############################
+----------------------
 
-1. Use the following commands to install a Miniconda on your system::
+Install via Conda
+^^^^^^^^^^^^^^^^^^
 
-	brew install curl
-	curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-	export CONDA_PATH=/Users/foo
-	bash Miniconda3-latest-MacOSX-x86_64.sh -p $CONDA_PATH/miniconda3
-	mv Miniconda3-latest-MacOSX-x86_64.sh $CONDA_PATH/miniconda3
+Alternatively, you can install Pegasus via Conda, which is a separate virtual environment without touching your system-wide packages and settings. 
 
-Feel free to change ``/Users/foo`` to your own directory on handling Miniconda.
+You can install Anaconda_, or Miniconda_ (a minimal installer of conda). In this tutorial, we'll use Miniconda.
 
+1. Download `Miniconda installer`_ for your OS. For example, if on 64-bit Linux, then use the following commands to install Miniconda::
+
+	export $CONDA_PATH=/home/foo
+	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
+	mv Miniconda3-latest-Linux-x86_64.sh $CONDA_PATH/miniconda3
+	source ~/.bashrc
+
+where ``/home/foo`` should be replaced by the directory to which you want to install Miniconda. Similarly for macOS.
 
 2. Create a conda environment for pegasus. This tutorial uses ``pegasus`` as the environment name, but you are free to choose your own::
 
 	conda create -n pegasus -y python=3.8
 
-Also notice that Python ``3.8`` is used in this tutorial. To choose a different version of Python, simply change the version number in the command above.
+Also notice that Python ``3.8`` is used in this tutorial. To choose a different version of Python, simply change the version number in the command above. Since Pegasus conda package only support Python 3.7 and 3.8 for now, you should choose your Python version from either of these two.
 
 3. Enter ``pegasus`` environment by activating::
 
 	conda activate pegasus
 
-4. (Optional) Install the following dependency if you want *mkl* to for optimized math routines::
+4. Install Pegasus::
 
-	conda install -y -c anaconda numpy
+	conda install -y -c bioconda pegasuspy
 
-5. **For macOS 10.14 or later:** for these macOS versions, you need to set the following environment variable before installing Pegasus::
 
-	export MACOSX_DEPLOYMENT_TARGET=10.15
-
-where ``10.15`` is the version number for macOS Catalina. You should change it to your own OS version. For example, ``10.14`` is for macOS Mojave.
-
-5. Install pegasus::
-
-	pip install pegasuspy
-
-6. (Optional) You can install the following optional features:
-
-	- **fitsne**: Generate t-SNE plot by a faster algorithm FIt-SNE::
-
-		conda install -y -c conda-forge fftw
-		pip install fitsne
-
-	- **leiden**: Leiden clustering algorithm::
-
-		pip install leidenalg
-
----------------
+--------------------------
 
 Development Version
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -286,3 +213,6 @@ where ``-e`` option of ``pip`` means to install in editing mode, so that your Pe
 
 
 .. _Oracle JDK: https://www.oracle.com/java/
+.. _Anaconda: https://www.anaconda.com/products/individual#Downloads
+.. _Miniconda: https://docs.conda.io/en/latest/index.html
+.. _Miniconda installer: https://docs.conda.io/en/latest/miniconda.html
