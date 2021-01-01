@@ -45,7 +45,7 @@ def search_genes(
     >>> results = pg.search_genes(adata, ['CD3E', 'CD4', 'CD8'])
     """
 
-    columns = [x for x in data.varm[rec_key].dtype.names if x.startswith(measure + ":")]
+    columns = [x for x in data.varm[rec_key].dtype.names if x.endswith(f":{measure}")]
     df = pd.DataFrame(data=data.varm[rec_key][columns], index=data.var_names)
     return df.reindex(index=gene_list)
 
@@ -98,7 +98,7 @@ def search_de_genes(
     """
 
     columns = [
-        x for x in data.varm[rec_key].dtype.names if x.startswith(de_test + "_qval:")
+        x for x in data.varm[rec_key].dtype.names if x.endswith(f":{de_test}_qval")
     ]
     df_de = pd.DataFrame(data.varm[rec_key][columns], index=data.var_names)
     df_de = df_de.reindex(index=gene_list)
@@ -107,9 +107,9 @@ def search_de_genes(
         x
         for x in data.varm[rec_key].dtype.names
         if (
-            x.startswith("percentage_fold_change:")
+            x.endswith(":percentage_fold_change")
             if de_test == "fisher"
-            else x.startswith("log_fold_change:")
+            else x.endswith(":log2FC")
         )
     ]
     df_fc = pd.DataFrame(data.varm[rec_key][columns], index=data.var_names)
