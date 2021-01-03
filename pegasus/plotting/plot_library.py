@@ -505,7 +505,9 @@ def compo_plot(
     condition: str,
     style: Optional[str] = "frequency",
     restrictions: Optional[Union[str, List[str]]] = None,
-    xlabel: Optional[str] = None,
+    switch_axes: Optional[bool] = False,
+    groupby_label: Optional[str] = None,
+    sort_function: Union[Callable[[List[str]], List[str]], str] = 'natsorted',
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
@@ -532,8 +534,12 @@ def compo_plot(
         Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each 'condition' within each category in 'groupby' (stacked), the `normalized` style shows for each category in 'groupby' the percentage of cells that are also in each 'condition' over all cells that are in the same 'condition' (not stacked).
     restrictions: ``str`` or ``List[str]``, optional, default: None
         A list of restrictions to subset data for plotting. Each restriction takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows).
-    xlabel: `str`, optional (default None)
-        Label for the horizontal axis. If None, use 'groupby'.
+    switch_axes: ``bool``, optional, default: ``False``
+        By default, X axis is for groupby, and Y axis for frequencies with respect to condition. If this parameter is ``True``, switch the axes.
+    groupby_label: `str`, optional (default None)
+        Label for the axis displaying 'groupby' categories. If None, use 'groupby'.
+    sort_function: ``Union[Callable[List[str], List[str]], str]``, optional, default: ``natsorted``
+        Function used for sorting both groupby and condition labels. If ``natsorted``, apply natsorted function to sort by natural order. If ``None``, don't sort. Otherwise, a callable function will be applied to the labels for sorting.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     left: `float`, optional (default: `0.15`)
@@ -559,8 +565,8 @@ def compo_plot(
     --------
     >>> fig = pg.compo_plot(data, 'louvain_labels', 'Donor', style = 'normalized')
     """
-    if xlabel is None:
-        xlabel = groupby
+    if groupby_label is None:
+        groupby_label = groupby
 
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace) # default nrows = 1 & ncols = 1
 
@@ -569,9 +575,17 @@ def compo_plot(
     selected = restr_obj.get_satisfied(data)
 
     df = pd.crosstab(data.obs.loc[selected, groupby], data.obs.loc[selected, condition])
-    df = df.reindex(
-        index=natsorted(df.index.values), columns=natsorted(df.columns.values)
-    )
+
+    index_values = df.index.tolist()
+    column_values = df.columns.tolist()
+    if sort_function == "natsorted":
+        sort_function = natsorted
+    if callable(sort_function):
+        index_values = sort_function(index_values)
+        column_values = sort_function(column_values)
+    if switch_axes:
+        index_values.reverse()
+    df = df.reindex(index = index_values, columns = column_values)
 
     if style == "frequency":
         df = df.div(df.sum(axis=1), axis=0) * 100.0
@@ -580,7 +594,7 @@ def compo_plot(
         df = df.div(df.sum(axis=0), axis=1) * 100.0
 
     df.plot(
-        kind = "bar",
+        kind = "bar" if not switch_axes else "barh",
         stacked = style == "frequency",
         legend = False,
         color = _get_palette(df.shape[1]),
@@ -588,8 +602,12 @@ def compo_plot(
     )
 
     ax.grid(False)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("Percentage")
+    if not switch_axes:
+        ax.set_xlabel(groupby_label)
+        ax.set_ylabel("Percentage")
+    else:
+        ax.set_xlabel("Percentage")
+        ax.set_ylabel(groupby_label)
     ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
 
     if len(max(df.index.astype(str), key=len)) >= 5:
@@ -975,7 +993,7 @@ def dotplot(
     dot_max: int = 20,
     switch_axes: bool = False,
     cmap: Union[str, List[str], Tuple[str]] = 'Reds',
-    sort_function: Callable[[pd.DataFrame], List[str]] = None,
+    sort_function: Union[Callable[[List[str]], List[str]], str] = 'natsorted',
     grid: bool = True,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
@@ -1007,8 +1025,8 @@ def dotplot(
         If ``True``, switch X and Y axes.
     cmap: ``str`` or ``List[str]`` or ``Tuple[str]``, optional, default: ``Reds``
         Color map.
-    sort_function: ``Callable[[pd.DataFrame], List[str]]``, optional, default: ``None``
-        Function used for sorting labels. If ``None``, don't sort.
+    sort_function: ``Union[Callable[List[str], List[str]], str]``, optional, default: ``natsorted``
+        Function used for sorting groupby labels. If ``natsorted``, apply natsorted function to sort by natural order. If ``None``, don't sort. Otherwise, a callable function will be applied to the labels for sorting.
     grid: ``bool``, optional, default: ``True``
         If ``True``, plot grids.
     return_fig: ``bool``, optional, default: ``False``
@@ -1046,11 +1064,14 @@ def dotplot(
         return np.count_nonzero(g) / g.shape[0]
 
     summarized_df = df.groupby(groupby).aggregate([reduce_function, non_zero])
-    if sort_function is not None:
-        row_indices = sort_function(summarized_df)
-        summarized_df = summarized_df.loc[row_indices]
-    else:
-        summarized_df = summarized_df.loc[natsorted(summarized_df.index, reverse=True)]
+
+    row_indices = summarized_df.index.tolist()
+    if sort_function == "natsorted":
+        row_indices = natsorted(row_indices)
+    elif callable(sort_function):
+        row_indices = sort_function(row_indices)
+    row_indices.reverse()
+    summarized_df = summarized_df.loc[row_indices]
 
     mean_columns = []
     frac_columns = []
