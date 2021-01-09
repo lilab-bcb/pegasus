@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import issparse, csr_matrix
 from typing import Union, List, Tuple
+from anndata import AnnData
 
 
 def update_rep(rep: str) -> str:
@@ -10,7 +11,7 @@ def update_rep(rep: str) -> str:
     return rep if rep is not None else "mat"
 
 
-def X_from_rep(data: "AnnData", rep: str) -> np.array:
+def X_from_rep(data: AnnData, rep: str) -> np.array:
     """
     If rep is not mat, first check if X_rep is in data.obsm. If not, raise an error.
     If rep is None, return data.X as a numpy array
@@ -24,7 +25,7 @@ def X_from_rep(data: "AnnData", rep: str) -> np.array:
         return data.X if not issparse(data.X) else data.X.toarray()
 
 
-def W_from_rep(data: "AnnData", rep: str) -> "csr_matrix":
+def W_from_rep(data: AnnData, rep: str) -> csr_matrix:
     """
     Return affinity matrix W based on representation rep.
     """

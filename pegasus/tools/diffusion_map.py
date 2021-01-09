@@ -1,7 +1,7 @@
 import time
 import numpy as np
 
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy
@@ -19,8 +19,8 @@ from pegasusio import timer
 
 
 def calculate_normalized_affinity(
-    W: "csr_matrix"
-) -> Tuple["csr_matrix", "np.array", "np.array"]:
+    W: csr_matrix
+) -> Tuple[csr_matrix, np.array, np.array]:
     diag = W.sum(axis=1).A1
     diag_half = np.sqrt(diag)
     W_norm = W.tocoo(copy=True)
@@ -57,8 +57,8 @@ def find_knee_point(x: List[float], y: List[float]) -> int:
 
 
 def calculate_diffusion_map(
-    W: "csr_matrix", n_components: int, solver: str, random_state: int, max_t: int
-) -> Tuple["np.array", "np.array", "np.array"]:
+    W: csr_matrix, n_components: int, solver: str, random_state: int, max_t: int
+) -> Tuple[np.array, np.array, np.array]:
     assert issparse(W)
 
     nc, labels = connected_components(W, directed=True, connection="strong")
