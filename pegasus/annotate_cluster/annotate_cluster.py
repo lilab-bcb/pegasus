@@ -6,6 +6,7 @@ from sys import stdout
 from natsort import natsorted
 from typing import List, Dict, Union
 from anndata import AnnData
+from io import IOBase
 
 import logging
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class CellType:
 
     def evaluate(
         self,
-        obj: "json object",
+        obj: dict,
         de_up: pd.DataFrame,
         de_down: pd.DataFrame,
         thre: float,
@@ -114,7 +115,7 @@ class Annotator:
         self.object = markers
         self.recalibrate(self.object, genes)
 
-    def recalibrate(self, obj: "json object", genes: List[str]) -> None:
+    def recalibrate(self, obj: dict, genes: List[str]) -> None:
         """ Remove markers that are not expressed (not in genes) and calculate partial weights for existing genes.
         """
         for celltype in obj["cell_types"]:
@@ -138,7 +139,7 @@ class Annotator:
         fc_thre: float = 1.5,
         threshold: float = 0.5,
         ignore_nonde: bool = False,
-        obj: "json object" = None,
+        obj: dict = None,
     ):
         """ Evaluate a cluster to determine its putative cell type.
         """
@@ -167,7 +168,7 @@ class Annotator:
 
     def report(
         self,
-        fout: "output stream",
+        fout: IOBase,
         ct_list: List["CellType"],
         space: int = 4,
     ) -> None:
