@@ -1,12 +1,11 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 
-name: Pegasus
+name: Pegasus CI
 
 on:
-  push:
-    branches: [ $default-branch ]
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - master
 
 jobs:
   build:
@@ -14,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ['3.6', '3.7', '3.8']
 
     steps:
@@ -23,36 +22,30 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Cache pip on Linux
-      uses: actions/cache@v2
-      if: startsWith(runner.os, 'Linux')
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Cache pip on macOS
-      uses: actions/cache@v2
-      if: starsWith(runner.os, 'macOS')
-      with:
-        path: ~/Library/Caches/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        sudo apt --qq update
+        sudo apt -q update
         sudo apt install -y libfftw3-dev default-jdk
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
-        pip install -r requirements.txt
+        python -m pip install flake8 pytest setuptools wheel
+        python -m pip install -e .
         python -m pip install fitsne leidenalg
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+    - name: Fetch test data
       run: |
-        pytest
+        sudo apt install -y git
+        git clone https://github.com/klarman-cell-observatory/pegasus-test-data.git ./tests/data
+    - name: Pipeline test
+      run: |
+        bash tests/run_pipeline.sh
+        pytest tests/test_pipeline.py
+    - name: One sample input test
+      run: |
+        bash tests/run_one_sample.sh
+    - name: Hashing CITE-Seq pipeline test
+      run: |
+        bash tests/run_hashing_citeseq.sh
+        pytest tests/test_hashing_citeseq.py
