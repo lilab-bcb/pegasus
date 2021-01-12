@@ -28,5 +28,5 @@ seaborn
 setuptools
 statsmodels
 torch
-umap-learn>=0.4
+umap-learn>=0.4, <0.5
 xlsxwriter
