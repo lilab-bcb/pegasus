@@ -18,7 +18,6 @@ numba
 numpy
 pandas>=0.24
 pegasusio>=0.2.9
-pyarrow
 pybind11
 python-igraph
 scanorama
@@ -29,6 +28,5 @@ seaborn
 setuptools
 statsmodels
 torch
-umap-learn>=0.4
-xlrd
+umap-learn>=0.4, <0.5
 xlsxwriter
