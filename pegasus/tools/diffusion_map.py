@@ -167,6 +167,11 @@ def diffmap(
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 
+    # remove previous FLE calculations
+    data.uns.pop("diffmap_knn_indices", None)
+    data.uns.pop("diffmap_knn_distances", None)
+    data.uns.pop("W_diffmap", None)
+
 
 @timer(logger=logger)
 def reduce_diffmap_to_3d(data: MultimodalData, random_state: int = 0) -> None:
