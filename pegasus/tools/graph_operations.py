@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 try:
     import igraph
 except ImportError:
@@ -14,7 +14,7 @@ from pegasusio import timer
 
 @timer(logger=logger)
 def construct_graph(
-    W: "csr_matrix", directed: bool = False, adjust_weights: bool = True
+    W: csr_matrix, directed: bool = False, adjust_weights: bool = True
 ) -> "igraph":
 
     assert issparse(W)

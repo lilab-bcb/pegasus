@@ -3,6 +3,9 @@ import pandas as pd
 from collections import namedtuple
 import matplotlib.pyplot as plt
 from typing import List, Union, Tuple
+from pegasusio import MultimodalData, UnimodalData
+from anndata import AnnData
+from matplotlib.axes import Axes
 
 
 def _transform_basis(basis: str) -> str:
@@ -327,7 +330,7 @@ class RestrictionParser:
             value_str = value_str[1:]
         return Restriction(negation=negation, values=value_str.split(","))
 
-    def _calc_satisfied(self, data: "MultimodalData, UnimodalData or anndata.AnnData", restr_dict: dict, selected: List[bool]):
+    def _calc_satisfied(self, data: Union[MultimodalData, UnimodalData, AnnData], restr_dict: dict, selected: List[bool]):
         for attr, restr in restr_dict.items():
             labels = data.obs[attr].values
             from pandas.api.types import is_numeric_dtype
@@ -338,11 +341,11 @@ class RestrictionParser:
             else:
                 selected[:] = selected & np.isin(labels, restr.values)
 
-    def calc_default(self, data: "MultimodalData, UnimodalData or anndata.AnnData") -> None:
+    def calc_default(self, data: Union[MultimodalData, UnimodalData, AnnData]) -> None:
         self.selected = np.ones(data.shape[0], dtype = bool)
         self._calc_satisfied(data, self.restrs, self.selected)
 
-    def get_satisfied(self, data: "MultimodalData, UnimodalData or anndata.AnnData", attr: str = None) -> List[bool]:
+    def get_satisfied(self, data: Union[MultimodalData, UnimodalData, AnnData], attr: str = None) -> List[bool]:
         restr_dict = None if attr is None else self.attr_restrs.get(attr, None)
         if restr_dict is None:
             return self.selected
@@ -402,7 +405,7 @@ def _generate_categories(values: Union[pd.Categorical, np.ndarray], selected: Li
         return pd.Categorical(labels, categories=natsorted(np.unique(labels))), with_background
 
 
-def _plot_corners(ax: "matplotlib.axes.Axes", corners: np.ndarray, marker_size: float) -> None:
+def _plot_corners(ax: Axes, corners: np.ndarray, marker_size: float) -> None:
     ax.scatter(
         corners[:, 0],
         corners[:, 1],

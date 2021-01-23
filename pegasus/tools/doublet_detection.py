@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from typing import List, Optional, Union, Tuple
+from matplotlib.figure import Figure
 
 import logging
 logger = logging.getLogger(__name__)
@@ -235,7 +236,7 @@ def _run_scrublet(
     n_jobs: Optional[int] = -1,
     random_state: Optional[int] = 0,
     plot_hist: Optional[bool] = True
-) -> Union[None, "Figure"]:
+) -> Union[None, Figure]:
     """Calculate doublet scores using Scrublet-like [Wolock18]_ strategy for the current data.X; determine a right threshold based on the KDE curve.
        This function should be called after highly_variable_gene selection.
 

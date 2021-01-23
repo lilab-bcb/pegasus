@@ -2,7 +2,7 @@
 Pegasus for Single Cell Analysis
 ====================================
 
-|PyPI| |PyPIDownload| |Conda| |Python| |Singularity| |License| |Docs|
+|PyPI| |PyPIDownload| |Conda| |Python| |Singularity| |License| |Docs| |Build|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pegasuspy.svg
    :target: https://pypi.org/project/pegasuspy
@@ -18,6 +18,8 @@ Pegasus for Single Cell Analysis
    :target: https://github.com/klarman-cell-observatory/pegasus/blob/master/LICENSE
 .. |Docs| image:: https://readthedocs.org/projects/pegasus/badge/?version=latest
    :target: https://pegasus.readthedocs.io/
+.. |Build| image:: https://github.com/klarman-cell-observatory/pegasus/workflows/Pegasus%20CI/badge.svg
+   :target: https://github.com/klarman-cell-observatory/pegasus/actions?query=workflow%3A%22Pegasus+CI%22
 
 
 Pegasus is a tool for analyzing transcriptomes of millions of single cells. It is a command line tool, a python package and a base for Cloud-based analysis workflows.
