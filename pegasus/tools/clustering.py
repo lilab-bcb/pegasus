@@ -108,7 +108,7 @@ def _find_optimal_resolution(algo, module, optimal_k, resol_max, G, random_state
         resol_mid = (resol_l + resol_r) / 2.0
         membership_mid = _run_community_detection(algo, module, G, resol_mid, random_state, n_iter)
         k = max(membership_mid) + 1
-        logger.info(f"_find_optimal_resolution: resol = {resol_mid:.4f}, k = {k}, optimal_k = {k}.")
+        logger.info(f"_find_optimal_resolution: resol = {resol_mid:.4f}, k = {k}, optimal_k = {optimal_k}.")
         if k >= optimal_k:
             resol_r = resol_mid
             resol = resol_mid
@@ -120,7 +120,7 @@ def _find_optimal_resolution(algo, module, optimal_k, resol_max, G, random_state
         resol = resol_r
         membership = _run_community_detection(algo, module, G, resol, random_state, n_iter)
         k = max(membership_mid) + 1
-        logger.info(f"_find_optimal_resolution: resol = {resol:.4f}, k = {k}, optimal_k = {k}.")
+        logger.info(f"_find_optimal_resolution: resol = {resol:.4f}, k = {k}, optimal_k = {optimal_k}.")
 
     return resol, membership
 
