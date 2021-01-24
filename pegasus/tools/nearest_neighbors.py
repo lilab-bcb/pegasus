@@ -263,6 +263,9 @@ def neighbors(
     # calculate affinity matrix
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.uns["W_" + rep] = W
+    # pop out jump method values
+    data.uns.pop(f"{rep}_jump_values", None)
+    data.uns.pop(f"{rep}_optimal_k", None)
 
 
 def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
