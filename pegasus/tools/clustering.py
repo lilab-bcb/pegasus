@@ -61,7 +61,7 @@ def jump_method(
     >>> pg.jump_method(data)
     """
     X = data.obsm[f"X_{rep}"]
-    Y = min(data.shape[1] / 3.0, 3.0)
+    Y = min(data.shape[1] / 3.0, 3.0) if Y is None else Y
     logger.info(f"Jump method: Y = {Y:.3f}.")
 
     jump_values = np.zeros(K_max, dtype = np.float64)
@@ -264,7 +264,7 @@ def leiden(
         resolution, membership = _find_optimal_resolution("leiden", leidenalg, optimal_k, resol_max, G, random_state, n_iter)
 
     data.uns["leiden_resolution"] = resolution
-    labels = np.array([str(x + 1) for x in partition.membership])
+    labels = np.array([str(x + 1) for x in membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
 
