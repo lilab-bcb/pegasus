@@ -604,7 +604,7 @@ def regress_out(
         response_list.append(resid)
 
     pca_key = f'{rep}_regressed'
-    data.obsm[f'X_{pca_key}'] = np.vstack(response_list).T.astype(data.obsm[f'X_{rep}'].dtype)
+    data.obsm[f'X_{pca_key}'] = np.ascontiguousarray(np.vstack(response_list).T.astype(data.obsm[f'X_{rep}'].dtype))
 
     return pca_key
 
