@@ -74,9 +74,14 @@ def calc_expm1(X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
     return res
 
 
-def calc_stat_per_batch(X: Union[csr_matrix, np.ndarray], batch: pd.Categorical) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    nbatch = batch.categories.size
-    codes = batch.codes.astype(np.int32)
+def calc_stat_per_batch(X: Union[csr_matrix, np.ndarray], batch: Union[pd.Categorical, np.ndarray, list]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    from pandas.api.types import is_categorical_dtype
+    if is_categorical_dtype(batch):
+        nbatch = batch.categories.size
+        codes = batch.codes.astype(np.int32)
+    else:
+        codes = np.array(batch, dtype = np.int32)
+        nbatch = codes.max() + 1 # assume cluster label starts from 0
 
     if issparse(X):
         from pegasus.cylib.fast_utils import calc_stat_per_batch_sparse
