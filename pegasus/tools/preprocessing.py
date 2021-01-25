@@ -314,7 +314,7 @@ def log_norm(
         Use current selected modality in data, which should contain one RNA expression matrix.
 
     norm_count: ``int``, optional, default: ``1e5``.
-        Total count of cells after normalization.
+        Total counts of one cell after normalization.
 
     backup_matrix: ``str``, optional, default: ``raw.X``.
         The key name of the backup count matrix, usually the raw counts.
