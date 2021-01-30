@@ -130,7 +130,6 @@ def louvain(
     data: MultimodalData,
     rep: str = "pca",
     resolution: int = 1.3,
-    resol_max: int = 2.0,
     random_state: int = 0,
     class_label: str = "louvain_labels",
 ) -> None:
@@ -145,10 +144,7 @@ def louvain(
         The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm`` and nearest neighbors must be calculated so that affinity matrix ``'W_' + rep`` exists in ``data.uns``. By default, use PCA coordinates.
 
     resolution: ``int``, optional, default: ``1.3``
-        Resolution factor. Higher resolution tends to find more clusters with smaller sizes. If ``None``, search the optimal resolution from (0, resol_max] using the optimal K found by the Jump Method [Sugar and James, 2003].
-
-    resol_max: ``int``, optional, default: ``2.0``
-        Maximum resolution to search for the optimal resolution parameter. 
+        Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -185,6 +181,7 @@ def louvain(
         if optimal_k_key not in data.uns:
             jump_method(data, rep = rep, random_state = random_state)
         optimal_k = data.uns[optimal_k_key]
+        resol_max = 2.0
         resolution, membership = _find_optimal_resolution("louvain", louvain_module, optimal_k, resol_max, G, random_state)
 
     data.uns["louvain_resolution"] = resolution
@@ -217,13 +214,10 @@ def leiden(
         The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm`` and nearest neighbors must be calculated so that affinity matrix ``'W_' + rep`` exists in ``data.uns``. By default, use PCA coordinates.
 
     resolution: ``int``, optional, default: ``1.3``
-        Resolution factor. Higher resolution tends to find more clusters. If ``None``, search the optimal resolution from (0, resol_max] using the optimal K found by the Jump Method [Sugar and James, 2003].
+        Resolution factor. Higher resolution tends to find more clusters.
 
     n_iter: ``int``, optional, default: ``-1``
         Number of iterations that Leiden algorithm runs. If ``-1``, run the algorithm until reaching its optimal clustering.
-
-    resol_max: ``int``, optional, default: ``2.0``
-        Maximum resolution to search for the optimal resolution parameter. 
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -261,6 +255,7 @@ def leiden(
         if optimal_k_key not in data.uns:
             jump_method(data, rep = rep, random_state = random_state)
         optimal_k = data.uns[optimal_k_key]
+        resol_max = 2.0
         resolution, membership = _find_optimal_resolution("leiden", leidenalg, optimal_k, resol_max, G, random_state, n_iter)
 
     data.uns["leiden_resolution"] = resolution

@@ -139,10 +139,11 @@ def correct_batch_effects(data: MultimodalData, keyword: str, features: str = No
         X[idx] = X[idx] * np.reshape(muls[:, i], newshape=(1, m)) + np.reshape(
             plus[:, i], newshape=(1, m)
         )
+    data.uns["_tmp_ls_" + str(features)] = True
 
 
 def correct_batch(data: MultimodalData, features: str = None) -> None:
-    """Batch correction on data using Location-Scale (L/S) Adjustment method. ([Li-and-Wong03]_, [Li20]_)
+    """Batch correction on data using Location-Scale (L/S) Adjustment method. ([Li-and-Wong03]_, [Li20]_). If L/S adjustment method is used, users must call this function every time before they call the pca function.
 
     Parameters
     ----------
