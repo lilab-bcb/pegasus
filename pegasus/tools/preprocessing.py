@@ -354,7 +354,6 @@ def select_features(
     features: str = "highly_variable_features",
     standardize: bool = True,
     max_value: float = 10.0,
-    use_cache: bool = True,
 ) -> str:
     """ Subset the features and store the resulting matrix in dense format in data.uns with `'_tmp_fmat_'` prefix, with the option of standardization and truncating based on max_value. `'_tmp_fmat_*'` will be removed before writing out the disk.
 
@@ -372,9 +371,6 @@ def select_features(
     max_value: ``float``, optional, default: ``10``.
         The threshold to truncate data after scaling. If ``None``, do not truncate.
 
-    use_cache: ``bool``, optional, default: ``False``.
-        Whether to use precalculated subset matrix if exists.
-
     Returns
     -------
     keyword: ``str``
@@ -389,33 +385,38 @@ def select_features(
     >>> pg.select_features(data)
     """
     keyword = "_tmp_fmat_" + str(features)  # fmat: feature matrix
-
-    if (not use_cache) or (use_cache and (keyword not in data.uns)):
+    batch_ls_key = "_tmp_ls_" + str(features)
+    
+    if batch_ls_key in data.uns:
+        X = data.uns[keyword]
+    else:
         if features is not None:
             assert features in data.var
             X = data.X[:, data.var[features].values]
         else:
             X = data.X
-
+        
         from pegasus.tools import slicing
-        data.uns[keyword] = slicing(X, copy=True)
+        X = slicing(X, copy=True)
+        
+    if standardize:
+        m1 = X.mean(axis=0)
+        psum = np.multiply(X, X).sum(axis=0)
+        std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
+        std[std == 0] = 1
+        X -= m1
+        X /= std
+        data.uns["stdzn_mean"] = m1
+        data.uns["stdzn_std"] = std
+        data.uns.pop(batch_ls_key, None)
 
-    if standardize or (max_value is not None):
-        X = data.uns[keyword]
-        if standardize:
-            m1 = X.mean(axis=0)
-            psum = np.multiply(X, X).sum(axis=0)
-            std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
-            std[std == 0] = 1
-            X -= m1
-            X /= std
-            data.uns["stdzn_mean"] = m1
-            data.uns["stdzn_std"] = std
-        if max_value is not None:
-            data.uns["stdzn_max_value"] = max_value
-            X[X > max_value] = max_value
-            X[X < -max_value] = -max_value
-        data.uns[keyword] = X
+    if max_value is not None:
+        data.uns["stdzn_max_value"] = max_value
+        X[X > max_value] = max_value
+        X[X < -max_value] = -max_value
+        data.uns.pop(batch_ls_key, None)
+
+    data.uns[keyword] = X
 
     return keyword
 
@@ -429,7 +430,6 @@ def pca(
     max_value: float = 10.0,
     robust: bool = False,
     random_state: int = 0,
-    use_cache: bool = True,
 ) -> None:
     """Perform Principle Component Analysis (PCA) to the data.
 
@@ -458,9 +458,6 @@ def pca(
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
 
-    use_cache: ``bool``, optional, default: ``True``.
-        Whether to use precalculated subset feature matrix if exists.
-
     Returns
     -------
     ``None``.
@@ -481,7 +478,7 @@ def pca(
     --------
     >>> pg.pca(data)
     """
-    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value, use_cache=use_cache)
+    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value)
     X = data.uns[keyword]
 
     if robust:
