@@ -11,6 +11,7 @@ scikit-learn
 scikit-misc
 natsort
 joblib
+psutil
 numba
 importlib_metadata; python_version < '3.8'
 umap-learn
