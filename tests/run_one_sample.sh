@@ -1,1 +1,1 @@
-pegasus cluster -p 2 --min-genes 500 --max-genes 6000 --percent-mito 20.0 --output-filtration-results --output-h5ad --output-loom --plot-filtration-results --plot-hvf --pca-robust --louvain --leiden --tsne --umap --fle tests/data/heart_1k_v3/filtered_feature_bc_matrix.h5 tests/one_sample_result
+pegasus cluster -p 2 --min-genes 500 --max-genes 6000 --percent-mito 20.0 --output-filtration-results --output-h5ad --output-loom --plot-filtration-results --plot-hvf --louvain --leiden --tsne --umap --fle tests/data/heart_1k_v3/filtered_feature_bc_matrix.h5 tests/one_sample_result

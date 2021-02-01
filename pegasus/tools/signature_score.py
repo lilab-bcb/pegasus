@@ -161,6 +161,8 @@ def calc_signature_score(
         sig_string = signatures
         if sig_string in predefined_signatures:
             signatures = _load_signatures_from_file(predefined_signatures[sig_string])
+            from threadpoolctl import threadpool_limits
+            
             if sig_string.startswith("cell_cycle"):
                 _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
                 data.obs["cycle_diff"] = data.obs["G2/M"] - data.obs["G1/S"]

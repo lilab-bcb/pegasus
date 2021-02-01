@@ -276,7 +276,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         if clust_attr is not None:
             logger.info(f"For doublet inference, clust_attr={clust_attr}.")
 
-        tools.infer_doublets(unidata, channel_attr = channel_attr, clust_attr = clust_attr, expected_doublet_rate = kwargs["expected_doublet_rate"], robust = True, n_jobs = kwargs["n_jobs"], random_state = kwargs["random_state"], plot_hist = output_name)
+        tools.infer_doublets(unidata, channel_attr = channel_attr, clust_attr = clust_attr, expected_doublet_rate = kwargs["expected_doublet_rate"], n_jobs = kwargs["n_jobs"], random_state = kwargs["random_state"], plot_hist = output_name)
         
         dbl_clusts = None
         if clust_attr is not None:
