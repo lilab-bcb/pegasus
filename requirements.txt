@@ -5,7 +5,7 @@ docopt
 demuxEM
 forceatlas2-python
 gprofiler-official
-harmony-pytorch
+harmony-pytorch>=0.1.6
 hnswlib
 importlib_metadata>=0.7; python_version < '3.8'
 psutil
