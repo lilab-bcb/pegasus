@@ -247,7 +247,7 @@ def run_harmony(
 
     logger.info("Start integration using Harmony.")
     out_rep = rep + '_harmony'
-    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs_kmeans = n_jobs, random_state = random_state)
+    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
     return out_rep
 
 

@@ -45,7 +45,6 @@ from .tools import (
     calc_kBET,
     calc_kSIM,
     diffmap,
-    reduce_diffmap_to_3d,
     calc_pseudotime,
     jump_method,
     cluster,

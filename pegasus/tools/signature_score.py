@@ -169,7 +169,8 @@ def calc_signature_score(
                 maxvalues = values.max(axis = 1)
 
                 kmeans = KMeans(n_clusters=2, random_state=random_state)
-                kmeans.fit(maxvalues.reshape(-1, 1))
+                with threadpool_limits(limits = 1):
+                    kmeans.fit(maxvalues.reshape(-1, 1))
                 cycle_idx = kmeans.labels_ == np.argmax(kmeans.cluster_centers_[:,0])
 
                 codes = np.zeros(data.shape[0], dtype = np.int32)
@@ -182,7 +183,8 @@ def calc_signature_score(
                 data.obs["gender_score"] = data.obs["male_score"] - data.obs["female_score"]
 
                 kmeans = KMeans(n_clusters=3, random_state=random_state)
-                kmeans.fit(data.obs["gender_score"].values.reshape(-1, 1))
+                with threadpool_limits(limits = 1):
+                    kmeans.fit(data.obs["gender_score"].values.reshape(-1, 1))
                 reorg_dict = {y:x for x, y in enumerate(np.argsort(kmeans.cluster_centers_[:,0]))}
                 codes = list(map(lambda x: reorg_dict[x], kmeans.labels_))
 

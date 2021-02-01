@@ -63,7 +63,6 @@ Options:
   --calc-signature-scores <sig_list>               Calculate signature scores for gene sets in <sig_list>. <sig_list> is a comma-separated list of strings. Each string should either be a <GMT_file> or one of 'cell_cycle_human', 'cell_cycle_mouse', 'gender_human', 'gender_mouse', 'mitochondrial_genes_human', 'mitochondrial_genes_mouse', 'ribosomal_genes_human' and 'ribosomal_genes_mouse'.
 
   --pca-n <number>                                 Number of principal components. [default: 50]
-  --pca-robust                                     Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
 
   --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
   --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
@@ -77,7 +76,6 @@ Options:
   --diffmap-ndc <number>                           Number of diffusion components. [default: 100]
   --diffmap-solver <solver>                        Solver for eigen decomposition, either 'eigsh' or 'randomized'. [default: eigsh]
   --diffmap-maxt <max_t>                           Maximum time stamp to search for the knee point. [default: 5000]
-  --diffmap-to-3d                                  If map diffusion map into 3D space using PCA.
   --calculate-pseudotime <roots>                   Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
   --louvain                                        Run louvain clustering algorithm.
@@ -206,7 +204,6 @@ Examples:
             "temp_folder": self.args["--temp-folder"],
             "calc_sigscore": self.args["--calc-signature-scores"],
             "pca_n": int(self.args["--pca-n"]),
-            "pca_robust": self.args["--pca-robust"],
             "K": int(self.args["--knn-K"]),
             "full_speed": self.args["--knn-full-speed"],
             "kBET": self.args["--kBET"],
@@ -217,7 +214,6 @@ Examples:
             "diffmap_ndc": int(self.args["--diffmap-ndc"]),
             "diffmap_maxt": int(self.args["--diffmap-maxt"]),
             "diffmap_solver": self.args["--diffmap-solver"],
-            "diffmap_to_3d": self.args["--diffmap-to-3d"],
             "pseudotime": self.split_string(self.args["--calculate-pseudotime"]),
             "louvain": self.args["--louvain"],
             "louvain_resolution": float(self.args["--louvain-resolution"]),

@@ -8,6 +8,9 @@ from matplotlib.figure import Figure
 import logging
 logger = logging.getLogger(__name__)
 
+from joblib import effective_n_jobs
+from threadpoolctl import threadpool_limits
+
 from pegasusio import UnimodalData, MultimodalData
 from pegasusio import timer
 
@@ -231,7 +234,6 @@ def _run_scrublet(
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
     n_prin_comps: Optional[int] = 30,
-    robust: Optional[bool] = False,
     k: Optional[int] = None,
     n_jobs: Optional[int] = -1,
     random_state: Optional[int] = 0,
@@ -256,9 +258,6 @@ def _run_scrublet(
 
     n_prin_comps: ``int``, optional, default: ``30``
         Number of principal components.
-
-    robust: ``bool``, optional, default: ``False``.
-        If true, use 'arpack' instead of 'randomized' for large matrices (i.e. max(X.shape) > 500 and n_components < 0.8 * min(X.shape))
 
     k: ``int``, optional, default: ``None``
         Number of observed cell neighbors. If None, k = round(0.5 * sqrt(number of observed cells)). Total neighbors k_adj = round(k * (1.0 + sim_doublet_ratio)).
@@ -319,9 +318,11 @@ def _run_scrublet(
     obsX -= m1 # standardize
     obsX /= std
 
-    svd_solver = "auto" if not robust else ("arpack" if max(obsX.shape) > 500 and n_prin_comps < 0.8 * min(obsX.shape) else "full") # PCA
-    pca = PCA(n_components=n_prin_comps, random_state=random_state, svd_solver=svd_solver)
-    obs_pca = pca.fit_transform(obsX)
+    pca = PCA(n_components=n_prin_comps, random_state=random_state)
+    n_jobs = effective_n_jobs(n_jobs)
+    with threadpool_limits(limits = n_jobs):
+        obs_pca = pca.fit_transform(obsX.astype(np.float64)) # float64 for reproducibility
+        obs_pca = np.ascontiguousarray(obs_pca, dtype=np.float32)
 
     # standardize and calculate PCA for sim_rawX
     simX = sim_rawX.astype(np.float32).toarray()
@@ -331,6 +332,7 @@ def _run_scrublet(
     simX /= std
 
     sim_pca = pca.transform(simX) # transform to PC coordinates
+    sim_pca = np.ascontiguousarray(sim_pca, dtype=np.float32)
 
     # concatenate observed and simulated data
     pc_coords = np.vstack((obs_pca, sim_pca))
@@ -455,7 +457,6 @@ def infer_doublets(
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
     n_prin_comps: Optional[int] = 30,
-    robust: Optional[bool] = False,
     k: Optional[int] = None,
     n_jobs: Optional[int] = -1,
     alpha: Optional[float] = 0.05,
@@ -488,9 +489,6 @@ def infer_doublets(
 
     n_prin_comps: ``int``, optional, default: ``30``
         Number of principal components.
-
-    robust: ``bool``, optional, default: ``False``.
-        If true, use 'arpack' instead of 'randomized' for large matrices (i.e. max(X.shape) > 500 and n_components < 0.8 * min(X.shape))
 
     k: ``int``, optional, default: ``None``
         Number of observed cell neighbors. If None, k = round(0.5 * sqrt(number of observed cells)). Total neighbors k_adj = round(k * (1.0 + sim_doublet_ratio)).
@@ -531,8 +529,7 @@ def infer_doublets(
     if channel_attr is None:
         if data.shape[0] >= min_cell:
             fig = _run_scrublet(data, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
-                                n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
-                                plot_hist = if_plot)
+                                n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot)
             if if_plot:
                 fig.savefig(f"{plot_hist}.dbl.png")
         else:
@@ -565,8 +562,7 @@ def infer_doublets(
                 highly_variable_features(unidata)
                 # Run _run_scrublet
                 fig = _run_scrublet(unidata, name = channel, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
-                                    n_prin_comps = n_prin_comps, robust = robust, k = k, n_jobs = n_jobs, random_state = random_state, \
-                                    plot_hist = if_plot)
+                                    n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot)
                 if if_plot:
                     fig.savefig(f"{plot_hist}.{channel}.dbl.png")
 

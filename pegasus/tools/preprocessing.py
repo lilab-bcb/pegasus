@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 
 from scipy.sparse import issparse, csr_matrix
-
+from joblib import effective_n_jobs
+from threadpoolctl import threadpool_limits
 from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union
@@ -386,7 +387,7 @@ def select_features(
     """
     keyword = "_tmp_fmat_" + str(features)  # fmat: feature matrix
     batch_ls_key = "_tmp_ls_" + str(features)
-    
+
     if batch_ls_key in data.uns:
         X = data.uns[keyword]
     else:
@@ -428,7 +429,7 @@ def pca(
     features: str = "highly_variable_features",
     standardize: bool = True,
     max_value: float = 10.0,
-    robust: bool = False,
+    n_jobs: int = -1,
     random_state: int = 0,
 ) -> None:
     """Perform Principle Component Analysis (PCA) to the data.
@@ -452,8 +453,8 @@ def pca(
     max_value: ``float``, optional, default: ``10``.
         The threshold to truncate data after scaling. If ``None``, do not truncate.
 
-    robust: ``bool``, optional, default: ``False``.
-        If true, use 'arpack' instead of 'randomized' for large matrices (i.e. max(X.shape) > 500 and n_components < 0.8 * min(X.shape))
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to all available threads.
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -479,18 +480,15 @@ def pca(
     >>> pg.pca(data)
     """
     keyword = select_features(data, features=features, standardize=standardize, max_value=max_value)
-    X = data.uns[keyword]
+    X = data.uns[keyword].astype(np.float64) # float64 to avoid precision issues and make results more reproducible across platforms
+    pca = PCA(n_components=n_components, random_state=random_state) # use auto solver, default is randomized for large datasets
 
-    if robust:
-        svd_solver = "arpack" if max(X.shape) > 500 and n_components < 0.8 * min(X.shape) else "full"
-        pca = PCA(n_components=n_components, random_state=random_state, svd_solver=svd_solver)
-    else:
-        pca = PCA(n_components=n_components, random_state=random_state)
+    n_jobs = effective_n_jobs(n_jobs)
+    with threadpool_limits(limits = n_jobs):
+        X_pca = pca.fit_transform(X)
 
-    X_pca = pca.fit_transform(X)
-
-    data.obsm["X_pca"] = np.ascontiguousarray(X_pca)
-    data.uns["PCs"] = np.ascontiguousarray(pca.components_.T)  # cannot be varm because numbers of features are not the same
+    data.obsm["X_pca"] = np.ascontiguousarray(X_pca, dtype=np.float32)
+    data.uns["PCs"] = np.ascontiguousarray(pca.components_.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same
     data.uns["pca"] = {}
     data.uns["pca"]["variance"] = pca.explained_variance_
     data.uns["pca"]["variance_ratio"] = pca.explained_variance_ratio_
@@ -601,7 +599,7 @@ def regress_out(
         response_list.append(resid)
 
     pca_key = f'{rep}_regressed'
-    data.obsm[f'X_{pca_key}'] = np.ascontiguousarray(np.vstack(response_list).T.astype(data.obsm[f'X_{rep}'].dtype))
+    data.obsm[f'X_{pca_key}'] = np.ascontiguousarray(np.vstack(response_list).T.astype(data.obsm[f'X_{rep}'].dtype), dtype=np.float32)
 
     return pca_key
 
@@ -611,7 +609,7 @@ def tsvd(
     data: MultimodalData,
     n_components: int = 51,
     features: str = "robust",
-    robust: bool = False,
+    n_jobs: int = -1,
     random_state: int = 0,
 ) -> None:
     """Perform Truncated Singular Value Decomposition (TSVD) to the data.
@@ -631,6 +629,9 @@ def tsvd(
 
     robust: ``bool``, optional, default: ``False``.
         If true, use 'arpack' instead of 'randomized'.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to all available threads.
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -654,12 +655,16 @@ def tsvd(
     X = data.X
     if (features is not None) and (data.var[features].sum() < data.shape[1]):
         X = X[:, data.var[features].values]
+    X = X.astype(np.float64) # for reproducible purpose
 
-    tsvd = TruncatedSVD(n_components = n_components, algorithm = 'arpack' if robust else 'randomized', random_state = random_state)
-    X_tsvd = tsvd.fit_transform(X)
+    tsvd = TruncatedSVD(n_components = n_components, random_state = random_state)
 
-    data.obsm["X_tsvd"] = np.ascontiguousarray(X_tsvd)
-    data.uns["TSVDs"] = np.ascontiguousarray(tsvd.components_.T)  # cannot be varm because numbers of features are not the same
+    n_jobs = effective_n_jobs(n_jobs)
+    with threadpool_limits(limits = n_jobs):
+        X_tsvd = tsvd.fit_transform(X)
+
+    data.obsm["X_tsvd"] = np.ascontiguousarray(X_tsvd, dtype=np.float32)
+    data.uns["TSVDs"] = np.ascontiguousarray(tsvd.components_.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same
     data.uns["tsvd"] = {}
     data.uns["tsvd"]["variance"] = tsvd.explained_variance_
     data.uns["tsvd"]["variance_ratio"] = tsvd.explained_variance_ratio_

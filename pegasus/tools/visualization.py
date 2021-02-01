@@ -5,8 +5,9 @@ import umap as umap_module
 import forceatlas2 as fa2
 import uuid
 
-from pegasusio import MultimodalData
 from joblib import effective_n_jobs
+from threadpoolctl import threadpool_limits
+from pegasusio import MultimodalData
 
 from pegasus.tools import (
     update_rep,
@@ -283,10 +284,10 @@ def tsne(
         if rep == "pca":
             initialization = X[:, 0:n_components].copy()
         else:
-            from sklearn.decomposition import PCA     
-            svd_solver = "arpack" if min(X.shape) > n_components else "full"
-            pca = PCA(n_components=n_components, random_state=random_state, svd_solver=svd_solver)
-            initialization = np.ascontiguousarray(pca.fit_transform(X))
+            from sklearn.decomposition import PCA
+            pca = PCA(n_components=n_components, random_state=random_state)
+            with threadpool_limits(limits = n_jobs):
+                initialization = np.ascontiguousarray(pca.fit_transform(X))
         initialization = initialization / np.std(initialization[:, 0]) * 0.0001
     else:
         assert isinstance(initialization, np.ndarray) and initialization.ndim == 2 and initialization.shape[0] == X.shape[0] and initialization.shape[1] == n_components

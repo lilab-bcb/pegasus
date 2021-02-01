@@ -8,6 +8,7 @@ gprofiler-official
 harmony-pytorch
 hnswlib
 importlib_metadata>=0.7; python_version < '3.8'
+threadpoolctl
 joblib
 lightgbm>=2.2.1
 loompy
