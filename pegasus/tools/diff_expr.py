@@ -5,7 +5,7 @@ import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import csr_matrix
 from statsmodels.stats.multitest import fdrcorrection as fdr
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
 
 from typing import List, Tuple, Dict, Union, Optional
 
@@ -86,23 +86,23 @@ def _de_test(
         intervals.append((start_pos, end_pos))
         start_pos = end_pos
 
-
-    result_list = Parallel(n_jobs=len(intervals), temp_folder=temp_folder)(
-        delayed(calc_mwu)(
-            start_pos,
-            end_pos,
-            data,
-            indices,
-            indptr,
-            n1arr,
-            n2arr,
-            cluster_cumsum,
-            first_j,
-            second_j,
-            verbose,
+    with parallel_backend("loky", inner_max_num_threads=1):
+        result_list = Parallel(n_jobs=len(intervals), temp_folder=temp_folder)(
+            delayed(calc_mwu)(
+                start_pos,
+                end_pos,
+                data,
+                indices,
+                indptr,
+                n1arr,
+                n2arr,
+                cluster_cumsum,
+                first_j,
+                second_j,
+                verbose,
+            )
+            for start_pos, end_pos in intervals
         )
-        for start_pos, end_pos in intervals
-    )
 
     Ulist = []
     plist = []
@@ -166,15 +166,17 @@ def _de_test(
             oddsratios[~idx1] = 1e30
             pvals[:, first_j] = pvals[:, second_j] = pval
         else:
-            result_list = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
-                delayed(fisher_exact)(
-                    a_true[i],
-                    a_false[i],
-                    b_true[i],
-                    b_false[i],
+            with parallel_backend("loky", inner_max_num_threads=1):
+                result_list = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
+                    delayed(fisher_exact)(
+                        a_true[i],
+                        a_false[i],
+                        b_true[i],
+                        b_false[i],
+                    )
+                    for i in posvec
                 )
-                for i in posvec
-            )
+                
             for i in range(posvec.size):
                 oddsratios[:, posvec[i]] = result_list[i][0]
                 pvals[:, posvec[i]] = result_list[i][1]
@@ -343,23 +345,25 @@ def _de_test_cond(
     n1arr = df_cross.values
     n2arr = cluster_cnts.reshape(-1, 1) - n1arr
     cumsum = df_cross.cumsum(axis = 1).values
-    result_list = Parallel(n_jobs=neff, temp_folder=temp_folder)(
-        delayed(_perform_de_cond)(
-            cluster_labels.categories[intervals[i]],
-            cond_labels,
-            gene_names,
-            n1arr[intervals[i]],
-            n2arr[intervals[i]],
-            cumsum[intervals[i]],
-            datalists[i],
-            indiceslists[i],
-            indptrs[intervals[i]],
-            t,
-            fisher,
-            verbose,
+
+    with parallel_backend("loky", inner_max_num_threads=1):
+        result_list = Parallel(n_jobs=neff, temp_folder=temp_folder)(
+            delayed(_perform_de_cond)(
+                cluster_labels.categories[intervals[i]],
+                cond_labels,
+                gene_names,
+                n1arr[intervals[i]],
+                n2arr[intervals[i]],
+                cumsum[intervals[i]],
+                datalists[i],
+                indiceslists[i],
+                indptrs[intervals[i]],
+                t,
+                fisher,
+                verbose,
+            )
+            for i in range(neff)
         )
-        for i in range(neff)
-    )
 
     df = pd.concat([x for y in result_list for x in y], axis = 1)
 

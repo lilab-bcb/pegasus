@@ -5,7 +5,7 @@ from pandas.api.types import is_categorical_dtype
 
 from scipy.sparse import csr_matrix
 from collections import defaultdict
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
 import skmisc.loess as sl
 from typing import List
 from pegasusio import MultimodalData
@@ -222,15 +222,16 @@ def select_hvf_seurat_multi(
         Xs.append(X[np.isin(cell2channel, channel)])
 
     n_jobs = eff_n_jobs(n_jobs)
-
-    res_arr = np.array(
-        Parallel(n_jobs=n_jobs)(
-            delayed(select_hvf_seurat_single)(
-                Xs[i], n_top, min_disp, max_disp, min_mean, max_mean
+    with parallel_backend("loky", inner_max_num_threads=1):
+        res_arr = np.array(
+            Parallel(n_jobs=n_jobs)(
+                delayed(select_hvf_seurat_single)(
+                    Xs[i], n_top, min_disp, max_disp, min_mean, max_mean
+                )
+                for i in range(channels.size)
             )
-            for i in range(channels.size)
         )
-    )
+
     selected = res_arr >= 0
     shared = selected.sum(axis=0)
     cands = (shared > 0).nonzero()[0]
