@@ -4,12 +4,11 @@ import pandas as pd
 from pegasusio import MultimodalData
 from natsort import natsorted
 
-from joblib import effective_n_jobs
 from threadpoolctl import threadpool_limits
 from sklearn.cluster import KMeans
 from typing import List, Optional, Union
 
-from pegasus.tools import construct_graph, calc_stat_per_batch
+from pegasus.tools import eff_n_jobs, construct_graph, calc_stat_per_batch
 
 import logging
 logger = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ def jump_method(
     Y = min(data.shape[1] / 3.0, 3.0) if Y is None else Y
     logger.info(f"Jump method: Y = {Y:.3f}.")
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     jump_values = np.zeros(K_max, dtype = np.float64)
     v_old = v = 0.0
     for k in range(1, K_max + 1):
@@ -288,7 +287,7 @@ def partition_cells_by_kmeans(
     if n_clusters == 1:
         return np.zeros(X.shape[0], dtype = np.int32)
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
 
     kmeans_params = {
         'n_clusters': n_clusters,

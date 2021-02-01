@@ -2,7 +2,6 @@ import time
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-from joblib import effective_n_jobs
 from threadpoolctl import threadpool_limits
 
 from typing import List, Dict
@@ -11,12 +10,12 @@ from anndata import AnnData
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 
-from pegasusio import read_input
+from pegasusio import read_input, timer
+from pegasus.tools import eff_n_jobs
 
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasusio import timer
 
 
 @timer(logger=logger)
@@ -64,7 +63,7 @@ def find_markers(
     >>> marker_dict = pg.find_markers(adata, label_attr = 'leiden_labels')
     """
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
 
     if remove_ribo:
         data = data[

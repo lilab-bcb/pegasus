@@ -6,10 +6,9 @@ from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
 from sklearn.neighbors import NearestNeighbors
 from pegasusio import MultimodalData
-from joblib import effective_n_jobs
 from typing import List, Tuple
 
-from pegasus.tools import update_rep, X_from_rep
+from pegasus.tools import eff_n_jobs, update_rep, X_from_rep
 
 import logging
 logger = logging.getLogger(__name__)
@@ -44,7 +43,7 @@ def calculate_nearest_neighbors(
         logger.warning(f"Warning: in calculate_nearest_neighbors, number of samples = {nsample} < K = {K}!\n Set K to {nsample}.")
         K = nsample
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
 
     if method == "hnsw":
         import hnswlib
@@ -140,7 +139,7 @@ def get_neighbors(
         indices, distances = calculate_nearest_neighbors(
             X_from_rep(data, rep),
             K=K,
-            n_jobs=effective_n_jobs(n_jobs),
+            n_jobs=eff_n_jobs(n_jobs),
             random_state=random_state,
             full_speed=full_speed,
         )
@@ -370,7 +369,7 @@ def calc_kBET(
     )  # add query as 1-nn
 
     # partition into chunks
-    n_jobs = min(effective_n_jobs(n_jobs), nsample)
+    n_jobs = min(eff_n_jobs(n_jobs), nsample)
     starts = np.zeros(n_jobs + 1, dtype=int)
     quotient = nsample // n_jobs
     remainder = nsample % n_jobs

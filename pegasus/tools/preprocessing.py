@@ -3,13 +3,12 @@ import numpy as np
 import pandas as pd
 
 from scipy.sparse import issparse, csr_matrix
-from joblib import effective_n_jobs
 from threadpoolctl import threadpool_limits
 from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
-from pegasus.tools import normalize_by_count
+from pegasus.tools import eff_n_jobs, normalize_by_count
 
 import logging
 logger = logging.getLogger(__name__)
@@ -483,7 +482,7 @@ def pca(
     X = data.uns[keyword].astype(np.float64) # float64 to avoid precision issues and make results more reproducible across platforms
     pca = PCA(n_components=n_components, random_state=random_state) # use auto solver, default is randomized for large datasets
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     with threadpool_limits(limits = n_jobs):
         X_pca = pca.fit_transform(X)
 
@@ -659,7 +658,7 @@ def tsvd(
 
     tsvd = TruncatedSVD(n_components = n_components, random_state = random_state)
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     with threadpool_limits(limits = n_jobs):
         X_tsvd = tsvd.fit_transform(X)
 

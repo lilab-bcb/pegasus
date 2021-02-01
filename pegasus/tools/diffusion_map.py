@@ -7,13 +7,11 @@ from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
-from joblib import effective_n_jobs
 from threadpoolctl import threadpool_limits
 from typing import List, Tuple
+
 from pegasusio import MultimodalData
-
-
-from pegasus.tools import update_rep, W_from_rep
+from pegasus.tools import eff_n_jobs, update_rep, W_from_rep
 
 import logging
 logger = logging.getLogger(__name__)
@@ -72,7 +70,7 @@ def calculate_diffusion_map(
     W_norm, diag, diag_half = calculate_normalized_affinity(W.astype(np.float64)) # use double precision to guarantee reproducibility
     logger.info("Calculating normalized affinity matrix is done.")
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     with threadpool_limits(limits = n_jobs):
         if solver == "eigsh":
             np.random.seed(random_state)

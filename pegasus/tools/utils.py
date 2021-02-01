@@ -4,6 +4,12 @@ from scipy.sparse import issparse, csr_matrix
 from typing import Union, List, Tuple
 from anndata import AnnData
 
+from pegasus.tools import _cpu_count
+
+def eff_n_jobs(n_jobs: int) -> int:
+    """ If n_jobs < 0, set it as the number of physical cores _cpu_count """
+    return n_jobs if n_jobs > 0 else _cpu_count
+
 
 def update_rep(rep: str) -> str:
     """ If rep is None, return rep as mat, which refers to the whole expression matrix

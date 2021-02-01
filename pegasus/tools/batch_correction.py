@@ -239,11 +239,9 @@ def run_harmony(
     try:
         from harmony import harmonize
     except ImportError as e:
-        print(f"ERROR: {e}")
-        print("ERROR: Need Harmony! Try 'pip install harmony-pytorch'.")
         import sys
+        logger.error(f"{e}\nNeed Harmony! Try 'pip install harmony-pytorch'.")
         sys.exit(-1)
-
 
     logger.info("Start integration using Harmony.")
     out_rep = rep + '_harmony'
@@ -305,9 +303,8 @@ def run_scanorama(
     try:
         from scanorama import integrate
     except ImportError as e:
-        print(f"ERROR: {e}")
-        print("ERROR: Need Scanorama! Try 'pip install scanorama'.")
         import sys
+        logger.error(f"{e}\nNeed Scanorama! Try 'pip install scanorama'.")
         sys.exit(-1)
 
     logger.info("Start integration using Scanorama.")
