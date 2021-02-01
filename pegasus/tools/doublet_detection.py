@@ -8,11 +8,11 @@ from matplotlib.figure import Figure
 import logging
 logger = logging.getLogger(__name__)
 
-from joblib import effective_n_jobs
 from threadpoolctl import threadpool_limits
 
 from pegasusio import UnimodalData, MultimodalData
 from pegasusio import timer
+from pegasus.tools import eff_n_jobs
 
 
 
@@ -319,7 +319,7 @@ def _run_scrublet(
     obsX /= std
 
     pca = PCA(n_components=n_prin_comps, random_state=random_state)
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     with threadpool_limits(limits = n_jobs):
         obs_pca = pca.fit_transform(obsX.astype(np.float64)) # float64 for reproducibility
         obs_pca = np.ascontiguousarray(obs_pca, dtype=np.float32)

@@ -2,8 +2,8 @@ try:
     get_ipython
 except NameError:
     import matplotlib
-
     matplotlib.use("Agg")
+
 
 import sys
 import logging

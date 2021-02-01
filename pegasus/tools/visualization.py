@@ -5,11 +5,11 @@ import umap as umap_module
 import forceatlas2 as fa2
 import uuid
 
-from joblib import effective_n_jobs
 from threadpoolctl import threadpool_limits
 from pegasusio import MultimodalData
 
 from pegasus.tools import (
+    eff_n_jobs,
     update_rep,
     X_from_rep,
     W_from_rep,
@@ -25,6 +25,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasusio import timer
+
+
 
 def calc_tsne(
     X,
@@ -272,7 +274,7 @@ def tsne(
     """
 
     rep = update_rep(rep)
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     X = X_from_rep(data, rep).astype(np.float64)
 
     if learning_rate == "auto":
@@ -473,7 +475,7 @@ def fle(
         _, file_name = tempfile.mkstemp()
 
     rep = update_rep(rep)
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
 
     if ("W_" + rep) not in data.uns:
         neighbors(
@@ -619,7 +621,7 @@ def net_umap(
     """
 
     rep = update_rep(rep)
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     knn_indices, knn_dists = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
 
     selected = select_cells(
@@ -802,7 +804,7 @@ def net_fle(
             _, file_name = tempfile.mkstemp()
 
     rep = update_rep(rep)
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
 
     if ("W_" + rep) not in data.uns:
         neighbors(

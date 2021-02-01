@@ -5,7 +5,7 @@ import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import csr_matrix
 from statsmodels.stats.multitest import fdrcorrection as fdr
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, delayed
 
 from typing import List, Tuple, Dict, Union, Optional
 
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 from anndata import AnnData
 from pegasusio import timer, MultimodalData, UnimodalData
+from pegasus.tools import eff_n_jobs
 
 
 
@@ -478,7 +479,7 @@ def de_analysis(
             cluster_labels = cluster_labels[idx_not_na]
             cond_labels = cond_labels[idx_not_na]
 
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
     gene_names = data.var_names.values
 
     if cond_labels is None:

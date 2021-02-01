@@ -10,7 +10,7 @@ import skmisc.loess as sl
 from typing import List
 from pegasusio import MultimodalData
 
-from pegasus.tools import calc_mean_and_var, calc_expm1, calc_stat_per_batch
+from pegasus.tools import eff_n_jobs, calc_mean_and_var, calc_expm1, calc_stat_per_batch
 
 import logging
 logger = logging.getLogger(__name__)
@@ -221,9 +221,7 @@ def select_hvf_seurat_multi(
     for channel in channels:
         Xs.append(X[np.isin(cell2channel, channel)])
 
-    from joblib import effective_n_jobs
-
-    n_jobs = effective_n_jobs(n_jobs)
+    n_jobs = eff_n_jobs(n_jobs)
 
     res_arr = np.array(
         Parallel(n_jobs=n_jobs)(
