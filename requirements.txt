@@ -10,7 +10,7 @@ hnswlib
 importlib_metadata>=0.7; python_version < '3.8'
 psutil
 threadpoolctl
-joblib
+joblib>=0.14
 lightgbm>=2.2.1
 loompy
 louvain>=0.7.0

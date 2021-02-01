@@ -350,8 +350,6 @@ def calc_kBET(
     if data.obs[attr].dtype.name != "category":
         data.obs[attr] = pd.Categorical(data.obs[attr])
 
-    from joblib import Parallel, delayed
-
     ideal_dist = (
         data.obs[attr].value_counts(normalize=True, sort=False).values
     )  # ideal no batch effect distribution
@@ -376,14 +374,16 @@ def calc_kBET(
     for i in range(n_jobs):
         starts[i + 1] = starts[i] + quotient + (1 if i < remainder else 0)
 
-    kBET_arr = np.concatenate(
-        Parallel(n_jobs=n_jobs, max_nbytes=1e7, temp_folder=temp_folder)(
-            delayed(calc_kBET_for_one_chunk)(
-                knn_indices[starts[i] : starts[i + 1], :], attr_values, ideal_dist, K
+    from joblib import Parallel, delayed, parallel_backend
+    with parallel_backend("loky", inner_max_num_threads=1):
+        kBET_arr = np.concatenate(
+            Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
+                delayed(calc_kBET_for_one_chunk)(
+                    knn_indices[starts[i] : starts[i + 1], :], attr_values, ideal_dist, K
+                )
+                for i in range(n_jobs)
             )
-            for i in range(n_jobs)
         )
-    )
 
     res = kBET_arr.mean(axis=0)
     stat_mean = res[0]
@@ -461,35 +461,3 @@ def calc_kSIM(
     kSIM_accept_rate = (correct_rates >= min_rate).sum() / nsample
 
     return (kSIM_mean, kSIM_accept_rate)
-
-
-# def calc_JSD(P, Q):
-#     M = (P + Q) / 2
-#     return (entropy(P, M, base = 2) + entropy(Q, M, base = 2)) / 2.0
-
-
-# def calc_kBJSD_for_one_datapoint(pos, attr_values, knn_indices, ideal_dist):
-#     idx = np.append(knn_indices[pos], [pos])
-#     empirical_dist = pd.Series(attr_values[idx]).value_counts(normalize = True, sort = False).values
-#     return calc_JSD(ideal_dist, empirical_dist)
-
-
-# def calc_kBJSD(data, attr, rep = 'pca', K = 25, n_jobs = 1, random_state = 0, temp_folder = None):
-#     assert attr in data.obs
-#     if data.obs[attr].dtype.name != 'category':
-#         data.obs[attr] = pd.Categorical(data.obs[attr])
-
-#     from joblib import Parallel, delayed
-
-#     ideal_dist = data.obs[attr].value_counts(normalize = True, sort = False).values # ideal no batch effect distribution
-#     nsample = data.shape[0]
-#     nbatch = ideal_dist.size
-
-#     attr_values = data.obs[attr].values.copy()
-#     attr_values.categories = range(nbatch)
-
-#     indices, distances = get_neighbors(data, K = K, rep = rep, n_jobs = n_jobs, random_state = random_state)
-#     knn_indices = indices[:, 0 : K - 1]
-#     kBJSD_arr = np.array(Parallel(n_jobs = 1, max_nbytes = 1e7, temp_folder = temp_folder)(delayed(calc_kBJSD_for_one_datapoint)(i, attr_values, knn_indices, ideal_dist) for i in range(nsample)))
-
-#     return kBJSD_arr.mean()
