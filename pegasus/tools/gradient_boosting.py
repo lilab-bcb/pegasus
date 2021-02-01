@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from joblib import effective_n_jobs
+from threadpoolctl import threadpool_limits
 
 from typing import List, Dict
 from anndata import AnnData
@@ -119,7 +120,8 @@ def find_markers(
     for gene_id in ords:
         gene_symbol = data.var_names[gene_id]
         mydat = [[x] for x in data.varm[de_key][log_exprs][gene_id]]
-        kmeans.fit(mydat)
+        with threadpool_limits(limits = 1):
+            kmeans.fit(mydat)
         kmeans_label_mode = pd.Series(kmeans.labels_).mode()[0]
         for i, kmeans_label in enumerate(np.argsort(kmeans.cluster_centers_[:, 0])):
             if kmeans_label != kmeans_label_mode:

@@ -4,6 +4,8 @@ import pandas as pd
 from pegasusio import MultimodalData
 from natsort import natsorted
 
+from joblib import effective_n_jobs
+from threadpoolctl import threadpool_limits
 from sklearn.cluster import KMeans
 from typing import List, Optional, Union
 
@@ -28,6 +30,7 @@ def jump_method(
     rep: str = "pca",
     K_max: int = 40,
     Y: float = None,
+    n_jobs: int = -1,
     random_state: int = 0,
 ) -> None:
     """ Determine the optimal number of clusters using the Jump Method. [Sugar and James, 2003]_
@@ -45,6 +48,9 @@ def jump_method(
 
     Y: ``float``, optional, default: ``None``
         The transformation power used. If None, use min(data.shape[1] / 3.0, 3.0). 
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to all available threads.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -64,10 +70,12 @@ def jump_method(
     Y = min(data.shape[1] / 3.0, 3.0) if Y is None else Y
     logger.info(f"Jump method: Y = {Y:.3f}.")
 
+    n_jobs = effective_n_jobs(n_jobs)
     jump_values = np.zeros(K_max, dtype = np.float64)
     v_old = v = 0.0
     for k in range(1, K_max + 1):
-        kmeans = KMeans(n_clusters = k, random_state = random_state).fit(X)
+        with threadpool_limits(limits = n_jobs):
+            kmeans = KMeans(n_clusters = k, random_state = random_state).fit(X)
         v = _calc_trans_distor(X, kmeans.labels_, Y)
         jump_values[k - 1] = v - v_old
         v_old = v
@@ -198,7 +206,6 @@ def leiden(
     data: MultimodalData,
     rep: str = "pca",
     resolution: int = 1.3,
-    resol_max: int = 2.0,
     n_iter: int = -1,
     random_state: int = 0,
     class_label: str = "leiden_labels",
@@ -272,6 +279,7 @@ def partition_cells_by_kmeans(
     n_clusters: int,
     n_clusters2: int,
     n_init: int,
+    n_jobs: int,
     random_state: int,
     min_avg_cells_per_final_cluster: Optional[int] = 10,
 ) -> List[int]:
@@ -280,29 +288,32 @@ def partition_cells_by_kmeans(
     if n_clusters == 1:
         return np.zeros(X.shape[0], dtype = np.int32)
 
+    n_jobs = effective_n_jobs(n_jobs)
+
     kmeans_params = {
         'n_clusters': n_clusters,
         'n_init': n_init,
         'random_state': random_state,
     }
-
     km = KMeans(**kmeans_params)
-    km.fit(X)
-    coarse = km.labels_.copy()
 
-    km.set_params(n_init=1)
-    labels = coarse.copy()
-    base_sum = 0
-    for i in range(n_clusters):
-        idx = coarse == i
-        nc = min(n_clusters2, max(idx.sum() // min_avg_cells_per_final_cluster, 1))
-        if nc == 1:
-            labels[idx] = base_sum
-        else:
-            km.set_params(n_clusters=nc)
-            km.fit(X[idx, :])
-            labels[idx] = base_sum + km.labels_
-        base_sum += nc
+    with threadpool_limits(limits = n_jobs):
+        km.fit(X)
+        coarse = km.labels_.copy()
+
+        km.set_params(n_init=1)
+        labels = coarse.copy()
+        base_sum = 0
+        for i in range(n_clusters):
+            idx = coarse == i
+            nc = min(n_clusters2, max(idx.sum() // min_avg_cells_per_final_cluster, 1))
+            if nc == 1:
+                labels[idx] = base_sum
+            else:
+                km.set_params(n_clusters=nc)
+                km.fit(X[idx, :])
+                labels[idx] = base_sum + km.labels_
+            base_sum += nc
 
     return labels
 
@@ -316,6 +327,7 @@ def spectral_louvain(
     n_clusters: int = 30,
     n_clusters2: int = 50,
     n_init: int = 10,
+    n_jobs: int = -1,
     random_state: int = 0,
     class_label: str = "spectral_louvain_labels",
 ) -> None:
@@ -343,6 +355,9 @@ def spectral_louvain(
 
     n_init: ``int``, optional, default: ``10``
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use for the KMeans step. -1 refers to all available threads.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -378,7 +393,7 @@ def spectral_louvain(
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
-        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, random_state,
+        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, n_jobs, random_state,
     )
 
     W = data.uns["W_" + rep]
@@ -412,6 +427,7 @@ def spectral_leiden(
     n_clusters: int = 30,
     n_clusters2: int = 50,
     n_init: int = 10,
+    n_jobs: int = -1,
     random_state: int = 0,
     class_label: str = "spectral_leiden_labels",
 ) -> None:
@@ -439,6 +455,9 @@ def spectral_leiden(
 
     n_init: ``int``, optional, default: ``10``
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use for the KMeans step. -1 refers to all available threads.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -474,7 +493,7 @@ def spectral_leiden(
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
-        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, random_state,
+        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, n_jobs, random_state,
     )
 
     W = data.uns["W_" + rep]
@@ -504,6 +523,7 @@ def cluster(
     algo: str = "louvain",
     rep: str = "pca",
     resolution: int = 1.3,
+    n_jobs: int = -1,
     random_state: int = 0,
     class_label: str = None,
     n_iter: int = -1,
@@ -530,6 +550,9 @@ def cluster(
 
     resolution: ``int``, optional, default: ``1.3``
         Resolution factor. Higher resolution tends to find more clusters.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use for the KMeans step in 'spectral_louvain' and 'spectral_leiden'. -1 refers to all available threads.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -586,6 +609,7 @@ def cluster(
                 "n_clusters": n_clusters,
                 "n_clusters2": n_clusters2,
                 "n_init": n_init,
+                "n_jobs": n_jobs,
             }
         )
 

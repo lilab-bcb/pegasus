@@ -7,8 +7,11 @@ from scipy.sparse.linalg import eigsh
 from scipy.stats import entropy
 from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
+from joblib import effective_n_jobs
+from threadpoolctl import threadpool_limits
 from typing import List, Tuple
 from pegasusio import MultimodalData
+
 
 from pegasus.tools import update_rep, W_from_rep
 
@@ -57,7 +60,7 @@ def find_knee_point(x: List[float], y: List[float]) -> int:
 
 
 def calculate_diffusion_map(
-    W: csr_matrix, n_components: int, solver: str, random_state: int, max_t: int
+    W: csr_matrix, n_components: int, solver: str, max_t: int, n_jobs: int, random_state: int,
 ) -> Tuple[np.array, np.array, np.array]:
     assert issparse(W)
 
@@ -66,22 +69,24 @@ def calculate_diffusion_map(
 
     assert nc == 1
 
-    W_norm, diag, diag_half = calculate_normalized_affinity(W)
+    W_norm, diag, diag_half = calculate_normalized_affinity(W.astype(np.float64)) # use double precision to guarantee reproducibility
     logger.info("Calculating normalized affinity matrix is done.")
 
-    if solver == "eigsh":
-        np.random.seed(random_state)
-        v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
-        Lambda, U = eigsh(W_norm, k=n_components, v0=v0)
-        Lambda = Lambda[::-1]
-        U = U[:, ::-1]
-    else:
-        assert solver == "randomized"
-        U, S, VT = randomized_svd(
-            W_norm, n_components=n_components, random_state=random_state
-        )
-        signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
-        Lambda = signs * S  # get eigenvalues
+    n_jobs = effective_n_jobs(n_jobs)
+    with threadpool_limits(limits = n_jobs):
+        if solver == "eigsh":
+            np.random.seed(random_state)
+            v0 = np.random.uniform(-1.0, 1.0, W_norm.shape[0])
+            Lambda, U = eigsh(W_norm, k=n_components, v0=v0)
+            Lambda = Lambda[::-1]
+            U = U[:, ::-1]
+        else:
+            assert solver == "randomized"
+            U, S, VT = randomized_svd(
+                W_norm, n_components=n_components, random_state=random_state
+            )
+            signs = np.sign((U * VT.transpose()).sum(axis=0))  # get eigenvalue signs
+            Lambda = signs * S  # get eigenvalues
 
     # remove the first eigen value and vector
     Lambda = Lambda[1:]
@@ -110,8 +115,9 @@ def diffmap(
     n_components: int = 100,
     rep: str = "pca",
     solver: str = "eigsh",
-    random_state: int = 0,
     max_t: float = 5000,
+    n_jobs: int = -1,
+    random_state: int = 0,
 ) -> None:
     """Calculate Diffusion Map.
 
@@ -131,11 +137,14 @@ def diffmap(
             * ``"eigsh"``: default setting. Use *scipy* `eigsh <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_ as the solver to find eigenvalus and eigenvectors using the Implicitly Restarted Lanczos Method.
             * ``"randomized"``: Use *scikit-learn* `randomized_svd <https://scikit-learn.org/stable/modules/generated/sklearn.utils.extmath.randomized_svd.html>`_ as the solver to calculate a truncated randomized SVD.
 
-    random_state: ``int``, optional, default: ``0``
-        Random seed set for reproducing results.
-
     max_t: ``float``, optional, default: ``5000``
         pegasus tries to determine the best t to sum up to between ``[1, max_t]``.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to all available threads.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed set for reproducing results.
 
     Returns
     -------
@@ -157,13 +166,14 @@ def diffmap(
         W_from_rep(data, rep),
         n_components=n_components,
         solver=solver,
-        random_state=random_state,
         max_t = max_t,
+        n_jobs = n_jobs,
+        random_state=random_state,
     )
 
-    data.obsm["X_diffmap"] = Phi_pt
-    data.uns["diffmap_evals"] = Lambda
-    data.obsm["X_phi"] = Phi
+    data.obsm["X_diffmap"] = np.ascontiguousarray(Phi_pt, dtype=np.float32)
+    data.uns["diffmap_evals"] = Lambda.astype(np.float32)
+    data.obsm["X_phi"] = np.ascontiguousarray(Phi, dtype=np.float32)
     # data.uns['W_norm'] = W_norm
     # data.obsm['X_dmnorm'] = U_df
 
@@ -171,35 +181,3 @@ def diffmap(
     data.uns.pop("diffmap_knn_indices", None)
     data.uns.pop("diffmap_knn_distances", None)
     data.uns.pop("W_diffmap", None)
-
-
-@timer(logger=logger)
-def reduce_diffmap_to_3d(data: MultimodalData, random_state: int = 0) -> None:
-    """Reduce high-dimensional Diffusion Map matrix to 3-dimentional.
-
-    Parameters
-    ----------
-    data: ``pegasusio.MultimodalData``
-        Annotated data matrix with rows for cells and columns for genes.
-
-
-    random_state: ``int``, optional, default: ``0``
-        Random seed set for reproducing results.
-
-    Returns
-    -------
-    ``None``
-
-    Update ``data.obsm``:
-        * ``data.obsm["X_diffmap_pca"]``: 3D Diffusion Map matrix of data.
-
-    Examples
-    --------
-    >>> pg.reduce_diffmap_to_3d(data)
-    """
-
-    if "X_diffmap" not in data.obsm.keys():
-        raise ValueError("Please run diffmap first!")
-
-    pca = PCA(n_components=3, random_state=random_state)
-    data.obsm["X_diffmap_pca"] = pca.fit_transform(data.obsm["X_diffmap"])

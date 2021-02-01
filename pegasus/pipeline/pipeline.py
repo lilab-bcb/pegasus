@@ -69,7 +69,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 n_components=n_pc,
                 features="highly_variable_features",
                 standardize=standardize,
-                robust=kwargs["pca_robust"],
+                n_jobs=kwargs["n_jobs"],
                 random_state=kwargs["random_state"],
             )
             pca_key = "pca"
@@ -109,11 +109,10 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_components=kwargs["diffmap_ndc"],
             rep=pca_key,
             solver=kwargs["diffmap_solver"],
-            random_state=kwargs["random_state"],
             max_t=kwargs["diffmap_maxt"],
+            n_jobs=kwargs["n_jobs"],
+            random_state=kwargs["random_state"],
         )
-        if kwargs["diffmap_to_3d"]:
-            tools.reduce_diffmap_to_3d(unidata, random_state=kwargs["random_state"])
 
     # calculate kBET
     if ("kBET" in kwargs) and kwargs["kBET"]:
@@ -143,6 +142,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_clusters=kwargs["spectral_louvain_nclusters"],
             n_clusters2=kwargs["spectral_louvain_nclusters2"],
             n_init=kwargs["spectral_louvain_ninit"],
+            n_jobs=kwargs["n_jobs"],
             random_state=kwargs["random_state"],
             class_label="spectral_louvain_labels",
         )
@@ -157,6 +157,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_clusters=kwargs["spectral_leiden_nclusters"],
             n_clusters2=kwargs["spectral_leiden_nclusters2"],
             n_init=kwargs["spectral_leiden_ninit"],
+            n_jobs=kwargs["n_jobs"],
             random_state=kwargs["random_state"],
             class_label="spectral_leiden_labels",
         )

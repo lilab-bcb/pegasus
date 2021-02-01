@@ -176,7 +176,7 @@ def calculate_affinity_matrix(
     sigmas_sq = np.square(sigmas)
 
     # calculate local-scaled kernel
-    normed_dist = np.zeros((nsample, K), dtype=float)
+    normed_dist = np.zeros((nsample, K), dtype=np.float32)
     for i in range(nsample):
         numers = 2.0 * sigmas[i] * sigmas[indices[i, :]]
         denoms = sigmas_sq[i] + sigmas_sq[indices[i, :]]
