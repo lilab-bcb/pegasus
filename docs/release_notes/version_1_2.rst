@@ -1,3 +1,20 @@
+1.2.1 :small:`February 1st, 2021`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Make PCA more reproducible. No need to keep options for robust PCA calculation:
+
+    * In ``pca`` function, remove argument ``robust``.
+    * In ``infer_doublets`` function, remove argument ``robust``.
+    * In **pegasus cluster** command, remove option ``--pca-robust``.
+
+* Add control on number of parallel threads for OpenMP/BLAS.
+
+* Remove function ``reduce_diffmap_to_3d``. In **pegasus cluster** command, remove option ``--diffmap-to-3d``.
+
+* Enhance plotting functions.
+
+* Bug fix.
+
 1.2.0 :small:`December 25, 2020`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

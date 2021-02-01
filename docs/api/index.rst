@@ -67,7 +67,6 @@ Diffusion Map
 	:toctree: .
 
 	diffmap
-	reduce_diffmap_to_3d
 	calc_pseudotime
 	infer_path
 
