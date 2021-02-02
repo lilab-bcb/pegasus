@@ -111,7 +111,7 @@ def get_neighbors(
     rep : `str`, optional (default: 'pca')
         Representation used to calculate kNN. If `None` use data.X
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads
+        Number of threads to use. -1 refers to using all physical CPU cores.
     random_state: `int`, optional (default: 0)
         Random seed for random number generator.
     full_speed: `bool`, optional (default: False)
@@ -225,7 +225,7 @@ def neighbors(
         Embedding representation used to calculate kNN. If ``None``, use ``data.X``; otherwise, keyword ``'X_' + rep`` must exist in ``data.obsm``.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
+        Number of threads to use. If ``-1``, use all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
@@ -321,7 +321,7 @@ def calc_kBET(
         Acceptance rate threshold. A cell is accepted if its kBET p-value is greater than or equal to ``alpha``.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads used. If ``-1``, use all available threads.
+        Number of threads used. If ``-1``, use all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
@@ -424,7 +424,7 @@ def calc_kSIM(
         Acceptance rate threshold. A cell is accepted if its kSIM rate is larger than or equal to ``min_rate``.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads used. If ``-1``, use all available threads.
+        Number of threads used. If ``-1``, use all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.

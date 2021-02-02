@@ -33,7 +33,7 @@
     * Integrate Fisher's exact test via Cython in DE analysis to improve speed.
 * Other highlights:
 
-    * Make I/O and count matrices aggregation a dedicated package `PegasusIO <https://pegasusio.readthedocs.io>`_.
+    * Make I/O and count matrices aggregation a dedicated package `PegasusIO <https://pegasusio.readthedocs.io>`__.
     * Tutorials:
 
         * Update `Analysis tutorial <_static/tutorials/pegasus_analysis.html>`_;

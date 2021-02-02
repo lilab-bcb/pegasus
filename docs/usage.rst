@@ -116,46 +116,46 @@ to see the usage information::
 
 * Options:
 
-	-\\-restriction <restriction>...
+	-\-restriction <restriction>...
 		Select channels that satisfy all restrictions. Each restriction takes the format of name:value,...,value or name:~value,..,value, where ~ refers to not. You can specifiy multiple restrictions by setting this option multiple times.
 
-	-\\-attributes <attributes>
+	-\-attributes <attributes>
 		Specify a comma-separated list of outputted attributes. These attributes should be column names in the csv file.
 
-	-\\-default-reference <reference>
+	-\-default-reference <reference>
 		If sample count matrix is in either DGE, mtx, csv, tsv or loom format and there is no Reference column in the csv_file, use <reference> as the reference.
 
-	-\\-select-only-singlets
+	-\-select-only-singlets
 		If we have demultiplexed data, turning on this option will make pegasus only include barcodes that are predicted as singlets.
 
-	-\\-remap-singlets <remap_string>
+	-\-remap-singlets <remap_string>
 		Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2". In this way, the new singlet names will be in metadata field with key 'assignment', while the old names will be kept in metadata field with key 'assignment.orig'.
 
-	-\\-subset-singlets <subset_string>
+	-\-subset-singlets <subset_string>
 		If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
 
-	-\\-min-genes <number>
+	-\-min-genes <number>
 		Only keep barcodes with at least <ngene> expressed genes.
 
-	-\\-max-genes <number>
+	-\-max-genes <number>
 		Only keep cells with less than <number> of genes.
 
-	-\\-min-umis <number>
+	-\-min-umis <number>
 		Only keep cells with at least <number> of UMIs.
 
-	-\\-max-umis <number>
+	-\-max-umis <number>
 		Only keep cells with less than <number> of UMIs.
 
-	-\\-mito-prefix <prefix>
+	-\-mito-prefix <prefix>
 		Prefix for mitochondrial genes. If multiple prefixes are provided, separate them by comma (e.g. "MT-,mt-").
 
-	-\\-percent-mito <percent>
+	-\-percent-mito <percent>
 		Only keep cells with mitochondrial percent less than <percent>%. Only when both mito_prefix and percent_mito set, the mitochondrial filter will be triggered.
 
-	-\\-no-append-sample-name
+	-\-no-append-sample-name
 		Turn this option on if you do not want to append sample name in front of each sample's barcode (concatenated using '-').
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 * Outputs:
@@ -199,37 +199,37 @@ to see the usage information::
 
 * Options:
 
-	\-p <number>, -\\-threads <number>
+	\-p <number>, -\-threads <number>
 		Number of threads. [default: 1]
 
-	-\\-genome <genome>
+	-\-genome <genome>
 		Reference genome name. If not provided, we will infer it from the expression matrix file.
 
-	-\\-alpha-on-samples <alpha>
+	-\-alpha-on-samples <alpha>
 		The Dirichlet prior concentration parameter (alpha) on samples. An alpha value < 1.0 will make the prior sparse. [default: 0.0]
 
-	-\\-min-num-genes <number>
+	-\-min-num-genes <number>
 		We only demultiplex cells/nuclei with at least <number> of expressed genes. [default: 100]
 
-	-\\-min-num-umis <number>
+	-\-min-num-umis <number>
 		We only demultiplex cells/nuclei with at least <number> of UMIs. [default: 100]
 
-	-\\-min-signal-hashtag <count>
+	-\-min-signal-hashtag <count>
 		Any cell/nucleus with less than <count> hashtags from the signal will be marked as unknown. [default: 10.0]
 
-	-\\-random-state <seed>
+	-\-random-state <seed>
 		The random seed used in the KMeans algorithm to separate empty ADT droplets from others. [default: 0]
 
-	-\\-generate-diagnostic-plots
+	-\-generate-diagnostic-plots
 		Generate a series of diagnostic plots, including the background/signal between HTO counts, estimated background probabilities, HTO distributions of cells and non-cells etc.
 
-	-\\-generate-gender-plot <genes>
+	-\-generate-gender-plot <genes>
 		Generate violin plots using gender-specific genes (e.g. Xist). <gene> is a comma-separated list of gene names.
 
-	-v, -\\-version
+	-v, -\-version
 		Show DemuxEM version.
 
-	-h, -\\-help
+	-h, -\-help
 		Print out help information.
 
 * Outputs:
@@ -286,310 +286,304 @@ to see the usage information::
 
 * Options:
 
-	\-p <number>, -\\-threads <number>
+	\-p <number>, -\-threads <number>
 		Number of threads. [default: 1]
 
-	-\\-processed
+	-\-processed
 		Input file is processed. Assume quality control, data normalization and log transformation, highly variable gene selection, batch correction/PCA and kNN graph building is done.
 
-  	-\\-channel <channel_attr>
+  	-\-channel <channel_attr>
 		Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
 
-	-\\-black-list <black_list>
+	-\-black-list <black_list>
 		Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
-	-\\-select-singlets
+	-\-select-singlets
 		Only select DemuxEM-predicted singlets for analysis.
 
-	-\\-remap-singlets <remap_string>
+	-\-remap-singlets <remap_string>
 		Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2". In this way, the new singlet names will be in metadata field with key 'assignment', while the old names will be kept in metadata field with key 'assignment.orig'.
 
-	-\\-subset-singlets <subset_string>
+	-\-subset-singlets <subset_string>
 		If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
 
-	-\\-genome <genome_name>
+	-\-genome <genome_name>
 		If sample count matrix is in either DGE, mtx, csv, tsv or loom format, use <genome_name> as the genome reference name.
 
-	-\\-focus <keys>
+	-\-focus <keys>
 		Focus analysis on Unimodal data with <keys>. <keys> is a comma-separated list of keys. If None, the self._selected will be the focused one.
 
-	-\\-append <key>
+	-\-append <key>
 		 Append Unimodal data <key> to any <keys> in ``--focus``.
 
-	-\\-output-loom
+	-\-output-loom
 	 	Output loom-formatted file.
 
-	-\\-output-h5ad
+	-\-output-h5ad
 		Output h5ad-formatted file.
 
-  	-\\-min-genes <number>
+  	-\-min-genes <number>
 		Only keep cells with at least <number> of genes. [default: 500]
 
-	-\\-max-genes <number>
+	-\-max-genes <number>
 		Only keep cells with less than <number> of genes. [default: 6000]
 
-	-\\-min-umis <number>
+	-\-min-umis <number>
 		Only keep cells with at least <number> of UMIs.
 
-	-\\-max-umis <number>
+	-\-max-umis <number>
 		Only keep cells with less than <number> of UMIs.
 
-	-\\-mito-prefix <prefix>
+	-\-mito-prefix <prefix>
 		Prefix for mitochondrial genes. Can provide multiple prefixes for multiple organisms (e.g. "MT-" means to use "MT-", "GRCh38:MT-,mm10:mt-,MT-" means to use "MT-" for GRCh38, "mt-" for mm10 and "MT-" for all other organisms). [default: GRCh38:MT-,mm10:mt-,MT-]
 
-	-\\-percent-mito <ratio>
+	-\-percent-mito <ratio>
 		Only keep cells with mitochondrial percent less than <percent>%. [default: 20.0]
 
-	-\\-gene-percent-cells <ratio>
+	-\-gene-percent-cells <ratio>
 		Only use genes that are expressed in at least <percent>% of cells to select variable genes. [default: 0.05]
 
-	-\\-output-filtration-results
+	-\-output-filtration-results
 		Output filtration results as a spreadsheet.
 
-	-\\-plot-filtration-results
+	-\-plot-filtration-results
 		Plot filtration results as PDF files.
 
-	-\\-plot-filtration-figsize <figsize>
+	-\-plot-filtration-figsize <figsize>
 		Figure size for filtration plots. <figsize> is a comma-separated list of two numbers, the width and height of the figure (e.g. 6,4).
 
-	-\\-min-genes-before-filtration <number>
+	-\-min-genes-before-filtration <number>
 		If raw data matrix is input, empty barcodes will dominate pre-filtration statistics. To avoid this, for raw data matrix, only consider barcodes with at lease <number> genes for pre-filtration condition. [default: 100]
 
-	-\\-counts-per-cell-after <number>
+	-\-counts-per-cell-after <number>
 		Total counts per cell after normalization. [default: 1e5]
 
-	-\\-select-hvf-flavor <flavor>
+	-\-select-hvf-flavor <flavor>
 		Highly variable feature selection method. <flavor> can be 'pegasus' or 'Seurat'. [default: pegasus]
 
-	-\\-select-hvf-ngenes <nfeatures>
+	-\-select-hvf-ngenes <nfeatures>
 		Select top <nfeatures> highly variable features. If <flavor> is 'Seurat' and <ngenes> is 'None', select HVGs with z-score cutoff at 0.5. [default: 2000]
 
-	-\\-no-select-hvf
+	-\-no-select-hvf
 		Do not select highly variable features.
 
-	-\\-plot-hvf
+	-\-plot-hvf
 		Plot highly variable feature selection.
 
-	-\\-correct-batch-effect
+	-\-correct-batch-effect
 		Correct for batch effects.
 
-	-\\-correction-method <method>
+	-\-correction-method <method>
 		Batch correction method, can be either 'L/S' for location/scale adjustment algorithm (Li and Wong. The analysis of Gene Expression Data 2003) or 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019) or 'scanorama' for Scanorama (Hie et al. Nature Biotechnology 2019). [default: harmony]
 
-	-\\-batch-group-by <expression>
+	-\-batch-group-by <expression>
 		Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
 
-	-\\-harmony-nclusters <nclusters>
+	-\-harmony-nclusters <nclusters>
 		Number of clusters used for Harmony batch correction.
 
-	-\\-random-state <seed>
+	-\-random-state <seed>
 		Random number generator seed. [default: 0]
 
-	-\\-temp-folder <temp_folder>
+	-\-temp-folder <temp_folder>
 		Joblib temporary folder for memmapping numpy arrays.
 
-	-\\-calc-signature-scores <sig_list>
+	-\-calc-signature-scores <sig_list>
 		Calculate signature scores for gene sets in <sig_list>. <sig_list> is a comma-separated list of strings. Each string should either be a <GMT_file> or one of 'cell_cycle_human', 'cell_cycle_mouse', 'gender_human', 'gender_mouse', 'mitochondrial_genes_human', 'mitochondrial_genes_mouse', 'ribosomal_genes_human' and 'ribosomal_genes_mouse'.
 
-	-\\-pca-n <number>
+	-\-pca-n <number>
 		Number of principal components. [default: 50]
 
-	-\\-pca-robust
-		Use 'arpack' instead of 'randomized' as svd_solver for large sparse matrices. It will take longer time to compute PCs, but the results are more numerically stable.
-
-	-\\-knn-K <number>
+	-\-knn-K <number>
 		Number of nearest neighbors for building kNN graph. [default: 100]
 
-	-\\-knn-full-speed
+	-\-knn-full-speed
 		For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
-	-\\-kBET
+	-\-kBET
 		Calculate kBET.
 
-	-\\-kBET-batch <batch>
+	-\-kBET-batch <batch>
 		kBET batch keyword.
 
-	-\\-kBET-alpha <alpha>
+	-\-kBET-alpha <alpha>
 		kBET rejection alpha. [default: 0.05]
 
-	-\\-kBET-K <K>
+	-\-kBET-K <K>
 		kBET K. [default: 25]
 
-	-\\-diffmap
+	-\-diffmap
 		Calculate diffusion maps.
 
-	-\\-diffmap-ndc <number>
+	-\-diffmap-ndc <number>
 		Number of diffusion components. [default: 100]
 
-	-\\-diffmap-solver <solver>
+	-\-diffmap-solver <solver>
 		Solver for eigen decomposition, either 'randomized' or 'eigsh'. [default: eigsh]
 
-	-\\-diffmap-maxt <max_t>
+	-\-diffmap-maxt <max_t>
 		Maximum time stamp to search for the knee point. [default: 5000]
 
-	-\\-diffmap-to-3d
-		If map diffusion map into 3D space using PCA.
-
-	-\\-calculate-pseudotime <roots>
+	-\-calculate-pseudotime <roots>
 		Calculate diffusion-based pseudotimes based on <roots>. <roots> should be a comma-separated list of cell barcodes.
 
-  	-\\-louvain
+  	-\-louvain
   		Run louvain clustering algorithm.
 
-	-\\-louvain-resolution <resolution>
+	-\-louvain-resolution <resolution>
 		Resolution parameter for the louvain clustering algorithm. [default: 1.3]
 
-	-\\-louvain-class-label <label>
+	-\-louvain-class-label <label>
 		Louvain cluster label name in result. [default: louvain_labels]
 
-	-\\-leiden
+	-\-leiden
 		Run leiden clustering algorithm.
 
-	-\\-leiden-resolution <resolution>
+	-\-leiden-resolution <resolution>
 		Resolution parameter for the leiden clustering algorithm. [default: 1.3]
 
-	-\\-leiden-niter <niter>
+	-\-leiden-niter <niter>
 		Number of iterations of running the Leiden algorithm. If <niter> is negative, run Leiden iteratively until no improvement. [default: -1]
 
-	-\\-leiden-class-label <label>
+	-\-leiden-class-label <label>
 		Leiden cluster label name in result. [default: leiden_labels]
 
-	-\\-spectral-louvain
+	-\-spectral-louvain
 		Run spectral-louvain clustering algorithm.
 
-	-\\-spectral-louvain-basis <basis>
+	-\-spectral-louvain-basis <basis>
 		Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. If 'diffmap' is not calculated, use 'pca' instead. [default: diffmap]
 
-	-\\-spectral-louvain-nclusters <number>
+	-\-spectral-louvain-nclusters <number>
 		Number of first level clusters for Kmeans. [default: 30]
 
-	-\\-spectral-louvain-nclusters2 <number>
+	-\-spectral-louvain-nclusters2 <number>
 		Number of second level clusters for Kmeans. [default: 50]
 
-	-\\-spectral-louvain-ninit <number>
+	-\-spectral-louvain-ninit <number>
 		Number of Kmeans tries for first level clustering. Default is the same as scikit-learn Kmeans function. [default: 10]
 
-	-\\-spectral-louvain-resolution <resolution>.
+	-\-spectral-louvain-resolution <resolution>.
 		Resolution parameter for louvain. [default: 1.3]
 
-	-\\-spectral-louvain-class-label <label>
+	-\-spectral-louvain-class-label <label>
 		Spectral-louvain label name in result. [default: spectral_louvain_labels]
 
-	-\\-spectral-leiden
+	-\-spectral-leiden
 		Run spectral-leiden clustering algorithm.
 
-	-\\-spectral-leiden-basis <basis>
+	-\-spectral-leiden-basis <basis>
 		Basis used for KMeans clustering. Can be 'pca' or 'diffmap'. If 'diffmap' is not calculated, use 'pca' instead. [default: diffmap]
 
-	-\\-spectral-leiden-nclusters <number>
+	-\-spectral-leiden-nclusters <number>
 		Number of first level clusters for Kmeans. [default: 30]
 
-	-\\-spectral-leiden-nclusters2 <number>
+	-\-spectral-leiden-nclusters2 <number>
 		Number of second level clusters for Kmeans. [default: 50]
 
-	-\\-spectral-leiden-ninit <number>
+	-\-spectral-leiden-ninit <number>
 		Number of Kmeans tries for first level clustering. Default is the same as scikit-learn Kmeans function. [default: 10]
 
-	-\\-spectral-leiden-resolution <resolution>
+	-\-spectral-leiden-resolution <resolution>
 		Resolution parameter for leiden. [default: 1.3]
 
-	-\\-spectral-leiden-class-label <label>
+	-\-spectral-leiden-class-label <label>
 		Spectral-leiden label name in result. [default: spectral_leiden_labels]
 
-	-\\-tsne
+	-\-tsne
 		Run FIt-SNE package to compute t-SNE embeddings for visualization.
 
-	-\\-tsne-perplexity <perplexity>
+	-\-tsne-perplexity <perplexity>
 		t-SNE's perplexity parameter. [default: 30]
 
-	-\\-tsne-initialization <choice>
+	-\-tsne-initialization <choice>
 		<choice> can be either 'random' or 'pca'. 'random' refers to random initialization. 'pca' refers to PCA initialization as described in (CITE Kobak et al. 2019) [default: pca]
 
-  	-\\-umap
+  	-\-umap
   		Run umap for visualization.
 
-	-\\-umap-K <K>
+	-\-umap-K <K>
 		K neighbors for umap. [default: 15]
 
-	-\\-umap-min-dist <number>
+	-\-umap-min-dist <number>
 		Umap parameter. [default: 0.5]
 
-	-\\-umap-spread <spread>
+	-\-umap-spread <spread>
 		Umap parameter. [default: 1.0]
 
-	-\\-fle
+	-\-fle
 		Run force-directed layout embedding.
 
-	-\\-fle-K <K>
+	-\-fle-K <K>
 		K neighbors for building graph for FLE. [default: 50]
 
-	-\\-fle-target-change-per-node <change>
+	-\-fle-target-change-per-node <change>
 		Target change per node to stop forceAtlas2. [default: 2.0]
 
-	-\\-fle-target-steps <steps>
+	-\-fle-target-steps <steps>
 		Maximum number of iterations before stopping the forceAtlas2 algoritm. [default: 5000]
 
-	-\\-fle-memory <memory>
+	-\-fle-memory <memory>
 		Memory size in GB for the Java FA2 component. [default: 8]
 
-	-\\-net-down-sample-fraction <frac>
+	-\-net-down-sample-fraction <frac>
 		Down sampling fraction for net-related visualization. [default: 0.1]
 
-	-\\-net-down-sample-K <K>
+	-\-net-down-sample-K <K>
 		Use <K> neighbors to estimate local density for each data point for down sampling. [default: 25]
 
-	-\\-net-down-sample-alpha <alpha>
+	-\-net-down-sample-alpha <alpha>
 		Weighted down sample, proportional to radius^alpha. [default: 1.0]
 
-	-\\-net-regressor-L2-penalty <value>
+	-\-net-regressor-L2-penalty <value>
 		L2 penalty parameter for the deep net regressor. [default: 0.1]
 
-	-\\-net-umap
+	-\-net-umap
 		Run net umap for visualization.
 
-	-\\-net-umap-polish-learning-rate <rate>
+	-\-net-umap-polish-learning-rate <rate>
 		After running the deep regressor to predict new coordinate, what is the learning rate to use to polish the coordinates for UMAP. [default: 1.0]
 
-	-\\-net-umap-polish-nepochs <nepochs>
+	-\-net-umap-polish-nepochs <nepochs>
 		Number of iterations for polishing UMAP run. [default: 40]
 
-	-\\-net-umap-out-basis <basis>
+	-\-net-umap-out-basis <basis>
 		Output basis for net-UMAP. [default: net_umap]
 
-	-\\-net-fle
+	-\-net-fle
 		Run net FLE.
 
-	-\\-net-fle-polish-target-steps <steps>
+	-\-net-fle-polish-target-steps <steps>
 		After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
 
-	-\\-net-fle-out-basis <basis>
+	-\-net-fle-out-basis <basis>
 		Output basis for net-FLE. [default: net_fle]
 
-	-\\-infer-doublets
+	-\-infer-doublets
 		Infer doublets using the method described `here <https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf>`_. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
   
- 	-\\-expected-doublet-rate <rate>
+ 	-\-expected-doublet-rate <rate>
  		The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.
 
-	-\\-dbl-cluster-attr <attr>
+	-\-dbl-cluster-attr <attr>
 		<attr> refers to a cluster attribute containing cluster labels (e.g. 'louvain_labels'). Doublet clusters will be marked based on <attr> with the following criteria: passing the Fisher's exact test and having >= 50% of cells identified as doublets. By default, the first computed cluster attribute in the list of leiden, louvain, spectral_ledein and spectral_louvain is used.
 
-	-\\-citeseq
+	-\-citeseq
 	    Input data contain both RNA and CITE-Seq modalities. This will set --focus to be the RNA modality and --append to be the CITE-Seq modality. In addition, 'ADT-' will be added in front of each antibody name to avoid name conflict with genes in the RNA modality.
 
-	-\\-citeseq-umap
+	-\-citeseq-umap
 		For high quality cells kept in the RNA modality, generate a UMAP based on their antibody expression. 
   
-	-\\-citeseq-umap-exclude <list>
+	-\-citeseq-umap-exclude <list>
 		<list> is a comma-separated list of antibodies to be excluded from the UMAP calculation (e.g. Mouse-IgG1,Mouse-IgG2a).
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 * Outputs:
 
 	output_name.zarr.zip
-		Output file in Zarr format. To load this file in python, use ``import pegasus; data = pegasus.read_input('output_name.zarr.zip')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, ``data.obsm['X_diffmap_pca']`` records the first 3 PCs by projecting the diffusion components using PCA, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). This file can be loaded into R and converted into a Seurat object.
+		Output file in Zarr format. To load this file in python, use ``import pegasus; data = pegasus.read_input('output_name.zarr.zip')``. The log-normalized expression matrix is stored in ``data.X`` as a CSR-format sparse matrix. The ``obs`` field contains cell related attributes, including clustering results. For example, ``data.obs_names`` records cell barcodes; ``data.obs['Channel']`` records the channel each cell comes from; ``data.obs['n_genes']``, ``data.obs['n_counts']``, and ``data.obs['percent_mito']`` record the number of expressed genes, total UMI count, and mitochondrial rate for each cell respectively; ``data.obs['louvain_labels']`` and ``data.obs['approx_louvain_labels']`` record each cell's cluster labels using different clustring algorithms; ``data.obs['pseudo_time']`` records the inferred pseudotime for each cell. The ``var`` field contains gene related attributes. For example, ``data.var_names`` records gene symbols, ``data.var['gene_ids']`` records Ensembl gene IDs, and ``data.var['selected']`` records selected variable genes. The ``obsm`` field records embedding coordiates. For example, ``data.obsm['X_pca']`` records PCA coordinates, ``data.obsm['X_tsne']`` records tSNE coordinates, ``data.obsm['X_umap']`` records UMAP coordinates, ``data.obsm['X_diffmap']`` records diffusion map coordinates, and ``data.obsm['X_fle']`` records the force-directed layout coordinates from the diffusion components. The ``uns`` field stores other related information, such as reference genome (``data.uns['genome']``). This file can be loaded into R and converted into a Seurat object.
 
 	output_name.<group>.h5ad
 		Optional output. Only exists if '--output-h5ad' is set. Results in h5ad format per focused <group>. This file can be loaded into R and converted into a Seurat object.
@@ -617,7 +611,7 @@ to see the usage information::
 
 * Examples::
 
-	pegasus cluster -p 20 --correct-batch-effect --louvain --fitsne example_10x.h5 example_out
+	pegasus cluster -p 20 --correct-batch-effect --louvain --tsne example_10x.h5 example_out
 	pegasus cluster -p 20 --leiden --umap --net-fle example.zarr.zip example_out
 
 
@@ -649,34 +643,34 @@ to see the usage information::
 
 * Options:
 
-	-\\-labels <attr>
+	-\-labels <attr>
 		<attr> used as cluster labels. [default: louvain_labels]
 
 	\-p <threads>
 		Use <threads> threads. [default: 1]
 
-	-\\-de-key <key>
+	-\-de-key <key>
 		Store DE results into AnnData varm with key = <key>. [default: de_res]
 
-	-\\-t
+	-\-t
 		Calculate Welch's t-test.
 
-	-\\-fisher
+	-\-fisher
 		Calculate Fisher's exact test.
 
-	-\\-temp-folder <temp_folder>
+	-\-temp-folder <temp_folder>
 		Joblib temporary folder for memmapping numpy arrays.
 
-	-\\-alpha <alpha>
+	-\-alpha <alpha>
 		Control false discovery rate at <alpha>. [default: 0.05]
 
-	-\\-ndigits <ndigits>
+	-\-ndigits <ndigits>
 		Round non p-values and q-values to <ndigits> after decimal point in the excel. [default: 3]
 
-	-\\-quiet
+	-\-quiet
 		Do not show detailed intermediate outputs.
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 * Outputs:
@@ -724,24 +718,24 @@ to see the usage information::
 	\-p <threads>
 		Use <threads> threads. [default: 1]
 
-	-\\-labels <attr>
+	-\-labels <attr>
 		<attr> used as cluster labels. [default: louvain_labels]
 
-	-\\-de-key <key>
+	-\-de-key <key>
 		Key for storing DE results in 'varm' field. [default: de_res]
 
-	-\\-remove-ribo
+	-\-remove-ribo
 		Remove ribosomal genes with either RPL or RPS as prefixes.
 
-	-\\-min-gain <gain>
+	-\-min-gain <gain>
 		Only report genes with a feature importance score (in gain) of at least <gain>. [default: 1.0]
 
-	-\\-random-state <seed>
+	-\-random-state <seed>
 		Random state for initializing LightGBM and KMeans. [default: 0]
 
 
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 * Outputs:
@@ -784,29 +778,29 @@ to see the usage information::
 
 * Options:
 
-	-\\-markers <str>
+	-\-markers <str>
 		<str> is a comma-separated list. Each element in the list either refers to a JSON file containing legacy markers, or 'human_immune'/'mouse_immune'/'human_brain'/'mouse_brain'/'human_lung' for predefined markers. [default: human_immune]
 
-	-\\-de-test <test>
+	-\-de-test <test>
 		DE test to use to infer cell types. [default: mwu]
 
-	-\\-de-alpha <alpha>
+	-\-de-alpha <alpha>
 		False discovery rate to control family-wise error rate. [default: 0.05]
 
-	-\\-de-key <key>
+	-\-de-key <key>
 		Keyword where the DE results store in 'varm' field. [default: de_res]
 
-	-\\-minimum-report-score <score>
+	-\-minimum-report-score <score>
 		Minimum cell type score to report a potential cell type. [default: 0.5]
 
-	-\\-do-not-use-non-de-genes
+	-\-do-not-use-non-de-genes
 		Do not count non DE genes as down-regulated.
 
-	-\\-annotation <annotation_string>
+	-\-annotation <annotation_string>
 		Write cell type annotations in <annotation_string> into <input_data_file>. <annotation_string> has this format: ``'anno_name:clust_name:anno_1;anno_2;...;anno_n'``,
 		where ``anno_name`` is the annotation attribute in the Zarr object, ``clust_name`` is the attribute with cluster ids, and ``anno_i`` is the annotation for cluster i.
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 * Outputs:
@@ -853,61 +847,61 @@ to see the usage information::
 
 * Options:
 
-	-\\-dpi <dpi>
+	-\-dpi <dpi>
 		DPI value for the figure. [default: 500]
 
-	-\\-basis <basis>
-		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'fle', 'diffmap_pca', 'net_tsne', 'net_umap' or 'net_fle'. [default: umap]
+	-\-basis <basis>
+		Basis for 2D plotting, chosen from 'tsne', 'fitsne', 'umap', 'pca', 'fle', 'net_tsne', 'net_umap' or 'net_fle'. [default: umap]
 
-	-\\-attributes <attrs>
+	-\-attributes <attrs>
 		<attrs> is a comma-separated list of attributes to color the basis. This option is only used in 'scatter'.
 
-	-\\-restriction <restriction>...
+	-\-restriction <restriction>...
 		Set restriction if you only want to plot a subset of data. Multiple <restriction> strings are allowed. Each <restriction> takes the format of 'attr:value,value', or 'attr:~value,value..' which means excluding values. This option is used in 'composition' and 'scatter'.
 
-	-\\-alpha <alpha>
+	-\-alpha <alpha>
 		Point transparent parameter. Can be a single value or a list of values separated by comma used for each attribute in <attrs>.
 
-	-\\-legend-loc <str>
+	-\-legend-loc <str>
 		Legend location, can be either "right margin" or "on data". If a list is provided, set 'legend_loc' for each attribute in 'attrs' separately. [default: "right margin"]
 
-	-\\-palette <str>
+	-\-palette <str>
 		Used for setting colors for every categories in categorical attributes. Multiple <palette> strings are allowed. Each string takes the format of 'attr:color1,color2,...,colorn'. 'attr' is the categorical attribute and 'color1' - 'colorn' are the colors for each category in 'attr' (e.g. 'cluster_labels:black,blue,red,...,yellow'). If there is only one categorical attribute in 'attrs', ``palletes`` can be set as a single string and the 'attr' keyword can be omitted (e.g. "blue,yellow,red").
 
-	-\\-show-background
+	-\-show-background
 		Show points that are not selected as gray.
 
-	-\\-nrows <nrows>
+	-\-nrows <nrows>
 		Number of rows in the figure. If not set, pegasus will figure it out automatically.
 
-	-\\-ncols <ncols>
+	-\-ncols <ncols>
 		Number of columns in the figure. If not set, pegasus will figure it out automatically.
 
-	-\\-panel-size <sizes>
+	-\-panel-size <sizes>
 		Panel size in inches, w x h, separated by comma. Note that margins are not counted in the sizes. For composition, default is (6, 4). For scatter plots, default is (4, 4).
 
-	-\\-left <left>
+	-\-left <left>
 		Figure's left margin in fraction with respect to panel width.
 
-	-\\-bottom <bottom>
+	-\-bottom <bottom>
 		Figure's bottom margin in fraction with respect to panel height.
 
-	-\\-wspace <wspace>
+	-\-wspace <wspace>
 		Horizontal space between panels in fraction with respect to panel width.
 
-	-\\-hspace <hspace>
+	-\-hspace <hspace>
 		Vertical space between panels in fraction with respect to panel height.
 
-	-\\-groupby <attr>
+	-\-groupby <attr>
 		Use <attr> to categorize the cells for the composition plot, e.g. cell type.
 
-	-\\-condition <attr>
+	-\-condition <attr>
 		Use <attr> to calculate frequency within each category defined by '--groupby' for the composition plot, e.g. donor.
 
-	-\\-style <style>
+	-\-style <style>
 		Composition plot styles. Can be either 'frequency' or 'normalized'. [default: normalized]
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 Examples::
@@ -943,13 +937,13 @@ to see the usage information::
 
 * Options:
 
-	-\\-dense
+	-\-dense
 		Output dense expression matrix instead.
 
-	-\\-round-to <ndigit>
+	-\-round-to <ndigit>
 		Round expression to <ndigit> after the decimal point. [default: 2]
 
-	\-h, -\\-help
+	\-h, -\-help
 		Print out help information.
 
 * Outputs:
@@ -986,13 +980,13 @@ to see the usage information::
 
 * Options:
 
-	-\\-num-mismatch <mismatch>
+	-\-num-mismatch <mismatch>
 		Number of mismatch allowed for each index sequence. [default: 1]
 
-  	-\\-num-report <report>
+  	-\-num-report <report>
   		Number of valid 10x indexes to report. Default is to report all valid indexes. [default: 9999]
 
-  	\-h, -\\-help
+  	\-h, -\-help
   		Print out help information.
 
 * Outputs:

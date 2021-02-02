@@ -453,7 +453,7 @@ def pca(
         The threshold to truncate data after scaling. If ``None``, do not truncate.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads.
+        Number of threads to use. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -630,7 +630,7 @@ def tsvd(
         If true, use 'arpack' instead of 'randomized'.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads.
+        Number of threads to use. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.

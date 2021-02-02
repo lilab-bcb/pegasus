@@ -42,7 +42,7 @@ def find_markers(
         Keyword of DE analysis result stored in ``data.varm``.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to used. If ``-1``, use all available threads.
+        Number of threads to used. -1 refers to using all physical CPU cores.
 
     min_gain: ``float``, optional, default: ``1.0``
         Only report genes with a feature importance score (in gain) of at least ``min_gain``.
