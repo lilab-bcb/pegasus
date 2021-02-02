@@ -49,7 +49,7 @@ def jump_method(
         The transformation power used. If None, use min(data.shape[1] / 3.0, 3.0). 
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads.
+        Number of threads to use. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -356,7 +356,7 @@ def spectral_louvain(
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use for the KMeans step. -1 refers to all available threads.
+        Number of threads to use for the KMeans step. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -375,7 +375,6 @@ def spectral_louvain(
     --------
     >>> pg.spectral_louvain(data)
     """
-
     try:
         import louvain as louvain_module
     except ImportError:
@@ -456,7 +455,7 @@ def spectral_leiden(
         Number of kmeans tries for the first level clustering. Default is set to be the same as scikit-learn Kmeans function.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use for the KMeans step. -1 refers to all available threads.
+        Number of threads to use for the KMeans step. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -551,7 +550,7 @@ def cluster(
         Resolution factor. Higher resolution tends to find more clusters.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use for the KMeans step in 'spectral_louvain' and 'spectral_leiden'. -1 refers to all available threads.
+        Number of threads to use for the KMeans step in 'spectral_louvain' and 'spectral_leiden'. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.

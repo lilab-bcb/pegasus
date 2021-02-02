@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 from sklearn.neural_network import MLPRegressor
+from threadpoolctl import threadpool_limits
 import logging
 
 logger = logging.getLogger("pegasus")
@@ -35,7 +36,7 @@ class MaxStdScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose=False):
+def net_train_and_predict(X_train, y_train, X_pred, alpha, n_jobs, random_state, verbose=False):
     start_time = time.perf_counter()
 
     scaler_x = MaxStdScaler()
@@ -51,12 +52,14 @@ def net_train_and_predict(X_train, y_train, X_pred, alpha, random_state, verbose
         alpha=alpha,
         random_state=random_state,
     )
-    regressor.fit(X_train, y_train)
+    with threadpool_limits(limits=n_jobs):
+        regressor.fit(X_train, y_train)
     logger.info(regressor.loss_)
 
-    y_pred = scaler_y.inverse_transform(
-        regressor.predict(scaler_x.transform(X_pred)), copy=False
-    )
+    with threadpool_limits(limits=n_jobs):
+        y_pred = scaler_y.inverse_transform(
+            regressor.predict(scaler_x.transform(X_pred)), copy=False
+        )
 
     end_time = time.perf_counter()
 

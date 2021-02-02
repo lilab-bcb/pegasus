@@ -339,7 +339,7 @@ def highly_variable_features(
         Maximum mean.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to be used during calculation. If ``-1``, all available threads will be used.
+        Number of threads to be used during calculation. If ``-1``, all physical CPU cores will be used.
 
     Returns
     -------

@@ -139,7 +139,7 @@ def diffmap(
         pegasus tries to determine the best t to sum up to between ``[1, max_t]``.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads.
+        Number of threads to use. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.

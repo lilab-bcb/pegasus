@@ -4,7 +4,12 @@ Release Notes
 .. role:: small
 
 .. note::
-    Also see the release notes of `PegasusIO <https://pegasusio.readthedocs.io/en/stable/release_notes.html>`_.
+    Also see the release notes of `PegasusIO <https://pegasusio.readthedocs.io/en/stable/release_notes.html>`__.
+
+Version 1.3
+~~~~~~~~~~~~~
+
+.. include:: release_notes/version_1_3.rst
 
 Version 1.2
 ~~~~~~~~~~~~~
@@ -25,3 +30,4 @@ Version 0.x
 ~~~~~~~~~~~~~~~
 
 .. include:: release_notes/version_0_x.rst
+

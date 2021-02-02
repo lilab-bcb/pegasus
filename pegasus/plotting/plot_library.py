@@ -1060,6 +1060,16 @@ def dotplot(
     df = pd.DataFrame(data=X, columns=genes)
     df[groupby] = data.obs[groupby].values
 
+    if df[groupby].isna().sum() > 0:
+        logger.warning(f"Detected NaN values in attribute '{groupby}'! Please check if '{groupby}' is set correctly.")
+        return None
+
+    series = df[groupby].value_counts()
+    idx = series == 0
+    if idx.sum() > 0:
+        logger.warning(f"The following categories contain no cells and are removed: {','.join(list(series.index[idx]))}.")
+        df[groupby] = df[groupby].cat.remove_unused_categories()
+
     def non_zero(g):
         return np.count_nonzero(g) / g.shape[0]
 
@@ -1227,13 +1237,14 @@ def dendrogram(
     groupby: ``str``
         Categorical cell attribute to plot, which must exist in ``data.obs``.
     correlation_method: ``str``, optional, default: ``pearson``
-        Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation`_ for details.
+        Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corr.html>`_ for details.
     n_clusters: ``int``, optional, default: ``None``
         The number of clusters to find, used by hierarchical clustering. It must be ``None`` if ``distance_threshold`` is not ``None``.
     affinity: ``str``, optional, default: ``correlation``
         Metric used to compute the linkage, used by hierarchical clustering. Valid values for metric are:
             - From scikit-learn: ``cityblock``, ``cosine``, ``euclidean``, ``l1``, ``l2``, ``manhattan``.
             - From scipy.spatial.distance: ``braycurtis``, ``canberra``, ``chebyshev``, ``correlation``, ``dice``, ``hamming``, ``jaccard``, ``kulsinski``, ``mahalanobis``, ``minkowski``, ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``, ``sokalsneath``, ``sqeuclidean``, ``yule``.
+            
         Default is the correlation distance. See `scikit-learn distance documentation <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise_distances.html>`_ for details.
     linkage: ``str``, optional, default: ``complete``
         Which linkage criterion to use, used by hierarchical clustering. Below are available options:
@@ -1241,7 +1252,8 @@ def dendrogram(
             - ``avarage`` uses the average of the distances of each observation of the two sets.
             - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
             - ``single`` uses the minimum of the distances between all observations of the two sets.
-        See `scikit-learn documentation`_ for details.
+            
+        See `scikit-learn documentation <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html>`_ for details.
     compute_full_tree: ``str`` or ``bool``, optional, default: ``auto``
         Stop early the construction of the tree at ``n_clusters``, used by hierarchical clustering. It must be ``True`` if ``distance_threshold`` is not ``None``.
         By default, this option is ``auto``, which is ``True`` if and only if ``distance_threshold`` is not ``None``, or ``n_clusters`` is less than ``min(100, 0.02 * n_groups)``, where ``n_groups`` is the number of categories in ``data.obs[groupby]``.
@@ -1252,17 +1264,13 @@ def dendrogram(
     orientation: ``str``, optional, default: ``top``
         The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
     color_threshold: ``float``, optional, default: ``None``
-        Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
+        Threshold for coloring clusters. See `scipy dendrogram documentation <https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html>`_ for explanation.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwargs:
         Are passed to ``scipy.cluster.hierarchy.dendrogram``.
-
-    .. _scikit-learn documentation: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
-    .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
-    .. _pandas corr documentation: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corr.html
 
     Returns
     -------

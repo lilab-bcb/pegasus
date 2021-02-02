@@ -145,7 +145,7 @@ htmlhelp_basename = "pegasus_doc"
 
 
 def setup(app):
-    app.add_stylesheet("css/custom.css")
+    app.add_css_file("css/custom.css")
 
 
 # -- Options for LaTeX output ------------------------------------------------
