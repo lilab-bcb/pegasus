@@ -1,4 +1,4 @@
-1.2.1 :small:`February 1st, 2021`
+1.2.1 :small:`TBD`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Make PCA more reproducible. No need to keep options for robust PCA calculation:
