@@ -424,6 +424,13 @@ def _run_scrublet(
 def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], pred_dbl: List[bool], alpha: float = 0.05) -> pd.DataFrame:
     df = pd.crosstab(cluster_labels, pred_dbl)
 
+    if df.shape[1] == 1: # either no doublets or all doublets
+        result = pd.DataFrame({'cluster': df.index})
+        result['percentage'] = 100.0 if (True in df.columns) else 0.0
+        result['pval'] = 1.0
+        result['qval'] = 1.0
+        return result
+
     ndbl = df[True].sum()
     a = df[True].values.astype(np.int32)
     b = df[False].values.astype(np.int32)
