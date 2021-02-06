@@ -503,11 +503,11 @@ def _assemble_df(res_dict: dict, rec_array: np.ndarray, prefix: str, col_names: 
     df.columns = col_names
 
     idx = df["mwu_qval"] <= alpha
-    idx_up = idx & (df["log2FC"].values > 0)
+    idx_up = idx & (df["auroc"].values > 0.5)
     df_up = df.loc[idx_up].sort_values(by="auroc", ascending=False, inplace=False)
     res_dict["up"] = pd.DataFrame(df_up if head is None else df_up.iloc[0:head])
 
-    idx_down = idx & (df["log2FC"].values < 0)
+    idx_down = idx & (df["auroc"].values < 0.5)
     df_down = df.loc[idx_down].sort_values(by="auroc", ascending=True, inplace=False)
     res_dict["down"] = pd.DataFrame(df_down if head is None else df_down.iloc[0:head])
 
@@ -536,7 +536,7 @@ def markers(
         Keyword of DE result stored in ``data.varm``.
 
     alpha: ``float``, optional, default: ``0.05``
-        q-value threshold for getting significant DE genes. Only those with q-value of any test no less than ``alpha`` are significant, and thus considered as DE genes.
+        q-value threshold for getting significant DE genes. Only those with q-value of MWU test no less than ``alpha`` are significant, and thus considered as DE genes.
 
     Returns
     -------
@@ -544,6 +544,8 @@ def markers(
         A Python dictionary containing markers.
         If DE is performed between clusters, the structure is ``dict[cluster_id]['up' or 'down'][dataframe]``.
         If DE is performed between conditions within each cluster, the structure is ``dict[cluster_id][condition_id]['up' or 'down'][dataframe]``.
+        'up' refers to up-regulated genes, which should have 'auroc' > 0.5.
+        'down' refers to down-regulated genes, which should have 'auroc' < 0.5.
 
     Examples
     --------
