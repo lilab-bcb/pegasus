@@ -681,8 +681,8 @@ def split_one_cluster(
     idx = np.where(data.obs[clust_label] == clust_id)[0]
     tmpdat = data[idx].copy()
     from pegasus.tools import neighbors 
-    neighbors(tmpdata, rep=rep)
-    leiden(tmpdata, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
+    neighbors(tmpdat, rep=rep)
+    leiden(tmpdat, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
     new_clust = data.obs[clust_label].values.astype(int)
     new_label = new_clust.max() + 1
     for label in tmpdat.obs['leiden_labels'].value_counts().index[1:]:
