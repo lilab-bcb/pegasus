@@ -48,6 +48,7 @@ from .tools import (
     calc_pseudotime,
     jump_method,
     cluster,
+    split_one_cluster,
     louvain,
     leiden,
     spectral_louvain,
