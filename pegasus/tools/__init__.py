@@ -19,6 +19,7 @@ from .preprocessing import (
     tsvd,
     tsvd_transform,
     regress_out,
+    nmf,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
 from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
