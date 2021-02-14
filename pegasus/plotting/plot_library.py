@@ -54,7 +54,7 @@ def scatter(
     data: ``pegasusio.MultimodalData``
        Use current selected modality in data.
     attrs: ``str`` or ``List[str]``
-        Color scatter plots by attrs. Each attribute in attrs should be one key in data.obs or data.var_names (e.g. one gene). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+        Color scatter plots by attrs. Each attribute in attrs can be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
     basis: ``str``, optional, default: ``umap``
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
@@ -136,7 +136,7 @@ def scatter(
 
     if not is_list_like(legend_loc):
         legend_loc = [legend_loc] * nattrs
-    legend_fontsize = [5 if x == 'on data' else 10 for x in legend_loc]
+    legend_fontsize = [5 if x == "on data" else 10 for x in legend_loc]
 
     palettes = DictWithDefault(palettes)
     cmaps = DictWithDefault(cmaps)
@@ -156,12 +156,14 @@ def scatter(
 
                 if attr in data.obs:
                     values = data.obs[attr].values
-                else:
-                    try:
-                        loc = data.var_names.get_loc(attr)
-                    except KeyError:
-                        raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
+                elif attr in data.var_names:
+                    loc = data.var_names.get_loc(attr)
                     values = slicing(data.X, col = loc)
+                else:
+                    obsm_key, sep, component = attr.partition("@")
+                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+                        raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
+                    values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
 
@@ -292,7 +294,7 @@ def scatter_groups(
     data: ``pegasusio.MultimodalData``
        Use current selected modality in data.
     attr: ``str``
-        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs or data.var_names (e.g. one gene). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
     groupby: ``str``
         Generate separate scatter plots of 'attr' for data points in each category in 'groupby', which should be a key in data.obs representing one categorical variable.
     basis: ``str``, optional, default: ``umap``
@@ -366,12 +368,14 @@ def scatter_groups(
 
     if attr in data.obs:
         values = data.obs[attr].values
-    else:
-        try:
-            loc = data.var_names.get_loc(attr)
-        except KeyError:
-            raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
+    elif attr in data.var_names:
+        loc = data.var_names.get_loc(attr)
         values = slicing(data.X, col = loc)
+    else:
+        obsm_key, sep, component = attr.partition("@")
+        if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+            raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
+        values = data.obsm[obsm_key][:, int(component)]
 
     is_cat = is_categorical_dtype(values)
     if (not is_cat) and (not is_numeric_dtype(values)):
