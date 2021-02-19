@@ -530,31 +530,33 @@ def compo_plot(
     Parameters
     ----------
 
-    data : `AnnData` or `UnimodalData` or `MultimodalData` object
+    data : ``AnnData`` or ``UnimodalData`` or ``MultimodalData`` object
         Single cell expression data.
-    groupby : `str`
+    groupby : ``str``
         A categorical variable in data.obs that is used to categorize the cells, e.g. cell type.
-    condition: `str`
-        A categorical variable in data.obs that is used to calculate frequency within each category defined by 'groupby', e.g. donor.
-    style: `str`, optional (default: `frequency`)
-        Composition plot style. Can be either `frequency`, or 'normalized'. Within each cluster, the `frequency` style show the percentage of cells from each 'condition' within each category in 'groupby' (stacked), the `normalized` style shows for each category in 'groupby' the percentage of cells that are also in each 'condition' over all cells that are in the same 'condition' (not stacked).
+    condition: ``str``
+        A categorical variable in data.obs that is used to calculate frequency within each category defined by ``groupby``, e.g. donor.
+    style: ``str``, optional (default: ``frequency``)
+        Composition plot style. Can be either ``frequency``, or ``normalized``. Within each cluster, the ``frequency`` style show the percentage of cells from each ``condition`` within each category in ``groupby`` (stacked), the ``normalized`` style shows for each category in ``groupby`` the percentage of cells that are also in each ``condition`` over all cells that are in the same ``condition`` (not stacked).
     restrictions: ``str`` or ``List[str]``, optional, default: None
         A list of restrictions to subset data for plotting. Each restriction takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows).
     switch_axes: ``bool``, optional, default: ``False``
         By default, X axis is for groupby, and Y axis for frequencies with respect to condition. If this parameter is ``True``, switch the axes.
-    groupby_label: `str`, optional (default None)
-        Label for the axis displaying 'groupby' categories. If None, use 'groupby'.
+    groupby_label: ``str``, optional (default ``None``)
+        Label for the axis displaying ``groupby`` categories. If ``None``, use ``groupby``.
     sort_function: ``Union[Callable[List[str], List[str]], str]``, optional, default: ``natsorted``
         Function used for sorting both groupby and condition labels. If ``natsorted``, apply natsorted function to sort by natural order. If ``None``, don't sort. Otherwise, a callable function will be applied to the labels for sorting.
-    panel_size: `tuple`, optional (default: `(6, 4)`)
+    panel_size: ``tuple``, optional (default: ``(6, 4)``)
         The plot size (width, height) in inches.
-    left: `float`, optional (default: `0.15`)
+    palette: ``List[str]``, optional (default: ``None``)
+        Used for setting colors for categories in ``condition``. Within the list, each string is the color for one category.
+    left: ``float``, optional (default: ``0.15``)
         This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
-    bottom: `float`, optional (default: `0.15`)
+    bottom: ``float``, optional (default: ``0.15``)
         This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
-    wspace: `float`, optional (default: `0.3`)
+    wspace: ``float``, optional (default: ``0.3``)
         This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
-    hspace: `float`, optional (defualt: `0.15`)
+    hspace: ``float``, optional (defualt: ``0.15``)
         This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
@@ -564,7 +566,7 @@ def compo_plot(
     Returns
     -------
 
-    `Figure` object
+    ``Figure`` object
         A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
 
     Examples
@@ -687,6 +689,8 @@ def violin(
             - If ``count``, the width of the violins will be scaled by the number of observations in that bin.
     panel_size: ``Tuple[float, float]``, optional, default: ``(8, 0.5)``
         The size (width, height) in inches of each violin panel.
+    palette: ``List[str]``, optional (default: ``None``)
+        Used for setting colors for categories in ``groupby``. Within the list, each string is the color for one category.
     left: ``float``, optional, default: ``0.15``
         This parameter sets the figure's left margin as a fraction of panel's width (left * panel_size[0]).
     bottom: ``float``, optional, default: ``0.15``
