@@ -137,6 +137,7 @@ def louvain(
     data: MultimodalData,
     rep: str = "pca",
     resolution: int = 1.3,
+    n_clust: int = None,
     random_state: int = 0,
     class_label: str = "louvain_labels",
 ) -> None:
@@ -152,6 +153,9 @@ def louvain(
 
     resolution: ``int``, optional, default: ``1.3``
         Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
+    
+    n_clust: ``int``, optional, default: ``None``
+        This option only takes effect if 'resolution = None'. Try to find an appropriate resolution by binary search such that the total number of clusters matches 'n_clust'. The range of resolution to search is (0.01, 2.0].
 
     random_state: ``int``, optional, default: ``0``
         Random seed for reproducing results.
@@ -184,12 +188,8 @@ def louvain(
     if resolution is not None:
         membership = _run_community_detection("louvain", louvain_module, G, resolution, random_state)    
     else:
-        optimal_k_key = f"{rep}_optimal_k"
-        if optimal_k_key not in data.uns:
-            jump_method(data, rep = rep, random_state = random_state)
-        optimal_k = data.uns[optimal_k_key]
-        resol_max = 2.0
-        resolution, membership = _find_optimal_resolution("louvain", louvain_module, optimal_k, resol_max, G, random_state)
+        assert isinstance(n_clust, int)
+        resolution, membership = _find_optimal_resolution("louvain", louvain_module, n_clust, 2.0, G, random_state)
 
     data.uns["louvain_resolution"] = resolution
     labels = np.array([str(x + 1) for x in membership])
@@ -205,6 +205,7 @@ def leiden(
     data: MultimodalData,
     rep: str = "pca",
     resolution: int = 1.3,
+    n_clust: int = None,
     n_iter: int = -1,
     random_state: int = 0,
     class_label: str = "leiden_labels",
@@ -221,6 +222,9 @@ def leiden(
 
     resolution: ``int``, optional, default: ``1.3``
         Resolution factor. Higher resolution tends to find more clusters.
+
+    n_clust: ``int``, optional, default: ``None``
+        This option only takes effect if 'resolution = None'. Try to find an appropriate resolution by binary search such that the total number of clusters matches 'n_clust'. The range of resolution to search is (0.01, 2.0].
 
     n_iter: ``int``, optional, default: ``-1``
         Number of iterations that Leiden algorithm runs. If ``-1``, run the algorithm until reaching its optimal clustering.
@@ -257,12 +261,8 @@ def leiden(
     if resolution is not None:
         membership = _run_community_detection("leiden", leidenalg, G, resolution, random_state, n_iter)        
     else:
-        optimal_k_key = f"{rep}_optimal_k"
-        if optimal_k_key not in data.uns:
-            jump_method(data, rep = rep, random_state = random_state)
-        optimal_k = data.uns[optimal_k_key]
-        resol_max = 2.0
-        resolution, membership = _find_optimal_resolution("leiden", leidenalg, optimal_k, resol_max, G, random_state, n_iter)
+        assert isinstance(n_clust, int)
+        resolution, membership = _find_optimal_resolution("leiden", leidenalg, n_clust, 2.0, G, random_state, n_iter)
 
     data.uns["leiden_resolution"] = resolution
     labels = np.array([str(x + 1) for x in membership])
@@ -627,3 +627,66 @@ def cluster(
                 resolution, new_resol
             )
         )
+
+
+def split_one_cluster(
+    data: MultimodalData,
+    clust_label: str,
+    clust_id: str,
+    n_clust: int,
+    res_label: str,
+    rep: str = "pca",
+    random_state: int = 0,
+) -> None:
+    """
+    Use Leiden algorithm to split 'clust_id' in 'clust_label' into 'n_components' clusters and write the new clusting results to 'res_label'. Assume 'clust_label' named clusters as numbers (in str format).
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    clust_label: `str`
+        Use existing clustering stored in data.obs['clust_label'].
+
+    clust_id: `str`
+        Cluster ID in data.obs['clust_label'].
+
+    n_clust: `int`
+        Split 'clust_id' into `n_clust' subclusters.
+
+    res_label: `str`,
+        Write new clustering in data.obs['res_label']. The largest subcluster will use 'clust_id' as its cluster ID, while other subclusters will be numbered after existing clusters.
+
+    rep: ``str``, optional, default: ``"pca"``
+        The embedding representation used for Kmeans clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use for the KMeans step in 'spectral_louvain' and 'spectral_leiden'. -1 refers to using all physical CPU cores.
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for reproducing results.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obs``:
+        * ``data.obs[res_label]``: New cluster labels of cells as categorical data.
+
+    Examples
+    --------
+    >>> pg.split_one_cluster(data, 'leiden_labels', '15', 2, 'leiden_labels_split')
+    """
+    idx = np.where(data.obs[clust_label] == clust_id)[0]
+    tmpdat = data[idx].copy()
+    from pegasus.tools import neighbors 
+    neighbors(tmpdat, rep=rep)
+    leiden(tmpdat, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
+    new_clust = data.obs[clust_label].values.astype(int)
+    new_label = new_clust.max() + 1
+    for label in tmpdat.obs['leiden_labels'].value_counts().index[1:]:
+        new_clust[idx[(tmpdat.obs['leiden_labels'] == label).values]] = new_label
+        new_label += 1
+    data.obs[res_label] = pd.Categorical(values = new_clust.astype(str), categories = np.array(range(1, new_label)).astype(str))
+    del tmpdat

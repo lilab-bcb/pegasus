@@ -118,6 +118,8 @@ def calc_sig_background(X: Union[csr_matrix, np.ndarray], bins: pd.Categorical, 
 
     if mean_vec.dtype == np.float32:
         mean_vec = mean_vec.astype(np.float64)
+    if X.dtype == np.float64: # not sure if we should have this; we may consider make all matrices float32?
+        X = X.astype(np.float32)
 
     if issparse(X):
         from pegasus.cylib.fast_utils import calc_sig_background_sparse

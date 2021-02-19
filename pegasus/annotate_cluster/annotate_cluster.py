@@ -316,6 +316,11 @@ def infer_cell_types(
     assert isinstance(markers, dict)
     anno = Annotator(markers, data.var_names)
 
+    test2metric = {"mwu": "auroc", "t": "log2FC", "fisher": "percentage_fold_change"}
+    metric = test2metric[de_test]
+    thre = 0.5 if de_test == "mwu" else 0.0
+    coln = "percentage_fold_change" if de_test == "fisher" else "log2FC"
+
     clusts = natsorted(
         [
             x.rpartition(":")[0]
@@ -327,19 +332,11 @@ def infer_cell_types(
     for clust_id in clusts:
         idx = data.varm[de_key][f"{clust_id}:{de_test}_qval"] <= de_alpha
 
-        idx_up = idx & (data.varm[de_key][f"{clust_id}:log2FC"] > 0.0)
-        idx_down = idx & (
-            data.varm[de_key][f"{clust_id}:log2FC"] < 0.0
-        )
+        idx_up = idx & (data.varm[de_key][f"{clust_id}:{metric}"] > thre)
+        idx_down = idx & (data.varm[de_key][f"{clust_id}:{metric}"] < thre)
         assert idx_up.sum() + idx_down.sum() == idx.sum()
 
-        cols = [
-            f"{clust_id}:{x}"
-            for x in [
-                "percentage_fold_change" if de_test == "fisher" else "log2FC",
-                "percentage",
-            ]
-        ]
+        cols = [f"{clust_id}:{coln}", f"{clust_id}:percentage"]
         de_up = pd.DataFrame(
             data=data.varm[de_key][cols][idx_up], index=data.var_names[idx_up]
         )
