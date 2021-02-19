@@ -691,7 +691,7 @@ def write_results_to_excel(
     ) -> pd.DataFrame:
         """ Round related float columns to ndigits decimal points.
         """
-        df = pd.DataFrame(df_orig)
+        df = pd.DataFrame(df_orig, copy = True) # copy must be true, otherwise the passed df_orig will be modified.
 
         cols = []
         for name in df.columns:

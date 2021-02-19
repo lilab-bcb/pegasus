@@ -860,7 +860,7 @@ def heatmap(
     if not is_categorical_dtype(clusters):
         clusters = pd.Categorical(clusters)
     else:
-        clusters.remove_unused_categories(inplace = True)
+        clusters = clusters.remove_unused_categories()
     df_list = [pd.DataFrame({'cluster_name': clusters})]
 
     if len(obs_keys) > 0:
@@ -904,7 +904,7 @@ def heatmap(
         )
         cg.ax_heatmap.set_ylabel("")
         if attrs_labelsize is not None:
-            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize)
+            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=75)
     else:
         cg = sns.clustermap(
             data=df.T,
@@ -983,7 +983,8 @@ def heatmap(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg.fig if return_fig else None
+    return cg
+    # return cg.fig if return_fig else None
 
 
 def dotplot(

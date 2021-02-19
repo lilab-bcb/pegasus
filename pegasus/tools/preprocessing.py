@@ -719,6 +719,7 @@ def nmf(
     n_components: int = 20,
     init: str = "nndsvdar",
     solver: str = "cd",
+    max_iter: int = 200,
     features: str = "highly_variable_features",
     scale: bool = True,
     max_value: float = 10.0,
@@ -742,6 +743,9 @@ def nmf(
 
     solver: ``str``, optional, default: ``cd``.
         NMF solver. Options are 'cd' and 'mu'.
+
+    max_iter: ``str``, optional, default: ``200``.
+        Maximum number of iterations for NMF.
 
     features: ``str``, optional, default: ``"highly_variable_features"``.
         Keyword in ``data.var`` to specify features used for PCA.
@@ -781,7 +785,7 @@ def nmf(
     X = (data.uns[keyword] + data.uns['stdzn_mean'] / data.uns['stdzn_std']).astype(np.float64)
     X[X < 0] = 0.0
     
-    nmf = NMF(n_components=n_components, init=init, solver=solver, random_state=random_state)
+    nmf = NMF(n_components=n_components, init=init, solver=solver, max_iter=max_iter, random_state=random_state)
 
     n_jobs = eff_n_jobs(n_jobs)
     with threadpool_limits(limits = n_jobs):
