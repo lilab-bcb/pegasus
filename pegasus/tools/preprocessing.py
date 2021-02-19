@@ -22,12 +22,12 @@ def qc_metrics(
     select_singlets: bool = False,
     remap_string: str = None,
     subset_string: str = None,
-    min_genes: int = 500,
-    max_genes: int = 6000,
+    min_genes: int = None,
+    max_genes: int = None,
     min_umis: int = None,
     max_umis: int = None,
-    mito_prefix: str = "MT-",
-    percent_mito: float = 20.0,
+    mito_prefix: str = None,
+    percent_mito: float = None,
 ) -> None:
     """Generate Quality Control (QC) metrics regarding cell barcodes on the dataset.
 
@@ -41,17 +41,17 @@ def qc_metrics(
         Remap singlet names using <remap_string>, where <remap_string> takes the format "new_name_i:old_name_1,old_name_2;new_name_ii:old_name_3;...". For example, if we hashed 5 libraries from 3 samples sample1_lib1, sample1_lib2, sample2_lib1, sample2_lib2 and sample3, we can remap them to 3 samples using this string: "sample1:sample1_lib1,sample1_lib2;sample2:sample2_lib1,sample2_lib2". In this way, the new singlet names will be in metadata field with key 'assignment', while the old names will be kept in metadata field with key 'assignment.orig'.
     subset_string: ``str``, optional, default ``None``
         If select singlets, only select singlets in the <subset_string>, which takes the format "name1,name2,...". Note that if --remap-singlets is specified, subsetting happens after remapping. For example, we can only select singlets from sampe 1 and 3 using "sample1,sample3".
-    min_genes: ``int``, optional, default: ``500``
+    min_genes: ``int``, optional, default: ``None``
        Only keep cells with at least ``min_genes`` genes.
-    max_genes: ``int``, optional, default: ``6000``
+    max_genes: ``int``, optional, default: ``None``
        Only keep cells with less than ``max_genes`` genes.
     min_umis: ``int``, optional, default: ``None``
        Only keep cells with at least ``min_umis`` UMIs.
     max_umis: ``int``, optional, default: ``None``
        Only keep cells with less than ``max_umis`` UMIs.
-    mito_prefix: ``str``, optional, default: ``MT-``
+    mito_prefix: ``str``, optional, default: ``None``
        Prefix for mitochondrial genes.
-    percent_mito: ``float``, optional, default: ``20.0``
+    percent_mito: ``float``, optional, default: ``None``
        Only keep cells with percent mitochondrial genes less than ``percent_mito`` % of total counts.
 
     Returns
@@ -72,13 +72,6 @@ def qc_metrics(
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
-
-    # Make sure that n_genes and n_counts statistics are calculated by setting min_genes = 1 and min_umis = 1
-    if min_genes is None:
-        min_genes = 1
-    if min_umis is None:
-        min_umis = 1
-
     calc_qc_filters(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
 
 
