@@ -509,6 +509,8 @@ def compo_plot(
     groupby_label: Optional[str] = None,
     sort_function: Union[Callable[[List[str]], List[str]], str] = 'natsorted',
     panel_size: Optional[Tuple[float, float]] = (6, 4),
+    palette: Optional[List[str]] = None,
+    color_unused: bool = False,
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
@@ -593,11 +595,25 @@ def compo_plot(
         assert style == "normalized"
         df = df.div(df.sum(axis=0), axis=1) * 100.0
 
+    if color_unused:
+        if palette is None:
+            color_list = _get_palette(data.obs[condition].cat.categories.size)
+        else:
+            assert len(palette) >= data.obs[condition].cat.categories.size, "The palette provided has fewer colors than needed!"
+            color_idx = df.columns.map(data.obs[condition].cat.categories.get_loc)
+            color_list = palette[color_idx]
+    else:
+        if palette is None:
+            color_list = _get_palette(df.shape[1])
+        else:
+            assert len(palette) >= df.shape[1], "The palette provided has fewer colors than needed!"
+            color_list = palette[0:df.shape[1]]
+
     df.plot(
         kind = "bar" if not switch_axes else "barh",
         stacked = style == "frequency",
         legend = False,
-        color = _get_palette(df.shape[1]),
+        color = color_list,
         ax = ax,
     )
 
@@ -623,8 +639,10 @@ def violin(
     hue: Optional[str] = None,
     matkey: Optional[str] = None,
     stripplot: bool = False,
+    inner: Optional[str] = None,
     scale: str = 'width',
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
+    palette: Optional[List[str]] = None,
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
@@ -652,14 +670,17 @@ def violin(
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     stripplot: ``bool``, optional, default: ``False``
         Attach a stripplot to the violinplot or not. This option will be automatically turn off if 'hue' is set.
+    inner: ``str``, optional, default: ``None``
+        Representation of the datapoints in the violin interior:
+            - If ``box``, draw a miniature boxplot.
+            - If ``quartiles``, draw the quartiles of the distribution.
+            - If ``point`` or ``stick``, show each underlying datapoint.
+            - If ``None``, will draw unadorned violins.
     scale: ``str``, optional, default: ``width``
         The method used to scale the width of each violin:
             - If ``width``, each violin will have the same width.
             - If ``area``, each violin will have the same area.
             - If ``count``, the width of the violins will be scaled by the number of observations in that bin.
-    jitter: ``float`` or ``bool``, optional, default: ``False``
-        Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
-        This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
     panel_size: ``Tuple[float, float]``, optional, default: ``(8, 0.5)``
         The size (width, height) in inches of each violin panel.
     left: ``float``, optional, default: ``0.15``
@@ -726,7 +747,7 @@ def violin(
         ax = axes[i, 0]
         if stripplot:
             sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=1, color="k", jitter=True)
-        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, split=True, **kwargs)
+        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=inner, linewidth=1, ax=ax, cut=0, scale=scale, split=True, palette=palette, **kwargs)
         ax.grid(False)
 
         if hue is not None:
