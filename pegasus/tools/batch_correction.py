@@ -208,7 +208,7 @@ def run_harmony(
         Which representation to use as input of Harmony, default is PCA.
 
     n_jobs : ``int``, optional, default: ``-1``.
-        Number of threads to use for the KMeans clustering used in Harmony. ``-1`` refers to using all available threads.
+        Number of threads to use in Harmony. ``-1`` refers to using all physical CPU cores.
 
     n_clusters: ``int``, optional, default: ``None``.
         Number of Harmony clusters. Default is ``None``, which asks Harmony to estimate this number from the data.

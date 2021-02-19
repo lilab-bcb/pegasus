@@ -4,7 +4,7 @@ import pandas as pd
 
 from scipy.sparse import issparse, csr_matrix
 from threadpoolctl import threadpool_limits
-from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD, NMF
 
 from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
@@ -453,7 +453,7 @@ def pca(
         The threshold to truncate data after scaling. If ``None``, do not truncate.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads.
+        Number of threads to use. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -473,6 +473,8 @@ def pca(
         * ``data.uns["pca_variance"]``: Explained variance, i.e. the eigenvalues of the covariance matrix.
 
         * ``data.uns["pca_variance_ratio"]``: Ratio of explained variance.
+
+        * ``data.uns["pca_features"]``: Record the features used to generate PCA components.
 
     Examples
     --------
@@ -630,7 +632,7 @@ def tsvd(
         If true, use 'arpack' instead of 'randomized'.
 
     n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to all available threads.
+        Number of threads to use. -1 refers to using all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``.
         Random seed to be set for reproducing result.
@@ -709,3 +711,86 @@ def tsvd_transform(
     from sklearn.utils.extmath import safe_sparse_dot
     X_tsvd = safe_sparse_dot(X, data.uns["TSVDs"])
     return X_tsvd
+
+
+@timer(logger=logger)
+def nmf(
+    data: MultimodalData,
+    n_components: int = 20,
+    init: str = "nndsvdar",
+    solver: str = "cd",
+    max_iter: int = 200,
+    features: str = "highly_variable_features",
+    scale: bool = True,
+    max_value: float = 10.0,
+    n_jobs: int = -1,
+    random_state: int = 0,
+) -> None:
+    """Perform Principle Component Analysis (PCA) to the data.
+
+    The calculation uses *scikit-learn* implementation.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    n_components: ``int``, optional, default: ``50``.
+        Number of Principal Components to get.
+
+    init: ``str``, optional, default: ``nndsvdar``.
+        Method to initialize NMF for sklearn. Options are 'random', 'nndsvd', 'nndsvda' and 'nndsvdar'.
+
+    solver: ``str``, optional, default: ``cd``.
+        NMF solver. Options are 'cd' and 'mu'.
+
+    max_iter: ``str``, optional, default: ``200``.
+        Maximum number of iterations for NMF.
+
+    features: ``str``, optional, default: ``"highly_variable_features"``.
+        Keyword in ``data.var`` to specify features used for PCA.
+
+    scale: ``bool``, optional, default: ``True``.
+        Whether to scale the data to have unit variance.
+
+    max_value: ``float``, optional, default: ``10``.
+        The threshold to truncate data after scaling. If ``None``, do not truncate.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to using all physical CPU cores.
+
+    random_state: ``int``, optional, default: ``0``.
+        Random seed to be set for reproducing result.
+
+    Returns
+    -------
+    ``None``.
+
+    Update ``data.obsm``:
+
+        * ``data.obsm["X_nmf"]``: NMF coordinate matrix (W) of the data.
+
+    Update ``data.uns``:
+
+        * ``data.uns["H"]``: The feature factor matrix. 
+
+        * ``data.uns["nmf_features"]``: Record the features used to perform NMF analysis.
+
+    Examples
+    --------
+    >>> pg.nmf(data)
+    """
+    keyword = select_features(data, features=features, standardize=scale, max_value=max_value)
+
+    X = (data.uns[keyword] + data.uns['stdzn_mean'] / data.uns['stdzn_std']).astype(np.float64)
+    X[X < 0] = 0.0
+    
+    nmf = NMF(n_components=n_components, init=init, solver=solver, max_iter=max_iter, random_state=random_state)
+
+    n_jobs = eff_n_jobs(n_jobs)
+    with threadpool_limits(limits = n_jobs):
+        X_nmf = nmf.fit_transform(X)
+
+    data.obsm["X_nmf"] = np.ascontiguousarray(X_nmf, dtype=np.float32)
+    data.uns["H"] = np.ascontiguousarray(nmf.components_.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same
+    data.uns["nmf_features"] = features # record which feature to use

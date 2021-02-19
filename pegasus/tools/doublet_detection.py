@@ -262,8 +262,8 @@ def _run_scrublet(
     k: ``int``, optional, default: ``None``
         Number of observed cell neighbors. If None, k = round(0.5 * sqrt(number of observed cells)). Total neighbors k_adj = round(k * (1.0 + sim_doublet_ratio)).
 
-    n_job: ``int``, optional, default: ``-``
-        Number of threads to use. If ``-1``, use all available threads.
+    n_jobs: ``int``, optional, default: ``-``
+        Number of threads to use. If ``-1``, use all physical CPU cores.
 
     random_state: ``int``, optional, default: ``0``
         Random state for doublet simulation, PCA and approximate nearest neighbor search.
@@ -424,6 +424,13 @@ def _run_scrublet(
 def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], pred_dbl: List[bool], alpha: float = 0.05) -> pd.DataFrame:
     df = pd.crosstab(cluster_labels, pred_dbl)
 
+    if df.shape[1] == 1: # either no doublets or all doublets
+        result = pd.DataFrame({'cluster': df.index})
+        result['percentage'] = 100.0 if (True in df.columns) else 0.0
+        result['pval'] = 1.0
+        result['qval'] = 1.0
+        return result
+
     ndbl = df[True].sum()
     a = df[True].values.astype(np.int32)
     b = df[False].values.astype(np.int32)
@@ -463,9 +470,9 @@ def infer_doublets(
     random_state: Optional[int] = 0,
     plot_hist: Optional[str] = "sample",
 ) -> None:
-    """Infer doublets using a Scrublet-like strategy. [Li20-2]_
+    """Infer doublets by first calculating Scrublet-like [Wolock18]_ doublet scores and then smartly determining an appropriate doublet score cutoff [Li20-2]_ .
 
-    This function must be called after clustering. 
+    This function should be called after clustering if clust_attr is not None. In this case, we will test if each cluster is significantly enriched for doublets using Fisher's exact test.
 
     Parameters
     ----------
@@ -494,7 +501,7 @@ def infer_doublets(
         Number of observed cell neighbors. If None, k = round(0.5 * sqrt(number of observed cells)). Total neighbors k_adj = round(k * (1.0 + sim_doublet_ratio)).
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
+        Number of threads to use. If ``-1``, use all physical CPU cores.
 
     alpha: ``float``, optional, default: ``0.05``
         FDR significant level for cluster-level fisher exact test.

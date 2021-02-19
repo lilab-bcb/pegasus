@@ -6,17 +6,17 @@ API
 
 *Pegasus* can also be used as a python package. Import pegasus by::
 
-	import pegasus as pg
+    import pegasus as pg
 
 Read and Write
 ---------------
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	read_input
-	write_output
-	aggregate_matrices
+    read_input
+    write_output
+    aggregate_matrices
 
 Analysis Tools
 ---------------
@@ -25,16 +25,16 @@ Preprocess
 ~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	qc_metrics
-	get_filter_stats
-	filter_data
+    qc_metrics
+    get_filter_stats
+    filter_data
     identify_robust_genes
-	log_norm
-	highly_variable_features
-	select_features
-	pca
+    log_norm
+    highly_variable_features
+    select_features
+    pca
     regress_out
 
 
@@ -42,58 +42,58 @@ Batch Correction
 ~~~~~~~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	set_group_attribute
-	correct_batch
-	run_harmony
+    set_group_attribute
+    correct_batch
+    run_harmony
     run_scanorama
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	neighbors
-	get_neighbors
-	calc_kBET
-	calc_kSIM
+    neighbors
+    get_neighbors
+    calc_kBET
+    calc_kSIM
 
 Diffusion Map
 ~~~~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	diffmap
-	calc_pseudotime
-	infer_path
+    diffmap
+    calc_pseudotime
+    infer_path
 
 
 Cluster Algorithms
 ~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	cluster
-	louvain
-	leiden
-	spectral_louvain
-	spectral_leiden
+    cluster
+    louvain
+    leiden
+    spectral_louvain
+    spectral_leiden
 
 Visualization Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	tsne
-	umap
-	fle
-	net_umap
-	net_fle
+    tsne
+    umap
+    fle
+    net_umap
+    net_fle
 
 Doublet Detection
 ~~~~~~~~~~~~~~~~~~~~
@@ -116,33 +116,33 @@ Differential Expression Analysis
 ---------------------------------
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	de_analysis
-	markers
-	write_results_to_excel
+    de_analysis
+    markers
+    write_results_to_excel
 
 Annotate clusters
 -------------------
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	infer_cell_types
-	annotate
+    infer_cell_types
+    annotate
 
 Plotting
 --------
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	scatter
+    scatter
     scatter_groups
-	compo_plot
+    compo_plot
     violin
-	heatmap
-	dotplot
+    heatmap
+    dotplot
     dendrogram
     hvfplot
     qcviolin
@@ -163,8 +163,8 @@ Miscellaneous
 -------------
 
 .. autosummary::
-	:toctree: .
+    :toctree: .
 
-	search_genes
-	search_de_genes
-	find_markers
+    search_genes
+    search_de_genes
+    find_markers

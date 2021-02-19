@@ -19,6 +19,7 @@ from .preprocessing import (
     tsvd,
     tsvd_transform,
     regress_out,
+    nmf,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
 from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
@@ -33,7 +34,7 @@ from .nearest_neighbors import (
 from .graph_operations import construct_graph
 from .diffusion_map import diffmap
 from .pseudotime import calc_pseudotime, infer_path
-from .clustering import jump_method, louvain, leiden, spectral_louvain, spectral_leiden, cluster
+from .clustering import jump_method, louvain, leiden, spectral_louvain, spectral_leiden, cluster, split_one_cluster
 from .net_regressor import net_train_and_predict
 from .visualization import (
     tsne,

@@ -238,7 +238,7 @@ def tsne(
         Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
+        Number of threads to use. If ``-1``, use all physical CPU cores.
 
     n_components: ``int``, optional, default: ``2``
         Dimension of calculated FI-tSNE coordinates. By default, generate 2-dimensional data for 2D visualization.
@@ -348,7 +348,7 @@ def umap(
         The effective scale of embedded data points.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use for computing kNN graphs. If ``-1``, use all available threads.
+        Number of threads to use for computing kNN graphs. If ``-1``, use all physical CPU cores.
 
     full_speed: ``bool``, optional, default: ``False``
         * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
@@ -427,7 +427,7 @@ def fle(
         Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``tempfile.mkstemp`` to generate file name.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
+        Number of threads to use. If ``-1``, use all physical CPU cores.
 
     rep: ``str``, optional, default: ``"diffmap"``
         Representation of data used for the calculation. By default, use Diffusion Map coordinates. If ``None``, use the count matrix ``data.X``.
@@ -565,6 +565,9 @@ def net_umap(
     rep: ``str``, optional, default: ``"pca"``
         Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
 
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all physical CPU cores.
+
     n_components: ``int``, optional, default: ``2``
         Dimension of calculated UMAP coordinates. By default, generate 2-dimensional data for 2D visualization.
 
@@ -674,7 +677,7 @@ def net_umap(
     Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
     Y_init[selected, :] = X_umap
     Y_init[~selected, :] = net_train_and_predict(
-        X, X_umap, X_full[~selected, :], net_alpha, random_state, verbose=True
+        X, X_umap, X_full[~selected, :], net_alpha, n_jobs, random_state, verbose=True
     )
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
@@ -737,7 +740,7 @@ def net_fle(
         Temporary file to store the coordinates as the input to forceatlas2. If ``None``, use ``tempfile.mkstemp`` to generate file name.
 
     n_jobs: ``int``, optional, default: ``-1``
-        Number of threads to use. If ``-1``, use all available threads.
+        Number of threads to use. If ``-1``, use all physical CPU cores.
 
     rep: ``str``, optional, default: ``"diffmap"``
         Representation of data used for the calculation. By default, use Diffusion Map coordinates. If ``None``, use the count matrix ``data.X``.
@@ -857,7 +860,7 @@ def net_fle(
     Y_init = np.zeros((data.shape[0], n_components), dtype=np.float64)
     Y_init[selected, :] = X_fle
     Y_init[~selected, :] = net_train_and_predict(
-        X, X_fle, X_full[~selected, :], net_alpha, random_state, verbose=True
+        X, X_fle, X_full[~selected, :], net_alpha, n_jobs, random_state, verbose=True
     )
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init

@@ -54,7 +54,7 @@ def scatter(
     data: ``pegasusio.MultimodalData``
        Use current selected modality in data.
     attrs: ``str`` or ``List[str]``
-        Color scatter plots by attrs. Each attribute in attrs should be one key in data.obs or data.var_names (e.g. one gene). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+        Color scatter plots by attrs. Each attribute in attrs can be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
     basis: ``str``, optional, default: ``umap``
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
@@ -136,7 +136,7 @@ def scatter(
 
     if not is_list_like(legend_loc):
         legend_loc = [legend_loc] * nattrs
-    legend_fontsize = [5 if x == 'on data' else 10 for x in legend_loc]
+    legend_fontsize = [5 if x == "on data" else 10 for x in legend_loc]
 
     palettes = DictWithDefault(palettes)
     cmaps = DictWithDefault(cmaps)
@@ -156,12 +156,14 @@ def scatter(
 
                 if attr in data.obs:
                     values = data.obs[attr].values
-                else:
-                    try:
-                        loc = data.var_names.get_loc(attr)
-                    except KeyError:
-                        raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
+                elif attr in data.var_names:
+                    loc = data.var_names.get_loc(attr)
                     values = slicing(data.X, col = loc)
+                else:
+                    obsm_key, sep, component = attr.partition("@")
+                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+                        raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
+                    values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
 
@@ -292,7 +294,7 @@ def scatter_groups(
     data: ``pegasusio.MultimodalData``
        Use current selected modality in data.
     attr: ``str``
-        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs or data.var_names (e.g. one gene). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
     groupby: ``str``
         Generate separate scatter plots of 'attr' for data points in each category in 'groupby', which should be a key in data.obs representing one categorical variable.
     basis: ``str``, optional, default: ``umap``
@@ -366,12 +368,14 @@ def scatter_groups(
 
     if attr in data.obs:
         values = data.obs[attr].values
-    else:
-        try:
-            loc = data.var_names.get_loc(attr)
-        except KeyError:
-            raise KeyError(f"{attr} is neither in data.obs nor data.var_names!")
+    elif attr in data.var_names:
+        loc = data.var_names.get_loc(attr)
         values = slicing(data.X, col = loc)
+    else:
+        obsm_key, sep, component = attr.partition("@")
+        if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+            raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
+        values = data.obsm[obsm_key][:, int(component)]
 
     is_cat = is_categorical_dtype(values)
     if (not is_cat) and (not is_numeric_dtype(values)):
@@ -509,6 +513,8 @@ def compo_plot(
     groupby_label: Optional[str] = None,
     sort_function: Union[Callable[[List[str]], List[str]], str] = 'natsorted',
     panel_size: Optional[Tuple[float, float]] = (6, 4),
+    palette: Optional[List[str]] = None,
+    color_unused: bool = False,
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
@@ -593,11 +599,25 @@ def compo_plot(
         assert style == "normalized"
         df = df.div(df.sum(axis=0), axis=1) * 100.0
 
+    if color_unused:
+        if palette is None:
+            color_list = _get_palette(data.obs[condition].cat.categories.size)
+        else:
+            assert len(palette) >= data.obs[condition].cat.categories.size, "The palette provided has fewer colors than needed!"
+            color_idx = df.columns.map(data.obs[condition].cat.categories.get_loc)
+            color_list = palette[color_idx]
+    else:
+        if palette is None:
+            color_list = _get_palette(df.shape[1])
+        else:
+            assert len(palette) >= df.shape[1], "The palette provided has fewer colors than needed!"
+            color_list = palette[0:df.shape[1]]
+
     df.plot(
         kind = "bar" if not switch_axes else "barh",
         stacked = style == "frequency",
         legend = False,
-        color = _get_palette(df.shape[1]),
+        color = color_list,
         ax = ax,
     )
 
@@ -622,9 +642,11 @@ def violin(
     groupby: str,
     hue: Optional[str] = None,
     matkey: Optional[str] = None,
-    stripplot: bool = False,
-    scale: str = 'width',
+    stripplot: Optional[bool] = False,
+    inner: Optional[str] = None,
+    scale: Optional[str] = 'width',
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
+    palette: Optional[List[str]] = None,
     left: Optional[float] = 0.15,
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.1,
@@ -652,14 +674,17 @@ def violin(
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     stripplot: ``bool``, optional, default: ``False``
         Attach a stripplot to the violinplot or not. This option will be automatically turn off if 'hue' is set.
+    inner: ``str``, optional, default: ``None``
+        Representation of the datapoints in the violin interior:
+            - If ``box``, draw a miniature boxplot.
+            - If ``quartiles``, draw the quartiles of the distribution.
+            - If ``point`` or ``stick``, show each underlying datapoint.
+            - If ``None``, will draw unadorned violins.
     scale: ``str``, optional, default: ``width``
         The method used to scale the width of each violin:
             - If ``width``, each violin will have the same width.
             - If ``area``, each violin will have the same area.
             - If ``count``, the width of the violins will be scaled by the number of observations in that bin.
-    jitter: ``float`` or ``bool``, optional, default: ``False``
-        Amount of jitter (only along the categorical axis) to apply to stripplot. This is used only when ``stripplot`` is set to ``True``.
-        This can be useful when you have many points and they overlap, so that it is easier to see the distribution. You can specify the amount of jitter (half the width of the uniform random variable support), or just use ``True`` for a good default.
     panel_size: ``Tuple[float, float]``, optional, default: ``(8, 0.5)``
         The size (width, height) in inches of each violin panel.
     left: ``float``, optional, default: ``0.15``
@@ -726,7 +751,7 @@ def violin(
         ax = axes[i, 0]
         if stripplot:
             sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=1, color="k", jitter=True)
-        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=None, linewidth=1, ax=ax, cut=0, scale=scale, split=True, **kwargs)
+        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=inner, linewidth=1, ax=ax, cut=0, scale=scale, split=True, palette=palette, **kwargs)
         ax.grid(False)
 
         if hue is not None:
@@ -856,7 +881,7 @@ def heatmap(
     if not is_categorical_dtype(clusters):
         clusters = pd.Categorical(clusters)
     else:
-        clusters.remove_unused_categories(inplace = True)
+        clusters = clusters.remove_unused_categories()
     df_list = [pd.DataFrame({'cluster_name': clusters})]
 
     if len(obs_keys) > 0:
@@ -900,7 +925,7 @@ def heatmap(
         )
         cg.ax_heatmap.set_ylabel("")
         if attrs_labelsize is not None:
-            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize)
+            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=75)
     else:
         cg = sns.clustermap(
             data=df.T,
@@ -979,7 +1004,8 @@ def heatmap(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg.fig if return_fig else None
+    return cg
+    # return cg.fig if return_fig else None
 
 
 def dotplot(
@@ -1059,6 +1085,16 @@ def dotplot(
     X = slicing(data[:, genes].X)
     df = pd.DataFrame(data=X, columns=genes)
     df[groupby] = data.obs[groupby].values
+
+    if df[groupby].isna().sum() > 0:
+        logger.warning(f"Detected NaN values in attribute '{groupby}'! Please check if '{groupby}' is set correctly.")
+        return None
+
+    series = df[groupby].value_counts()
+    idx = series == 0
+    if idx.sum() > 0:
+        logger.warning(f"The following categories contain no cells and are removed: {','.join(list(series.index[idx]))}.")
+        df[groupby] = df[groupby].cat.remove_unused_categories()
 
     def non_zero(g):
         return np.count_nonzero(g) / g.shape[0]
@@ -1227,13 +1263,14 @@ def dendrogram(
     groupby: ``str``
         Categorical cell attribute to plot, which must exist in ``data.obs``.
     correlation_method: ``str``, optional, default: ``pearson``
-        Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation`_ for details.
+        Method of correlation between categories specified in ``data.obs``. Available options are: ``pearson``, ``kendall``, ``spearman``. See `pandas corr documentation <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corr.html>`_ for details.
     n_clusters: ``int``, optional, default: ``None``
         The number of clusters to find, used by hierarchical clustering. It must be ``None`` if ``distance_threshold`` is not ``None``.
     affinity: ``str``, optional, default: ``correlation``
         Metric used to compute the linkage, used by hierarchical clustering. Valid values for metric are:
             - From scikit-learn: ``cityblock``, ``cosine``, ``euclidean``, ``l1``, ``l2``, ``manhattan``.
             - From scipy.spatial.distance: ``braycurtis``, ``canberra``, ``chebyshev``, ``correlation``, ``dice``, ``hamming``, ``jaccard``, ``kulsinski``, ``mahalanobis``, ``minkowski``, ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``, ``sokalsneath``, ``sqeuclidean``, ``yule``.
+            
         Default is the correlation distance. See `scikit-learn distance documentation <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise_distances.html>`_ for details.
     linkage: ``str``, optional, default: ``complete``
         Which linkage criterion to use, used by hierarchical clustering. Below are available options:
@@ -1241,7 +1278,8 @@ def dendrogram(
             - ``avarage`` uses the average of the distances of each observation of the two sets.
             - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
             - ``single`` uses the minimum of the distances between all observations of the two sets.
-        See `scikit-learn documentation`_ for details.
+            
+        See `scikit-learn documentation <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html>`_ for details.
     compute_full_tree: ``str`` or ``bool``, optional, default: ``auto``
         Stop early the construction of the tree at ``n_clusters``, used by hierarchical clustering. It must be ``True`` if ``distance_threshold`` is not ``None``.
         By default, this option is ``auto``, which is ``True`` if and only if ``distance_threshold`` is not ``None``, or ``n_clusters`` is less than ``min(100, 0.02 * n_groups)``, where ``n_groups`` is the number of categories in ``data.obs[groupby]``.
@@ -1252,17 +1290,13 @@ def dendrogram(
     orientation: ``str``, optional, default: ``top``
         The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
     color_threshold: ``float``, optional, default: ``None``
-        Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
+        Threshold for coloring clusters. See `scipy dendrogram documentation <https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html>`_ for explanation.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
         The resolution in dots per inch.
     **kwargs:
         Are passed to ``scipy.cluster.hierarchy.dendrogram``.
-
-    .. _scikit-learn documentation: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html
-    .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
-    .. _pandas corr documentation: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corr.html
 
     Returns
     -------
