@@ -1004,8 +1004,7 @@ def heatmap(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg
-    # return cg.fig if return_fig else None
+    return cg.fig if return_fig else None
 
 
 def dotplot(
