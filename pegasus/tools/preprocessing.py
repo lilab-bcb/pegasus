@@ -141,12 +141,12 @@ def get_filter_stats(data: Union[MultimodalData, UnimodalData], min_genes_before
 
 
 @timer(logger=logger)
-def filter_data(data: Union[MultimodalData, UnimodalData], focus_list: List[str] = None) -> None:
+def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
     Parameters
     ----------
-    data: ``MultimodalData`` or ``UnimodalData`` object
+    data: ``MultimodalData`` object
         Use current selected modality in data, which should contain one RNA expression matrix.
     focus_list: ``List[str]``, optional, default None
         UnimodalData objects with keys in focus_list were qc_metrics marked. Filter them and make sure other modalities' barcodes are consistent with filtered barcodes. If focus_list is None and self._selected's modality is "rna", focus_list = [self._selected]
