@@ -68,7 +68,7 @@ def qc_metrics(
 
     Examples
     --------
-    >>> pg.qc_metrics(data)
+    >>> pg.qc_metrics(data, min_genes=500, max_genes=6000, mito_prefix="MT-", percent_mito=10)
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()

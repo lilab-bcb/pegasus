@@ -125,7 +125,7 @@ Next, you can install Pegasus system-wide by PyPI (see `macOS installation via P
 
 To use the Force-directed-layout (FLE) embedding feature, you'll need Java. You can either install `Oracle JDK`_, or install OpenJDK via Homebrew::
 
-	brew cask install java
+	brew install java
 
 .. _macOS installation via PyPI: ./installation.html#macos-install-via-pypi
 
@@ -164,7 +164,7 @@ Then install *fitsne* by::
 Install via Conda
 ^^^^^^^^^^^^^^^^^^
 
-Alternatively, you can install Pegasus via Conda, which is a separate virtual environment without touching your system-wide packages and settings. 
+Alternatively, you can install Pegasus via Conda, which is a separate virtual environment without touching your system-wide packages and settings.
 
 You can install Anaconda_, or Miniconda_ (a minimal installer of conda). In this tutorial, we'll use Miniconda.
 
@@ -197,7 +197,7 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 Install via Singularity
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Singularity_ is a container engine similar to Docker. Its main difference from Docker is that Singularity can be used with unprivileged permissions. 
+Singularity_ is a container engine similar to Docker. Its main difference from Docker is that Singularity can be used with unprivileged permissions.
 
 On `Singularity Hub`_, we maintain Singularity container of Pegasus current stable version (running on Ubuntu Linux 20.04 with Python 3.8). On your server or machine where Singularity has been installed, pull this container using::
 
