@@ -18,7 +18,7 @@ matplotlib>=2.0.0
 natsort
 numba
 numpy
-pandas>=0.24
+pandas>=1.2.0
 pegasusio>=0.2.9
 pybind11
 python-igraph
