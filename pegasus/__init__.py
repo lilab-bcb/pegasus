@@ -85,6 +85,8 @@ from .plotting import (
     ridgeplot,
 )
 
+from .ddqc import ddqc_metrics
+
 try:
     from importlib.metadata import version, PackageNotFoundError
 except ImportError:  # < Python 3.8: Use backport module

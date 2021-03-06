@@ -18,7 +18,7 @@ from pegasusio import timer, run_gc
 
 
 def qc_metrics(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     select_singlets: bool = False,
     remap_string: str = None,
     subset_string: str = None,
@@ -33,7 +33,7 @@ def qc_metrics(
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
        Use current selected modality in data, which should contain one RNA expression matrix.
     select_singlets: ``bool``, optional, default ``False``
         If select only singlets.
@@ -75,12 +75,12 @@ def qc_metrics(
     calc_qc_filters(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
 
 
-def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> pd.DataFrame:
+def get_filter_stats(data: Union[MultimodalData, UnimodalData], min_genes_before_filt: int = 100) -> pd.DataFrame:
     """Calculate filtration stats on cell barcodes.
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Use current selected modality in data, which should contain one RNA expression matrix.
     min_genes_before_filt: ``int``, optional, default ``100``
         If raw data matrix is input, empty barcodes will dominate pre-filtration statistics. To avoid this, for raw matrix, only consider barcodes with at least <number> genes for pre-filtration condition.
@@ -141,12 +141,12 @@ def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> 
 
 
 @timer(logger=logger)
-def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
+def filter_data(data: Union[MultimodalData, UnimodalData], focus_list: List[str] = None) -> None:
     """ Filter data based on qc_metrics calculated in ``pg.qc_metrics``.
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Use current selected modality in data, which should contain one RNA expression matrix.
     focus_list: ``List[str]``, optional, default None
         UnimodalData objects with keys in focus_list were qc_metrics marked. Filter them and make sure other modalities' barcodes are consistent with filtered barcodes. If focus_list is None and self._selected's modality is "rna", focus_list = [self._selected]
@@ -165,12 +165,12 @@ def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
 
 
 @timer(logger=logger)
-def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> None:
+def identify_robust_genes(data: Union[MultimodalData, UnimodalData], percent_cells: float = 0.05) -> None:
     """ Identify robust genes as candidates for HVG selection and remove genes that are not expressed in any cells.
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Use current selected modality in data, which should contain one RNA expression matrix.
     percent_cells: ``float``, optional, default: ``0.05``
        Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
@@ -295,7 +295,7 @@ def _run_filter_data(
 
 @timer(logger=logger)
 def log_norm(
-    data: MultimodalData, 
+    data: Union[MultimodalData, UnimodalData], 
     norm_count: float = 1e5, 
     backup_matrix: str = "raw.X",
 ) -> None:
@@ -303,7 +303,7 @@ def log_norm(
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Use current selected modality in data, which should contain one RNA expression matrix.
 
     norm_count: ``int``, optional, default: ``1e5``.
@@ -343,7 +343,7 @@ def log_norm(
 
 @run_gc
 def select_features(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     features: str = "highly_variable_features",
     standardize: bool = True,
     max_value: float = 10.0,
@@ -352,7 +352,7 @@ def select_features(
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with rows for cells and columns for genes.
 
     features: ``str``, optional, default: ``None``.
@@ -416,7 +416,7 @@ def select_features(
 
 @timer(logger=logger)
 def pca(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
@@ -430,7 +430,7 @@ def pca(
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with rows for cells and columns for genes.
 
     n_components: ``int``, optional, default: ``50``.
@@ -491,14 +491,14 @@ def pca(
 
 @timer(logger=logger)
 def pc_transform(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     X: Union[csr_matrix, np.ndarray]
 ) -> np.ndarray:
     """Transform a new count matrix X using existing PCs contained in data.
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with PCs calculated
 
     X: ``Union[csr_matrix, np.ndarray]``
@@ -600,7 +600,7 @@ def regress_out(
 
 @timer(logger=logger)
 def tsvd(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     n_components: int = 51,
     features: str = "robust",
     n_jobs: int = -1,
@@ -612,7 +612,7 @@ def tsvd(
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with rows for cells and columns for genes.
 
     n_components: ``int``, optional, default: ``51``.
@@ -667,14 +667,14 @@ def tsvd(
 
 @timer(logger=logger)
 def tsvd_transform(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     X: Union[csr_matrix, np.ndarray]
 ) -> np.ndarray:
     """Transform a new count matrix X using existing TSVD components contained in data.
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with PCs calculated
 
     X: ``Union[csr_matrix, np.ndarray]``
@@ -708,7 +708,7 @@ def tsvd_transform(
 
 @timer(logger=logger)
 def nmf(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     n_components: int = 20,
     init: str = "nndsvdar",
     solver: str = "cd",
@@ -725,7 +725,7 @@ def nmf(
 
     Parameters
     ----------
-    data: ``pegasusio.MultimodalData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with rows for cells and columns for genes.
 
     n_components: ``int``, optional, default: ``50``.
