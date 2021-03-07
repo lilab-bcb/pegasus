@@ -380,21 +380,19 @@ def spectral_louvain(
     except ImportError:
         print("Need louvain! Try 'pip install louvain-github'.")
 
-    if "X_" + rep_kmeans not in data.obsm.keys():
-        logger.warning(
-            "{} is not calculated, switch to pca instead.".format(rep_kmeans)
-        )
+    if f"X_{rep_kmeans}" not in data.obsm.keys():
+        logger.warning(f"{rep_kmeans} is not calculated, switch to pca instead.")
         rep_kmeans = "pca"
-        if "X_" + rep_kmeans not in data.obsm.keys():
-            raise ValueError("Please run {} first!".format(rep_kmeans))
-    if "W_" + rep not in data.uns:
+        if f"X_{rep_kmeans}" not in data.obsm.keys():
+            raise ValueError(f"Please run {rep_kmeans} first!")
+    if f"W_{rep}" not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
-        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, n_jobs, random_state,
+        data.obsm[f"X_{rep_kmeans}"], n_clusters, n_clusters2, n_init, n_jobs, random_state,
     )
 
-    W = data.uns["W_" + rep]
+    W = data.uns[f"W_{rep}"]
 
     G = construct_graph(W)
     partition_type = louvain_module.RBConfigurationVertexPartition
@@ -480,21 +478,19 @@ def spectral_leiden(
     except ImportError:
         print("Need leidenalg! Try 'pip install leidenalg'.")
 
-    if "X_" + rep_kmeans not in data.obsm.keys():
-        logger.warning(
-            "{} is not calculated, switch to pca instead.".format(rep_kmeans)
-        )
+    if f"X_{rep_kmeans}" not in data.obsm.keys():
+        logger.warning(f"{rep_kmeans} is not calculated, switch to pca instead.")
         rep_kmeans = "pca"
-        if "X_" + rep_kmeans not in data.obsm.keys():
-            raise ValueError("Please run {} first!".format(rep_kmeans))
-    if "W_" + rep not in data.uns:
+        if f"X_{rep_kmeans}" not in data.obsm.keys():
+            raise ValueError(f"Please run {rep_kmeans} first!")
+    if f"W_{rep}" not in data.uns:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
-        data.obsm[rep_kmeans], n_clusters, n_clusters2, n_init, n_jobs, random_state,
+        data.obsm[f"X_{rep_kmeans}"], n_clusters, n_clusters2, n_init, n_jobs, random_state,
     )
 
-    W = data.uns["W_" + rep]
+    W = data.uns[f"W_{rep}"]
 
     G = construct_graph(W)
     partition_type = leidenalg.RBConfigurationVertexPartition
