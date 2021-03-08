@@ -356,11 +356,15 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 )
 
     if kwargs["output_h5ad"]:
+        import time
+        start_time = time.perf_counter()
         adata = unidata.to_anndata()
         adata.uns["scale.data"] = adata.uns.pop("_tmp_fmat_highly_variable_features")  # assign by reference
         adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
         adata.write(f"{output_name}.h5ad", compression="gzip")
         del adata
+        end_time = time.perf_counter()
+        logger.info(f"H5AD file {output_name}.h5ad is written. Time spent = {end_time - start_time:.2f}s.")
 
     # write out results
     if kwargs["output_loom"]:
