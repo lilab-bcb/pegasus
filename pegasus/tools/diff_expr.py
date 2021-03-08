@@ -150,6 +150,11 @@ def _de_test(
         dftq = pd.DataFrame(qvals, index = gene_names, columns = [f"{x}:t_qval" for x in cluster_labels.categories])
         df_list.extend([dft, dftp, dftq])
 
+        if verbose:
+            end = time.perf_counter()
+            logger.info(f"Welch's t-test is finished. Time spent = {end - start:.4f}s.")
+            start = end
+
     if fisher:
         from pegasus.cylib.cfisher import fisher_exact
         a_true, a_false, b_true, b_false = results[2]
