@@ -84,6 +84,7 @@ from .plotting import (
     rank_plot,
     ridgeplot,
 )
+from .ddqc import ddqc_metrics
 
 try:
     from importlib.metadata import version, PackageNotFoundError
