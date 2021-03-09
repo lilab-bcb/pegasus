@@ -88,7 +88,7 @@ def _reverse_to_raw_matrix(unidata: UnimodalData, obs_copy: pd.DataFrame, var_co
 # do_metric - set to true, if you want to filter the data based on metric
 # record_path - path for recording filtered cells CSVs (keep it None if not needed)
 def ddqc_metrics(data: MultimodalData, res=1.3, method="mad", threshold=2, basic_n_genes=100, basic_percent_mito=80, mito_prefix="MT-",
-                 ribo_prefix="^Rp[sl]\d", do_counts=True, do_genes=True, do_mito=True, do_ribo=True, random_state=29) -> None:
+                 ribo_prefix="^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", do_counts=True, do_genes=True, do_mito=True, do_ribo=True, random_state=29) -> None:
     assert isinstance(data, MultimodalData)
     obs_copy, var_copy, uns_copy = _cluster_data(data, basic_n_genes, basic_percent_mito, mito_prefix, ribo_prefix, random_state=random_state)
 
