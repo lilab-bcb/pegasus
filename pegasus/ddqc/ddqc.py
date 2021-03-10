@@ -45,8 +45,11 @@ def _cluster_data(data: MultimodalData, n_genes: int, percent_mito: float, mito_
 # do_upper_co and do_lower_co - whether to do upper and lower cutoff
 # record_path - path for recording filtered cells CSVs (keep it None if not needed)
 # Only keep "mad" and "outlier"
-def _metric_filter(data: MultimodalData, method: str, param: float, metric_name: str, do_lower_co: bool = False, do_upper_co: bool = False) -> np.ndarray:
+def _metric_filter(data: MultimodalData, method: str, param: float, metric_name: str, do_lower_co: bool = False, do_upper_co: bool = False, df_qc: pd.DataFrame = None) -> np.ndarray:
     qc_pass = np.zeros(data.shape[0], dtype = bool) # T/F array to tell whether the cell is filtered
+    if df_qc is not None:
+        df_qc[f"{metric_name}_lower_co"] = None
+        df_qc[f"{metric_name}_upper_co"] = None
 
     for cl in data.obs["louvain_labels"].cat.categories: # iterate through all clusters
         idx = data.obs["louvain_labels"] == cl
@@ -66,8 +69,12 @@ def _metric_filter(data: MultimodalData, method: str, param: float, metric_name:
         qc_pass_cl = np.ones(values.size, dtype = bool)
         if do_lower_co:
             qc_pass_cl &= (values >= lower_co)
+            if df_qc is not None:
+                df_qc.loc[idx, f"{metric_name}_lower_co"] = lower_co
         if do_upper_co:
             qc_pass_cl &= (values <= upper_co)
+            if df_qc is not None:
+                df_qc.loc[idx, f"{metric_name}_upper_co"] = upper_co
         qc_pass[idx] = qc_pass_cl
 
     return qc_pass
@@ -86,22 +93,29 @@ def _reverse_to_raw_matrix(unidata: UnimodalData, obs_copy: pd.DataFrame, var_co
 # method - method name for filtering (mad or outlier)
 # threshold - parameter for the selected method
 # do_metric - set to true, if you want to filter the data based on metric
-# record_path - path for recording filtered cells CSVs (keep it None if not needed)
+# return_df_qc: return a dataframe with cluster labels and thresholds for each metric
 def ddqc_metrics(data: MultimodalData, res=1.3, method="mad", threshold=2, basic_n_genes=100, basic_percent_mito=80, mito_prefix="MT-",
-                 ribo_prefix="^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", do_counts=True, do_genes=True, do_mito=True, do_ribo=True, random_state=29) -> None:
+                 ribo_prefix="^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", do_counts=True, do_genes=True, do_mito=True, do_ribo=True, random_state=29,
+                 return_df_qc=False) -> Union[None, pd.DataFrame]:
     assert isinstance(data, MultimodalData)
     obs_copy, var_copy, uns_copy = _cluster_data(data, basic_n_genes, basic_percent_mito, mito_prefix, ribo_prefix, random_state=random_state)
+
+    df_qc = None
+    if return_df_qc:
+        df_qc = pd.DataFrame({"cluster_labels": data.obs["louvain_labels"].values}, index = data.obs_names)
 
     passed_qc = np.ones(data.shape[0], dtype = bool)
     # for each metric if do_metric is true, the filtering will be performed
     if do_counts:
-        passed_qc &= _metric_filter(data, method, threshold, "n_counts", do_lower_co=True)
+        passed_qc &= _metric_filter(data, method, threshold, "n_counts", do_lower_co=True, df_qc=df_qc)
     if do_genes:
-        passed_qc &= _metric_filter(data, method, threshold, "n_genes", do_lower_co=True)
+        passed_qc &= _metric_filter(data, method, threshold, "n_genes", do_lower_co=True, df_qc=df_qc)
     if do_mito:
-        passed_qc &= _metric_filter(data, method, threshold, "percent_mito", do_upper_co=True)
+        passed_qc &= _metric_filter(data, method, threshold, "percent_mito", do_upper_co=True, df_qc=df_qc)
     if do_ribo:
-        passed_qc &= _metric_filter(data, method, threshold, "percent_ribo", do_upper_co=True)
+        passed_qc &= _metric_filter(data, method, threshold, "percent_ribo", do_upper_co=True, df_qc=df_qc)
 
     _reverse_to_raw_matrix(data.current_data(), obs_copy, var_copy, uns_copy)
     data.obs["passed_qc"] = passed_qc
+
+    return df_qc
