@@ -402,7 +402,7 @@ def annotate(
     based_on: str,
     anno_dict: Union[Dict[str, str], List[str]],
 ) -> None:
-    """Add annotation to AnnData obj.
+    """Add annotation to the data object as a categorical variable.
 
     Parameters
     ----------
@@ -430,8 +430,7 @@ def annotate(
     if isinstance(anno_dict, list):
         cluster_ids = data.obs[based_on].cat.categories.values.astype('str')
         anno_dict = dict(zip(cluster_ids, anno_dict))
-
-    data.obs[name] = [anno_dict[x] for x in data.obs[based_on]]
+    data.obs[name] = pd.Categorical([anno_dict[x] for x in data.obs[based_on]])
 
 @timer(logger=logger)
 def run_annotate_cluster(
