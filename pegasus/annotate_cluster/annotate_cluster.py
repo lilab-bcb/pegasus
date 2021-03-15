@@ -181,7 +181,7 @@ class Annotator:
 
 
 def infer_cluster_names(
-    cell_type_dict: Dict[str, List["CellType"]], threshold: float = 0.5
+    cell_type_dict: Dict[str, List["CellType"]], threshold: float = 0.5, is_human_immune: bool = False
 ) -> List[str]:
     """Decide cluster names based on cell types automatically.
 
@@ -193,6 +193,9 @@ def infer_cluster_names(
     threshold: ``float``, optional, default: ``0.5``
         A threshold for cell type result reported. It should be a real number between ``0.0`` and ``1.0``.
 
+    is_human_immune: ``bool``, optional, default: False
+        If cell types are annotated using the Pegasus' human_immune markers, apply a smarter naming algorithm.
+
     Returns
     -------
     ``List[str]``
@@ -203,9 +206,11 @@ def infer_cluster_names(
     >>> cell_type_dict = pg.infer_cell_types(adata, markers = 'human_immune', de_test = 't')
     >>> cluster_names = pg.infer_cluster_names(cell_type_dict)
     """
+    from collections import Counter
+
     cluster_ids = natsorted(cell_type_dict.keys())
     names = []
-    name_dict = dict()
+    name_dict = Counter()
     for cluster_id in cluster_ids:
         ct_list = cell_type_dict[cluster_id]
 
@@ -213,15 +218,42 @@ def infer_cluster_names(
             cell_name = cluster_id
         else:
             ct = ct_list[0]
-            while ct.subtypes is not None and len(ct.subtypes) > 0 and ct.subtypes[0].score >= threshold:
-                ct = ct.subtypes[0]
-            cell_name = ct.name
-
-            if cell_name in name_dict:
-                name_dict[cell_name] += 1
-                cell_name = cell_name + "-" + str(name_dict[cell_name])
+            if is_human_immune and ct.name == "T cell":
+                subname = None
+                has_naive_t = False
+                for subt in ct.subtypes:
+                    if subt.score >= threshold and (subt.name != "T regulatory cell" or subt.avgp > 0.5):
+                        if subt.name == "Naive T cell" and subt.score >= 0.6:
+                            has_naive_t = True
+                        elif subname is None:
+                            subname = subt.name
+                if subname is None:
+                    cell_name = "Naive T cell" if has_naive_t else "T cell"
+                elif has_naive_t and (subname in ["T helper cell", "Cytotoxic T cell"]):
+                    cell_name = "CD4+ Naive T cell" if subname == "T helper cell" else "CD8+ Naive T cell"
+                else:
+                    cell_name = subname
+            elif is_human_immune and ct.name == "B cell":
+                subname = None
+                for subt in ct.subtypes:
+                    if subt.score >= threshold:
+                        subname = subt.name
+                        break
+                cell_name = subname if subname is not None else "Naive B cell"
+            elif is_human_immune and ct.name == "CD1C+ dendritic cell":
+                cell_name = ct.name
+                for ctype in ct_list[1:]:
+                    if ctype.score >= threshold and ctype.name == "CLEC9A+ dendritic cell":
+                        cell_name = "Conventional dendritic cell (CD1C+/CLEC9A+)"
+                        break
             else:
-                name_dict[cell_name] = 1
+                while ct.subtypes is not None and len(ct.subtypes) > 0 and ct.subtypes[0].score >= threshold:
+                    ct = ct.subtypes[0]
+                cell_name = ct.name
+
+            name_dict[cell_name] += 1
+            if name_dict[cell_name] > 1:
+                cell_name = f"{cell_name}-{name_dict[cell_name]}"
 
         names.append(cell_name)
 

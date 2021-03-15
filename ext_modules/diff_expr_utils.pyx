@@ -20,6 +20,7 @@ ctypedef fused indptr_type:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef tuple csr_to_csc(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int M, int N, const long[:] ords):
+    """ This routine in addition group cells by clusters (ords)"""
     cdef Py_ssize_t i, j, pos, col
 
     output_indptr = np.zeros(N+1, dtype = np.int64)
@@ -124,6 +125,7 @@ cdef void partition_indices(const long[:] indices, const long[:] cumsum, long[:]
 cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint verbose):
     """ Run Mann-Whitney U test for all clusters in cluster_labels, focusing only on genes in [start_pos, end_pos)
         P values are calculated based on normal distribution approximation, accurate when each cluster has > 20 samples
+        This function assumes the cells are grouped by cluster ids
     """
     cdef Py_ssize_t ngene, ncluster, nsample
     cdef Py_ssize_t i, j, pos_i

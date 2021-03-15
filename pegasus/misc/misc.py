@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from typing import List
-from anndata import AnnData
+from typing import List, Union
+from pegasusio import UnimodalData, MultimodalData
 
 import logging
 logger = logging.getLogger("pegasus")
@@ -9,19 +9,19 @@ logger = logging.getLogger("pegasus")
 
 
 def search_genes(
-    data: AnnData,
+    data: Union[MultimodalData, UnimodalData],
     gene_list: List[str],
     rec_key: str = "de_res",
     measure: str = "percentage",
 ) -> pd.DataFrame:
-    """Extract and display gene expressions for each cluster from an `anndata` object.
+    """Extract and display gene expressions for each cluster.
 
     This function helps to see marker expressions in clusters via the interactive python environment.
 
     Parameters
     ----------
 
-    data: ``anndata.AnnData``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix containing the expression matrix and differential expression results.
 
     gene_list: ``List[str]``
@@ -51,7 +51,7 @@ def search_genes(
 
 
 def search_de_genes(
-    data: AnnData,
+    data: Union[MultimodalData, UnimodalData],
     gene_list: List[str],
     rec_key: str = "de_res",
     de_test: str = "fisher",
@@ -69,7 +69,7 @@ def search_de_genes(
 
     Parameters
     ----------
-    data: ``anndata.Anndata``
+    data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix containing the expression matrix and differential expression results.
 
     gene_list: ``List[str]``
@@ -162,7 +162,7 @@ def show_attributes(
 
 
 def perform_oneway_anova(
-    data: AnnData,
+    data: Union[MultimodalData, UnimodalData],
     glist: List[str],
     restriction_vec: List[str],
     group_str: str,
@@ -304,3 +304,55 @@ def perform_oneway_anova(
             data.obs.loc[idx, res_key] = group_names[i]
 
     return results
+
+
+def find_outlier_clusters(data: Union[MultimodalData, UnimodalData], cluster_attr: str, qc_attr: str) -> pd.DataFrame:
+    """ Using MWU test to detect if any cluster is an outlier regarding one of the qc attributes: n_genes, n_counts, percent_mito.
+
+    Parameters
+    ----------
+    data: ``MultimodalData`` or ``UnimodalData`` object
+        Annotated data matrix with rows for cells and columns for genes.
+    
+    cluster_attr: ``str``
+        Attribute in data.obs representing cluster assignment, e.g. 'louvain_labels'
+
+    qc_attr: ``str``
+        One of the QC attribute, choosing from 'n_genes', 'n_counts' and 'percent_mito'.
+    """
+    from scipy.sparse import csr_matrix, csc_matrix
+    from pegasus.cylib.de_utils import csr_to_csc, calc_mwu
+
+    cluster_labels = data.obs[cluster_attr].values
+    values = data.obs[qc_attr].values
+    report = 'upper' if qc_attr == 'percent_mito' else 'lower'
+
+    nsample = cluster_labels.size
+    ords = np.argsort(cluster_labels.codes)
+    mat_csr = csr_matrix(values.astype(np.float32).reshape(-1, 1))
+    data, indices, indptr = csr_to_csc(mat_csr.data, mat_csr.indices, mat_csr.indptr, nsample, 1, ords)
+    start_pos = 0
+    end_pos = 1
+    cluster_cnts = cluster_labels.value_counts()
+    n1arr = cluster_cnts.values
+    n2arr = nsample - n1arr
+    cluster_cumsum = cluster_cnts.cumsum().values
+    first_j = second_j = -1
+    posvec = np.where(n1arr > 0)[0]
+    if len(posvec) == 2:
+        first_j = posvec[0]
+        second_j = posvec[1]
+    U_stats, pvals, aurocs = calc_mwu(start_pos, end_pos, data, indices, indptr, n1arr, n2arr, cluster_cumsum, first_j, second_j, False)
+
+    index = []
+    pval_vec = []
+    auroc_vec = []
+    for i in range(U_stats.shape[1]):
+        if pvals[0, i] < 1e-6 and ((report == 'lower' and aurocs[0, i] < 0.25) or (report == 'upper' and aurocs[0, i] > 0.75)):
+            index.append(cluster_labels.categories[i])
+            pval_vec.append(pvals[0, i])
+            auroc_vec.append(aurocs[0, i])
+    res_df = pd.DataFrame(data = {'auroc': auroc_vec, 'pval': pval_vec}, index = index)
+    res_df.sort_values(by='auroc', ascending=(report == 'lower'), inplace=True)
+    
+    return res_df
