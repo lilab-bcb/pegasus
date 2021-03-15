@@ -42,13 +42,13 @@
 						"name" : "T regulatory cell",
 						"markers" : [
 							{
-								"genes" : ["RTKN2+", "TIGIT+", "FOXP3+"],
-								"weight" : 0.8,
+								"genes" : ["FOXP3+", "IL2RA+"],
+								"weight" : 0.7,
 								"comments" : "key T reg markers"
 							},
 							{
-								"genes" : ["CD4+", "IL2RA+"],
-								"weight" : 0.2,
+								"genes" : ["CD4+"],
+								"weight" : 0.3,
 								"comments" : "key markers that do not express heavily in droplet-based RNA-Seq"
 							}
 						]
@@ -173,29 +173,9 @@
 			"name" : "CD14+ Monocyte",
 			"markers" : [
 				{
-					"genes" : ["VCAN+"],
-					"weight" : 0.16,
-					"comment" : ""
-				},
-				{
-					"genes" : ["FCN1+"],
-					"weight" : 0.16,
-					"comment" : ""
-				},
-				{
-					"genes" : ["S100A8+", "S100A9+"],
-					"weight" : 0.32,
-					"comment" : "calprotectin heterodimer"
-				},
-				{
-					"genes" : ["CD14+"],
-					"weight" : 0.16,
-					"comment" : "marker for CD14+ monocyte"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
-					"weight" : 0.2,
-					"comment" : "MHC II"
+					"genes" : ["CD14+", "VCAN+", "S100A8+", "S100A9+", "FCN1+"],
+					"weight" : 1.0,
+					"comment" : "Markers from Chloe et al Science 2017 paper"
 				}
 			]
 		},
@@ -204,67 +184,33 @@
 			"name" : "CD16+ Monocyte",
 			"markers" : [
 				{
-					"genes" : ["FCGR3A+"],
-					"weight" : 0.2,
-					"comment" : "CD16a, key marker"
-				},
-				{
-					"genes" : ["ASAH1+", "MS4A7+", "IFITM2+", "IFITM3+"],
-					"weight" : 0.6,
-					"comment" : "important markers from Chloe et al Science 2017 paper"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
-					"weight" : 0.2,
-					"comment" : "MHC II"
+					"genes" : ["FCGR3A+", "ASAH1+", "MS4A7+", "IFITM2+", "IFITM3+"],
+					"weight" : 1.0,
+					"comment" : "Markers from Chloe et al Science 2017 paper"
 				}
 			]
 		},
 
 		{
-			"name" : "Conventional dendritic cell",
+			"name" : "CD1C+ dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["HLA-DPA1+", "HLA-DPB1+", "HLA-DQA1+", "HLA-DQB1+"],
-					"weight" : 0.4,
-					"comment" : "key markers"
-				},
+					"genes" : ["CD1C+", "FCER1A+", "CLEC10A+"],
+					"weight" : 1.0,
+					"comment" : "markers from Chloe et al Science 2017 paper"
+				}
+			]
+		},
+
+		{
+			"name" : "CLEC9A+ dendritic cell",
+			"markers" : [
 				{
-					"genes" : ["FCER1A+", "CLEC10A+"],
-					"weight" : 0.4,
-					"comment" : "key markers 2"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
-					"weight" : 0.2,
-					"comment" : "MHC II"
-				}				
-			],
-			"subtypes" : {
-				"title" : "cDC subtype markers",
-				"cell_types" : [
-					{
-						"name" : "CD1C+ cDC",
-						"markers" : [
-							{
-								"genes" : ["CD1C+"],
-								"weight" : 1.0,
-								"comment" : "CD1C"
- 							}
-						]
-					},
-					{
-						"name" : "CD141+ cDC",
-						"markers" : [
-							{
-								"genes" : ["THBD+"],
-								"weight" : 1.0,
-								"comment" : "CD141"
- 							}
-						]
-					}
-				]
-			}
+					"genes" : ["CLEC9A+", "C1orf54+", "CADM1+", "XCR1+"],
+					"weight" : 1.0,
+					"comment" : "markers from Chloe et al Science 2017 paper"
+				}
+			]
 		},
 
 		{
@@ -272,13 +218,8 @@
 			"markers" : [
 				{
 					"genes" : ["JCHAIN+", "LILRA4+", "GZMB+", "MZB1+", "IL3RA+", "SERPINF1+", "ITM2C+", "IRF7+"],
-					"weight" : 0.8,
+					"weight" : 1.0,
 					"comment" : "important pDC markers"
-				},
-				{
-					"genes" : ["HLA-DRA+", "HLA-DRB1+"],
-					"weight" : 0.2,
-					"comment" : "MHC II"
 				}
 			]
 		},
@@ -366,14 +307,9 @@
 			"name" : "Neutrophil",
 			"markers" : [
 				{
-					"genes" : ["FUT4+", "MPO+", "CSF3R+"],
-					"weight" : 0.6,
+					"genes" : ["FUT4+", "MPO+", "CEACAM8+", "ELANE+", "CXCR1+", "CXCR2+", "LY6G6D+"],
+					"weight" : 1.0,
 					"comment" : "key markers"
-				},
-				{
-					"genes" : ["FCGR3A+", "FCGR3B+", "CEACAM8+"],
-					"weight" : 0.4,
-					"comment" : "important markers"
 				}
 			]
 		},
