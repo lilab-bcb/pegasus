@@ -43,9 +43,10 @@ def _cluster_data(data: MultimodalData, n_genes: int, percent_mito: float, mito_
 # param - parameter for the selected method
 # metric name - name of the metric (must be in adata.obs)
 # do_upper_co and do_lower_co - whether to do upper and lower cutoff
-# record_path - path for recording filtered cells CSVs (keep it None if not needed)
+# lower_bound and upper_bound - maximum lower_co and minimum upper_co cutoff
 # Only keep "mad" and "outlier"
-def _metric_filter(data: MultimodalData, method: str, param: float, metric_name: str, do_lower_co: bool = False, do_upper_co: bool = False, df_qc: pd.DataFrame = None) -> np.ndarray:
+def _metric_filter(data: MultimodalData, method: str, param: float, metric_name: str, do_lower_co: bool = False, do_upper_co: bool = False,
+                   lower_bound: float = INF, upper_bound: float = -INF, df_qc: pd.DataFrame = None) -> np.ndarray:
     qc_pass = np.zeros(data.shape[0], dtype = bool) # T/F array to tell whether the cell is filtered
     if df_qc is not None:
         df_qc[f"{metric_name}_lower_co"] = None
@@ -65,7 +66,10 @@ def _metric_filter(data: MultimodalData, method: str, param: float, metric_name:
             q75, q25 = np.percentile(values, [75, 25])
             lower_co = q25 - 1.5 * (q75 - q25)
             upper_co = q75 + 1.5 * (q75 - q25)
-        
+
+        lower_co = min(lower_co, lower_bound)
+        upper_bound = max(upper_co, upper_bound)
+
         qc_pass_cl = np.ones(values.size, dtype = bool)
         if do_lower_co:
             qc_pass_cl &= (values >= lower_co)
@@ -93,25 +97,27 @@ def _reverse_to_raw_matrix(unidata: UnimodalData, obs_copy: pd.DataFrame, var_co
 # method - method name for filtering (mad or outlier)
 # threshold - parameter for the selected method
 # do_metric - set to true, if you want to filter the data based on metric
+# n_genes_lower_bound - maximum cutoff for n genes
+# percent_mito_upper_bound - minimum cutoff for percent mito
 # return_df_qc: return a dataframe with cluster labels and thresholds for each metric
-def ddqc_metrics(data: MultimodalData, res=1.3, method="mad", threshold=2, basic_n_genes=100, basic_percent_mito=80, mito_prefix="MT-",
-                 ribo_prefix="^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", do_counts=True, do_genes=True, do_mito=True, do_ribo=True, random_state=29,
-                 return_df_qc=False) -> Union[None, pd.DataFrame]:
+def ddqc_metrics(data: MultimodalData, res=1.3, method="mad", threshold=2, basic_n_genes=100, percent_mito_upper_bound=10, mito_prefix="MT-",
+                 ribo_prefix="^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", do_counts=True, do_genes=True, do_mito=True, do_ribo=False, n_genes_lower_bound=200,
+                 basic_percent_mito=80, random_state=29, return_df_qc=False) -> Union[None, pd.DataFrame]:
     assert isinstance(data, MultimodalData)
     obs_copy, var_copy, uns_copy = _cluster_data(data, basic_n_genes, basic_percent_mito, mito_prefix, ribo_prefix, random_state=random_state)
 
     df_qc = None
     if return_df_qc:
-        df_qc = pd.DataFrame({"cluster_labels": data.obs["louvain_labels"].values}, index = data.obs_names)
+        df_qc = pd.DataFrame({"cluster_labels": data.obs["louvain_labels"].values}, index=data.obs_names)
 
     passed_qc = np.ones(data.shape[0], dtype = bool)
     # for each metric if do_metric is true, the filtering will be performed
     if do_counts:
         passed_qc &= _metric_filter(data, method, threshold, "n_counts", do_lower_co=True, df_qc=df_qc)
     if do_genes:
-        passed_qc &= _metric_filter(data, method, threshold, "n_genes", do_lower_co=True, df_qc=df_qc)
+        passed_qc &= _metric_filter(data, method, threshold, "n_genes", do_lower_co=True, lower_bound=n_genes_lower_bound, df_qc=df_qc)
     if do_mito:
-        passed_qc &= _metric_filter(data, method, threshold, "percent_mito", do_upper_co=True, df_qc=df_qc)
+        passed_qc &= _metric_filter(data, method, threshold, "percent_mito", do_upper_co=True, upper_bound=percent_mito_upper_bound, df_qc=df_qc)
     if do_ribo:
         passed_qc &= _metric_filter(data, method, threshold, "percent_ribo", do_upper_co=True, df_qc=df_qc)
 
