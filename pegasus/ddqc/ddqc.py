@@ -46,7 +46,7 @@ def _cluster_data(data: MultimodalData, n_genes: int, percent_mito: float, mito_
 # lower_bound and upper_bound - maximum lower_co and minimum upper_co cutoff
 # Only keep "mad" and "outlier"
 def _metric_filter(data: MultimodalData, method: str, param: float, metric_name: str, do_lower_co: bool = False, do_upper_co: bool = False,
-                   lower_bound: float = INF, upper_bound: float = -INF, df_qc: pd.DataFrame = None) -> np.ndarray:
+                   lower_bound: float = 10 ** 10, upper_bound: float = -10 ** 10, df_qc: pd.DataFrame = None) -> np.ndarray:
     qc_pass = np.zeros(data.shape[0], dtype = bool) # T/F array to tell whether the cell is filtered
     if df_qc is not None:
         df_qc[f"{metric_name}_lower_co"] = None
