@@ -42,7 +42,7 @@
 					"comment" : "Markers from HTAPP, Muus and Braga papers that are validated in snRNA-seq data"
 				},
 				{
-					"genes" : ["CDHR3+", "RP1+", "LRRIQ1+", "HYDIN+", "DNAH7+"],
+					"genes" : ["CDHR3+", "RP1+", "HYDIN+", "DNAH7+"],
 					"weight" : 0.2,
 					"comment" : "Markers from DE list of a snRNA-seq data"
 				}
