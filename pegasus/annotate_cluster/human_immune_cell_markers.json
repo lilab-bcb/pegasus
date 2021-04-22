@@ -49,7 +49,7 @@
 							{
 								"genes" : ["CD4+"],
 								"weight" : 0.3,
-								"comments" : "key markers that do not express heavily in droplet-based RNA-Seq"
+								"comment" : "key markers that do not express heavily in droplet-based RNA-Seq"
 							}
 						]
 					},
