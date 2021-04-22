@@ -16,7 +16,7 @@ loompy
 louvain>=0.7.0
 matplotlib>=2.0.0
 natsort
-numba
+numba<=0.52.0
 numpy
 pandas>=1.2.0
 pegasusio>=0.2.9
