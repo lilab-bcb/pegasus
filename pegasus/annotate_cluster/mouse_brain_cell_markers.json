@@ -5,7 +5,7 @@
 			"name" : "Glutamatergic neuron",
 			"markers" : [
 				{
-					"genes" : ["Slc17a7+"],
+					"genes" : ["Slc17a7+", "Slc17a6+", "Neurod6+", "Neurod2+"],
 					"weight" : 1.0
 				}
 			],
