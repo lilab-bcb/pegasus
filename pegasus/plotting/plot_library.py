@@ -24,11 +24,12 @@ from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size
 
 def scatter(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    attrs: Union[str, List[str]],
+    attrs: Union[str, List[str]] = None,
     basis: Optional[str] = "umap",
     matkey: Optional[str] = None,
     restrictions: Optional[Union[str, List[str]]] = None,
     show_background: Optional[bool] = False,
+    fix_corners: Optional[bool] = True,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[Union[str, List[str]]] = "right margin",
     legend_ncol: Optional[str] = None,
@@ -53,8 +54,8 @@ def scatter(
     ----------
     data: ``pegasusio.MultimodalData``
        Use current selected modality in data.
-    attrs: ``str`` or ``List[str]``
-        Color scatter plots by attrs. Each attribute in attrs can be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+    attrs: ``str`` or ``List[str]``, default: None
+        Color scatter plots by attrs. Each attribute in attrs can be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used. If no attributes are provided, plot the basis for all data.
     basis: ``str``, optional, default: ``umap``
         Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
     matkey: ``str``, optional, default: None
@@ -63,6 +64,8 @@ def scatter(
         A list of restrictions to subset data for plotting. There are two types of restrictions: global restriction and attribute-specific restriction. Global restriction appiles to all attributes in ``attrs`` and takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows). Attribute-specific restriction takes the format of 'attr:key:value,value...', or 'attr:key:~value,value...'. It only applies to one attribute 'attr'. If 'attr' and 'key' are the same, one can use '.' to replace 'key' (e.g. ``cluster_labels:.:value1,value2``).
     show_background: ``bool``, optional, default: False
         Only applicable if `restrictions` is set. By default, only data points selected are shown. If show_background is True, data points that are not selected will also be shown.
+    fix_corners: ``bool``, optional, default: True
+        If True, fix the corners of the plots as defined using all data points.
     alpha: ``float`` or ``List[float]``, optional, default: ``1.0``
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str`` or ``List[str]``, optional, default: ``right margin``
@@ -107,7 +110,11 @@ def scatter(
     >>> pg.scatter(data, attrs=['louvain_labels', 'Channel'], basis='fitsne')
     >>> pg.scatter(data, attrs=['CD14', 'TRAC'], basis='umap')
     """
-    if not is_list_like(attrs):
+    if attrs is None:
+        attrs = ['_all'] # default, plot all points
+        if palettes is None:
+            palettes = '_all:slategrey'
+    elif not is_list_like(attrs):
         attrs = [attrs]
     nattrs = len(attrs)
 
@@ -126,7 +133,7 @@ def scatter(
 
 
     basis = _transform_basis(basis)
-    marker_size = _get_marker_size(x.size)
+    global_marker_size = _get_marker_size(x.size)
     nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
@@ -154,7 +161,9 @@ def scatter(
                 pos = i * ncols + j
                 attr = attrs[pos]
 
-                if attr in data.obs:
+                if attr == '_all': # if default
+                    values = pd.Categorical.from_codes(np.zeros(data.shape[0], dtype=int), categories=['cell'])
+                elif attr in data.obs:
                     values = data.obs[attr].values
                 elif attr in data.var_names:
                     loc = data.var_names.get_loc(attr)
@@ -166,13 +175,17 @@ def scatter(
                     values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
+                marker_size = global_marker_size
+                if (not fix_corners) and (is_numeric_dtype(values) or (not show_background)):
+                    marker_size = _get_marker_size(selected.sum())
 
                 if is_numeric_dtype(values):
                     cmap = cmaps.get(attr, squeeze = True)
                     if cmap is None:
                         raise KeyError(f"Please set colormap for attribute {attr} or set a default colormap!")
 
-                    _plot_corners(ax, corners, marker_size)
+                    if fix_corners:
+                        _plot_corners(ax, corners, marker_size)
 
                     img = ax.scatter(
                         x[selected],
@@ -224,26 +237,29 @@ def scatter(
                                     **scatter_kwargs,
                                 )
                             else:
-                                _plot_corners(ax, corners, marker_size)
+                                if fix_corners:
+                                    _plot_corners(ax, corners, marker_size)
 
-                    if legend_loc[pos] == "right margin":
-                        legend = ax.legend(
-                            loc="center left",
-                            bbox_to_anchor=(1, 0.5),
-                            frameon=False,
-                            fontsize=legend_fontsize[pos],
-                            ncol=_get_legend_ncol(label_size, legend_ncol),
-                        )
-                        for handle in legend.legendHandles:
-                            handle.set_sizes([300.0])
-                    elif legend_loc[pos] == "on data":
-                        texts = []
-                        for px, py, txt in text_list:
-                            texts.append(ax.text(px, py, txt, fontsize=legend_fontsize[pos], fontweight = "bold", ha = "center", va = "center"))
-                        # from adjustText import adjust_text
-                        # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
+                    if attr != '_all':
+                        if legend_loc[pos] == "right margin":
+                            legend = ax.legend(
+                                loc="center left",
+                                bbox_to_anchor=(1, 0.5),
+                                frameon=False,
+                                fontsize=legend_fontsize[pos],
+                                ncol=_get_legend_ncol(label_size, legend_ncol),
+                            )
+                            for handle in legend.legendHandles:
+                                handle.set_sizes([300.0])
+                        elif legend_loc[pos] == "on data":
+                            texts = []
+                            for px, py, txt in text_list:
+                                texts.append(ax.text(px, py, txt, fontsize=legend_fontsize[pos], fontweight = "bold", ha = "center", va = "center"))
+                            # from adjustText import adjust_text
+                            # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
-                ax.set_title(attr)
+                if attr != '_all':
+                    ax.set_title(attr)
             else:
                 ax.set_frame_on(False)
 

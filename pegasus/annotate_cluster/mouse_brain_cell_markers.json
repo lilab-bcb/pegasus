@@ -5,7 +5,7 @@
 			"name" : "Glutamatergic neuron",
 			"markers" : [
 				{
-					"genes" : ["Rbfox3+", "Reln+", "Slc17a6+", "Slc17a7+"],
+					"genes" : ["Slc17a7+", "Slc17a6+", "Neurod6+", "Neurod2+"],
 					"weight" : 1.0
 				}
 			],
@@ -13,28 +13,64 @@
 				"title" : "Glutamatergic neuron subtype markers",
 				"cell_types" : [
 					{
-						"name" : "Glutamatergic layer 4",
+						"name" : "Glutamatergic layer 2/3 IT",
 						"markers" : [
 							{
-								"genes" : ["Rorb+", "Paqr8+"],
+								"genes" : ["Cux2+"],
 								"weight" : 1.0
 							}
 						]
 					},
 					{
-						"name" : "Glutamatergic layer 5",
+						"name" : "Glutamatergic layer 4/5 IT",
 						"markers" : [
 							{
-								"genes" : ["Deptor+"],
+								"genes" : ["Rorb+"],
 								"weight" : 1.0
 							}
 						]
 					},
 					{
-						"name" : "Glutamatergic layer 6a",
+						"name" : "Glutamatergic layer 5 IT",
 						"markers" : [
 							{
-								"genes" : ["Foxp2+", "Tle4+"],
+								"genes" : ["Sulf2+", "Fezf2+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 6 IT",
+						"markers" : [
+							{
+								"genes" : ["Sulf1+", "Ptpru+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 6 IT Car3",
+						"markers" : [
+							{
+								"genes" : ["Sulf1+", "Ptpru+", "Car3+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 5 ET",
+						"markers" : [
+							{
+								"genes" : ["Fam84b+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer 6 CT",
+						"markers" : [
+							{
+								"genes" : ["Syt6+", "Foxp2+"],
 								"weight" : 1.0
 							}
 						]
@@ -43,7 +79,16 @@
 						"name" : "Glutamatergic layer 6b",
 						"markers" : [
 							{
-								"genes" : ["Rgs12+", "Tle4+"],
+								"genes" : ["Nxph4+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "Glutamatergic layer L56 NP",
+						"markers" : [
+							{
+								"genes" : ["Tshz2+"],
 								"weight" : 1.0
 							}
 						]
@@ -55,7 +100,7 @@
 			"name" : "GABAergic neuron",
 			"markers" : [
 				{
-					"genes" : ["Rbfox3+", "Reln+", "Gad1+", "Gad2+"],
+					"genes" : ["Gad1+", "Gad2+", "Slc32a1+"],
 					"weight" : 1.0
 				}
 			],
@@ -63,10 +108,10 @@
 				"title" : "GABAergic neuron subtype markers",
 				"cell_types" : [
 					{
-						"name" : "GABAergic Vip interneuron",
+						"name" : "GABAergic Pvalb interneuron",
 						"markers" : [
 							{
-								"genes" : ["Vip+", "Parm1+"],
+								"genes" : ["Pvalb+"],
 								"weight" : 1.0
 							}
 						]
@@ -81,10 +126,19 @@
 						]
 					},
 					{
-						"name" : "GABAergic Pvalb interneuron",
+						"name" : "GABAergic Vip interneuron",
 						"markers" : [
 							{
-								"genes" : ["Pvalb+"],
+								"genes" : ["Vip+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "GABAergic Sncg interneuron",
+						"markers" : [
+							{
+								"genes" : ["Sncg+"],
 								"weight" : 1.0
 							}
 						]
@@ -93,7 +147,16 @@
 						"name" : "GABAergic Ndnf interneuron",
 						"markers" : [
 							{
-								"genes" : ["Ndnf+", "Fgf13+"],
+								"genes" : ["Ndnf+"],
+								"weight" : 1.0
+							}
+						]
+					},
+					{
+						"name" : "GABAergic Lamp5 interneuron",
+						"markers" : [
+							{
+								"genes" : ["Lamp5+"],
 								"weight" : 1.0
 							}
 						]
@@ -102,20 +165,22 @@
 			}
 		},
 		{
-			"name" : "Astrocyte",
-			"markers" : [
-				{
-					"genes" : ["Gja1+", "Aqp4+", "F3+", "Prex2+"],
-					"weight" : 1.0
-				}
-			]
-		},
-		{
 			"name" : "Oligodendrocyte",
 			"markers" : [
 				{
-					"genes" : ["Mbp+", "Trf+", "Plp1+", "Olig1+", "Vcan+", "Olig2+", "Mog+"],
-					"weight" : 1.0
+					"genes" : ["Mbp+", "Plp1+"],
+					"weight" : 0.6,
+					"comment" : "Oligo specific markers (Allen Brain Map)"
+				},
+				{
+					"genes" : ["Mog+"],
+					"weight" : 0.15,
+					"comment" : "Oligo specific markers, but not expressed in all Oligo cells (Allen Brain Map)"
+				},
+				{
+					"genes" : ["Olig1+", "Olig2+", "Sox10+"],
+					"weight" : 0.25,
+					"comment" : "Expressed in both Oligo and OPC (Allen Brain Map)"
 				}
 			]
 		},
@@ -127,6 +192,24 @@
 					"weight" : 1.0
 				}
 			]
+		},
+		{
+			"name" : "Astrocyte",
+			"markers" : [
+				{
+					"genes" : ["Aqp4+", "Gja1+", "F3+", "Prex2+"],
+					"weight" : 1.0
+				}
+			]
+		},
+		{
+			"name" : "Microglia",
+			"markers" : [
+				{
+					"genes" : ["C1qb+", "P2ry12+", "Ctss+", "Csf1r+", "Hmha1+"],
+					"weight" : 1.0
+				}
+			]			
 		},
 		{
 			"name" : "Endothelial",
@@ -169,24 +252,6 @@
 			"markers" : [
 				{
 					"genes" : ["Ccdc153+"],
-					"weight" : 1.0
-				}
-			]			
-		},
-		{
-			"name" : "Neurogenesis",
-			"markers" : [
-				{
-					"genes" : ["Sox4+", "Sox11+"],
-					"weight" : 1.0
-				}
-			]			
-		},
-		{
-			"name" : "Microglia",
-			"markers" : [
-				{
-					"genes" : ["C1qb+", "P2ry12+", "Ctss+", "Csf1r+", "Hmha1+"],
 					"weight" : 1.0
 				}
 			]			

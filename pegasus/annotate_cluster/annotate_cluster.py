@@ -430,7 +430,8 @@ def annotate(
     if isinstance(anno_dict, list):
         cluster_ids = data.obs[based_on].cat.categories.values.astype('str')
         anno_dict = dict(zip(cluster_ids, anno_dict))
-    data.obs[name] = pd.Categorical([anno_dict[x] for x in data.obs[based_on]])
+    from natsort import natsorted 
+    data.obs[name] = pd.Categorical([anno_dict[x] for x in data.obs[based_on]], categories = natsorted(anno_dict.values()))
 
 @timer(logger=logger)
 def run_annotate_cluster(
