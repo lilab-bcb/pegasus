@@ -162,7 +162,15 @@ def calc_umap(
         _n_epochs = umap_obj.n_epochs if umap_obj.n_epochs is not None else 0
         if umap_obj.verbose:
             logger.info("Construct embedding")
-        embedding = umap_module.umap_.simplicial_set_embedding(
+
+        def simplicial_set_embedding(*args, **kwargs):
+            from packaging import version
+            if version.parse(umap_module.__version__) >= version.parse('0.5.0'): # For umap-learn v0.5+
+                kwargs.update({'densmap': False, 'densmap_kwds': {}, 'output_dens': False})
+            embedding = umap_module.umap_.simplicial_set_embedding(*args, **kwargs)
+            return (embedding[0] if isinstance(embedding, tuple) else embedding)
+
+        embedding = simplicial_set_embedding(
             data=X,
             graph=umap_obj.graph_,
             n_components=umap_obj.n_components,
@@ -251,7 +259,7 @@ def tsne(
 
     learning_rate: ``float``, optional, default: ``auto``
         By default, the learning rate is determined automatically as max(data.shape[0] / early_exaggeration, 200). See [Belkina19]_ and [Kobak19]_ for details.
-    
+
     initialization: ``str``, optional, default: ``pca``
         Initialization can be either ``pca`` or ``random`` or np.ndarray. By default, we use ``pca`` initialization according to [Kobak19]_.
 

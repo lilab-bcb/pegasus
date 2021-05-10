@@ -16,7 +16,7 @@ loompy
 louvain>=0.7.0
 matplotlib>=2.0.0
 natsort
-numba<=0.52.0
+numba
 numpy
 pandas>=1.2.0
 pegasusio>=0.2.9
@@ -30,5 +30,5 @@ seaborn
 setuptools
 statsmodels
 torch
-umap-learn>=0.4, <0.5
+umap-learn>=0.4
 xlsxwriter
