@@ -159,7 +159,7 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, 
                 return pos
         assert False
 
-def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300):
+def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, theory_thr = None):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
         (A) top left: histogram of observed cells;
         (B) top right: histogram of simulated doublets;
@@ -174,6 +174,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.hist(obs_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
+    ax.axvline(x = theory_thr, ls = "--", c = "r", linewidth=1)
     ax.set_title('Observed cells')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -182,6 +183,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.hist(sim_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
+    ax.axvline(x = theory_thr, ls = "--", c = "r", linewidth=1)
     ax.set_title('Simulated doublets')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -200,6 +202,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.plot(sim_x, sim_y, '-', c='k', lw = 1)
     ax.set_ylim(bottom = 0.0)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
+    ax.axvline(x = np.log(theory_thr), ls = "--", c="r", lw=1)
     ax.set_title('KDE of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Density')
@@ -207,6 +210,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax = axes[1, 1]
     ax.plot(sim_x, curv, '-', c='k', lw = 1)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
+    ax.axvline(x = np.log(theory_thr), ls = "--", c="r", lw=1)
     ax.set_title('Curvature of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Curvature')
@@ -289,6 +293,7 @@ def _run_scrublet(
     from pegasus.tools import calculate_nearest_neighbors, simulate_doublets
     from sklearn.decomposition import PCA
     from scipy.stats import gaussian_kde
+    from sklearn.cluster import KMeans
 
     if "highly_variable_features" not in data.var:
         raise ValueError("_run_scrublet must be run after highly_variable_features is called!")
@@ -323,6 +328,14 @@ def _run_scrublet(
     with threadpool_limits(limits = n_jobs):
         obs_pca = pca.fit_transform(obsX.astype(np.float64)) # float64 for reproducibility
         obs_pca = np.ascontiguousarray(obs_pca, dtype=np.float32)
+        kmeans = KMeans(n_clusters = 5, random_state = random_state).fit(obs_pca)
+
+    # calculate in simulated distribution, expected percentage of embedded doublets
+    data.obs["kmeans_"] = pd.Categorical(kmeans.labels_)
+    _, freqs = np.unique(kmeans.labels_, return_counts = True)
+    freqs = np.array(freqs) / sum(freqs)
+    d_emb = (((1.0 - rho) * freqs + rho * (freqs ** 2)) ** 2).sum()
+    print(f"d_emb = {d_emb}, d_neo = {1.0 - d_emb}.")
 
     # standardize and calculate PCA for sim_rawX
     simX = sim_rawX.astype(np.float32).toarray()
@@ -354,6 +367,7 @@ def _run_scrublet(
     # Determine a scrublet score threshold
     # log transformed
     sim_scores_log = np.log(sim_scores)
+    theory_thr = np.exp(np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6))
 
     # Estimate KDE
     min_score = sim_scores_log.min()
@@ -417,7 +431,7 @@ def _run_scrublet(
     logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}")
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv, theory_thr=theory_thr)
     return fig
 
 
@@ -576,6 +590,7 @@ def infer_doublets(
                 dbl_score[idx] = unidata.obs["doublet_score"].values
                 pred_dbl[idx] = unidata.obs["pred_dbl"].values
                 thresholds[channel] = unidata.uns["doublet_threshold"]
+                data.obs["kmeans_"] = unidata.obs["kmeans_"]
             else:
                 logger.warning(f"Channel {channel} has {idx.size} < {min_cell} cells and thus doublet score calculation is skipped!")
 
