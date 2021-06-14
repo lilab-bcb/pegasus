@@ -98,6 +98,25 @@ def _locate_cutoff_among_peaks(y: List[float], maxima: List[float]) -> int:
 
     return best_pos if best_gap > gap_12 else pos_12
 
+
+def _locate_cutoff_among_peaks_with_guide(x: List[float], y: List[float], maxima: List[float], sim_scores_log: List[float], d_neo: float) -> int:
+    best_delta = 1e100
+    best_pos = -1
+    for i in range(1, maxima.size):
+        if maxima[0] < maxima[i]:
+            start = maxima[0]
+            end = maxima[i]
+        else:
+            start = maxima[i]
+            end = maxima[0]
+        pos = y[start+1:end].argmin() + (start+1)
+        d_prac_neo = (sim_scores_log > x[pos]).sum() / sim_scores_log.size
+        delta = abs(d_prac_neo - d_neo)
+        if best_delta > delta:
+            best_delta = delta
+            best_pos = pos
+    return best_pos
+
 def _find_pos_curv(curv, start, dir, thre = 0.06):
     RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
     assert (RANGE.stop - RANGE.start) * RANGE.step > 0
@@ -159,7 +178,51 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, 
                 return pos
         assert False
 
-def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, theory_thr = None):
+
+def _find_cutoff_left_side(x_theory: float, peak_pos: int, x: List[float], curv: List[float], filtered_maxima: List[int]) -> int:
+    # test if peak might represent a doublet peak and thus we need to find a cutoff at the left side
+    if x_theory >= x[peak_pos]:
+        return -1 # if theory limit is on the right side of the peak, return
+
+    peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
+    end = _find_pos_curv(curv, peak_pos-1, '-')
+
+    pos_theory = 2 + np.argmin(np.abs(x[2:peak_pos+1] - x_theory)) # position of x_theory
+
+    # print(f"curv_theory={curv[pos_theory]}, peak_curv_value={peak_curv_value}, ratio={curv[pos_theory] / peak_curv_value}.")
+
+    if x_theory > x[end] and curv[pos_theory] < 0.0 and curv[pos_theory] / peak_curv_value > 0.2:
+        return -1
+
+    start = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, end-1, '-')+1, '+')
+    assert start <= end
+    pos = curv[start:end+1].argmax() + start
+
+    if x_theory <= x[pos]:
+        return pos
+
+    pos_alt = pos_theory - 1
+    while pos_alt > pos:
+        if curv[pos_alt] > curv[pos_alt + 1] and curv[pos_alt + 1] > curv[pos_alt + 2] and curv[pos_alt] > curv[pos_alt - 1] and curv[pos_alt - 1] > curv[pos_alt - 2]:
+            break
+        pos_alt -= 1
+
+    if pos_alt > pos:
+        pos = pos_alt
+
+    return pos
+
+
+def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: List[int]) -> int:
+    # peak represents embedded doublets, find a cutoff at the right side
+    peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
+    start = _find_pos_curv(curv, peak_pos+1, '+')
+    end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-')
+    assert start <= end
+    return curv[start:end+1].argmax() + start
+
+
+def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, theory_thr = None, threshold_alt = None):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
         (A) top left: histogram of observed cells;
         (B) top right: histogram of simulated doublets;
@@ -175,6 +238,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
     ax.axvline(x = theory_thr, ls = "--", c = "r", linewidth=1)
+    ax.axvline(x = threshold_alt, ls = "--", c = "g", linewidth=1)
     ax.set_title('Observed cells')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -184,6 +248,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
     ax.axvline(x = theory_thr, ls = "--", c = "r", linewidth=1)
+    ax.axvline(x = threshold_alt, ls = "--", c = "g", linewidth=1)
     ax.set_title('Simulated doublets')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -203,6 +268,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.set_ylim(bottom = 0.0)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
     ax.axvline(x = np.log(theory_thr), ls = "--", c="r", lw=1)
+    ax.axvline(x = np.log(threshold_alt), ls = "--", c="g", lw=1)
     ax.set_title('KDE of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Density')
@@ -211,6 +277,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.plot(sim_x, curv, '-', c='k', lw = 1)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
     ax.axvline(x = np.log(theory_thr), ls = "--", c="r", lw=1)
+    ax.axvline(x = np.log(threshold_alt), ls = "--", c="g", lw=1)
     ax.set_title('Curvature of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Curvature')
@@ -335,7 +402,8 @@ def _run_scrublet(
     _, freqs = np.unique(kmeans.labels_, return_counts = True)
     freqs = np.array(freqs) / sum(freqs)
     d_emb = (((1.0 - rho) * freqs + rho * (freqs ** 2)) ** 2).sum()
-    print(f"d_emb = {d_emb}, d_neo = {1.0 - d_emb}.")
+    d_neo = 1.0 - d_emb
+    print(f"d_emb = {d_emb}, d_neo = {d_neo}.")
 
     # standardize and calculate PCA for sim_rawX
     simX = sim_rawX.astype(np.float32).toarray()
@@ -367,7 +435,6 @@ def _run_scrublet(
     # Determine a scrublet score threshold
     # log transformed
     sim_scores_log = np.log(sim_scores)
-    theory_thr = np.exp(np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6))
 
     # Estimate KDE
     min_score = sim_scores_log.min()
@@ -424,14 +491,37 @@ def _run_scrublet(
 
     threshold = np.exp(x[pos])
 
+    x_theory = np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6)
+    theory_thr = np.exp(x_theory)
+
+    pos_alt = pos
+    if maxima.size >= 2:
+        pos_alt = _locate_cutoff_among_peaks_with_guide(x, y, maxima, sim_scores_log, d_neo)
+    elif maxima_by_x.size > 1 and x_theory < x[maxima_by_x[-1]]:
+        posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
+        pos_alt = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
+    else:
+        pos_alt = _find_cutoff_left_side(x_theory, maxima_by_x[0], x, curv, filtered_maxima)
+        if pos_alt < 0:
+            pos_alt = _find_cutoff_right_side(maxima_by_x[-1], curv, filtered_maxima)
+    
+    frac_right = (sim_scores_log > x[maxima_by_x[0]]).sum() / sim_scores.size
+    print(f"frac_right={frac_right}.")
+    
+    threshold_alt = np.exp(x[pos_alt])
+
     data.obs["doublet_score"] = obs_scores.astype(np.float32)
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}")
+    d_pneo = (sim_scores_log > x[pos]).sum() / sim_scores_log.size
+    d_ratio = d_neo / d_pneo
+    d_alt = (obs_scores > threshold_alt).sum() / data.shape[0]
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}; sim_cut={d_pneo:.2%}; ratio={d_ratio}; pos_alt_rate = {d_alt:.2%}.")
+
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv, theory_thr=theory_thr)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv, theory_thr=theory_thr, threshold_alt=threshold_alt)
     return fig
 
 
