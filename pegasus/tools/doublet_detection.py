@@ -49,8 +49,8 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
                 maxima_by_x.append(i)
             else:
                 filtered_maxima.append(i)
-    maxima_by_x = np.array(maxima_by_x)
-    filtered_maxima = np.array(filtered_maxima)
+    maxima_by_x = np.array(maxima_by_x, dtype=int)
+    filtered_maxima = np.array(filtered_maxima, dtype=int)
     n_max = maxima_by_x.size
 
     curr_peak = 0
@@ -65,7 +65,7 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
             if y[maxima_by_x[i + 1]] > y[maxima_by_x[curr_peak]]:
                 curr_peak = i + 1
     merged_peaks.append(maxima_by_x[curr_peak])
-    merged_peaks = np.array(merged_peaks)
+    merged_peaks = np.array(merged_peaks, dtype=int)
     maxima = merged_peaks[np.argsort(y[merged_peaks])[::-1]]
 
     return maxima, maxima_by_x, filtered_maxima
@@ -181,13 +181,10 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, 
         assert False
 
 
-def _find_cutoff_left_side(x_theory: float, frac_right: float, peak_pos: int, x: List[float], curv: List[float], err_bound: float = 0.05) -> int:
-    # test if peak might represent a doublet peak and thus we need to find a cutoff at the left side
-    if frac_right >= 0.5 or (frac_right >= 0.4 and x_theory + err_bound >= x[peak_pos]):
-        return -1 # frac_right > 0.5 or frac_right > 0.4 and x_theory > x[peak_pos], with err_bound considered
-
+def _find_cutoff_left_side(peak_pos: int, x: List[float], curv: List[float], x_theory: float) -> int:
+    # Peak represents a doublet peak and thus we need to find a cutoff at the left side
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
-    end = _find_pos_curv(curv, peak_pos-1, '-', err_bound)
+    end = _find_pos_curv(curv, peak_pos-1, '-', 0.05)
     start = end
     while start > 2 and x[start] >= x_theory:
         start -= 1
@@ -198,7 +195,7 @@ def _find_cutoff_left_side(x_theory: float, frac_right: float, peak_pos: int, x:
 
 
 def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: List[int]) -> int:
-    # peak represents embedded doublets, find a cutoff at the right side
+    # Peak represents embedded doublets, find a cutoff at the right side
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
     start = _find_pos_curv(curv, peak_pos+1, '+', 0.05)
     end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-', 0.05)
@@ -478,21 +475,27 @@ def _run_scrublet(
     x_theory = np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6)
     theory_thr = np.exp(x_theory)
 
-    pos_alt = pos
+    pos_alt = -1
     if maxima.size >= 2:
         pos_alt = _locate_cutoff_among_peaks_with_guide(x, y, maxima, sim_scores_log, d_neo)
-    elif maxima_by_x.size > 1 and x_theory < x[maxima_by_x[-1]]:
-        posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
-        pos_alt = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
-    else:
-        frac_right = (sim_scores_log > x[maxima_by_x[0]]).sum() / sim_scores.size
+        d_pneo = (sim_scores_log > x[pos_alt]).sum() / sim_scores_log.size
+        if d_pneo < 0.1: # < 10%, consider it as not a peak
+            idx_ = maxima_by_x >= pos_alt
+            filtered_maxima = np.concatenate((filtered_maxima, maxima_by_x[idx_]))
+            maxima_by_x = maxima_by_x[~idx_]
+            pos_alt = -1
+
+    if pos_alt < 0:
+        frac_right = (sim_scores_log > x[maxima_by_x[-1]]).sum() / sim_scores.size
         print(f"frac_right={frac_right}.")
-        pos_alt = _find_cutoff_left_side(x_theory, frac_right, maxima_by_x[0], x, curv)
-        if pos_alt < 0:
+        if frac_right < 0.4 or (frac_right < 0.5 and x_theory + 0.05 < x[maxima_by_x[-1]]):
+            if maxima_by_x.size > 1:
+                posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
+                pos_alt = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
+            else:
+                pos_alt = _find_cutoff_left_side(maxima_by_x[0], x, curv, x_theory)
+        else:
             pos_alt = _find_cutoff_right_side(maxima_by_x[-1], curv, filtered_maxima)
-    
-    
-    
 
     threshold_alt = np.exp(x[pos_alt])
 
@@ -500,10 +503,8 @@ def _run_scrublet(
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
-    d_pneo = (sim_scores_log > x[pos]).sum() / sim_scores_log.size
-    d_ratio = d_neo / d_pneo
     d_alt = (obs_scores > threshold_alt).sum() / data.shape[0]
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}; sim_cut={d_pneo:.2%}; ratio={d_ratio}; pos_alt_rate = {d_alt:.2%}.")
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}; pos_alt_rate = {d_alt:.2%}; frac_alt = {(sim_scores_log > x[pos_alt]).sum() / sim_scores_log.size}.")
 
     fig = None
     if plot_hist:
