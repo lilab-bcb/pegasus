@@ -117,11 +117,13 @@ def _locate_cutoff_among_peaks_with_guide(x: List[float], y: List[float], maxima
             best_pos = pos
     return best_pos
 
-def _find_pos_curv(curv, start, dir, thre = 0.06):
+
+
+def _find_pos_curv(curv, start, dir, err_bound = 0.06):
     RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
     assert (RANGE.stop - RANGE.start) * RANGE.step > 0
     for pos in RANGE:
-        if curv[pos] > thre:
+        if curv[pos] > err_bound:
             break
     return pos
 
@@ -179,45 +181,27 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, 
         assert False
 
 
-def _find_cutoff_left_side(x_theory: float, peak_pos: int, x: List[float], curv: List[float], filtered_maxima: List[int]) -> int:
+def _find_cutoff_left_side(x_theory: float, frac_right: float, peak_pos: int, x: List[float], curv: List[float], err_bound: float = 0.05) -> int:
     # test if peak might represent a doublet peak and thus we need to find a cutoff at the left side
-    if x_theory >= x[peak_pos]:
-        return -1 # if theory limit is on the right side of the peak, return
+    if frac_right >= 0.5 or (frac_right >= 0.4 and x_theory + err_bound >= x[peak_pos]):
+        return -1 # frac_right > 0.5 or frac_right > 0.4 and x_theory > x[peak_pos], with err_bound considered
 
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
-    end = _find_pos_curv(curv, peak_pos-1, '-')
+    end = _find_pos_curv(curv, peak_pos-1, '-', err_bound)
+    start = end
+    while start > 2 and x[start] >= x_theory:
+        start -= 1
+    while start > 2 and not (curv[start - 1] > curv[start] and curv[start] < curv[start + 1]):
+        start -= 1
 
-    pos_theory = 2 + np.argmin(np.abs(x[2:peak_pos+1] - x_theory)) # position of x_theory
-
-    # print(f"curv_theory={curv[pos_theory]}, peak_curv_value={peak_curv_value}, ratio={curv[pos_theory] / peak_curv_value}.")
-
-    if x_theory > x[end] and curv[pos_theory] < 0.0 and curv[pos_theory] / peak_curv_value > 0.2:
-        return -1
-
-    start = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, end-1, '-')+1, '+')
-    assert start <= end
-    pos = curv[start:end+1].argmax() + start
-
-    if x_theory <= x[pos]:
-        return pos
-
-    pos_alt = pos_theory - 1
-    while pos_alt > pos:
-        if curv[pos_alt] > curv[pos_alt + 1] and curv[pos_alt + 1] > curv[pos_alt + 2] and curv[pos_alt] > curv[pos_alt - 1] and curv[pos_alt - 1] > curv[pos_alt - 2]:
-            break
-        pos_alt -= 1
-
-    if pos_alt > pos:
-        pos = pos_alt
-
-    return pos
+    return start + curv[start:end+1].argmax()
 
 
 def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: List[int]) -> int:
     # peak represents embedded doublets, find a cutoff at the right side
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
-    start = _find_pos_curv(curv, peak_pos+1, '+')
-    end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-')
+    start = _find_pos_curv(curv, peak_pos+1, '+', 0.05)
+    end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-', 0.05)
     assert start <= end
     return curv[start:end+1].argmax() + start
 
@@ -501,13 +485,15 @@ def _run_scrublet(
         posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
         pos_alt = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
     else:
-        pos_alt = _find_cutoff_left_side(x_theory, maxima_by_x[0], x, curv, filtered_maxima)
+        frac_right = (sim_scores_log > x[maxima_by_x[0]]).sum() / sim_scores.size
+        print(f"frac_right={frac_right}.")
+        pos_alt = _find_cutoff_left_side(x_theory, frac_right, maxima_by_x[0], x, curv)
         if pos_alt < 0:
             pos_alt = _find_cutoff_right_side(maxima_by_x[-1], curv, filtered_maxima)
     
-    frac_right = (sim_scores_log > x[maxima_by_x[0]]).sum() / sim_scores.size
-    print(f"frac_right={frac_right}.")
     
+    
+
     threshold_alt = np.exp(x[pos_alt])
 
     data.obs["doublet_score"] = obs_scores.astype(np.float32)
