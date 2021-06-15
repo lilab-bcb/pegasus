@@ -70,35 +70,6 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
 
     return maxima, maxima_by_x, filtered_maxima
 
-def _locate_cutoff_among_peaks(y: List[float], maxima: List[float]) -> int:
-    """ Find two peaks with largest gap.
-    """
-    best_gap = 0
-    best_pos = -1
-
-    pos_12 = gap_12 = -1
-
-    for i in range(1, maxima.size):
-        if maxima[0] < maxima[i]:
-            start = maxima[0]
-            end = maxima[i]
-        else:
-            start = maxima[i]
-            end = maxima[0]
-        pos = y[start+1:end].argmin() + (start+1)
-        gap = y[maxima[i]] - y[pos]
-
-        if i == 1:
-            pos_12 = pos
-            gap_12 = y[maxima[0]] - y[pos]
-
-        if best_gap < gap:
-            best_gap = gap
-            best_pos = pos
-
-    return best_pos if best_gap > gap_12 else pos_12
-
-
 def _locate_cutoff_among_peaks_with_guide(x: List[float], y: List[float], maxima: List[float], sim_scores_log: List[float], d_neo: float) -> int:
     best_delta = 1e100
     best_pos = -1
@@ -117,9 +88,7 @@ def _locate_cutoff_among_peaks_with_guide(x: List[float], y: List[float], maxima
             best_pos = pos
     return best_pos
 
-
-
-def _find_pos_curv(curv, start, dir, err_bound = 0.06):
+def _find_pos_curv(curv, start, dir, err_bound = 0.05):
     RANGE = range(start, curv.size) if dir == '+' else range(start, 0, -1)
     assert (RANGE.stop - RANGE.start) * RANGE.step > 0
     for pos in RANGE:
@@ -137,73 +106,49 @@ def _find_curv_minima_at_peak(curv, peak_pos):
         end += 1
     return curv[start:end].min()
 
-def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, dir, rel_thre = 0.45, minima_dir_thre = -0.25):
-    """ Find a negative curvature value that is a local minima or a filtered local maxima with respect to density value.
-        dir represents the direction of search, choosing from '+' or '-'.
+def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, rel_thre = 0.45, minima_dir_thre = -0.25):
+    """ Find a negative curvature value that is a local minima or a filtered local maxima with respect to density value at the right hand side of start.
         Beside being a local minima, the value must also satisfy the rel_thre requirement.
         rel_thre requires that the curvature value must smaller than rel_thre fraction of the max of minimal curvature value of the peak and the minimal curvature value since start at direction dir.
     """
-    if dir == '+':
-        pos_from = max(start, 2)
-        pos_to = curv.size - 2
-        tmp_arr = filtered_maxima[filtered_maxima > start]
-        if tmp_arr.size > 0:
-            lmax = tmp_arr.min()
-            pos_to = _find_pos_curv(curv, lmax-1, '-') + 1
-        assert pos_from < pos_to
-        minima_with_dir = curv[pos_from:pos_to].min()
-        if minima_with_dir >= minima_dir_thre:
-            # No other local minima
-            return pos_to # return right end
-        thre = min(max(peak_curv_value, minima_with_dir) * rel_thre, minima_dir_thre)
-        assert thre < 0.0
-        for pos in range(pos_from, pos_to):
-            if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
-                return pos
-        assert False
-    else:
-        assert dir == '-'
-        pos_from = min(start, curv.size - 3)
-        pos_to = 1
-        tmp_arr = filtered_maxima[filtered_maxima < start]
-        if tmp_arr.size > 0:
-            lmax = tmp_arr.max()
-            pos_to = _find_pos_curv(curv, lmax+1, '+') - 1
-        assert pos_from > pos_to
-        minima_with_dir = curv[pos_to+1:pos_from+1].min()
-        if minima_with_dir >= minima_dir_thre:
-            return pos_to
-        thre = min(max(peak_curv_value, minima_with_dir) * rel_thre, minima_dir_thre)
-        assert thre < 0.0
-        for pos in range(pos_from, pos_to, -1):
-            if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
-                return pos
-        assert False
-
+    pos_from = max(start, 2)
+    pos_to = curv.size - 2
+    tmp_arr = filtered_maxima[filtered_maxima > start]
+    if tmp_arr.size > 0:
+        lmax = tmp_arr.min()
+        pos_to = _find_pos_curv(curv, lmax-1, '-') + 1
+    assert pos_from < pos_to
+    minima_with_dir = curv[pos_from:pos_to].min()
+    if minima_with_dir >= minima_dir_thre:
+        # No other local minima
+        return pos_to # return right end
+    thre = min(max(peak_curv_value, minima_with_dir) * rel_thre, minima_dir_thre)
+    assert thre < 0.0
+    for pos in range(pos_from, pos_to):
+        if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
+            return pos
+    assert False
 
 def _find_cutoff_left_side(peak_pos: int, x: List[float], curv: List[float], x_theory: float) -> int:
     # Peak represents a doublet peak and thus we need to find a cutoff at the left side
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
-    end = _find_pos_curv(curv, peak_pos-1, '-', 0.05)
+    end = _find_pos_curv(curv, peak_pos-1, '-')
     start = end
     while start > 2 and x[start] >= x_theory:
         start -= 1
     while start > 2 and not (curv[start - 1] > curv[start] and curv[start] < curv[start + 1]):
         start -= 1
-
     return start + curv[start:end+1].argmax()
-
 
 def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: List[int]) -> int:
     # Peak represents embedded doublets, find a cutoff at the right side
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
-    start = _find_pos_curv(curv, peak_pos+1, '+', 0.05)
-    end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-', 0.05)
+    start = _find_pos_curv(curv, peak_pos+1, '+')
+    end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1)-1, '-')
     assert start <= end
     return curv[start:end+1].argmax() + start
 
-
-def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, theory_thr = None, threshold_alt = None):
+def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
         (A) top left: histogram of observed cells;
         (B) top right: histogram of simulated doublets;
@@ -218,8 +163,6 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.hist(obs_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
-    ax.axvline(x = theory_thr, ls = "--", c = "r", linewidth=1)
-    ax.axvline(x = threshold_alt, ls = "--", c = "g", linewidth=1)
     ax.set_title('Observed cells')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -228,28 +171,14 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.hist(sim_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
-    ax.axvline(x = theory_thr, ls = "--", c = "r", linewidth=1)
-    ax.axvline(x = threshold_alt, ls = "--", c = "g", linewidth=1)
     ax.set_title('Simulated doublets')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
-
-    # ax = axes[1, 0]
-    # from scipy.stats import gaussian_kde
-    # kde = gaussian_kde(sim_scores)
-    # y = kde(x)
-    # ax.plot(x, y, '-', c='k', lw = 1)
-    # ax.set_ylim(bottom = 0.0)
-    # ax.set_title('KDE of simulated doublets')
-    # ax.set_xlabel('Doublet score')
-    # ax.set_ylabel('Density')
 
     ax = axes[1, 0]
     ax.plot(sim_x, sim_y, '-', c='k', lw = 1)
     ax.set_ylim(bottom = 0.0)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
-    ax.axvline(x = np.log(theory_thr), ls = "--", c="r", lw=1)
-    ax.axvline(x = np.log(threshold_alt), ls = "--", c="g", lw=1)
     ax.set_title('KDE of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Density')
@@ -257,8 +186,6 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax = axes[1, 1]
     ax.plot(sim_x, curv, '-', c='k', lw = 1)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
-    ax.axvline(x = np.log(theory_thr), ls = "--", c="r", lw=1)
-    ax.axvline(x = np.log(threshold_alt), ls = "--", c="g", lw=1)
     ax.set_title('Curvature of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Curvature')
@@ -384,7 +311,6 @@ def _run_scrublet(
     freqs = np.array(freqs) / sum(freqs)
     d_emb = (((1.0 - rho) * freqs + rho * (freqs ** 2)) ** 2).sum()
     d_neo = 1.0 - d_emb
-    print(f"d_emb = {d_emb}, d_neo = {d_neo}.")
 
     # standardize and calculate PCA for sim_rawX
     simX = sim_rawX.astype(np.float32).toarray()
@@ -437,78 +363,38 @@ def _run_scrublet(
     assert maxima.size > 0
     curv = _calc_vec_f(_curvature, x.size, y, gap) # calculate curvature
 
-    if maxima.size >= 2:
-        pos = _locate_cutoff_among_peaks(y, maxima)
-    else:
-        frac_right_thre = 0.41
-        frac_left_thre = 0.39
-
-        pos = -1
-        for i in range(maxima_by_x.size):
-            frac_right = (sim_scores_log > x[maxima_by_x[i]]).sum() / sim_scores.size
-            if frac_right < frac_right_thre: # peak might represent a doublet peak, try to find a cutoff at the left side
-                if i == 0:
-                    peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[i])
-                    end = _find_pos_curv(curv, maxima_by_x[i]-1, '-')
-                    start = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, end-1, '-')+1, '+')
-                    assert start <= end
-                    pos = curv[start:end+1].argmax() + start
-                else:
-                    pos = y[maxima_by_x[i-1]+1:maxima_by_x[i]].argmin() + (maxima_by_x[i-1]+1)
-
-                frac_left = (sim_scores_log < x[pos]).sum() / sim_scores.size    
-                if frac_left < frac_left_thre:
-                    pos = maxima_by_x[i]
-
-                break
-
-        if pos < 0:
-            # peak represents embedded doublets, find a cutoff at the right side
-            peak_curv_value = _find_curv_minima_at_peak(curv, maxima_by_x[-1])
-            start = _find_pos_curv(curv, maxima_by_x[-1]+1, '+')
-            end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1, '+')-1, '-')
-            assert start <= end
-            pos = curv[start:end+1].argmax() + start
-
-    threshold = np.exp(x[pos])
-
     x_theory = np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6)
-    theory_thr = np.exp(x_theory)
 
-    pos_alt = -1
+    pos = -1
     if maxima.size >= 2:
-        pos_alt = _locate_cutoff_among_peaks_with_guide(x, y, maxima, sim_scores_log, d_neo)
-        d_pneo = (sim_scores_log > x[pos_alt]).sum() / sim_scores_log.size
+        pos = _locate_cutoff_among_peaks_with_guide(x, y, maxima, sim_scores_log, d_neo)
+        d_pneo = (sim_scores_log > x[pos]).sum() / sim_scores_log.size
         if d_pneo < 0.1: # < 10%, consider it as not a peak
-            idx_ = maxima_by_x >= pos_alt
+            idx_ = maxima_by_x >= pos
             filtered_maxima = np.concatenate((filtered_maxima, maxima_by_x[idx_]))
             maxima_by_x = maxima_by_x[~idx_]
-            pos_alt = -1
-
-    if pos_alt < 0:
+            pos = -1
+    if pos < 0:
         frac_right = (sim_scores_log > x[maxima_by_x[-1]]).sum() / sim_scores.size
-        print(f"frac_right={frac_right}.")
-        if frac_right < 0.4 or (frac_right < 0.5 and x_theory + 0.05 < x[maxima_by_x[-1]]):
+        if frac_right < 0.41 or (frac_right < 0.5 and x_theory + 0.05 < x[maxima_by_x[-1]]):
             if maxima_by_x.size > 1:
                 posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
-                pos_alt = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
+                pos = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
             else:
-                pos_alt = _find_cutoff_left_side(maxima_by_x[0], x, curv, x_theory)
+                pos = _find_cutoff_left_side(maxima_by_x[0], x, curv, x_theory)
         else:
-            pos_alt = _find_cutoff_right_side(maxima_by_x[-1], curv, filtered_maxima)
-
-    threshold_alt = np.exp(x[pos_alt])
+            pos = _find_cutoff_right_side(maxima_by_x[-1], curv, filtered_maxima)
+    threshold = np.exp(x[pos])
 
     data.obs["doublet_score"] = obs_scores.astype(np.float32)
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
-    d_alt = (obs_scores > threshold_alt).sum() / data.shape[0]
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}; pos_alt_rate = {d_alt:.2%}; frac_alt = {(sim_scores_log > x[pos_alt]).sum() / sim_scores_log.size}.")
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}.")
 
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv, theory_thr=theory_thr, threshold_alt=threshold_alt)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv)
     return fig
 
 
