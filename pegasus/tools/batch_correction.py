@@ -174,7 +174,7 @@ def correct_batch(data: MultimodalData, features: str = None) -> None:
     logger.info("Adjustment parameters are estimated.")
 
     # select dense matrix
-    keyword = select_features(data, features=features, standardize=False, max_value=None) # do not standardize or truncate max_value
+    keyword = select_features(data, features=features) # do not standardize or truncate max_value
     logger.info("Features are selected.")
 
     if can_correct:
@@ -255,7 +255,7 @@ def run_scanorama(
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
-    max_value: float = 10,
+    max_value: float = 10.0,
     random_state: int = 0,
 ) -> str:
     """Batch correction using Scanorama.
@@ -310,7 +310,7 @@ def run_scanorama(
     logger.info("Start integration using Scanorama.")
 
     rep = 'scanorama'
-    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value)
+    keyword = select_features(data, features=features, scale=standardize, center=standardize, max_value=max_value)
     X = data.uns[keyword]
 
     datasets = []

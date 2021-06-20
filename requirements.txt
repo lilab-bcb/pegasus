@@ -31,4 +31,5 @@ setuptools
 statsmodels
 torch
 umap-learn>=0.4
+wordcloud
 xlsxwriter

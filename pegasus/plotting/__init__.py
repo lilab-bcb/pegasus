@@ -11,4 +11,5 @@ from .plot_library import (
     volcano,
     rank_plot,
     ridgeplot,
+    wordcloud,
 )

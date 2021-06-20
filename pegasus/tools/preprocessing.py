@@ -1,10 +1,9 @@
-import time
 import numpy as np
 import pandas as pd
 
 from scipy.sparse import issparse, csr_matrix
 from threadpoolctl import threadpool_limits
-from sklearn.decomposition import PCA, TruncatedSVD, NMF
+from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
@@ -344,11 +343,13 @@ def log_norm(
 @run_gc
 def select_features(
     data: MultimodalData,
-    features: str = "highly_variable_features",
-    standardize: bool = True,
-    max_value: float = 10.0,
+    features: str = None,
+    scale: bool = False,
+    center: bool = False,
+    max_value: float = None,
+    expression_space: bool = False,
 ) -> str:
-    """ Subset the features and store the resulting matrix in dense format in data.uns with `'_tmp_fmat_'` prefix, with the option of standardization and truncating based on max_value. `'_tmp_fmat_*'` will be removed before writing out the disk.
+    """ Subset the features and store the resulting matrix in dense format in data.uns with `'_tmp_fmat_'` prefix, with options of scale, center, truncation based on max_value and convert back to expression space. `'_tmp_fmat_*'` will be removed before writing out the disk.
 
     Parameters
     ----------
@@ -358,11 +359,17 @@ def select_features(
     features: ``str``, optional, default: ``None``.
         a keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
 
-    standardize: ``bool``, optional, default: ``True``.
-        Whether to scale the data to unit variance and zero mean.
+    scale: ``bool``, optional, default: ``False``.
+        Whether to scale data to unit variance.
 
-    max_value: ``float``, optional, default: ``10``.
-        The threshold to truncate data after scaling. If ``None``, do not truncate.
+    center: ``bool``, optional, default: ``True``.
+        Whether to center data to zero mean.
+
+    max_value: ``float``, optional, default: ``None``.
+        The threshold to truncate data on both sides. If ``None``, do not truncate. Note if center is False, will first center, truncate and then add center back.
+
+    expression_space: ``bool``, optional, default: ``False``.
+        Scale at the expression space (instead of log space)
 
     Returns
     -------
@@ -375,7 +382,7 @@ def select_features(
 
     Examples
     --------
-    >>> pg.select_features(data)
+    >>> pg.select_features(data, scale=True, center=True, max_value=10.0)
     """
     keyword = "_tmp_fmat_" + str(features)  # fmat: feature matrix
     batch_ls_key = "_tmp_ls_" + str(features)
@@ -391,25 +398,40 @@ def select_features(
         
         from pegasus.tools import slicing
         X = slicing(X, copy=True)
-        
-    if standardize:
+    
+    if expression_space:
+        np.expm1(X, out = X) # convert back to expression space
+
+    scaled_mean = None
+    if scale or center:
         m1 = X.mean(axis=0)
         psum = np.multiply(X, X).sum(axis=0)
         std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
         std[std == 0] = 1
-        X -= m1
-        X /= std
         data.uns["stdzn_mean"] = m1
         data.uns["stdzn_std"] = std
-        data.uns.pop(batch_ls_key, None)
 
-    if max_value is not None:
+        if center:
+            X -= m1
+
+        if scale:
+            X /= std
+            if (not center) and (max_value != None):
+                scaled_mean = m1 / std
+                X -= scaled_mean
+
+    if max_value != None:
         data.uns["stdzn_max_value"] = max_value
         X[X > max_value] = max_value
         X[X < -max_value] = -max_value
-        data.uns.pop(batch_ls_key, None)
+
+    if scaled_mean is not None:
+        X += scaled_mean
 
     data.uns[keyword] = X
+
+    if (batch_ls_key in data.uns) and (expression_space or scale or center or max_value != None):
+        data.uns.pop(batch_ls_key) # if data.uns[keyword] is modified, pop up the batch corrected dense matrix
 
     return keyword
 
@@ -473,7 +495,7 @@ def pca(
     --------
     >>> pg.pca(data)
     """
-    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value)
+    keyword = select_features(data, features=features, scale=standardize, center=standardize, max_value=max_value)
     X = data.uns[keyword].astype(np.float64) # float64 to avoid precision issues and make results more reproducible across platforms
     pca = PCA(n_components=n_components, random_state=random_state) # use auto solver, default is randomized for large datasets
 
@@ -704,86 +726,3 @@ def tsvd_transform(
     from sklearn.utils.extmath import safe_sparse_dot
     X_tsvd = safe_sparse_dot(X, data.uns["TSVDs"])
     return X_tsvd
-
-
-@timer(logger=logger)
-def nmf(
-    data: MultimodalData,
-    n_components: int = 20,
-    init: str = "nndsvdar",
-    solver: str = "cd",
-    max_iter: int = 200,
-    features: str = "highly_variable_features",
-    scale: bool = True,
-    max_value: float = 10.0,
-    n_jobs: int = -1,
-    random_state: int = 0,
-) -> None:
-    """Perform Principle Component Analysis (PCA) to the data.
-
-    The calculation uses *scikit-learn* implementation.
-
-    Parameters
-    ----------
-    data: ``pegasusio.MultimodalData``
-        Annotated data matrix with rows for cells and columns for genes.
-
-    n_components: ``int``, optional, default: ``50``.
-        Number of Principal Components to get.
-
-    init: ``str``, optional, default: ``nndsvdar``.
-        Method to initialize NMF for sklearn. Options are 'random', 'nndsvd', 'nndsvda' and 'nndsvdar'.
-
-    solver: ``str``, optional, default: ``cd``.
-        NMF solver. Options are 'cd' and 'mu'.
-
-    max_iter: ``str``, optional, default: ``200``.
-        Maximum number of iterations for NMF.
-
-    features: ``str``, optional, default: ``"highly_variable_features"``.
-        Keyword in ``data.var`` to specify features used for PCA.
-
-    scale: ``bool``, optional, default: ``True``.
-        Whether to scale the data to have unit variance.
-
-    max_value: ``float``, optional, default: ``10``.
-        The threshold to truncate data after scaling. If ``None``, do not truncate.
-
-    n_jobs : `int`, optional (default: -1)
-        Number of threads to use. -1 refers to using all physical CPU cores.
-
-    random_state: ``int``, optional, default: ``0``.
-        Random seed to be set for reproducing result.
-
-    Returns
-    -------
-    ``None``.
-
-    Update ``data.obsm``:
-
-        * ``data.obsm["X_nmf"]``: NMF coordinate matrix (W) of the data.
-
-    Update ``data.uns``:
-
-        * ``data.uns["H"]``: The feature factor matrix. 
-
-        * ``data.uns["nmf_features"]``: Record the features used to perform NMF analysis.
-
-    Examples
-    --------
-    >>> pg.nmf(data)
-    """
-    keyword = select_features(data, features=features, standardize=scale, max_value=max_value)
-
-    X = (data.uns[keyword] + data.uns['stdzn_mean'] / data.uns['stdzn_std']).astype(np.float64)
-    X[X < 0] = 0.0
-    
-    nmf = NMF(n_components=n_components, init=init, solver=solver, max_iter=max_iter, random_state=random_state)
-
-    n_jobs = eff_n_jobs(n_jobs)
-    with threadpool_limits(limits = n_jobs):
-        X_nmf = nmf.fit_transform(X)
-
-    data.obsm["X_nmf"] = np.ascontiguousarray(X_nmf, dtype=np.float32)
-    data.uns["H"] = np.ascontiguousarray(nmf.components_.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same
-    data.uns["nmf_features"] = features # record which feature to use

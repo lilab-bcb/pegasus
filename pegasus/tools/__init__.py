@@ -19,7 +19,6 @@ from .preprocessing import (
     tsvd,
     tsvd_transform,
     regress_out,
-    nmf,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
 from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
@@ -48,3 +47,4 @@ from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import get_anndata_for_subclustering
 from .signature_score import calc_signature_score
 from .doublet_detection import infer_doublets, mark_doublets
+from .nmf import nmf

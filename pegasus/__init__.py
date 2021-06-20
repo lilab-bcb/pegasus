@@ -83,6 +83,7 @@ from .plotting import (
     volcano,
     rank_plot,
     ridgeplot,
+    wordcloud,
 )
 
 try:

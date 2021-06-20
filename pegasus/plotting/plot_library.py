@@ -1738,7 +1738,7 @@ def rank_plot(
 
     Examples
     --------
-    >>> fig = pg.rank_plot(data, show = False, dpi = 500)
+    >>> fig = pg.rank_plot(data, dpi = 500)
     """
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
 
@@ -1883,3 +1883,72 @@ def ridgeplot(
     sns.reset_orig()
 
     return g.fig if return_fig else None
+
+
+def wordcloud(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    factor: int,
+    max_words: Optional[int] = 20,
+    random_state: Optional[int] = 0,
+    colormap: Optional[str] = "hsv",
+    width: Optional[int] = 800,
+    height: Optional[int] = 400,
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Generate one word cloud image for factor (starts from 0) in data.uns['W']. 
+
+    Parameters
+    ----------
+
+    data : ``AnnData`` or ``UnimodalData`` or ``MultimodalData`` object
+        The main data object.
+    factor: ``int``
+        Which factor to plot. factor starts from 0.
+    max_words: ``int``, optional, default: 20
+        Maximum number of genes to show in the image.
+    random_state: ``int``, optional, default: 0
+        Random seed passing to WordCloud function.
+    colormap: ``str``, optional, default: ``hsv``
+        Color map for plotting words.
+    width: ``int``, optional, default: 800
+        Canvas width.
+    height: ``int``, optional, default: 400
+        Canvas height.
+    panel_size: ``tuple``, optional, default: `(6, 4)`
+        The plot size (width, height) in inches.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> fig = pg.wordcloud(data, factor=0)
+    """
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
+
+    assert 'W' in data.uns
+    hvg = data.var_names[data.var['highly_variable_features']]
+    word_dict = {}
+    for i in range(hvg.size):
+        word_dict[hvg[i]] = data.uns['W'][i, factor]
+
+    from wordcloud import WordCloud
+    wc = WordCloud(background_color="white", max_words=max_words, random_state=random_state, colormap=colormap, width=width, height=height)
+    wc.generate_from_frequencies(word_dict)
+    
+    ax.imshow(wc)
+    ax.axis('off')
+
+    return fig if return_fig else None
+
+
