@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
+import numba
 
 from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
@@ -15,6 +16,17 @@ logger = logging.getLogger(__name__)
 
 from pegasusio import timer
 
+
+
+@numba.njit(cache=True)
+def _reorg_knn(indices, distances):
+    for i in range(indices.shape[0]):
+        if indices[i, 0] != i:
+            for j in range(indices.shape[1]-1, 0, -1):
+                indices[i, j] = indices[i, j-1]
+                distances[i, j] = distances[i, j-1]
+            indices[i, 0] = i
+            distances[i, 0] = 0.0
 
 
 def calculate_nearest_neighbors(
@@ -62,12 +74,11 @@ def calculate_nearest_neighbors(
         knn_index.set_num_threads(n_jobs)
         indices, distances = knn_index.knn_query(X, k=K)
         # eliminate the first neighbor, which is the node itself
-        for i in range(nsample):
-            if indices[i, 0] != i:
-                indices[i, 1:] = indices[i, 0:-1]
-                distances[i, 1:] = distances[i, 0:-1]
-        indices = indices[:, 1:].astype(int)
-        distances = np.sqrt(distances[:, 1:])
+        _reorg_knn(indices, distances)
+        indices = indices[:, 1:]
+        indices.dtype = np.int64
+        distances = distances[:, 1:]
+        distances = np.sqrt(distances, out=distances)
     else:
         assert method == "sklearn"
         knn = NearestNeighbors(
@@ -98,6 +109,7 @@ def get_neighbors(
     n_jobs: int = -1,
     random_state: int = 0,
     full_speed: bool = False,
+    use_cache: bool = True,
 ) -> Tuple[List[int], List[float]]:
     """Find K nearest neighbors for each data point and return the indices and distances arrays.
 
@@ -116,6 +128,8 @@ def get_neighbors(
         Random seed for random number generator.
     full_speed: `bool`, optional (default: False)
         If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+    use_cache: `bool`, optional (default: True)
+        If use_cache and found cached knn results, will not recompute.
 
     Returns
     -------
@@ -131,7 +145,7 @@ def get_neighbors(
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    if knn_is_cached(data, indices_key, distances_key, K):
+    if use_cache and knn_is_cached(data, indices_key, distances_key, K):
         indices = data.uns[indices_key]
         distances = data.uns[distances_key]
         logger.info("Found cached kNN results, no calculation is required.")
@@ -207,6 +221,7 @@ def neighbors(
     n_jobs: int = -1,
     random_state: int = 0,
     full_speed: bool = False,
+    use_cache: bool = True,
 ) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
@@ -234,6 +249,10 @@ def neighbors(
         * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
+    use_cache: ``bool``, optional, default: ``True``
+        * If ``True`` and found cached knn results, Pegasus will use cached results and do not recompute.
+        * Otherwise, compute kNN irrespective of caching status.
+
     Returns
     -------
     ``None``
@@ -257,6 +276,7 @@ def neighbors(
         n_jobs=n_jobs,
         random_state=random_state,
         full_speed=full_speed,
+        use_cache=use_cache,
     )
 
     # calculate affinity matrix
@@ -298,6 +318,7 @@ def calc_kBET(
     n_jobs: int = -1,
     random_state: int = 0,
     temp_folder: str = None,
+    use_cache: bool = True,
 ) -> Tuple[float, float, float]:
     """Calculate the kBET metric of the data regarding a specific sample attribute and embedding.
 
@@ -328,6 +349,9 @@ def calc_kBET(
 
     temp_folder: ``str``, optional, default: ``None``
         Temporary folder for joblib execution.
+
+    use_cache: ``bool``, optional, default: ``True``
+        If use cache results for kNN.
 
     Returns
     -------
@@ -360,7 +384,7 @@ def calc_kBET(
     attr_values.categories = range(nbatch)
 
     indices, distances = get_neighbors(
-        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
@@ -401,6 +425,7 @@ def calc_kSIM(
     min_rate: float = 0.9,
     n_jobs: int = -1,
     random_state: int = 0,
+    use_cache: bool = True,
 ) -> Tuple[float, float]:
     """Calculate the kSIM metric of the data regarding a specific sample attribute and embedding.
 
@@ -429,6 +454,9 @@ def calc_kSIM(
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
 
+    use_cache: ``bool``, optional, default: ``True``
+        If use cache results for kNN.
+
     Returns
     -------
     kSIM_mean: ``float``
@@ -447,7 +475,7 @@ def calc_kSIM(
     nsample = data.shape[0]
 
     indices, distances = get_neighbors(
-        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
