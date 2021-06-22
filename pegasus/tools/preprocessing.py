@@ -343,46 +343,30 @@ def log_norm(
 @run_gc
 def select_features(
     data: MultimodalData,
-    features: str = None,
-    scale: bool = False,
-    center: bool = False,
-    max_value: float = None,
-    expression_space: bool = False,
+    features: str = "highly_variable_features",
+    standardize: bool = True,
+    max_value: float = 10.0,
 ) -> str:
-    """ Subset the features and store the resulting matrix in dense format in data.uns with `'_tmp_fmat_'` prefix, with options of scale, center, truncation based on max_value and convert back to expression space. `'_tmp_fmat_*'` will be removed before writing out the disk.
-
+    """ Subset the features and store the resulting matrix in dense format in data.uns with `'_tmp_fmat_'` prefix, with the option of standardization and truncating based on max_value. `'_tmp_fmat_*'` will be removed before writing out the disk.
     Parameters
     ----------
     data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
-
-    features: ``str``, optional, default: ``None``.
+    features: ``str``, optional, default: ``highly_variable_features``.
         a keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
-
-    scale: ``bool``, optional, default: ``False``.
-        Whether to scale data to unit variance.
-
-    center: ``bool``, optional, default: ``True``.
-        Whether to center data to zero mean.
-
-    max_value: ``float``, optional, default: ``None``.
-        The threshold to truncate data on both sides. If ``None``, do not truncate. Note if center is False, will first center, truncate and then add center back.
-
-    expression_space: ``bool``, optional, default: ``False``.
-        Scale at the expression space (instead of log space)
-
+    standardize: ``bool``, optional, default: ``True``.
+        Whether to scale the data to unit variance and zero mean.
+    max_value: ``float``, optional, default: ``10``.
+        The threshold to truncate data after scaling. If ``None``, do not truncate.
     Returns
     -------
     keyword: ``str``
         The keyword in ``data.uns`` referring to the features selected.
-
     Update ``data.uns`` if needed:
-
         * ``data.uns[keyword]``: A submatrix of the data containing features selected.
-
     Examples
     --------
-    >>> pg.select_features(data, scale=True, center=True, max_value=10.0)
+    >>> pg.select_features(data)
     """
     keyword = "_tmp_fmat_" + str(features)  # fmat: feature matrix
     batch_ls_key = "_tmp_ls_" + str(features)
@@ -398,40 +382,25 @@ def select_features(
         
         from pegasus.tools import slicing
         X = slicing(X, copy=True)
-    
-    if expression_space:
-        np.expm1(X, out = X) # convert back to expression space
-
-    scaled_mean = None
-    if scale or center:
+        
+    if standardize:
         m1 = X.mean(axis=0)
         psum = np.multiply(X, X).sum(axis=0)
         std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
         std[std == 0] = 1
+        X -= m1
+        X /= std
         data.uns["stdzn_mean"] = m1
         data.uns["stdzn_std"] = std
+        data.uns.pop(batch_ls_key, None)
 
-        if center:
-            X -= m1
-
-        if scale:
-            X /= std
-            if (not center) and (max_value != None):
-                scaled_mean = m1 / std
-                X -= scaled_mean
-
-    if max_value != None:
+    if max_value is not None:
         data.uns["stdzn_max_value"] = max_value
         X[X > max_value] = max_value
         X[X < -max_value] = -max_value
-
-    if scaled_mean is not None:
-        X += scaled_mean
+        data.uns.pop(batch_ls_key, None)
 
     data.uns[keyword] = X
-
-    if (batch_ls_key in data.uns) and (expression_space or scale or center or max_value != None):
-        data.uns.pop(batch_ls_key) # if data.uns[keyword] is modified, pop up the batch corrected dense matrix
 
     return keyword
 
@@ -495,7 +464,7 @@ def pca(
     --------
     >>> pg.pca(data)
     """
-    keyword = select_features(data, features=features, scale=standardize, center=standardize, max_value=max_value)
+    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value)
     X = data.uns[keyword].astype(np.float64) # float64 to avoid precision issues and make results more reproducible across platforms
     pca = PCA(n_components=n_components, random_state=random_state) # use auto solver, default is randomized for large datasets
 

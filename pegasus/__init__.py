@@ -36,6 +36,7 @@ from .tools import (
     tsvd_transform,
     regress_out,
     nmf,
+    integrative_nmf,
     highly_variable_features,
     set_group_attribute,
     correct_batch,

@@ -174,7 +174,7 @@ def correct_batch(data: MultimodalData, features: str = None) -> None:
     logger.info("Adjustment parameters are estimated.")
 
     # select dense matrix
-    keyword = select_features(data, features=features) # do not standardize or truncate max_value
+    keyword = select_features(data, features=features, standardize=False, max_value=None) # do not standardize or truncate max_value
     logger.info("Features are selected.")
 
     if can_correct:
@@ -190,6 +190,7 @@ def correct_batch(data: MultimodalData, features: str = None) -> None:
 @timer(logger=logger)
 def run_harmony(
     data: MultimodalData,
+    batch: str = 'Channel',
     rep: str = 'pca',
     n_jobs: int = -1,
     n_clusters: int = None,
@@ -203,6 +204,9 @@ def run_harmony(
     ----------
     data: ``MultimodalData``.
         Annotated data matrix with rows for cells and columns for genes.
+
+    batch: ``str``, optional, default: ``"Channel"``.
+        Which attribute in data.obs field represents batches, default is "Channel".
 
     rep: ``str``, optional, default: ``"pca"``.
         Which representation to use as input of Harmony, default is PCA.
@@ -230,10 +234,10 @@ def run_harmony(
     --------
     >>> pg.run_harmony(data, rep = "pca", n_jobs = 10, random_state = 25)
     """
-    if not is_categorical_dtype(data.obs['Channel']):
-        data.obs['Channel'] = pd.Categorical(data.obs['Channel'])
-    if data.obs['Channel'].cat.categories.size  == 1:
-        logger.warning("Warning: data only contains 1 channel. Cannot apply Harmony!")
+    if not is_categorical_dtype(data.obs[batch]):
+        data.obs[batch] = pd.Categorical(data.obs[batch])
+    if data.obs[batch].cat.categories.size  == 1:
+        logger.warning("Warning: data only contains 1 batch. Cannot apply Harmony!")
         return rep
 
     try:
@@ -245,13 +249,14 @@ def run_harmony(
 
     logger.info("Start integration using Harmony.")
     out_rep = rep + '_harmony'
-    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, 'Channel', n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
+    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, batch, n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
     return out_rep
 
 
 @timer(logger=logger)
 def run_scanorama(
     data: MultimodalData,
+    batch: str = 'Channel',
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
@@ -266,6 +271,9 @@ def run_scanorama(
     ----------
     data: ``MultimodalData``.
         Annotated data matrix with rows for cells and columns for genes.
+
+    batch: ``str``, optional, default: ``"Channel"``.
+        Which attribute in data.obs field represents batches, default is "Channel".
 
     n_components: ``int``, optional default: ``50``.
         Number of integrated embedding components to keep. This sets Scanorama's dimred parameter.
@@ -294,10 +302,10 @@ def run_scanorama(
     --------
     >>> pg.run_scanorama(data, random_state = 25)
     """
-    if not is_categorical_dtype(data.obs['Channel']):
-        data.obs['Channel'] = pd.Categorical(data.obs['Channel'])
-    if data.obs['Channel'].cat.categories.size  == 1:
-        logger.warning("Warning: data only contains 1 channel. Cannot apply Scanorama!")
+    if not is_categorical_dtype(data.obs[batch]):
+        data.obs[batch] = pd.Categorical(data.obs[batch])
+    if data.obs[batch].cat.categories.size  == 1:
+        logger.warning("Warning: data only contains 1 batch. Cannot apply Scanorama!")
         return 'pca'
 
     try:
@@ -310,15 +318,15 @@ def run_scanorama(
     logger.info("Start integration using Scanorama.")
 
     rep = 'scanorama'
-    keyword = select_features(data, features=features, scale=standardize, center=standardize, max_value=max_value)
+    keyword = select_features(data, features=features, standardize=standardize, max_value=max_value)
     X = data.uns[keyword]
 
     datasets = []
-    for channel in data.obs['Channel'].cat.categories:
-        idx = (data.obs['Channel'] == channel).values
+    for channel in data.obs[batch].cat.categories:
+        idx = (data.obs[batch] == channel).values
         assert idx.sum() > 0
         datasets.append(X[idx, :])
-    genes_list = [[str(i) for i in range(X.shape[1])]] * data.obs['Channel'].cat.categories.size
+    genes_list = [[str(i) for i in range(X.shape[1])]] * data.obs[batch].cat.categories.size
 
     integrated, genes = integrate(datasets, genes_list, dimred = n_components, seed = random_state)
     data.obsm[f'X_{rep}'] = np.concatenate(integrated, axis = 0)
