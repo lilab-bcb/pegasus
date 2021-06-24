@@ -374,6 +374,8 @@ def integrative_nmf(
 
     Xs = _select_and_scale_features(data, features=features, space=space, batch=batch)
 
+    np.save('counts.npy', np.concatenate(Xs).astype(np.float64))
+    
     # _end = time.perf_counter()
     # print(f"Scale X: {_end-_start:.6f}s.")
     # _start = _end

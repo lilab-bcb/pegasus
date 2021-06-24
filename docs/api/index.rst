@@ -167,4 +167,5 @@ Miscellaneous
 
     search_genes
     search_de_genes
+    find_outlier_clusters
     find_markers
