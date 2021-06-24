@@ -35,6 +35,7 @@ Preprocess
     highly_variable_features
     select_features
     pca
+    nmf
     regress_out
 
 
@@ -48,6 +49,7 @@ Batch Correction
     correct_batch
     run_harmony
     run_scanorama
+    integrative_nmf
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~

@@ -1,7 +1,7 @@
 Installation
 ------------
 
-Pegasus works with Python 3.6, 3.7, and 3.8.
+Pegasus works with Python 3.7, 3.8 and 3.9.
 
 Linux
 ^^^^^
@@ -189,7 +189,16 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 4. Install Pegasus::
 
-	conda install -y -c bioconda pegasuspy
+	pip install pegasuspy
+
+5. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
+
+	conda install -y -c conda-forge fftw
+	pip install fitsne
+
+And use the following command to enable the Leiden clustering functionality::
+
+	pip install leidenalg
 
 
 --------------------------
@@ -203,7 +212,7 @@ On `Singularity Hub`_, we maintain Singularity container of Pegasus current stab
 
 	singularity pull shub://klarman-cell-observatory/pegasus
 
-This will fetch a 2.4GB container file ``pegasus_latest.sif`` on your machine. Then interact with it, e.g.::
+This will fetch a container file ``pegasus_latest.sif`` of about 2.4GB on your machine. Then interact with it, e.g.::
 
 	singularity run pegasus_latest.sif
 

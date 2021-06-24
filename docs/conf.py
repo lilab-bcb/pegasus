@@ -23,15 +23,15 @@ import pegasus
 # -- Project information -----------------------------------------------------
 
 project = "Pegasus"
-copyright = "2020 The Broad Institute, Inc. and The General Hospital Corporation. All rights reserved."
+copyright = "2020 - 2021 The Broad Institute, Inc. and The General Hospital Corporation. All rights reserved."
 author = (
     "Yiming Yang, Joshua Gould and Bo Li"
 )
 
 # The short X.Y version
-version = "1.2"
+version = "1.4"
 # The full version, including alpha/beta/rc tags
-release = "1.2.0"
+release = "1.4.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -95,8 +95,8 @@ pygments_style = "sphinx"
 
 intersphinx_mapping = dict(
     anndata=('https://anndata.readthedocs.io/en/latest/', None),
-    numpy=('https://docs.scipy.org/doc/numpy/', None),
-    pandas=('http://pandas.pydata.org/pandas-docs/stable/', None),
+    numpy=('https://numpy.org/doc/stable/', None),
+    pandas=('https://pandas.pydata.org/pandas-docs/stable/', None),
     sklearn=('https://scikit-learn.org/dev/', None),
 )
 

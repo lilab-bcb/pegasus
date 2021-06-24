@@ -13,6 +13,10 @@ References
    "A test metric for assessing single-cell RNA-seq batch correction",
    In `Nature Methods <https://www.nature.com/articles/s41592-018-0254-1>`__, 2018.
 
+.. [Gao21] Ch. Gao, et al.,
+   "Iterative single-cell multi-omic integration using online learning",
+   In `Nature Biotechnology <https://www.nature.com/articles/s41587-021-00867-x>`__, 2021.
+
 .. [Hie19] B. Hie, B. Bryson, and B. Berger,
    "Efficient integration of heterogeneous single-cell transcriptomes using Scanorama",
    In `Nature Biotechnology <https://www.nature.com/articles/s41587-019-0113-3>`__, 2019.
@@ -64,6 +68,10 @@ References
 .. [Traag19] V. A. Traag, L. Waltman, and N. J. van Eck,
    "From Louvain to Leiden: guaranteeing well-connected communities",
    In `Scientific Reports <https://www.nature.com/articles/s41598-019-41695-z>`__, 2019.
+
+.. [Welch19] J. D. Welch, et al.,
+   "Single-Cell Multi-omic Integration Compares and Contrasts Features of Brain Cell Identity"
+   In `Cell <https://www.sciencedirect.com/science/article/pii/S0092867419305045>`__, 2019.
 
 .. [Wolock18] S.L. Wolock, R. Lopez, and A.M. Klein,
    "Scrublet: computational identification of cell doublets in single-cell transcriptomic Data",
