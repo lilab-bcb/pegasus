@@ -49,6 +49,12 @@ There are optional packages that you can install:
 
 	python3 -m pip install leidenalg
 
+.. note::
+
+	If installing from Python 3.9, you'll need to install the following packages system-wide first in order to locally compile ``louvain`` package, one of Pegasus' dependencies::
+
+		sudo apt install flex bison libtool
+
 --------------------------
 
 Fedora
@@ -100,6 +106,12 @@ There are optional packages that you can install:
 - **leiden**: This package provides Leiden clustering algorithm, besides the default Louvain algorithm in Pegasus::
 
 	python3.8 -m pip install leidenalg
+
+.. note::
+
+	If installing from Python 3.9, you'll need to install the following packages system-wide first in order to locally compile ``louvain`` package, one of Pegasus' dependencies::
+
+		sudo dnf install flex bison libtool
 
 
 .. _Ubuntu/Debian install via PyPI: ./installation.html#ubuntu-debian-install-via-pypi
@@ -187,11 +199,15 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 	conda activate pegasus
 
-4. Install Pegasus::
+4. Install the following dependency::
+
+	conda install -y -c conda-forge louvain
+
+6. Install Pegasus::
 
 	pip install pegasuspy
 
-5. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
+7. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
 
 	conda install -y -c conda-forge fftw
 	pip install fitsne
