@@ -224,13 +224,21 @@ Install via Singularity
 
 Singularity_ is a container engine similar to Docker. Its main difference from Docker is that Singularity can be used with unprivileged permissions.
 
-On `Singularity Hub`_, we maintain Singularity container of Pegasus current stable version (running on Ubuntu Linux 20.04 with Python 3.8). On your server or machine where Singularity has been installed, pull this container using::
+.. note::
 
-	singularity pull shub://klarman-cell-observatory/pegasus
+	Please notice that Singularity Hub has been offline since April 26th, 2021 (see `blog post`_). All existing containers held there are in archive, and we can no longer push new builds.
 
-This will fetch a container file ``pegasus_latest.sif`` of about 2.4GB on your machine. Then interact with it, e.g.::
+	So if you fetch the container from Singularity Hub using the following command::
 
-	singularity run pegasus_latest.sif
+		singularity pull shub://klarman-cell-observatory/pegasus
+
+	it will just give you a Singularity container of Pegasus v1.2.0 running on Ubuntu Linux 20.04 base with Python 3.8, in the name ``pegasus_latest.sif`` of about 2.4 GB.
+
+On your local machine, first `install Singularity`_, then you can use our `Singularity spec file`_ to build a Singularity container by yourself. 
+
+Say the built container file has name ``pegasus.sif``. Now you can interact with it, e.g.::
+
+	singularity run pegasus.sif
 
 Please refer to `Singularity image interaction guide`_ for details.
 
@@ -260,5 +268,7 @@ where ``-e`` option of ``pip`` means to install in editing mode, so that your Pe
 .. _Miniconda: https://docs.conda.io/en/latest/index.html
 .. _Miniconda installer: https://docs.conda.io/en/latest/miniconda.html
 .. _Singularity: http://singularity.lbl.gov/
-.. _Singularity Hub: https://singularity-hub.org/collections/5065
+.. _blog post: https://vsoch.github.io//2021/singularity-hub-archive/
+.. _install Singularity: https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps
+.. _Singularity spec file: https://raw.githubusercontent.com/klarman-cell-observatory/pegasus/master/Singularity
 .. _Singularity image interaction guide: https://singularityhub.github.io/singularityhub-docs/docs/interact
