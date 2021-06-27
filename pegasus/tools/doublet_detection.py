@@ -310,7 +310,7 @@ def _run_scrublet(
         kmeans = KMeans(n_clusters = 5, random_state = random_state).fit(obs_pca)
 
     # calculate in simulated distribution, expected percentage of embedded doublets
-    data.obs["kmeans_"] = pd.Categorical(kmeans.labels_)
+    data.obs["dbl_kmeans_"] = pd.Categorical(kmeans.labels_)
     _, freqs = np.unique(kmeans.labels_, return_counts = True)
     freqs = np.array(freqs) / sum(freqs)
     d_emb = (((1.0 - rho) * freqs + rho * (freqs ** 2)) ** 2).sum()
@@ -382,6 +382,7 @@ def _run_scrublet(
     if pos < 0:
         frac_right = (sim_scores_log > x[maxima_by_x[-1]]).sum() / sim_scores.size
         if frac_right < 0.41 or (frac_right < 0.5 and x_theory + 0.05 < x[maxima_by_x[-1]]):
+            logger.debug(f"frac_right={frac_right}.")
             if maxima_by_x.size > 1:
                 posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
                 pos = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
@@ -395,10 +396,7 @@ def _run_scrublet(
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
-    sim_neo_rate = (sim_scores > threshold).sum() / sim_scores.size
-    neo_dbl_rate = data.obs['pred_dbl'].sum() / data.shape[0]
-
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {neo_dbl_rate:.2%}; neotypic doublet rate in simulation = {sim_neo_rate:.2%}.")
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}.")
 
     fig = None
     if plot_hist:
@@ -561,7 +559,6 @@ def infer_doublets(
                 dbl_score[idx] = unidata.obs["doublet_score"].values
                 pred_dbl[idx] = unidata.obs["pred_dbl"].values
                 thresholds[channel] = unidata.uns["doublet_threshold"]
-                data.obs["kmeans_"] = unidata.obs["kmeans_"]
             else:
                 logger.warning(f"Channel {channel} has {idx.size} < {min_cell} cells and thus doublet score calculation is skipped!")
 
