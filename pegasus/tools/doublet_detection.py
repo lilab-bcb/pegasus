@@ -148,7 +148,7 @@ def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: L
     assert start <= end
     return curv[start:end+1].argmax() + start
 
-def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300):
+def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, threshold_theory = None):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
         (A) top left: histogram of observed cells;
         (B) top right: histogram of simulated doublets;
@@ -163,6 +163,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.hist(obs_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
+    ax.axvline(x = threshold_theory, ls = "--", c = "r", linewidth=1)
     ax.set_title('Observed cells')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -171,6 +172,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.hist(sim_scores, x, color="gray", linewidth=0, density=True)
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
+    ax.axvline(x = threshold_theory, ls = "--", c = "r", linewidth=1)
     ax.set_title('Simulated doublets')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -179,6 +181,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.plot(sim_x, sim_y, '-', c='k', lw = 1)
     ax.set_ylim(bottom = 0.0)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
+    ax.axvline(x = np.log(threshold_theory), ls = "--", c="r", lw=1)
     ax.set_title('KDE of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Density')
@@ -186,6 +189,7 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax = axes[1, 1]
     ax.plot(sim_x, curv, '-', c='k', lw = 1)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
+    ax.axvline(x = np.log(threshold_theory), ls = "--", c="r", lw=1)
     ax.set_title('Curvature of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Curvature')
@@ -364,6 +368,7 @@ def _run_scrublet(
     curv = _calc_vec_f(_curvature, x.size, y, gap) # calculate curvature
 
     x_theory = np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6)
+    threshold_theory = np.exp(x_theory)
 
     pos = -1
     if maxima.size >= 2:
@@ -390,11 +395,14 @@ def _run_scrublet(
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}.")
+    sim_neo_rate = (sim_scores > threshold).sum() / sim_scores.size
+    neo_dbl_rate = data.obs['pred_dbl'].sum() / data.shape[0]
+
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {neo_dbl_rate:.2%}; neotypic doublet rate in simulation = {sim_neo_rate:.2%}.")
 
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv, threshold_theory=threshold_theory)
     return fig
 
 
