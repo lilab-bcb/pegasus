@@ -396,7 +396,9 @@ def _run_scrublet(
     data.obs["pred_dbl"] = obs_scores > threshold
     data.uns["doublet_threshold"] = float(threshold)
 
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {data.obs['pred_dbl'].sum() / data.shape[0]:.2%}.")
+    neo_dbl_rate = data.obs['pred_dbl'].sum() / data.shape[0]
+    neo_sim_dbl_rate = (sim_scores > threshold).sum() / sim_scores.size
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate = {neo_dbl_rate:.2%}; neotypic doublet rate in simulation = {neo_sim_dbl_rate:.2%}.")
 
     fig = None
     if plot_hist:
