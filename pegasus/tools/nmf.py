@@ -87,7 +87,7 @@ def nmf(
 ) -> None:
     """Perform Nonnegative Matrix Factorization (NMF) to the data using Frobenius norm. Steps include select features and L2 normalization and NMF and L2 normalization of resulting coordinates.
 
-    The calculation uses *NMF-Torch*.
+    The calculation uses `nmf-torch <https://github.com/lilab-bcb/nmf-torch>`_ package.
 
     Parameters
     ----------
@@ -113,7 +113,7 @@ def nmf(
         Choose from ``mu`` (Multiplicative Update), ``hals`` (Hierarchical Alternative Least Square), ``halsvar`` (HALS variant, use HALS to mimic ``bpp`` and can get better convergence for sometimes) and ``bpp`` (alternative non-negative least squares with Block Principal Pivoting method).
 
     mode: ``str``, optional, default: ``batch``
-        Learning mode. Choose from ``batch`` and ``online``. Notice that ``online`` only works when ``beta=2.0``. For other beta loss, it switches back to ``batch`` method.        
+        Learning mode. Choose from ``batch`` and ``online``. Notice that ``online`` only works when ``beta=2.0``. For other beta loss, it switches back to ``batch`` method.
 
     tol: ``float``, optional, default: ``1e-4``
         The toleration used for convergence check.
@@ -154,7 +154,7 @@ def nmf(
 
     Update ``data.uns``:
 
-        * ``data.uns["W"]``: The feature factor matrix. 
+        * ``data.uns["W"]``: The feature factor matrix.
 
         * ``data.uns["H"]``: The coordinate factor matrix.
 
@@ -220,7 +220,7 @@ def _refine_cluster(clusters, indices, ncluster):
 @njit(fastmath=True, cache=True)
 def _quantile_norm(Hs, csums, ids_by_clusts, nbatch, ref_batch, ncluster, min_cells=20, quantiles=50):
     qs = np.linspace(0, 1, quantiles+1) # Generate quantiles
-    
+
     # Prepare reference batch
     ref_quantiles = []
     ref_sizes = np.zeros(ncluster, dtype=numba.i4)
@@ -228,7 +228,7 @@ def _quantile_norm(Hs, csums, ids_by_clusts, nbatch, ref_batch, ncluster, min_ce
     Href = Hs[ref_batch]
     csum_ref = csums[ref_batch]
     ids_ref = ids_by_clusts[ref_batch]
-    
+
     for j in range(ncluster):
         start = csum_ref[j]
         end = csum_ref[j+1]
@@ -291,9 +291,13 @@ def integrative_nmf(
 ) -> str:
     """Perform Integrative Nonnegative Matrix Factorization (iNMF) for data integration.
 
-    The calculation uses *NMF-Torch*.
+    The calculation uses `nmf-torch <https://github.com/lilab-bcb/nmf-torch>`_ package.
 
-    This function assumes that cells in each batch are adjacent to each other. In addition, it will scale each batch with L2 norm separately. The resulting Hs will also be scaled with L2 norm. If quantile_norm=True, quantile normalization will be additionally performed.
+    This function assumes that cells in each batch are adjacent to each other.
+    In addition, it will scale each batch with L2 norm separately. The resulting Hs will also be scaled with L2 norm.
+    If ``quantile_norm=True``, quantile normalization will be additionally performed.
+
+    See [Welch19]_ and [Gao21]_ for details on the algorithms.
 
     Parameters
     ----------
@@ -316,7 +320,7 @@ def integrative_nmf(
         Choose from ``mu`` (Multiplicative Update), ``halsvar`` (HALS variant that mimic bpp but faster) and ``bpp`` (alternative non-negative least squares with Block Principal Pivoting method).
 
     mode: ``str``, optional, default: ``online``
-        Learning mode. Choose from ``batch`` and ``online``. Notice that ``online`` only works when ``beta=2.0``. For other beta loss, it switches back to ``batch`` method.        
+        Learning mode. Choose from ``batch`` and ``online``. Notice that ``online`` only works when ``beta=2.0``. For other beta loss, it switches back to ``batch`` method.
 
     tol: ``float``, optional, default: ``1e-4``
         The toleration used for convergence check.
@@ -349,10 +353,10 @@ def integrative_nmf(
 
     Update ``data.uns``:
 
-        * ``data.uns["W"]``: The feature factor matrix. 
+        * ``data.uns["W"]``: The feature factor matrix.
 
         * ``data.uns["Hs"]``: The coordinate factor matrices.
-        
+
         * ``data.uns["Vs"]``: The batch specific feature factor matrices.
 
         * ``data.uns["inmf_err"]``: The iNMF loss.
@@ -369,13 +373,13 @@ def integrative_nmf(
         logger.warning("Warning: data only contains 1 batch. Cannot apply integrative_nmf!")
         return 'pca'
 
-    # import time 
+    # import time
     # _start = time.perf_counter()
 
     Xs = _select_and_scale_features(data, features=features, space=space, batch=batch)
 
     np.save('counts.npy', np.concatenate(Xs).astype(np.float64))
-    
+
     # _end = time.perf_counter()
     # print(f"Scale X: {_end-_start:.6f}s.")
     # _start = _end

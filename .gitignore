@@ -7,6 +7,15 @@ docs/_build
 .DS_Store
 pegasus/.DS_Store
 
+notebooks/*.zarr.zip
+notebooks/*.txt
+notebooks/*.png
+notebooks/*.csv
+notebooks/*.gmt
+notebooks/*.xlsx
+
+tests/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
