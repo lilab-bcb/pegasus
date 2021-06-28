@@ -425,7 +425,7 @@ def _run_scrublet(
 
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, threshold_theory, x, y, curv, threshold_auto=threhsold_auto)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, threshold_theory, x, y, curv, threshold_auto=threshold_auto)
     return fig
 
 
