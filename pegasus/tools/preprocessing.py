@@ -160,7 +160,7 @@ def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
     --------
     >>> pg.filter_data(data)
     """
-    data.filter_data(focus_list = focus_list, cache_passqc = True)
+    data.filter_data(focus_list = focus_list, cache_passqc = True, uns_white_list="norm_count,df_qcplot")
 
 
 @timer(logger=logger)
