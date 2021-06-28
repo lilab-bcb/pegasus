@@ -148,7 +148,7 @@ def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: L
     assert start <= end
     return curv[start:end+1].argmax() + start
 
-def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, threshold_theory = None):
+def _plot_hist(obs_scores, sim_scores, threshold, threshold_theory, sim_x, sim_y, curv, nbin = 100, fig_size = (8,6), dpi = 300, threshold_auto = None):
     """ Plot histogram of doublet scores for observed cells and simulated doublets
         (A) top left: histogram of observed cells;
         (B) top right: histogram of simulated doublets;
@@ -164,6 +164,8 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
     ax.axvline(x = threshold_theory, ls = "--", c = "r", linewidth=1)
+    if threshold_auto is not None:
+        ax.axvline(x = threshold_auto, ls = "--", c = "g", linewidth=1)
     ax.set_title('Observed cells')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -173,6 +175,8 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.set_yscale("log")
     ax.axvline(x = threshold, ls = "--", c = "k", linewidth=1)
     ax.axvline(x = threshold_theory, ls = "--", c = "r", linewidth=1)
+    if threshold_auto is not None:
+        ax.axvline(x = threshold_auto, ls = "--", c = "g", linewidth=1)
     ax.set_title('Simulated doublets')
     ax.set_xlabel('Doublet score')
     ax.set_ylabel('Density')
@@ -182,6 +186,8 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.set_ylim(bottom = 0.0)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
     ax.axvline(x = np.log(threshold_theory), ls = "--", c="r", lw=1)
+    if threshold_auto is not None:
+        ax.axvline(x = np.log(threshold_auto), ls = "--", c = "g", linewidth=1)
     ax.set_title('KDE of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Density')
@@ -190,6 +196,8 @@ def _plot_hist(obs_scores, sim_scores, threshold, sim_x, sim_y, curv, nbin = 100
     ax.plot(sim_x, curv, '-', c='k', lw = 1)
     ax.axvline(x = np.log(threshold), ls = "--", c="k", lw=1)
     ax.axvline(x = np.log(threshold_theory), ls = "--", c="r", lw=1)
+    if threshold_auto is not None:
+        ax.axvline(x = np.log(threshold_auto), ls = "--", c = "g", linewidth=1)
     ax.set_title('Curvature of simulated doublets')
     ax.set_xlabel('Log doublet score')
     ax.set_ylabel('Curvature')
@@ -220,7 +228,8 @@ def _run_scrublet(
     k: Optional[int] = None,
     n_jobs: Optional[int] = -1,
     random_state: Optional[int] = 0,
-    plot_hist: Optional[bool] = True
+    plot_hist: Optional[bool] = True,
+    manual_correction: Optional[str] = None,
 ) -> Union[None, Figure]:
     """Calculate doublet scores using Scrublet-like [Wolock18]_ strategy for the current data.X; determine a right threshold based on the KDE curve.
        This function should be called after highly_variable_gene selection.
@@ -253,6 +262,9 @@ def _run_scrublet(
 
     plot_hist: ``bool``, optional, default: ``True``
         If True, plot diagnostic histograms. Each sample would have a figure consisting of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets.
+
+    manual_correction: ``str``, optional, default: ``None``
+        If present, use human guide provided in manual_correction to select threshold. Currently only support manual_correction='peak', which means cut at the center of the peak.
 
     Returns
     --------
@@ -370,9 +382,11 @@ def _run_scrublet(
     x_theory = np.percentile(sim_scores_log, d_emb * 100.0 + 1e-6)
     threshold_theory = np.exp(x_theory)
 
+    case_num = -1
     pos = -1
     if maxima.size >= 2:
         pos = _locate_cutoff_among_peaks_with_guide(x, y, maxima, sim_scores_log, d_neo)
+        case_num = 0
         d_pneo = (sim_scores_log > x[pos]).sum() / sim_scores_log.size
         if d_pneo < 0.1: # < 10%, consider it as not a peak
             idx_ = maxima_by_x >= pos
@@ -386,11 +400,20 @@ def _run_scrublet(
             if maxima_by_x.size > 1:
                 posvec = np.vectorize(lambda i: y[maxima_by_x[i]+1:maxima_by_x[i+1]].argmin() + (maxima_by_x[i]+1))(range(maxima_by_x.size-1))
                 pos = posvec[np.argmin(np.abs(x[posvec] - x_theory))]
+                case_num = 1
             else:
                 pos = _find_cutoff_left_side(maxima_by_x[0], x, curv, x_theory)
+                case_num = 2
         else:
             pos = _find_cutoff_right_side(maxima_by_x[-1], curv, filtered_maxima)
+            case_num = 3
     threshold = np.exp(x[pos])
+
+    threshold_auto = None
+    if manual_correction is not None:
+        assert case_num == 2
+        threshold_auto = threshold
+        threshold = np.exp(x[maxima_by_x[-1]])
 
     data.obs["doublet_score"] = obs_scores.astype(np.float32)
     data.obs["pred_dbl"] = obs_scores > threshold
@@ -402,7 +425,7 @@ def _run_scrublet(
 
     fig = None
     if plot_hist:
-        fig = _plot_hist(obs_scores, sim_scores, threshold, x, y, curv, threshold_theory=threshold_theory)
+        fig = _plot_hist(obs_scores, sim_scores, threshold, threshold_theory, x, y, curv, threshold_auto=threhsold_auto)
     return fig
 
 
@@ -454,6 +477,7 @@ def infer_doublets(
     alpha: Optional[float] = 0.05,
     random_state: Optional[int] = 0,
     plot_hist: Optional[str] = "sample",
+    manual_correction: Optional[str] = None,
 ) -> None:
     """Infer doublets by first calculating Scrublet-like [Wolock18]_ doublet scores and then smartly determining an appropriate doublet score cutoff [Li20-2]_ .
 
@@ -496,6 +520,9 @@ def infer_doublets(
 
     plot_hist: ``str``, optional, default: ``sample``
         If not None, plot diagnostic histograms using ``plot_hist`` as the prefix. If `channel_attr` is None, ``plot_hist.dbl.png`` is generated; Otherwise, ``plot_hist.channel_name.dbl.png`` files are generated. Each figure consists of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets.
+    
+    manual_correction: ``str``, optional, default: ``None``
+        Use human guide to correct doublet threshold for certain channels. This is string representing a comma-separately list. Each item in the list represent one sample and the sample name and correction guide are separated using ':'. The only correction guide supported is 'peak', which means cut at the center of the peak. If only one sample available, use '' as the sample name.
 
     Returns
     -------
@@ -518,10 +545,16 @@ def infer_doublets(
 
     if_plot = plot_hist is not None
 
+    mancor = {}
+    if manual_correction is not None:
+        for item in manual_correction.split(','):
+            name, action = item.split(':')
+            mancor[name] = action
+
     if channel_attr is None:
         if data.shape[0] >= min_cell:
             fig = _run_scrublet(data, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
-                                n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot)
+                                n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot, manual_correction = mancor.get('', None))
             if if_plot:
                 fig.savefig(f"{plot_hist}.dbl.png")
         else:
@@ -554,7 +587,7 @@ def infer_doublets(
                 highly_variable_features(unidata)
                 # Run _run_scrublet
                 fig = _run_scrublet(unidata, name = channel, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
-                                    n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot)
+                                    n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot, manual_correction = mancor.get(channel, None))
                 if if_plot:
                     fig.savefig(f"{plot_hist}.{channel}.dbl.png")
 
