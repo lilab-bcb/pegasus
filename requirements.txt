@@ -20,7 +20,7 @@ natsort
 numba
 numpy
 pandas>=1.2.0
-pegasusio>=0.2.9
+pegasusio>=0.2.14
 pybind11
 python-igraph
 scanorama
