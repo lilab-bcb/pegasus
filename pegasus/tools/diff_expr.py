@@ -157,7 +157,7 @@ def _de_test(
 
     if fisher:
         from pegasus.cylib.cfisher import fisher_exact
-        a_true, a_false, b_true, b_false = results[2]
+        a_true, a_false, b_true, b_false = results[1 if not t else 2]
 
         oddsratios = np.zeros((ngene, n1arr.size), dtype = np.float32)
         pvals = np.ones((ngene, n1arr.size), dtype = np.float32)
