@@ -258,7 +258,7 @@ def _perform_de_cond(
             df_list.extend([dft, dftp, dftq])
 
         if fisher:
-            a_true, a_false, b_true, b_false = results[2]
+            a_true, a_false, b_true, b_false = results[1 if not t else 2]
 
             from pegasus.cylib.cfisher import fisher_exact
 
