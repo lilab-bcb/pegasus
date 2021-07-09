@@ -131,7 +131,6 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, rel_t
 
 def _find_cutoff_left_side(peak_pos: int, x: List[float], curv: List[float], x_theory: float) -> int:
     # Peak represents a doublet peak and thus we need to find a cutoff at the left side
-    peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
     end = _find_pos_curv(curv, peak_pos-1, '-')
     start = end
     while start > 2 and x[start] >= x_theory:
