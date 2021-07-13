@@ -142,7 +142,7 @@ Options:
   --dbl-cluster-attr <attr>                        <attr> refers to a cluster attribute containing cluster labels (e.g. 'louvain_labels'). Doublet clusters will be marked based on <attr> with the following criteria: passing the Fisher's exact test and having >= 50% of cells identified as doublets. By default, the first computed cluster attribute in the list of leiden, louvain, spectral_ledein and spectral_louvain is used.
 
   --citeseq                                        Input data contain both RNA and CITE-Seq modalities. This will set --focus to be the RNA modality and --append to be the CITE-Seq modality. In addition, 'ADT-' will be added in front of each antibody name to avoid name conflict with genes in the RNA modality.
-  --citeseq-umap                                   For high quality cells kept in the RNA modality, generate a UMAP based on their antibody expression. 
+  --citeseq-umap                                   For high quality cells kept in the RNA modality, generate a UMAP based on their antibody expression.
   --citeseq-umap-exclude <list>                    <list> is a comma-separated list of antibodies to be excluded from the UMAP calculation (e.g. Mouse-IgG1,Mouse-IgG2a).
 
   -h, --help                                       Print out help information.
@@ -204,7 +204,7 @@ Examples:
             "correction_method": self.args["--correction-method"],
             "group_attribute": self.args["--batch-group-by"],
             "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
-            "inmf_lambda": sef.convert_tofloat(self.args["--inmf-lambda"]),
+            "inmf_lambda": self.convert_tofloat(self.args["--inmf-lambda"]),
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
             "calc_sigscore": self.args["--calc-signature-scores"],
