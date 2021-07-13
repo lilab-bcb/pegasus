@@ -294,7 +294,7 @@ def _run_filter_data(
 
 @timer(logger=logger)
 def log_norm(
-    data: MultimodalData, 
+    data: Union[MultimodalData, UnimodalData],
     norm_count: float = 1e5, 
     backup_matrix: str = "raw.X",
 ) -> None:
@@ -342,7 +342,7 @@ def log_norm(
 
 @run_gc
 def select_features(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     features: str = "highly_variable_features",
     standardize: bool = True,
     max_value: float = 10.0,
@@ -407,7 +407,7 @@ def select_features(
 
 @timer(logger=logger)
 def pca(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     n_components: int = 50,
     features: str = "highly_variable_features",
     standardize: bool = True,
@@ -482,7 +482,7 @@ def pca(
 
 @timer(logger=logger)
 def pc_transform(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     X: Union[csr_matrix, np.ndarray]
 ) -> np.ndarray:
     """Transform a new count matrix X using existing PCs contained in data.

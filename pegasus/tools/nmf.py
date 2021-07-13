@@ -18,7 +18,7 @@ from pegasusio import timer
 
 
 def _select_and_scale_features(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     features: str = "highly_variable_features",
     space: str = "log",
     batch: str = None,
@@ -68,7 +68,7 @@ def _select_and_scale_features(
 
 @timer(logger=logger)
 def nmf(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     n_components: int = 20,
     features: str = "highly_variable_features",
     space: str = "log",
@@ -274,7 +274,7 @@ def _quantile_norm(Hs, csums, ids_by_clusts, nbatch, ref_batch, ncluster, min_ce
 
 @timer(logger=logger)
 def integrative_nmf(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     batch: str = "Channel",
     n_components: int = 20,
     features: str = "highly_variable_features",
@@ -345,7 +345,9 @@ def integrative_nmf(
 
     Returns
     -------
-    ``None``.
+    out_rep: ``str``
+        The keyword in ``data.obsm`` referring to the embedding calculated by integrative NMF algorithm. out_rep is always equal to "inmf"
+
 
     Update ``data.obsm``:
 
@@ -452,3 +454,5 @@ def integrative_nmf(
     data.uns["Vs"] = Vs
     data.uns["inmf_err"] = err
     data.obsm["X_inmf"] = np.concatenate(Hs_new)
+
+    return "inmf"

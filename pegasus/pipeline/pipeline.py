@@ -60,8 +60,24 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         if n_pc < kwargs["pca_n"]:
             logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
 
+        if kwargs["nmf"] or (kwargs["batch_correction"] and kwargs["correction_method"] == "inmf"):
+            n_nmf = min(kwargs["nmf_n"], unidata.shape[0], unidata.shape[1])
+            if n_nmf < kwargs["nmf_n"]:
+                logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of NMF components {kwargs['nmf_n']}. Reduce the number of NMF components to {n_nmf}.")
+        
+        if kwargs["nmf"]:
+            tools.nmf(
+                unidata,
+                n_components=n_nmf,
+                features="highly_variable_features",
+                n_jobs=kwargs["n_jobs"],
+                random_state=kwargs["random_state"],
+            )
+
         if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
-            pca_key = tools.run_scanorama(unidata, n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
+            dim_key = tools.run_scanorama(unidata, batch="Channel", n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
+        elif kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
+            dim_key = tools.integrative_nmf(unidata, batch="Channel", n_components=n_nmf, features="highly_variable_features", lam=kwargs["inmf_lambda"], n_jobs=kwargs["n_jobs"], random_state = kwargs["random_state"])
         else:
             # PCA
             tools.pca(
@@ -72,17 +88,17 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 n_jobs=kwargs["n_jobs"],
                 random_state=kwargs["random_state"],
             )
-            pca_key = "pca"
+            dim_key = "pca"
 
         # batch correction: Harmony
         if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
-            pca_key = tools.run_harmony(unidata, rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
+            dim_key = tools.run_harmony(unidata, batch="Channel", rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
 
         # Find K neighbors
         tools.neighbors(
             unidata,
             K=kwargs["K"],
-            rep=pca_key,
+            rep=dim_key,
             n_jobs=kwargs["n_jobs"],
             random_state=kwargs["random_state"],
             full_speed=kwargs["full_speed"],
@@ -107,7 +123,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.diffmap(
             unidata,
             n_components=kwargs["diffmap_ndc"],
-            rep=pca_key,
+            rep=dim_key,
             solver=kwargs["diffmap_solver"],
             max_t=kwargs["diffmap_maxt"],
             n_jobs=kwargs["n_jobs"],
@@ -119,7 +135,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         stat_mean, pvalue_mean, accept_rate = tools.calc_kBET(
             unidata,
             kwargs["kBET_batch"],
-            rep=pca_key,
+            rep=dim_key,
             K=kwargs["kBET_K"],
             alpha=kwargs["kBET_alpha"],
             n_jobs=kwargs["n_jobs"],
@@ -136,7 +152,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.cluster(
             unidata,
             algo="spectral_louvain",
-            rep=pca_key,
+            rep=dim_key,
             resolution=kwargs["spectral_louvain_resolution"],
             rep_kmeans=kwargs["spectral_louvain_basis"],
             n_clusters=kwargs["spectral_louvain_nclusters"],
@@ -151,7 +167,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.cluster(
             unidata,
             algo="spectral_leiden",
-            rep=pca_key,
+            rep=dim_key,
             resolution=kwargs["spectral_leiden_resolution"],
             rep_kmeans=kwargs["spectral_leiden_basis"],
             n_clusters=kwargs["spectral_leiden_nclusters"],
@@ -166,7 +182,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.cluster(
             unidata,
             algo="louvain",
-            rep=pca_key,
+            rep=dim_key,
             resolution=kwargs["louvain_resolution"],
             random_state=kwargs["random_state"],
             class_label=kwargs["louvain_class_label"],
@@ -176,7 +192,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.cluster(
             unidata,
             algo="leiden",
-            rep=pca_key,
+            rep=dim_key,
             resolution=kwargs["leiden_resolution"],
             n_iter=kwargs["leiden_niter"],
             random_state=kwargs["random_state"],
@@ -187,7 +203,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["net_umap"]:
         tools.net_umap(
             unidata,
-            rep=pca_key,
+            rep=dim_key,
             n_jobs=kwargs["n_jobs"],
             n_neighbors=kwargs["umap_K"],
             min_dist=kwargs["umap_min_dist"],
@@ -226,7 +242,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["tsne"]:
         tools.tsne(
             unidata,
-            rep=pca_key,
+            rep=dim_key,
             n_jobs=kwargs["n_jobs"],
             perplexity=kwargs["tsne_perplexity"],
             random_state=kwargs["random_state"],
@@ -236,7 +252,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["umap"]:
         tools.umap(
             unidata,
-            rep=pca_key,
+            rep=dim_key,
             n_neighbors=kwargs["umap_K"],
             min_dist=kwargs["umap_min_dist"],
             spread=kwargs["umap_spread"],
