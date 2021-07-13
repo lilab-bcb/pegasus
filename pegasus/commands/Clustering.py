@@ -204,7 +204,7 @@ Examples:
             "correction_method": self.args["--correction-method"],
             "group_attribute": self.args["--batch-group-by"],
             "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
-            "inmf_lambda": self.convert_tofloat(self.args["--inmf-lambda"]),
+            "inmf_lambda": self.convert_to_float(self.args["--inmf-lambda"]),
             "random_state": int(self.args["--random-state"]),
             "temp_folder": self.args["--temp-folder"],
             "calc_sigscore": self.args["--calc-signature-scores"],
