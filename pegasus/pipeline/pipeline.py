@@ -64,15 +64,18 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_nmf = min(kwargs["nmf_n"], unidata.shape[0], unidata.shape[1])
             if n_nmf < kwargs["nmf_n"]:
                 logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of NMF components {kwargs['nmf_n']}. Reduce the number of NMF components to {n_nmf}.")
-        
+
         if kwargs["nmf"]:
-            tools.nmf(
-                unidata,
-                n_components=n_nmf,
-                features="highly_variable_features",
-                n_jobs=kwargs["n_jobs"],
-                random_state=kwargs["random_state"],
-            )
+            if kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
+                logger.warning("NMF is skipped because integrative NMF is run instead.")
+            else:
+                tools.nmf(
+                    unidata,
+                    n_components=n_nmf,
+                    features="highly_variable_features",
+                    n_jobs=kwargs["n_jobs"],
+                    random_state=kwargs["random_state"],
+                )
 
         if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
             dim_key = tools.run_scanorama(unidata, batch="Channel", n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
@@ -93,6 +96,24 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         # batch correction: Harmony
         if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
             dim_key = tools.run_harmony(unidata, batch="Channel", rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
+
+        # Word cloud plots for NMF or iNMF results.
+        if kwargs["plot_wordcloud"]:
+            if kwargs["nmf"] or (kwargs["batch_correction"] and kwargs["correction_method"] == "inmf"):
+                assert 'W' in unidata.uns
+                from pegasus.plotting import wordcloud
+
+                for gene_program_idx in range(unidata.uns['W'].shape[1]):
+                    fig = wordcloud(
+                        unidata,
+                        factor=gene_program_idx,
+                        random_state=kwargs["random_state"],
+                        return_fig=True,
+                    )
+                    fig.savefig(f"{output_name}.word_cloud_{gene_program_idx}.pdf")
+                logger.info("Word cloud plots of gene programs are generated.")
+            else:
+                logger.warning("Neither NMF nor integrative NMF is enabled, so no word cloud plot will be generated!")
 
         # Find K neighbors
         tools.neighbors(
@@ -286,14 +307,14 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 if value in unidata.obs:
                     clust_attr = value
                     break
-        
+
         if channel_attr is not None:
             logger.info(f"For doublet inference, channel_attr={channel_attr}.")
         if clust_attr is not None:
             logger.info(f"For doublet inference, clust_attr={clust_attr}.")
 
         tools.infer_doublets(unidata, channel_attr = channel_attr, clust_attr = clust_attr, expected_doublet_rate = kwargs["expected_doublet_rate"], n_jobs = kwargs["n_jobs"], random_state = kwargs["random_state"], plot_hist = output_name)
-        
+
         dbl_clusts = None
         if clust_attr is not None:
             clusts = []
@@ -347,7 +368,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
             new_genome = unidata.get_genome()
             if new_genome != append_data.get_genome():
-                new_genome = f"{new_genome}_and_{append_data.get_genome()}" 
+                new_genome = f"{new_genome}_and_{append_data.get_genome()}"
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
