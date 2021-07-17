@@ -64,16 +64,20 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             n_nmf = min(kwargs["nmf_n"], unidata.shape[0], unidata.shape[1])
             if n_nmf < kwargs["nmf_n"]:
                 logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of NMF components {kwargs['nmf_n']}. Reduce the number of NMF components to {n_nmf}.")
-        
-        if kwargs["nmf"]:
-            tools.nmf(
-                unidata,
-                n_components=n_nmf,
-                features="highly_variable_features",
-                n_jobs=kwargs["n_jobs"],
-                random_state=kwargs["random_state"],
-            )
 
+        if kwargs["nmf"]:
+            if kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
+                logger.warning("NMF is skipped because integrative NMF is run instead.")
+            else:
+                tools.nmf(
+                    unidata,
+                    n_components=n_nmf,
+                    features="highly_variable_features",
+                    n_jobs=kwargs["n_jobs"],
+                    random_state=kwargs["random_state"],
+                )
+
+        # batch correction: Scanorama and iNMF
         if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
             dim_key = tools.run_scanorama(unidata, batch="Channel", n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
         elif kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
@@ -286,14 +290,14 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 if value in unidata.obs:
                     clust_attr = value
                     break
-        
+
         if channel_attr is not None:
             logger.info(f"For doublet inference, channel_attr={channel_attr}.")
         if clust_attr is not None:
             logger.info(f"For doublet inference, clust_attr={clust_attr}.")
 
         tools.infer_doublets(unidata, channel_attr = channel_attr, clust_attr = clust_attr, expected_doublet_rate = kwargs["expected_doublet_rate"], n_jobs = kwargs["n_jobs"], random_state = kwargs["random_state"], plot_hist = output_name)
-        
+
         dbl_clusts = None
         if clust_attr is not None:
             clusts = []
@@ -347,7 +351,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
             new_genome = unidata.get_genome()
             if new_genome != append_data.get_genome():
-                new_genome = f"{new_genome}_and_{append_data.get_genome()}" 
+                new_genome = f"{new_genome}_and_{append_data.get_genome()}"
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
