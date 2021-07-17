@@ -103,9 +103,19 @@ to see the usage information::
 * Arguments:
 
 	csv_file
-	csv_file should contains at least 2 columns — ``Sample``, sample name; ``Location``, file that contains the count matrices (e.g. ``filtered_gene_bc_matrices_h5.h5``), and merges matrices from the same genome together.
-	If multi-modality exists, a third Modality column might be required. The csv_file can optionally contain two columns - ``nUMI`` and ``nGene``.
-	These two columns define minimum number of UMIs and genes for cell selection for each sample. The values in these two columns overwrite the ``--min-genes`` and ``--min-umis`` options in command.
+	Input csv-formatted file containing information of each sc/snRNA-seq sample.
+	This file must contain at least 2 columns - ``Sample``, sample name; and ``Location``, location of the sample count matrix in either 10x v2/v3, DGE, mtx, csv, tsv or loom format.
+	Additionally, an optional ``Reference`` column can be used to select samples generated from a same reference (e.g. mm10).
+	If the count matrix is in either DGE, mtx, csv, tsv, or loom format, the value in this column will be used as the reference since the count matrix file does not contain reference name information.
+	Moreover, the ``Reference`` column can be used to aggregate count matrices generated from different genome versions or gene annotations together under a unified reference.
+	For example, if we have one matrix generated from mm9 and the other one generated from mm10, we can write mm9_10 for these two matrices in their Reference column.
+	Pegasus will change their references to 'mm9_10' and use the union of gene symbols from the two matrices as the gene symbols of the aggregated matrix.
+	For HDF5 files (e.g. 10x v2/v3), the reference name contained in the file does not need to match the value in this column.
+	In fact, we use this column to rename references in HDF5 files. For example, if we have two HDF files, one generated from mm9 and the other generated from mm10.
+	We can set these two files' Reference column value to 'mm9_10', which will rename their reference names into mm9_10 and the aggregated matrix will contain all genes from either mm9 or mm10.
+	This renaming feature does not work if one HDF5 file contain multiple references (e.g. mm10 and GRCh38).
+	*csv_file* can optionally contain two columns - ``nUMI`` and ``nGene``. These two columns define minimum number of UMIs and genes for cell selection for each sample.
+	The values in these two columns overwrite the ``--min-genes`` and ``--min-umis`` arguments.
 	See below for an example csv::
 
 			Sample,Source,Platform,Donor,Reference,Location
