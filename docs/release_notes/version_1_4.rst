@@ -1,3 +1,16 @@
+1.4.1 :small:`July 17, 2021`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Add NMF-related options to ``pegasus cluster`` command.
+
+* Add word cloud graph plotting feature to ``pegasus plot`` command.
+
+* ``pegasus aggregate_matrix`` command now allow sample-specific filtration with parameters set in the input CSV-format sample sheet.
+
+* Update doublet detection method: ``infer_doublets`` and ``mark_doublets`` functions.
+
+* Bug fix.
+
 1.4.0 :small:`June 24, 2021`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
