@@ -77,6 +77,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                     random_state=kwargs["random_state"],
                 )
 
+        # batch correction: Scanorama and iNMF
         if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
             dim_key = tools.run_scanorama(unidata, batch="Channel", n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
         elif kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
@@ -96,24 +97,6 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         # batch correction: Harmony
         if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
             dim_key = tools.run_harmony(unidata, batch="Channel", rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
-
-        # Word cloud plots for NMF or iNMF results.
-        if kwargs["plot_wordcloud"]:
-            if kwargs["nmf"] or (kwargs["batch_correction"] and kwargs["correction_method"] == "inmf"):
-                assert 'W' in unidata.uns
-                from pegasus.plotting import wordcloud
-
-                for gene_program_idx in range(unidata.uns['W'].shape[1]):
-                    fig = wordcloud(
-                        unidata,
-                        factor=gene_program_idx,
-                        random_state=kwargs["random_state"],
-                        return_fig=True,
-                    )
-                    fig.savefig(f"{output_name}.word_cloud_{gene_program_idx}.pdf")
-                logger.info("Word cloud plots of gene programs are generated.")
-            else:
-                logger.warning("Neither NMF nor integrative NMF is enabled, so no word cloud plot will be generated!")
 
         # Find K neighbors
         tools.neighbors(

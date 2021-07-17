@@ -103,7 +103,10 @@ to see the usage information::
 * Arguments:
 
 	csv_file
-		Input csv-formatted file containing information of each sc/snRNA-seq sample. This file must contain at least 2 columns - Sample, sample name and Location, location of the sample count matrix in either 10x v2/v3, DGE, mtx, csv, tsv or loom format. Additionally, an optional Reference column can be used to select samples generated from a same reference (e.g. mm10). If the count matrix is in either DGE, mtx, csv, tsv, or loom format, the value in this column will be used as the reference since the count matrix file does not contain reference name information. In addition, the Reference column can be used to aggregate count matrices generated from different genome versions or gene annotations together under a unified reference. For example, if we have one matrix generated from mm9 and the other one generated from mm10, we can write mm9_10 for these two matrices in their Reference column. Pegasus will change their references to 'mm9_10' and use the union of gene symbols from the two matrices as the gene symbols of the aggregated matrix. For HDF5 files (e.g. 10x v2/v3), the reference name contained in the file does not need to match the value in this column. In fact, we use this column to rename references in HDF5 files. For example, if we have two HDF files, one generated from mm9 and the other generated from mm10. We can set these two files' Reference column value to 'mm9_10', which will rename their reference names into mm9_10 and the aggregated matrix will contain all genes from either mm9 or mm10. This renaming feature does not work if one HDF5 file contain multiple references (e.g. mm10 and GRCh38). See below for an example csv::
+	csv_file should contains at least 2 columns — ``Sample``, sample name; ``Location``, file that contains the count matrices (e.g. ``filtered_gene_bc_matrices_h5.h5``), and merges matrices from the same genome together.
+	If multi-modality exists, a third Modality column might be required. The csv_file can optionally contain two columns - ``nUMI`` and ``nGene``.
+	These two columns define minimum number of UMIs and genes for cell selection for each sample. The values in these two columns overwrite the ``--min-genes`` and ``--min-umis`` options in command.
+	See below for an example::
 
 			Sample,Source,Platform,Donor,Reference,Location
  			sample_1,bone_marrow,NextSeq,1,GRCh38,/my_dir/sample_1/raw_feature_bc_matrices.h5
@@ -374,13 +377,16 @@ to see the usage information::
 		Correct for batch effects.
 
 	-\-correction-method <method>
-		Batch correction method, can be either 'L/S' for location/scale adjustment algorithm (Li and Wong. The analysis of Gene Expression Data 2003) or 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019) or 'scanorama' for Scanorama (Hie et al. Nature Biotechnology 2019). [default: harmony]
+		Batch correction method, can be either 'L/S' for location/scale adjustment algorithm (Li and Wong. The analysis of Gene Expression Data 2003), 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019), 'scanorama' for Scanorama (Hie et al. Nature Biotechnology 2019) or 'inmf' for integrative NMF (Yang and Michailidis Bioinformatics 2016, Welch et al. Cell 2019, Gao et al. Natuer Biotechnology 2021) [default: harmony]
 
 	-\-batch-group-by <expression>
 		Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
 
 	-\-harmony-nclusters <nclusters>
 		Number of clusters used for Harmony batch correction.
+
+	-\-inmf-lambda <lambda>
+		Coefficient of regularization for iNMF. [default: 5.0]
 
 	-\-random-state <seed>
 		Random number generator seed. [default: 0]
@@ -393,6 +399,12 @@ to see the usage information::
 
 	-\-pca-n <number>
 		Number of principal components. [default: 50]
+
+	-\-nmf
+		Compute nonnegative matrix factorization (NMF) on highly variable features.
+
+	-\-nmf-n <number>
+		Number of NMF components. IF iNMF is used for batch correction, this parameter also sets iNMF number of components. [default: 20]
 
 	-\-knn-K <number>
 		Number of nearest neighbors for building kNN graph. [default: 100]
@@ -561,7 +573,7 @@ to see the usage information::
 
 	-\-infer-doublets
 		Infer doublets using the method described `here <https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf>`_. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
-  
+
  	-\-expected-doublet-rate <rate>
  		The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.
 
@@ -572,8 +584,8 @@ to see the usage information::
 	    Input data contain both RNA and CITE-Seq modalities. This will set --focus to be the RNA modality and --append to be the CITE-Seq modality. In addition, 'ADT-' will be added in front of each antibody name to avoid name conflict with genes in the RNA modality.
 
 	-\-citeseq-umap
-		For high quality cells kept in the RNA modality, generate a UMAP based on their antibody expression. 
-  
+		For high quality cells kept in the RNA modality, generate a UMAP based on their antibody expression.
+
 	-\-citeseq-umap-exclude <list>
 		<list> is a comma-separated list of antibodies to be excluded from the UMAP calculation (e.g. Mouse-IgG1,Mouse-IgG2a).
 
@@ -837,7 +849,7 @@ to see the usage information::
 * Arguments:
 
 	plot_type
-		Plot type, either 'scatter' for scatter plots or 'compo' for composition plots.
+		Plot type, either 'scatter' for scatter plots, 'compo' for composition plots, or 'wordcloud' for word cloud plots.
 
 	input_file
 		Single cell data in Zarr or H5ad format.
@@ -901,6 +913,12 @@ to see the usage information::
 	-\-style <style>
 		Composition plot styles. Can be either 'frequency' or 'normalized'. [default: normalized]
 
+	-\-factor <factor>
+		Factor index (column index in data.uns['W']) to be used to generate word cloud plot.
+
+	-\-max-words <max_words>
+		Maximum number of genes to show in the image. [default: 20]
+
 	\-h, -\-help
 		Print out help information.
 
@@ -908,6 +926,7 @@ Examples::
 
 	pegasus plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad scatter.pdf
 	pegasus plot compo --groupby louvain_labels --condition Donor example.zarr.zip compo.pdf
+	pegasus plot wordcloud --factor 0 example.zarr.zip word_cloud_0.pdf
 
 
 ---------------------------------

@@ -18,7 +18,7 @@ Usage:
   pegasus plot -h
 
 Arguments:
-  plot_type              Plot type, either 'scatter' for scatter plots or 'compo' for composition plots
+  plot_type              Plot type, either 'scatter' for scatter plots, 'compo' for composition plots, or 'wordcloud' for word cloud plots.
   input_file             Single cell data in Zarr or H5ad format.
   output_file            Output image file.
 
@@ -41,12 +41,15 @@ Options:
   --groupby <attr>                   Use <attr> to categorize the cells for the composition plot, e.g. cell type.
   --condition <attr>                 Use <attr> to calculate frequency within each category defined by '--groupby' for the composition plot, e.g. donor.
   --style <style>                    Composition plot styles. Can be either 'frequency' or 'normalized'. [default: normalized]
+  --factor <factor>                  Factor index (column index in data.uns['W']) to be used to generate word cloud plot.
+  --max-words <max_words>            Maximum number of genes to show in the image. [default: 20]
 
   -h, --help                         Print out help information.
 
 Examples:
   pegasus plot scatter --basis tsne --attributes louvain_labels,Donor example.h5ad scatter.pdf
   pegasus plot compo --groupby louvain_labels --condition Donor example.zarr.zip compo.pdf
+  pegasus plot wordcloud --factor 0 example.zarr.zip word_cloud_0.pdf
     """
     def execute(self):
         kwargs = {
@@ -67,6 +70,8 @@ Examples:
             "groupby": self.args["--groupby"],
             "condition": self.args["--condition"],
             "style": self.args["--style"],
+            "factor": int(self.args["--factor"]) if self.args["--factor"] is not None else self.args["--factor"],
+            "max_words": int(self.args["--max-words"]),
             "return_fig": True,
             "dpi": int(self.args["--dpi"]),
         }
@@ -79,8 +84,10 @@ Examples:
             raise KeyError("--attributes must be provided for scatter plots!")
         if self.args["<plot_type>"] == "compo" and (kwargs["groupby"] is None or kwargs["condition"] is None):
             raise KeyError("--groupby and --condition must be provided for composition plots!")
+        if self.args["<plot_type>"] == "wordcloud" and kwargs["factor"] is None:
+            raise KeyError("--factor must be provided for word cloud plots!")
 
-        plot_type2keyword = {"scatter": "scatter", "compo" : "compo_plot"}
+        plot_type2keyword = {"scatter": "scatter", "compo" : "compo_plot", "wordcloud": "wordcloud"}
 
         data = read_input(self.args["<input_file>"])
         fig = getattr(pegasus.plotting, plot_type2keyword[self.args["<plot_type>"]])(data, **kwargs)
