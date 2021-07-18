@@ -384,9 +384,10 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             unidata_copy.uns['Vs'] = np.array(unidata_copy.uns['Vs'])
         adata = unidata_copy.to_anndata()
         del unidata_copy
+        adata.var[['highly_variable_features', 'robust']] = adata.var[['highly_variable_features', 'robust']].fillna(value=False)
         if "_tmp_fmat_highly_variable_features" in adata.uns:
             adata.uns["scale.data"] = adata.uns.pop("_tmp_fmat_highly_variable_features")  # assign by reference
-            adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
+            adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]==True].values
         adata.write(f"{output_name}.h5ad", compression="gzip")
         del adata
         end_time = time.perf_counter()
