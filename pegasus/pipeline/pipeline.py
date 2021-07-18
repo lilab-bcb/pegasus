@@ -378,9 +378,15 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["output_h5ad"]:
         import time
         start_time = time.perf_counter()
-        adata = unidata.to_anndata()
-        adata.uns["scale.data"] = adata.uns.pop("_tmp_fmat_highly_variable_features")  # assign by reference
-        adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
+        unidata_copy = unidata.copy()
+        if kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
+            unidata_copy.uns['Hs'] = np.concatenate(unidata_copy.uns['Hs'])
+            unidata_copy.uns['Vs'] = np.array(unidata_copy.uns['Vs'])
+        adata = unidata_copy.to_anndata()
+        del unidata_copy
+        if "_tmp_fmat_highly_variable_features" in adata.uns:
+            adata.uns["scale.data"] = adata.uns.pop("_tmp_fmat_highly_variable_features")  # assign by reference
+            adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]].values
         adata.write(f"{output_name}.h5ad", compression="gzip")
         del adata
         end_time = time.perf_counter()
