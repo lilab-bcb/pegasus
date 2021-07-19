@@ -380,12 +380,6 @@ def integrative_nmf(
 
     Xs = _select_and_scale_features(data, features=features, space=space, batch=batch)
 
-    np.save('counts.npy', np.concatenate(Xs).astype(np.float64))
-
-    # _end = time.perf_counter()
-    # print(f"Scale X: {_end-_start:.6f}s.")
-    # _start = _end
-
     try:
         from nmf import integrative_nmf
     except ImportError as e:
@@ -407,10 +401,6 @@ def integrative_nmf(
         lam=lam,
         fp_precision=fp_precision,
     )
-
-    # _end = time.perf_counter()
-    # print(f"INMF: {_end-_start:.6f}s.")
-    # _start = _end
 
     # Implementation of algo 3, quantile normalization
     Hs_new = numbaList()
@@ -438,15 +428,8 @@ def integrative_nmf(
             max_size = H_new.shape[0]
             ref_batch = i
 
-    # _end = time.perf_counter()
-    # print(f"Scale H and cluster: {_end-_start:.6f}s.")
-    # _start = _end
-
     if quantile_norm:
         _quantile_norm(Hs_new, csums, ids_by_clusts, nbatch, ref_batch, n_components) # quantile normalization
-
-    # _end = time.perf_counter()
-    # print(f"Quantile: {_end-_start:.6f}s.")
 
     data.uns["inmf_features"] = features # record which feature to use
     data.uns["W"] = np.ascontiguousarray(W.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same

@@ -49,3 +49,7 @@ jobs:
       run: |
         bash tests/run_hashing_citeseq.sh
         pytest tests/test_hashing_citeseq.py
+    - name: iNMF test
+      run: |
+        bash tests/run_inmf.sh
+        pytest tests/test_inmf.py

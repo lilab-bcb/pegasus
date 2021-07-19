@@ -1,5 +1,5 @@
 pegasus aggregate_matrix tests/data/count_matrix.csv tests/aggr
-pegasus cluster -p 2 --min-genes 500 --max-genes 6000 --percent-mito 20.0 --output-filtration-results --output-h5ad --output-loom --plot-filtration-results --plot-hvf --correct-batch-effect --louvain --leiden --tsne --umap --fle --infer-doublets --dbl-cluster-attr louvain_labels tests/aggr.zarr.zip tests/result
+pegasus cluster -p 2 --min-genes 500 --max-genes 6000 --percent-mito 20.0 --output-filtration-results --output-h5ad --output-loom --plot-filtration-results --plot-hvf --correct-batch-effect --nmf --louvain --leiden --tsne --umap --fle --infer-doublets --dbl-cluster-attr louvain_labels tests/aggr.zarr.zip tests/result
 pegasus de_analysis -p 2 --labels louvain_labels --t --fisher tests/result.zarr.zip tests/result.de.xlsx
 pegasus annotate_cluster --markers mouse_immune,mouse_brain tests/result.zarr.zip tests/result.anno.txt
 pegasus plot compo --groupby leiden_labels --condition Channel tests/result.zarr.zip tests/result.compo.pdf
