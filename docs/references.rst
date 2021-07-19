@@ -76,3 +76,7 @@ References
 .. [Wolock18] S.L. Wolock, R. Lopez, and A.M. Klein,
    "Scrublet: computational identification of cell doublets in single-cell transcriptomic Data",
    In `Cell Systems <https://www.sciencedirect.com/science/article/pii/S2405471218304745>`__, 2018.
+
+.. [Yang16] Z. Yang, and G. Michailidis,
+   "A non-negative matrix factorization method for detecting modules in heterogeneous omics multi-modal data",
+   In `Bioinformatics <https://academic.oup.com/bioinformatics/article/32/1/1/1743821?login=true>`__, 2016.
