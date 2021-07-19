@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix, coo_matrix, hstack
 
 from pegasusio import UnimodalData, MultimodalData
-from pegasusio import read_input, write_output, _get_fillna_dict
+from pegasusio import read_input, write_output, _fillna
 
 from pegasus import tools, misc
 
@@ -355,9 +355,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
-            fillna_dict = _get_fillna_dict(feature_metadata)
-            if len(fillna_dict) > 0:
-                feature_metadata.fillna(value=fillna_dict, inplace=True, downcast="infer")
+            _fillna(feature_metadata)
             unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
             unidata.uns["genome"] = new_genome
 
