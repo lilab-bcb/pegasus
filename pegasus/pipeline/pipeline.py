@@ -357,7 +357,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             feature_metadata.reset_index(inplace = True)
             fillna_dict = _get_fillna_dict(feature_metadata)
             if len(fillna_dict) > 0:
-                feature_metadata.fillna(value=fillna_dict, inplace=True)
+                feature_metadata.fillna(value=fillna_dict, inplace=True, downcast="infer")
             unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
             unidata.uns["genome"] = new_genome
 
