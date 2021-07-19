@@ -289,15 +289,15 @@ def integrative_nmf(
     random_state: int = 0,
     quantile_norm: bool = True,
 ) -> str:
-    """Perform Integrative Nonnegative Matrix Factorization (iNMF) for data integration.
+    """Perform Integrative Nonnegative Matrix Factorization (iNMF) [Yang16]_ for data integration.
 
-    The calculation uses `nmf-torch <https://github.com/lilab-bcb/nmf-torch>`_ package.
+    The calculation uses `nmf-torch <https://github.com/lilab-bcb/nmf-torch>`_ .
 
     This function assumes that cells in each batch are adjacent to each other.
     In addition, it will scale each batch with L2 norm separately. The resulting Hs will also be scaled with L2 norm.
     If ``quantile_norm=True``, quantile normalization will be additionally performed.
 
-    See [Welch19]_ and [Gao21]_ for details on the algorithms.
+    See [Welch19]_ and [Gao21]_ for preprocessing and normalization details.
 
     Parameters
     ----------
@@ -357,9 +357,9 @@ def integrative_nmf(
 
         * ``data.uns["W"]``: The feature factor matrix.
 
-        * ``data.uns["Hs"]``: The coordinate factor matrices.
+        * ``data.uns["H"]``: The concatenation of coordinate factor matrices with dimensions N x k.
 
-        * ``data.uns["Vs"]``: The batch specific feature factor matrices.
+        * ``data.uns["V"]``: The batch specific feature factor matrices as one tensor with dimensions d x k x g. 
 
         * ``data.uns["inmf_err"]``: The iNMF loss.
 
@@ -433,8 +433,8 @@ def integrative_nmf(
 
     data.uns["inmf_features"] = features # record which feature to use
     data.uns["W"] = np.ascontiguousarray(W.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same
-    data.uns["Hs"] = Hs
-    data.uns["Vs"] = Vs
+    data.uns["H"] = np.concatenate(Hs)
+    data.uns["V"] = np.array(Vs)
     data.uns["inmf_err"] = err
     data.obsm["X_inmf"] = np.concatenate(Hs_new)
 
