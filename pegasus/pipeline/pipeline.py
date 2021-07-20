@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix, coo_matrix, hstack
 
 from pegasusio import UnimodalData, MultimodalData
-from pegasusio import read_input, write_output, _get_fillna_dict
+from pegasusio import read_input, write_output, _fillna
 
 from pegasus import tools, misc
 
@@ -355,8 +355,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
-            feature_metadata.fillna(value = _get_fillna_dict(unidata.feature_metadata), inplace = True)
-
+            _fillna(feature_metadata)
             unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
             unidata.uns["genome"] = new_genome
 
@@ -378,13 +377,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     if kwargs["output_h5ad"]:
         import time
         start_time = time.perf_counter()
-        unidata_copy = unidata.copy()
-        if kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
-            unidata_copy.uns['Hs'] = np.concatenate(unidata_copy.uns['Hs'])
-            unidata_copy.uns['Vs'] = np.array(unidata_copy.uns['Vs'])
-        adata = unidata_copy.to_anndata()
-        del unidata_copy
-        adata.var[['highly_variable_features', 'robust']] = adata.var[['highly_variable_features', 'robust']].fillna(value=False)
+        adata = unidata.to_anndata()
         if "_tmp_fmat_highly_variable_features" in adata.uns:
             adata.uns["scale.data"] = adata.uns.pop("_tmp_fmat_highly_variable_features")  # assign by reference
             adata.uns["scale.data.rownames"] = unidata.var_names[unidata.var["highly_variable_features"]==True].values
