@@ -1,3 +1,8 @@
+1.4.2 :small:`july 19, 2021`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Bug fix for ``--output-h5ad`` and ``--citeseq`` options in ``pegasus cluster`` command.
+
 1.4.1 :small:`July 17, 2021`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
