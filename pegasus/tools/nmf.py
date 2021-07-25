@@ -359,7 +359,7 @@ def integrative_nmf(
 
         * ``data.uns["H"]``: The concatenation of coordinate factor matrices with dimensions N x k.
 
-        * ``data.uns["V"]``: The batch specific feature factor matrices as one tensor with dimensions d x k x g. 
+        * ``data.uns["V"]``: The batch specific feature factor matrices as one tensor with dimensions d x k x g.
 
         * ``data.uns["inmf_err"]``: The iNMF loss.
 
