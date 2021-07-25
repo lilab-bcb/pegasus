@@ -195,6 +195,7 @@ def run_harmony(
     n_jobs: int = -1,
     n_clusters: int = None,
     random_state: int = 0,
+    use_gpu: bool = False,
 ) -> str:
     """Batch correction on PCs using Harmony.
 
@@ -219,6 +220,9 @@ def run_harmony(
 
     random_state: ``int``, optional, default: ``0``.
         Seed for random number generator
+
+    use_gpu: ``bool``, optional, default: ``False``.
+        If ``True``, use GPU if available. Otherwise, use CPU only.
 
     Returns
     -------
@@ -249,7 +253,15 @@ def run_harmony(
 
     logger.info("Start integration using Harmony.")
     out_rep = rep + '_harmony'
-    data.obsm['X_' + out_rep] = harmonize(X_from_rep(data, rep), data.obs, batch, n_clusters = n_clusters, n_jobs = n_jobs, random_state = random_state)
+    data.obsm['X_' + out_rep] = harmonize(
+        X_from_rep(data, rep),
+        data.obs,
+        batch,
+        n_clusters = n_clusters,
+        n_jobs = n_jobs,
+        random_state = random_state,
+        use_gpu = use_gpu,
+    )
     return out_rep
 
 
