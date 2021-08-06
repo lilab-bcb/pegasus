@@ -106,7 +106,7 @@ def _get_legend_ncol(label_size: int, max_ncol: int = None):
 
 
 
-# palettes are imported from scanpy, need to be replaced
+
 
 pegasus_20 = [
     "#c5b0d5",
@@ -130,6 +130,8 @@ pegasus_20 = [
     "#ad494a",
     "#8c6d31",
 ]
+
+# palettes below are imported from SCANPY
 
 zeileis_26 = [
     "#023fa5",
