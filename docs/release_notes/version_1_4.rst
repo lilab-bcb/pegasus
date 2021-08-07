@@ -1,4 +1,9 @@
-1.4.2 :small:`july 19, 2021`
+1.4.3 :small:`Jupy 25, 2021`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Allow ``run_harmony`` function to use GPU for computation.
+
+1.4.2 :small:`July 19, 2021`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Bug fix for ``--output-h5ad`` and ``--citeseq`` options in ``pegasus cluster`` command.
