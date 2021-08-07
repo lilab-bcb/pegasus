@@ -209,12 +209,11 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 7. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
 
-	conda install -y -c conda-forge fftw
-	pip install fitsne
+	conda install -y -c conda-forge pyfit-sne
 
 And use the following command to enable the Leiden clustering functionality::
 
-	pip install leidenalg
+	conda install -y -c conda-forge leidenalg
 
 
 --------------------------
@@ -234,7 +233,7 @@ Singularity_ is a container engine similar to Docker. Its main difference from D
 
 	it will just give you a Singularity container of Pegasus v1.2.0 running on Ubuntu Linux 20.04 base with Python 3.8, in the name ``pegasus_latest.sif`` of about 2.4 GB.
 
-On your local machine, first `install Singularity`_, then you can use our `Singularity spec file`_ to build a Singularity container by yourself. 
+On your local machine, first `install Singularity`_, then you can use our `Singularity spec file`_ to build a Singularity container by yourself.
 
 Say the built container file has name ``pegasus.sif``. Now you can interact with it, e.g.::
 
