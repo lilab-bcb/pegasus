@@ -47,9 +47,11 @@ After that set other fields in the pop-out dialog:
 
 * In *Cloud compute profile* field, you can set the computing resources (CPUs and Memory size) you want to use.
 * In *Compute type* input, choose ``Standard VM``, as this is the cheapest type and is enough for using Pegasus.
+* **(NEW)** In case you need GPUs, select *Enable GPUs*, then choose *GPU type* and type in number of *GPUs* to use. Notice that only version 1.4.3 or later supports this GPU mode.
 * In *Persistent disk size (GB)* field, choose the size of the persistent disk for your cloud environment.
   This disk space by default remains after you delete your cloud environment (unless you choose to delete the persistent disk as well),
   but it costs even if you stop your cloud environment.
+
 
 Now click the ``CREATE`` button to start the creation. After waiting for 1-2 minutes, your cloud environment will be ready to use, and it's started automatically.
 
@@ -84,7 +86,7 @@ After creation, this cloud environment is associated with your Terra workspace. 
    :align: center
 
 
-2. Create Your Terra Notebook
+1. Create Your Terra Notebook
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the **NOTEBOOKS** tab of your workspace, you can either create a blank notebook, or upload your local notebook.
