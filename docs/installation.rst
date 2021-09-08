@@ -203,11 +203,11 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 	conda install -y -c conda-forge louvain
 
-6. Install Pegasus::
+5. Install Pegasus::
 
 	pip install pegasuspy
 
-7. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
+6. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
 
 	conda install -y -c conda-forge pyfit-sne
 
