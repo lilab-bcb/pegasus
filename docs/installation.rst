@@ -201,7 +201,7 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 4. Install the following dependency::
 
-	conda install -y -c conda-forge louvain
+	conda install -y -c conda-forge louvain python-annoy
 
 5. Install Pegasus::
 
