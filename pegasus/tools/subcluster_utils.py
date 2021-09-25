@@ -1,14 +1,24 @@
 import numpy as np
-import anndata
+from pegasusio import MultimodalData
+from typing import List, Dict, Union
 
-from typing import List
-from anndata import AnnData
 import logging
+logger = logging.getLogger(__name__)
 
-logger = logging.getLogger("pegasus")
 
+def parse_subset_selections(subset_selections: List[str]) -> Dict[str, List[str]]:
+    """ Take a list of selection criteria strings and return a parsed selection dictionary.
 
-def parse_subset_selections(subset_selections):
+    Parameters
+    ----------
+    subset_selections: ``List[str]``
+        A list of subset selection criteria. Each criterion takes the format of 'attribute:value,value,...,value'.
+
+    Returns
+    -------
+    ``Dict[str, List[str]]``
+    A dictionary of subsetting criteria
+    """
     subsets_dict = {}
     for subset_str in subset_selections:
         attr, value_str = subset_str.split(":")
@@ -19,7 +29,20 @@ def parse_subset_selections(subset_selections):
     return subsets_dict
 
 
-def get_anndata_for_subclustering(data: AnnData, subset_selections: List[str]):
+def clone_subset(data: MultimodalData, subset_selections: Union[List[bool], Union[str, List[str]]], ):
+    """ Clone a subset of data as a new MultimodalData object for subclustering purpose.
+
+    Parameters
+    ----------
+    subset_selections: ``List[bool]`` or ``str`` or ``List[str]``
+        This parameter can take three forms. First, it can be an array/list of boolean values (List[bool]) indicating which cells are selected. Second, it can be a string with the format of 'attribute:value,value,...,value'. In this case, Pegasus will search for 'attribute' in the 'obs' field and select all cells with 'attribute' in the specified values. Lastly, it can be a list of strings as criteria and Pegasus will only select cells that satisfy all criteria (AND logic).
+
+    Returns
+    -------
+    ``Dict[str, List[str]]``
+    A dictionary of subsetting criteria
+    """
+
     obs_index = np.full(data.shape[0], True)
     subsets_dict = parse_subset_selections(subset_selections)
     for key, value in subsets_dict.items():

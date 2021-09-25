@@ -304,7 +304,8 @@ def tsne(
         if initialization.dtype != np.float64:
             initialization = initialization.astype(np.float64)
 
-    data.obsm["X_" + out_basis] = calc_tsne(
+    key = f"X_{out_basis}"            
+    data.obsm[key] = calc_tsne(
         X,
         n_jobs,
         n_components,
@@ -314,6 +315,7 @@ def tsne(
         random_state,
         initialization,
     )
+    data.register_attr(key, "basis")
 
 
 @timer(logger=logger)
@@ -390,7 +392,8 @@ def umap(
     knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
     knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
 
-    data.obsm["X_" + out_basis] = calc_umap(
+    key = f"X_{out_basis}"    
+    data.obsm[key] = calc_umap(
         X,
         n_components,
         n_neighbors,
@@ -400,6 +403,7 @@ def umap(
         knn_indices=knn_indices,
         knn_dists=knn_dists,
     )
+    data.register_attr(key, "basis")
 
 
 @timer(logger=logger)
@@ -495,7 +499,8 @@ def fle(
             full_speed=full_speed,
         )
 
-    data.obsm["X_" + out_basis] = calc_force_directed_layout(
+    key = f"X_{out_basis}"    
+    data.obsm[key] = calc_force_directed_layout(
         W_from_rep(data, rep),
         file_name,
         n_jobs,
@@ -505,6 +510,7 @@ def fle(
         memory,
         random_state,
     )
+    data.register_attr(key, "basis")
 
 
 @timer(logger=logger)
@@ -694,7 +700,8 @@ def net_umap(
     knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
     knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
 
-    data.obsm["X_" + out_basis] = calc_umap(
+    key = f"X_{out_basis}"
+    data.obsm[key] = calc_umap(
         X_full,
         n_components,
         n_neighbors,
@@ -707,6 +714,7 @@ def net_umap(
         knn_indices=knn_indices,
         knn_dists=knn_dists,
     )
+    data.register_attr(key, "basis")
 
 
 @timer(logger=logger)
@@ -873,7 +881,8 @@ def net_fle(
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
-    data.obsm["X_" + out_basis] = calc_force_directed_layout(
+    key = f"X_{out_basis}"
+    data.obsm[key] = calc_force_directed_layout(
         W_from_rep(data, rep),
         file_name,
         n_jobs,
@@ -884,3 +893,5 @@ def net_fle(
         random_state,
         init=Y_init,
     )
+    data.register_attr(key, "basis")
+

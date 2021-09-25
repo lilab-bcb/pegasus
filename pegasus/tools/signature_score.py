@@ -83,6 +83,7 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
 
             data.obs[key] = ((calc_mean(data.X[:, idx], axis = 1) - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)).astype(np.float32)
+            data.register_attr(key, "signature")
 
 
 @timer(logger=logger)

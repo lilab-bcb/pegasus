@@ -195,6 +195,7 @@ def louvain(
     labels = np.array([str(x + 1) for x in membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    data.register_attr(class_label, "cluster")
 
     n_clusters = data.obs[class_label].cat.categories.size
     logger.info(f"Louvain clustering is done. Get {n_clusters} clusters.")
@@ -268,6 +269,7 @@ def leiden(
     labels = np.array([str(x + 1) for x in membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    data.register_attr(class_label, "cluster")
 
     n_clusters = data.obs[class_label].cat.categories.size
     logger.info(f"Leiden clustering is done. Get {n_clusters} clusters.")
@@ -409,6 +411,7 @@ def spectral_louvain(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    data.register_attr(class_label, "cluster")
 
     n_clusters = data.obs[class_label].cat.categories.size
     logger.info(f"Spectral Louvain clustering is done. Get {n_clusters} clusters.")
@@ -507,6 +510,7 @@ def spectral_leiden(
     labels = np.array([str(x + 1) for x in partition.membership])
     categories = natsorted(np.unique(labels))
     data.obs[class_label] = pd.Categorical(values=labels, categories=categories)
+    data.register_attr(class_label, "cluster")
 
     n_clusters = data.obs[class_label].cat.categories.size
     logger.info(f"Spectral Leiden clustering is done. Get {n_clusters} clusters.")
@@ -685,4 +689,5 @@ def split_one_cluster(
         new_clust[idx[(tmpdat.obs['leiden_labels'] == label).values]] = new_label
         new_label += 1
     data.obs[res_label] = pd.Categorical(values = new_clust.astype(str), categories = np.array(range(1, new_label)).astype(str))
+    data.register_attr(res_label, "cluster")
     del tmpdat
