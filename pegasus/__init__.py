@@ -68,6 +68,7 @@ from .tools import (
     calc_signature_score,
     infer_doublets,
     mark_doublets,
+    clone_subset,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes, find_outlier_clusters

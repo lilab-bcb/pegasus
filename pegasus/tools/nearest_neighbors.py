@@ -157,8 +157,10 @@ def get_neighbors(
             random_state=random_state,
             full_speed=full_speed,
         )
-        data.uns[indices_key] = indices
-        data.uns[distances_key] = distances
+        data.obsm[indices_key] = indices
+        data.register_attr(indices_key, "knn")
+        data.obsm[distances_key] = distances
+        data.register_attr(distances_key, "knn")
 
     return indices, distances
 
