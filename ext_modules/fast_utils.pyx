@@ -3,6 +3,8 @@
 import numpy as np
 
 cimport cython
+from libc.math cimport sqrt
+
 
 ctypedef unsigned char uint8
 
@@ -212,26 +214,32 @@ cpdef normalize_by_count_dense(int M, int N, float[:, :] X, uint8[:] robust, dou
 cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type[:] indices, indptr_type[:] indptr, int n_bins, const int[:] codes, const double[:] mean_vec):
     cdef Py_ssize_t i, j
 
-    sig_background = np.zeros((M, n_bins), dtype = np.float64)
-    cdef double[:, :] sig_back_view = sig_background
+    sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
+    sig_bkg_std = np.ones((M, n_bins), dtype = np.float64)
+    cdef double[:, :] sig_bkgm_view = sig_bkg_mean
+    cdef double[:, :] sig_bkgs_view = sig_bkg_std
 
     cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
-    cdef double[:] bin_avg = np.zeros(n_bins, dtype = np.float64)
+    cdef double cexpr, estd
 
     for j in range(N):
         bin_count[codes[j]] += 1
-        bin_avg[codes[j]] += mean_vec[j]
 
     for i in range(M):
         for j in range(indptr[i], indptr[i + 1]):
-            sig_back_view[i, codes[indices[j]]] += data[j]
+            cexpr = data[j] - mean_vec[indices[j]]
+            sig_bkgm_view[i, codes[indices[j]]] += cexpr
+            sig_bkgs_view[i, codes[indices[j]]] += cexpr * cexpr
 
     for j in range(n_bins):
-        bin_avg[j] /= bin_count[j]
         for i in range(M):
-            sig_back_view[i, j] = sig_back_view[i, j] / bin_count[j] - bin_avg[j]
-
-    return sig_background
+            sig_bkgm_view[i, j] /= bin_count[j]
+            estd = 0.0
+            if bin_count[j] > 1:
+                estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
+            sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
+            
+    return sig_bkg_mean, sig_bkg_std
 
 
 @cython.boundscheck(False)
@@ -239,26 +247,32 @@ cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type
 cpdef calc_sig_background_dense(int M, int N, const float[:, :] X, int n_bins, const int[:] codes, const double[:] mean_vec):
     cdef Py_ssize_t i, j
 
-    sig_background = np.zeros((M, n_bins), dtype = np.float64)
-    cdef double[:, :] sig_back_view = sig_background
+    sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
+    sig_bkg_std = np.ones((M, n_bins), dtype = np.float64)
+    cdef double[:, :] sig_bkgm_view = sig_bkg_mean
+    cdef double[:, :] sig_bkgs_view = sig_bkg_std
 
     cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
-    cdef double[:] bin_avg = np.zeros(n_bins, dtype = np.float64)
+    cdef double cexpr, estd
 
     for j in range(N):
         bin_count[codes[j]] += 1
-        bin_avg[codes[j]] += mean_vec[j]
 
     for i in range(M):
         for j in range(N):
-            sig_back_view[i, codes[j]] += X[i, j]
+            cexpr = X[i, j] - mean_vec[j]
+            sig_bkgm_view[i, codes[j]] += cexpr
+            sig_bkgs_view[i, codes[j]] += cexpr * cexpr
 
     for j in range(n_bins):
-        bin_avg[j] /= bin_count[j]
         for i in range(M):
-            sig_back_view[i, j] = sig_back_view[i, j] / bin_count[j] - bin_avg[j]
+            sig_bkgm_view[i, j] /= bin_count[j]
+            estd = 0.0
+            if bin_count[j] > 1:
+                estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
+            sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
 
-    return sig_background
+    return sig_bkg_mean, sig_bkg_std
 
 
 @cython.boundscheck(False)

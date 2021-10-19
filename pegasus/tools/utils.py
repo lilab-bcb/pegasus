@@ -112,7 +112,7 @@ def normalize_by_count(X: Union[csr_matrix, np.ndarray], robust: List[bool], nor
     return scale
 
 
-def calc_sig_background(X: Union[csr_matrix, np.ndarray], bins: pd.Categorical, mean_vec: List[float]) -> np.ndarray:
+def calc_sig_background(X: Union[csr_matrix, np.ndarray], bins: pd.Categorical, mean_vec: List[float]) -> Tuple[np.ndarray, np.ndarray]:
     n_bins = bins.categories.size
     codes = bins.codes.astype(np.int32)
 
