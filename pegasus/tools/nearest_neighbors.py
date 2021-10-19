@@ -146,8 +146,8 @@ def get_neighbors(
     distances_key = rep + "_knn_distances"
 
     if use_cache and knn_is_cached(data, indices_key, distances_key, K):
-        indices = data.uns[indices_key]
-        distances = data.uns[distances_key]
+        indices = data.obsm[indices_key]
+        distances = data.obsm[distances_key]
         logger.info("Found cached kNN results, no calculation is required.")
     else:
         indices, distances = calculate_nearest_neighbors(

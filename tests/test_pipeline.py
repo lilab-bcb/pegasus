@@ -25,8 +25,8 @@ class TestPipeline(unittest.TestCase):
         self.assertIn('df_qcplot', self.data.uns, "QC plot cache is lost!")
 
     def test_clustering(self):
-        self.assertEqual(self.data.uns['pca_harmony_knn_indices'].shape, (1043, 99), "KNN graph shape differs!")
-        self.assertEqual(self.data.uns['pca_harmony_knn_distances'].shape, (1043, 99), "KNN distance matrix shape differs!")
+        self.assertEqual(self.data.obsm['pca_harmony_knn_indices'].shape, (1043, 99), "KNN graph shape differs!")
+        self.assertEqual(self.data.obsm['pca_harmony_knn_distances'].shape, (1043, 99), "KNN distance matrix shape differs!")
         self.assertIn('louvain_labels', self.data.obs.columns, "Louvain result is lost!")
         self.assertIn('leiden_labels', self.data.obs.columns, "Leiden result is lost!")
 
@@ -48,7 +48,7 @@ class TestPipeline(unittest.TestCase):
         self.assertIn('1:t_qval', df_de.columns)
         self.assertIn('1:fisher_qval', df_de.columns)
         self.assertIn('result.de.xlsx', os.listdir('tests'), "DE spread sheet is lost!")
-    
+
     def test_annotation(self):
         self.assertIn('result.anno.txt', os.listdir('tests'), "Cell type annotation result is lost!")
 
@@ -66,7 +66,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(self.data.shape, data_loom.shape, "Loom format's shape is inconsistent!")
 
         self.assertIn('result.log', os.listdir('tests'), 'Clustering log is lost!')
-        
+
 
 if __name__ == "__main__":
     unittest.main()
