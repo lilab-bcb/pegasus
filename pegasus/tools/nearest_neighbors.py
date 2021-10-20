@@ -94,10 +94,10 @@ def knn_is_cached(
     data: MultimodalData, indices_key: str, distances_key: str, K: int
 ) -> bool:
     return (
-        (indices_key in data.uns)
-        and (distances_key in data.uns)
-        and data.uns[indices_key].shape[0] == data.shape[0]
-        and (K <= data.uns[indices_key].shape[1] + 1)
+        (indices_key in data.obsm)
+        and (distances_key in data.obsm)
+        and data.obsm[indices_key].shape[0] == data.shape[0]
+        and (K <= data.obsm[indices_key].shape[1] + 1)
     )
 
 
