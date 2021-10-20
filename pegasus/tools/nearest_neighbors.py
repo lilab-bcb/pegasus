@@ -259,10 +259,12 @@ def neighbors(
     -------
     ``None``
 
-    Update ``data.uns``:
-        * ``data.uns[rep + "_knn_indices"]``: kNN index matrix. Row i is the index list of kNN of cell i (excluding itself), sorted from nearest to farthest.
-        * ``data.uns[rep + "_knn_distances"]``: kNN distance matrix. Row i is the distance list of kNN of cell i (excluding itselt), sorted from smallest to largest.
-        * ``data.uns["W_" + rep]``: kNN graph of the data in terms of affinity matrix.
+    Update ``data.obsm``:
+        * ``data.obsm[rep + "_knn_indices"]``: kNN index matrix. Row i is the index list of kNN of cell i (excluding itself), sorted from nearest to farthest.
+        * ``data.obsm[rep + "_knn_distances"]``: kNN distance matrix. Row i is the distance list of kNN of cell i (excluding itselt), sorted from smallest to largest.
+
+    Update ``data.obsp``:
+        * ``data.obsp["W_" + rep]``: kNN graph of the data in terms of affinity matrix.
 
     Examples
     --------
@@ -283,7 +285,7 @@ def neighbors(
 
     # calculate affinity matrix
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
-    data.uns["W_" + rep] = W
+    data.obsp["W_" + rep] = W
     # pop out jump method values
     data.uns.pop(f"{rep}_jump_values", None)
     data.uns.pop(f"{rep}_optimal_k", None)

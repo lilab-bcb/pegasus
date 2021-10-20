@@ -36,9 +36,9 @@ def W_from_rep(data: AnnData, rep: str) -> csr_matrix:
     Return affinity matrix W based on representation rep.
     """
     rep_key = "W_" + rep
-    if rep_key not in data.uns:
+    if rep_key not in data.obsp:
         raise ValueError("Affinity matrix does not exist. Please run neighbors first!")
-    return data.uns[rep_key]
+    return data.obsp[rep_key]
 
 
 # slicing is not designed to work at extracting one element, convert to dense matrix
