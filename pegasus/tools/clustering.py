@@ -41,12 +41,12 @@ def jump_method(
 
     rep: ``str``, optional, default: ``"pca"``
         The embedding representation used for clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
-    
+
     K_max: ``int``, optional, default: 40
         The maximum number of clusters to try.
 
     Y: ``float``, optional, default: ``None``
-        The transformation power used. If None, use min(data.shape[1] / 3.0, 3.0). 
+        The transformation power used. If None, use min(data.shape[1] / 3.0, 3.0).
 
     n_jobs : `int`, optional (default: -1)
         Number of threads to use. -1 refers to using all physical CPU cores.
@@ -122,7 +122,7 @@ def _find_optimal_resolution(algo, module, optimal_k, resol_max, G, random_state
             membership = membership_mid
         else:
             resol_l = resol_mid
-    
+
     if resol is None:
         resol = resol_r
         membership = _run_community_detection(algo, module, G, resol, random_state, n_iter)
@@ -153,7 +153,7 @@ def louvain(
 
     resolution: ``int``, optional, default: ``1.3``
         Resolution factor. Higher resolution tends to find more clusters with smaller sizes.
-    
+
     n_clust: ``int``, optional, default: ``None``
         This option only takes effect if 'resolution = None'. Try to find an appropriate resolution by binary search such that the total number of clusters matches 'n_clust'. The range of resolution to search is (0.01, 2.0].
 
@@ -180,13 +180,13 @@ def louvain(
         print("Need louvain! Try 'pip install louvain-github'.")
 
     rep_key = "W_" + rep
-    if rep_key not in data.uns:
+    if rep_key not in data.obsp:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
-    W = data.uns[rep_key]
+    W = data.obsp[rep_key]
 
     G = construct_graph(W)
     if resolution is not None:
-        membership = _run_community_detection("louvain", louvain_module, G, resolution, random_state)    
+        membership = _run_community_detection("louvain", louvain_module, G, resolution, random_state)
     else:
         assert isinstance(n_clust, int)
         resolution, membership = _find_optimal_resolution("louvain", louvain_module, n_clust, 2.0, G, random_state)
@@ -254,13 +254,13 @@ def leiden(
         print("Need leidenalg! Try 'pip install leidenalg'.")
 
     rep_key = "W_" + rep
-    if rep_key not in data.uns:
+    if rep_key not in data.obsp:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
-    W = data.uns[rep_key]
+    W = data.obsp[rep_key]
 
     G = construct_graph(W)
     if resolution is not None:
-        membership = _run_community_detection("leiden", leidenalg, G, resolution, random_state, n_iter)        
+        membership = _run_community_detection("leiden", leidenalg, G, resolution, random_state, n_iter)
     else:
         assert isinstance(n_clust, int)
         resolution, membership = _find_optimal_resolution("leiden", leidenalg, n_clust, 2.0, G, random_state, n_iter)
@@ -387,14 +387,14 @@ def spectral_louvain(
         rep_kmeans = "pca"
         if f"X_{rep_kmeans}" not in data.obsm.keys():
             raise ValueError(f"Please run {rep_kmeans} first!")
-    if f"W_{rep}" not in data.uns:
+    if f"W_{rep}" not in data.obsp:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
         data.obsm[f"X_{rep_kmeans}"], n_clusters, n_clusters2, n_init, n_jobs, random_state,
     )
 
-    W = data.uns[f"W_{rep}"]
+    W = data.obsp[f"W_{rep}"]
 
     G = construct_graph(W)
     partition_type = louvain_module.RBConfigurationVertexPartition
@@ -486,14 +486,14 @@ def spectral_leiden(
         rep_kmeans = "pca"
         if f"X_{rep_kmeans}" not in data.obsm.keys():
             raise ValueError(f"Please run {rep_kmeans} first!")
-    if f"W_{rep}" not in data.uns:
+    if f"W_{rep}" not in data.obsp:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
 
     labels = partition_cells_by_kmeans(
         data.obsm[f"X_{rep_kmeans}"], n_clusters, n_clusters2, n_init, n_jobs, random_state,
     )
 
-    W = data.uns[f"W_{rep}"]
+    W = data.obsp[f"W_{rep}"]
 
     G = construct_graph(W)
     partition_type = leidenalg.RBConfigurationVertexPartition
@@ -680,7 +680,7 @@ def split_one_cluster(
     """
     idx = np.where(data.obs[clust_label] == clust_id)[0]
     tmpdat = data[idx].copy()
-    from pegasus.tools import neighbors 
+    from pegasus.tools import neighbors
     neighbors(tmpdat, rep=rep)
     leiden(tmpdat, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
     new_clust = data.obs[clust_label].values.astype(int)
