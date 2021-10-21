@@ -31,7 +31,7 @@
 						]
 					},
 					{
-						"name" : "Gabaergic PVALB interneuron",
+						"name" : "GABAergic PVALB interneuron",
 						"markers" : [
 							{
 								"genes" : ["PVALB+"],
@@ -40,7 +40,7 @@
 						]
 					},
 					{
-						"name" : "Gabaergic VIP interneuron",
+						"name" : "GABAergic VIP interneuron",
 						"markers" : [
 							{
 								"genes" : ["VIP+"],

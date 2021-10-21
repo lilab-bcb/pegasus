@@ -197,7 +197,7 @@
 				{
 					"genes" : ["CD1C+", "FCER1A+", "CLEC10A+"],
 					"weight" : 1.0,
-					"comment" : "markers from Chloe et al Science 2017 paper"
+					"comment" : "markers from Chloe et al Science 2017 paper; FCER1A is the best single gene marker"
 				}
 			]
 		},

@@ -16,7 +16,7 @@ class TestINMF(unittest.TestCase):
         adata = read_h5ad("tests/inmf_result.mm10-rna.h5ad")
 
         self.assertEqual(adata.shape, (self.n_cells, self.n_features), "Count matrix shape not correct!")
-        self.assertEqual(adata.uns['H'].shape, (self.n_cells, self.n_factors), "H shape not correct!")
+        self.assertEqual(adata.obsm['H'].shape, (self.n_cells, self.n_factors), "H shape not correct!")
         self.assertEqual(adata.uns['V'].shape, (self.n_batches, self.n_factors, self.n_hvfs), "V shape not correct!")
         self.assertEqual(adata.uns['W'].shape, (self.n_hvfs, self.n_factors), "W shape not correct!")
         self.assertEqual(adata.obsm['X_inmf'].shape, (self.n_cells, self.n_factors), "iNMF embedding shape not correct!")
@@ -32,7 +32,7 @@ class TestINMF(unittest.TestCase):
         data = io.read_input("tests/inmf_result.zarr.zip")
 
         self.assertEqual(data.shape, (self.n_cells, self.n_features), "Count matrix shape not correct!")
-        self.assertEqual(data.uns['H'].shape, (self.n_cells, self.n_factors), "H shape not correct!")
+        self.assertEqual(data.obsm['H'].shape, (self.n_cells, self.n_factors), "H shape not correct!")
         self.assertEqual(data.uns['V'].shape, (self.n_batches, self.n_factors, self.n_hvfs), "V shape not correct!")
         self.assertEqual(data.uns['W'].shape, (self.n_hvfs, self.n_factors), "W shape not correct!")
 

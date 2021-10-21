@@ -1,14 +1,24 @@
 import numpy as np
-import anndata
+from pegasusio import MultimodalData
+from typing import List, Dict, Union
 
-from typing import List
-from anndata import AnnData
 import logging
+logger = logging.getLogger(__name__)
 
-logger = logging.getLogger("pegasus")
 
+def parse_subset_selections(subset_selections: List[str]) -> Dict[str, List[str]]:
+    """ Take a list of selection criteria strings and return a parsed selection dictionary.
 
-def parse_subset_selections(subset_selections):
+    Parameters
+    ----------
+    subset_selections: ``List[str]``
+        A list of subset selection criteria. Each criterion takes the format of 'attribute:value,value,...,value'.
+
+    Returns
+    -------
+    ``Dict[str, List[str]]``
+    A dictionary of subsetting criteria
+    """
     subsets_dict = {}
     for subset_str in subset_selections:
         attr, value_str = subset_str.split(":")
@@ -19,46 +29,66 @@ def parse_subset_selections(subset_selections):
     return subsets_dict
 
 
-def get_anndata_for_subclustering(data: AnnData, subset_selections: List[str]):
-    obs_index = np.full(data.shape[0], True)
-    subsets_dict = parse_subset_selections(subset_selections)
-    for key, value in subsets_dict.items():
-        logger.info("{} in {}".format(str(key), str(value)))
-        obs_index = obs_index & np.isin(data.obs[key], value)
-    data = data[obs_index, :]
+def clone_subset(data: MultimodalData, subset_selections: Union[List[bool], Union[str, List[str]]]) -> MultimodalData:
+    """ Clone a subset of data as a new MultimodalData object for subclustering purpose.
 
-    obs_dict = {"obs_names": data.obs_names.values}
-    for attr in data.obs.columns:
-        if attr != "pseudotime":
-            if attr.find("_labels") < 0:
-                obs_dict[attr] = data.obs[attr].values
-            else:
-                obs_dict["parent_" + attr] = data.obs[attr].values
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with rows for cells and columns for genes.
+    subset_selections: ``List[bool]`` or ``str`` or ``List[str]``
+        This parameter can take three forms. First, it can be an array/list of boolean values (List[bool]) indicating which cells are selected. Second, it can be a string with the format of 'attribute:value,value,...,value'. In this case, Pegasus will search for 'attribute' in the 'obs' field and select all cells with 'attribute' in the specified values. Lastly, it can be a list of strings as criteria and Pegasus will only select cells that satisfy all criteria (AND logic).
 
-    var_dict = {
-        "var_names": data.var_names.values,
-        "gene_ids": data.var["gene_ids"].values,
-        "robust": data.var["robust"].values,
-    }
+    Returns
+    -------
+    ``pegasusio.MultimodalData``
+        Return a new subsetted data
+    """
+    if isinstance(subset_selections, str):
+        subset_selections = [subset_selections]
 
-    newdata = anndata.AnnData(X=data.X, obs=obs_dict, var=var_dict)
+    if len(subset_selections) == 0:
+        raise ValueError(f"No entry in subset_selections!")
+
+    val = subset_selections[0]
+    if isinstance(val, bool) or isinstance(val, np.bool_): # if bool list
+        obs_index = subset_selections
+    else:
+        obs_index = np.full(data.shape[0], True)
+        subsets_dict = parse_subset_selections(subset_selections)
+        for key, value in subsets_dict.items():
+            logger.info(f"Select {key} in {str(value)}")
+            obs_index = obs_index & np.isin(data.obs[key], value)
+
+    newdata = data[obs_index, :].copy()
+    # Add _par suffix to clustering labels
+    mapper = {}
+    for attr in newdata.obs.columns:
+        if newdata.get_attr_type(attr) == "cluster":
+            new_attr = f"{attr}_par"
+            newdata.register_attr(attr)
+            newdata.register_attr(new_attr, "cluster")
+            mapper[attr] = new_attr
+    if len(mapper) > 0:
+        newdata.obs.rename(columns = mapper, inplace = True)
+    # Add _par suffix to basis and also drop knn 
+    for attr in list(newdata.obsm.keys()):
+        attr_type = newdata.get_attr_type(attr)
+        if attr_type == "basis":
+            new_attr = f"{attr}_par"
+            newdata.register_attr(attr)
+            newdata.register_attr(new_attr, "basis")
+            newdata.obsm[new_attr] = newdata.obsm.pop(attr)
+        elif attr_type == "knn":
+            newdata.register_attr(attr) # pop up
+            del newdata.obsm[attr]        
+    # For var, update 'n_cells', mark genes with n_cells == 0 as unrobust and make hvg same as robust by default
     newdata.var["n_cells"] = newdata.X.getnnz(axis=0)
-    newdata.var["robust"] = (
-        newdata.var["robust"].values & (newdata.var["n_cells"] > 0).values
-    )
-    newdata.var["highly_variable_features"] = newdata.var[
-        "robust"
-    ]  # default all robust genes are "highly" variable
+    values = newdata.var["robust"].values if ("robust" in newdata.var) else np.full(newdata.shape[1], True)
+    values &= (newdata.var["n_cells"] > 0).values
+    newdata.var["robust"] = values
+    newdata.var["highly_variable_features"] = newdata.var["robust"]  # default all robust genes are "highly" variable
 
-    if "Channels" in data.uns:
-        newdata.uns["Channels"] = data.uns["Channels"]
-    if "Groups" in data.uns:
-        newdata.uns["Groups"] = data.uns["Groups"]
-    if "plus" in data.varm.keys():
-        newdata.varm["plus"] = data.varm["plus"]
-    if "muls" in data.varm.keys():
-        newdata.varm["muls"] = data.varm["muls"]
-
-    logger.info("{0} cells are selected.".format(newdata.shape[0]))
+    logger.info(f"{newdata.shape[0]} cells are selected.")
 
     return newdata

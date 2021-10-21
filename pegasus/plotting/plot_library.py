@@ -46,6 +46,7 @@ def scatter(
     hspace: Optional[float] = 0.15,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
+    show_neg_for_sig: Optional[bool] = False,
     **kwargs,
 ) -> Union[plt.Figure, None]:
     """Generate scatter plots for different attributes
@@ -98,6 +99,8 @@ def scatter(
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
+    show_neg_for_sig: ``bool``, optional, default: False
+        For signature scores (i.e. attribute type registered as 'signature'), if we should show negative scores or show them as zeros. Default is False (i.e. show them as zeros).
 
     Returns
     -------
@@ -165,6 +168,9 @@ def scatter(
                     values = pd.Categorical.from_codes(np.zeros(data.shape[0], dtype=int), categories=['cell'])
                 elif attr in data.obs:
                     values = data.obs[attr].values
+                    if data.get_attr_type(attr) == "signature" and (not show_neg_for_sig):
+                        values = values.copy()
+                        values[values < 0.0] = 0.0
                 elif attr in data.var_names:
                     loc = data.var_names.get_loc(attr)
                     values = slicing(data.X, col = loc)
@@ -301,6 +307,7 @@ def scatter_groups(
     hspace: Optional[float] = 0.15,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
+    show_neg_for_sig: Optional[bool] = False,
     **kwargs,
 ) -> Union[plt.Figure, None]:
     """ Generate scatter plots of attribute 'attr' for each category in attribute 'group'. Optionally show scatter plot containing data points from all categories in 'group'.
@@ -355,6 +362,8 @@ def scatter_groups(
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
         The resolution of the figure in dots-per-inch.
+    show_neg_for_sig: ``bool``, optional, default: False
+        For signature scores (i.e. attribute type registered as 'signature'), if we should show negative scores or show them as zeros. Default is False (i.e. show them as zeros).
 
     Returns
     -------
@@ -384,6 +393,9 @@ def scatter_groups(
 
     if attr in data.obs:
         values = data.obs[attr].values
+        if data.get_attr_type(attr) == "signature" and (not show_neg_for_sig):
+            values = values.copy()
+            values[values < 0.0] = 0.0
     elif attr in data.var_names:
         loc = data.var_names.get_loc(attr)
         values = slicing(data.X, col = loc)

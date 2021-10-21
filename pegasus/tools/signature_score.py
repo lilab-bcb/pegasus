@@ -49,7 +49,7 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         data.var["bins"] = bins
 
         # calculate background expectations
-        data.obsm["sig_background"] = calc_sig_background(data.X, bins, mean_vec)
+        data.obsm["sig_bkg_mean"], data.obsm["sig_bkg_std"] = calc_sig_background(data.X, bins, mean_vec)
 
     return True
 
@@ -82,7 +82,8 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             if key in data.obs:
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
 
-            data.obs[key] = ((calc_mean(data.X[:, idx], axis = 1) - data.var.loc[idx, "mean"].mean()) - data.obsm["sig_background"][:, data.var["bins"].cat.codes[idx]].mean(axis = 1)).astype(np.float32)
+            data.obs[key] = ((data.X[:, idx].toarray() - data.var.loc[idx, "mean"] - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
+            data.register_attr(key, "signature")
 
 
 @timer(logger=logger)

@@ -94,10 +94,10 @@ def knn_is_cached(
     data: MultimodalData, indices_key: str, distances_key: str, K: int
 ) -> bool:
     return (
-        (indices_key in data.uns)
-        and (distances_key in data.uns)
-        and data.uns[indices_key].shape[0] == data.shape[0]
-        and (K <= data.uns[indices_key].shape[1] + 1)
+        (indices_key in data.obsm)
+        and (distances_key in data.obsm)
+        and data.obsm[indices_key].shape[0] == data.shape[0]
+        and (K <= data.obsm[indices_key].shape[1] + 1)
     )
 
 
@@ -146,8 +146,8 @@ def get_neighbors(
     distances_key = rep + "_knn_distances"
 
     if use_cache and knn_is_cached(data, indices_key, distances_key, K):
-        indices = data.uns[indices_key]
-        distances = data.uns[distances_key]
+        indices = data.obsm[indices_key]
+        distances = data.obsm[distances_key]
         logger.info("Found cached kNN results, no calculation is required.")
     else:
         indices, distances = calculate_nearest_neighbors(
@@ -157,8 +157,10 @@ def get_neighbors(
             random_state=random_state,
             full_speed=full_speed,
         )
-        data.uns[indices_key] = indices
-        data.uns[distances_key] = distances
+        data.obsm[indices_key] = indices
+        data.register_attr(indices_key, "knn")
+        data.obsm[distances_key] = distances
+        data.register_attr(distances_key, "knn")
 
     return indices, distances
 
@@ -257,10 +259,12 @@ def neighbors(
     -------
     ``None``
 
-    Update ``data.uns``:
-        * ``data.uns[rep + "_knn_indices"]``: kNN index matrix. Row i is the index list of kNN of cell i (excluding itself), sorted from nearest to farthest.
-        * ``data.uns[rep + "_knn_distances"]``: kNN distance matrix. Row i is the distance list of kNN of cell i (excluding itselt), sorted from smallest to largest.
-        * ``data.uns["W_" + rep]``: kNN graph of the data in terms of affinity matrix.
+    Update ``data.obsm``:
+        * ``data.obsm[rep + "_knn_indices"]``: kNN index matrix. Row i is the index list of kNN of cell i (excluding itself), sorted from nearest to farthest.
+        * ``data.obsm[rep + "_knn_distances"]``: kNN distance matrix. Row i is the distance list of kNN of cell i (excluding itselt), sorted from smallest to largest.
+
+    Update ``data.obsp``:
+        * ``data.obsp["W_" + rep]``: kNN graph of the data in terms of affinity matrix.
 
     Examples
     --------
@@ -281,7 +285,7 @@ def neighbors(
 
     # calculate affinity matrix
     W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
-    data.uns["W_" + rep] = W
+    data.obsp["W_" + rep] = W
     # pop out jump method values
     data.uns.pop(f"{rep}_jump_values", None)
     data.uns.pop(f"{rep}_optimal_k", None)

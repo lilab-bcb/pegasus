@@ -6,7 +6,7 @@ import numba
 from numba import njit
 from numba.typed import List as numbaList
 
-from typing import List, Tuple, Union
+from typing import List, Union
 from pegasusio import UnimodalData, MultimodalData
 from pegasus.tools import slicing, eff_n_jobs, calculate_nearest_neighbors
 
@@ -150,13 +150,13 @@ def nmf(
 
     Update ``data.obsm``:
 
-        * ``data.obsm["X_nmf"]``: Scaled NMF coordinates. Each column has a unit variance.
+        * ``data.obsm["X_nmf"]``: Scaled NMF coordinates of shape ``(n_cells, n_components)``. Each column has a unit variance.
+
+        * ``data.obsm["H"]``: The coordinate factor matrix of shape ``(n_cells, n_components)``.
 
     Update ``data.uns``:
 
-        * ``data.uns["W"]``: The feature factor matrix.
-
-        * ``data.uns["H"]``: The coordinate factor matrix.
+        * ``data.uns["W"]``: The feature factor matrix of shape ``(n_HVFs, n_components)``.
 
         * ``data.uns["nmf_err"]``: The NMF loss.
 
@@ -194,9 +194,10 @@ def nmf(
 
     data.uns["nmf_features"] = features # record which feature to use
     data.uns["W"] = np.ascontiguousarray(W.T, dtype=np.float32) # cannot be varm because numbers of features are not the same
-    data.uns["H"] = np.ascontiguousarray(H, dtype=np.float32)
     data.uns["nmf_err"] = err
-    H = data.uns["H"]
+
+    data.obsm["H"] = np.ascontiguousarray(H, dtype=np.float32)
+    H = data.obsm["H"]
     data.obsm["X_nmf"] = H / np.linalg.norm(H, axis=0)
 
 
@@ -353,13 +354,13 @@ def integrative_nmf(
 
         * ``data.obsm["X_inmf"]``: Scaled and possibly quantile normalized iNMF coordinates.
 
+        * ``data.obsm["H"]``: The concatenation of coordinate factor matrices of shape ``(n_cells, n_components)``.
+
     Update ``data.uns``:
 
-        * ``data.uns["W"]``: The feature factor matrix.
+        * ``data.uns["W"]``: The feature factor matrix of shape ``(n_HVFs, n_components)``.
 
-        * ``data.uns["H"]``: The concatenation of coordinate factor matrices with dimensions N x k.
-
-        * ``data.uns["V"]``: The batch specific feature factor matrices as one tensor with dimensions d x k x g.
+        * ``data.uns["V"]``: The batch specific feature factor matrices as one tensor of shape ``(n_batches, n_components, n_HVFs)``.
 
         * ``data.uns["inmf_err"]``: The iNMF loss.
 
@@ -433,9 +434,10 @@ def integrative_nmf(
 
     data.uns["inmf_features"] = features # record which feature to use
     data.uns["W"] = np.ascontiguousarray(W.T, dtype=np.float32)  # cannot be varm because numbers of features are not the same
-    data.uns["H"] = np.concatenate(Hs)
     data.uns["V"] = np.array(Vs)
     data.uns["inmf_err"] = err
+
+    data.obsm["H"] = np.concatenate(Hs)
     data.obsm["X_inmf"] = np.concatenate(Hs_new)
 
     return "inmf"
