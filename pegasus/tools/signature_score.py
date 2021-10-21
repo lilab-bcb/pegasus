@@ -115,7 +115,7 @@ def calc_overall_signature_score(
     if not _check_and_calc_sig_background(data, n_bins):
         return None
 
-    sig_vec = ((data.X.toarray() - data.var["mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes]) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes]).mean(axis=1).astype(np.float32)
+    sig_vec = ((data.X.toarray().astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)).mean(axis=1)
 
     return sig_vec
 
