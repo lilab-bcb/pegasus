@@ -35,6 +35,12 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(self.data.obs['pred_dbl'].dtype, 'bool', "Type differs!")
         self.assertSetEqual(set(self.data.obs['demux_type'].cat.categories.tolist()), set(['doublet', 'singlet']), "Demux type names differ!")
 
+    def test_signature_score(self):
+        self.assertIn('G1/S', self.data.obs.columns, "G1/S signature score is lost!")
+        self.assertIn('G2/M', self.data.obs.columns, "G2/M signature score is lost!")
+        self.assertIn('cycling', self.data.obs.columns, "Max of G1/S and G2/M signature score is lost!")
+        self.assertSetEqual(set(self.data.obs['predicted_phase'].cat.categories.tolist()), set(['G0', 'G1/S', 'G2/M']), "Predicted phases of cell cycling differ!")
+
     def test_embeddings(self):
         self.assertEqual(self.data.obsm['X_pca_harmony'].shape, (1043, 50), "Harmony PCA shape differs!")
         self.assertEqual(self.data.obsm['X_umap'].shape, (1043, 2), "UMAP shape differs!")

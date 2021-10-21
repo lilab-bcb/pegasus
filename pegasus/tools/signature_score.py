@@ -82,7 +82,7 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             if key in data.obs:
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
 
-            data.obs[key] = ((data.X[:, idx].toarray() - data.var.loc[idx, "mean"] - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
+            data.obs[key] = ((data.X[:, idx].toarray() - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
             data.register_attr(key, "signature")
 
 
@@ -115,7 +115,7 @@ def calc_overall_signature_score(
     if not _check_and_calc_sig_background(data, n_bins):
         return None
 
-    sig_vec = ((data.X.toarray() - data.var["mean"].values.reshape(1, -1) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes]) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes]).mean(axis=1).astype(np.float32)
+    sig_vec = ((data.X.toarray() - data.var["mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes]) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes]).mean(axis=1).astype(np.float32)
 
     return sig_vec
 
