@@ -66,6 +66,7 @@ from .tools import (
     find_markers,
     infer_path,
     calc_signature_score,
+    calc_overall_signature_score,
     infer_doublets,
     mark_doublets,
     clone_subset,

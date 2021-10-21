@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union
 from sklearn.cluster import KMeans
 
 import anndata
@@ -86,13 +86,47 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             data.register_attr(key, "signature")
 
 
+def calc_overall_signature_score(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    n_bins: int = 50,
+) -> np.array:
+    """Calculate gene module score over all the genes in the data.
+
+    Parameters
+    -----------
+    data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
+        Single cell expression data.
+    n_bins: ``int``, optional, default: ``50``
+        Number of bins on expression levels for grouping genes.
+
+    Returns
+    -------
+    numpy.array
+        A numpy array of length ``n_cells`` representing gene module scores of cells over all the genes in the data.
+
+    Examples
+    ---------
+    >>> pg.calc_overall_signature_score(data)
+    >>> pg.calc_overall_signature_score(data, n_bins=100)
+    """
+    if isinstance(data, MultimodalData):
+        data = data._unidata
+
+    if not _check_and_calc_sig_background(data, n_bins):
+        return None
+
+    sig_vec = ((data.X.toarray() - data.var["mean"].values.reshape(1, -1) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes]) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes]).mean(axis=1).astype(np.float32)
+
+    return sig_vec
+
+
 @timer(logger=logger)
 def calc_signature_score(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     signatures: Union[Dict[str, List[str]], str],
-    n_bins: Optional[int] = 50,
-    show_omitted_genes: Optional[bool] = False,
-    random_state: Optional[int] = 0
+    n_bins: int = 50,
+    show_omitted_genes: bool = False,
+    random_state: int = 0
 ) -> None:
     """Calculate signature / gene module score. [Li20-1]_
 
@@ -109,7 +143,7 @@ def calc_signature_score(
         If ``signatures`` is a string, it should refer to a Gene Matrix Transposed (GMT)-formatted file. Pegasus will load signatures from the GMT file.
 
         Pegasus also provide 5 default signature panels for each of human and mouse. They are ``cell_cycle_human``, ``gender_human``, ``mitochondrial_genes_human``, ``ribosomal_genes_human`` and ``apoptosis_human`` for human; ``cell_cycle_mouse``, ``gender_mouse``, ``mitochondrial_genes_mouse``, ``ribosomal_genes_mouse`` and ``apoptosis_mouse`` for mouse.
-            * ``cell_cycle_human`` contains two cell-cycle signatures, ``G1/S`` and ``G2/M``, obtained from Tirosh et al. 2016. We also updated gene symbols according to Seurat's ``cc.genes.updated.2019`` vector. We additionally calculate signature scores ``cycling`` and ``cycle_diff``, which are ``max{G2/M, G1/S}`` and ``G2/M`` - ``G1/S`` respectively. We provide predicted cell cycle phases in ``data.obs['predicted_phase']`` in case it is useful. ``predicted_phase`` is predicted based on ``G1/S`` and ``G2/M`` scores. First, we identify ``G0`` cells. We apply KMeans algorithm to obtain 2 clusters based on the ``cycling`` signature. ``G0`` cells are from the cluster with smallest mean value. For each cell from the other cluster, if ``G1/S`` > ``G2/M``, it is a ``G1/S`` cell, otherwise it is a ``G2/M`` cell. 
+            * ``cell_cycle_human`` contains two cell-cycle signatures, ``G1/S`` and ``G2/M``, obtained from Tirosh et al. 2016. We also updated gene symbols according to Seurat's ``cc.genes.updated.2019`` vector. We additionally calculate signature scores ``cycling`` and ``cycle_diff``, which are ``max{G2/M, G1/S}`` and ``G2/M`` - ``G1/S`` respectively. We provide predicted cell cycle phases in ``data.obs['predicted_phase']`` in case it is useful. ``predicted_phase`` is predicted based on ``G1/S`` and ``G2/M`` scores. First, we identify ``G0`` cells. We apply KMeans algorithm to obtain 2 clusters based on the ``cycling`` signature. ``G0`` cells are from the cluster with smallest mean value. For each cell from the other cluster, if ``G1/S`` > ``G2/M``, it is a ``G1/S`` cell, otherwise it is a ``G2/M`` cell.
             * ``gender_human`` contains two gender-specific signatures, ``female_score`` and ``male_score``. Genes were selected based on DE analysis between genders based on 8 channels of bone marrow data from HCA Census of Immune Cells and the brain nuclei data from Gaublomme and Li et al, 2019, Nature Communications. After calculation, three signature scores will be calculated: ``female_score``, ``male_score`` and ``gender_score``. ``female_score`` and ``male_score`` are calculated based on female and male signatures respectively and a larger score represent a higher likelihood of that gender. ``gender_score`` is calculated as ``male_score`` - ``female_score``. A large positive score likely represents male and a large negative score likely represents female. Pegasus also provides predicted gender for each cell based on ``gender_score``, which is stored in ``data.obs['predicted_gender']``. To predict genders, we apply the KMeans algorithm to the ``gender_score`` and ask for 3 clusters. The clusters with a minimum and maximum clauster centers are predicted as ``female`` and ``male`` respectively and the cluster in the middle is predicted as ``uncertain``. Note that this approach is conservative and it is likely that users can predict genders based on ``gender_score`` for cells in the ``uncertain`` cluster with a reasonable accuracy.
             * ``mitochondrial_genes_human`` contains two signatures, ``mito_genes`` and ``mito_ribo``. ``mito_genes`` contains 13 mitocondrial genes from chrM and ``mito_ribo`` contains mitocondrial ribosomal genes that are not from chrM. Note that ``mito_genes`` correlates well with percent of mitocondrial UMIs and ``mito_ribo`` does not.
             * ``ribosomal_genes_human`` contains one signature, ``ribo_genes``, which includes ribosomal genes from both large and small units.
@@ -163,7 +197,7 @@ def calc_signature_score(
         if sig_string in predefined_signatures:
             signatures = _load_signatures_from_file(predefined_signatures[sig_string])
             from threadpoolctl import threadpool_limits
-            
+
             if sig_string.startswith("cell_cycle"):
                 _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
                 data.obs["cycle_diff"] = data.obs["G2/M"] - data.obs["G1/S"]
