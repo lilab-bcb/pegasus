@@ -86,11 +86,11 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             data.register_attr(key, "signature")
 
 
-def calc_overall_signature_score(
+def calc_cell_score_overall_genes(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     n_bins: int = 50,
 ) -> np.array:
-    """Calculate gene module score over all the genes in the data.
+    """Calculate the standardized expression scores of cells over all genes.
 
     Parameters
     -----------
@@ -102,12 +102,12 @@ def calc_overall_signature_score(
     Returns
     -------
     numpy.array
-        A numpy array of length ``n_cells`` representing gene module scores of cells over all the genes in the data.
+        A 2D numpy array of shape ``(n_cells, n_features)``, which represents the standardized expression scores of cells with respect to each gene.
 
     Examples
     ---------
-    >>> pg.calc_overall_signature_score(data)
-    >>> pg.calc_overall_signature_score(data, n_bins=100)
+    >>> pg.calc_cell_score_overall_genes(data)
+    >>> pg.calc_cell_score_overall_genes(data, n_bins=100)
     """
     if isinstance(data, MultimodalData):
         data = data._unidata
@@ -115,9 +115,9 @@ def calc_overall_signature_score(
     if not _check_and_calc_sig_background(data, n_bins):
         return None
 
-    sig_vec = ((data.X.toarray().astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)).mean(axis=1)
+    z_score_mat = (data.X.toarray().astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)
 
-    return sig_vec
+    return z_score_mat
 
 
 @timer(logger=logger)

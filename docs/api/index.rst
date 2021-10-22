@@ -113,7 +113,7 @@ Gene Module Score
     :toctree: .
 
     calc_signature_score
-    calc_overall_signature_score
+    calc_cell_score_overall_genes
 
 Differential Expression Analysis
 ---------------------------------
