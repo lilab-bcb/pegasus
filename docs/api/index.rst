@@ -37,6 +37,7 @@ Preprocess
     pca
     nmf
     regress_out
+    calculate_z_score
 
 
 Batch Correction
