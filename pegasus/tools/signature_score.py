@@ -86,11 +86,11 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             data.register_attr(key, "signature")
 
 
-def calc_cell_score_overall_genes(
+def calc_cell_score_over_genes(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     n_bins: int = 50,
 ) -> np.array:
-    """Calculate the standardized expression scores of cells over all genes.
+    """Calculate the standardized expression scores of cells over each gene.
 
     Parameters
     -----------
@@ -106,8 +106,8 @@ def calc_cell_score_overall_genes(
 
     Examples
     ---------
-    >>> pg.calc_cell_score_overall_genes(data)
-    >>> pg.calc_cell_score_overall_genes(data, n_bins=100)
+    >>> pg.calc_cell_score_over_genes(data)
+    >>> pg.calc_cell_score_over_genes(data, n_bins=100)
     """
     if isinstance(data, MultimodalData):
         data = data._unidata
