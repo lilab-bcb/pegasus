@@ -86,11 +86,11 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             data.register_attr(key, "signature")
 
 
-def calc_cell_score_over_genes(
+def calculate_z_score(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     n_bins: int = 50,
 ) -> np.array:
-    """Calculate the standardized expression scores of cells over each gene.
+    """Calculate the standardized z scores of the count matrix.
 
     Parameters
     -----------
@@ -102,12 +102,12 @@ def calc_cell_score_over_genes(
     Returns
     -------
     numpy.array
-        A 2D numpy array of shape ``(n_cells, n_features)``, which represents the standardized expression scores of cells with respect to each gene.
+        A 2D numpy array of shape ``(n_cells, n_features)``, which represents the standardized z-score expression matrix.
 
     Examples
     ---------
-    >>> pg.calc_cell_score_over_genes(data)
-    >>> pg.calc_cell_score_over_genes(data, n_bins=100)
+    >>> pg.calculate_z_score(data)
+    >>> pg.calculate_z_score(data, n_bins=100)
     """
     if isinstance(data, MultimodalData):
         data = data._unidata

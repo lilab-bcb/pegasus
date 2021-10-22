@@ -37,6 +37,7 @@ Preprocess
     pca
     nmf
     regress_out
+    calculate_z_score
 
 
 Batch Correction
@@ -113,7 +114,6 @@ Gene Module Score
     :toctree: .
 
     calc_signature_score
-    calc_cell_score_over_genes
 
 Differential Expression Analysis
 ---------------------------------
