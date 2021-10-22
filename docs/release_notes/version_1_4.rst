@@ -1,4 +1,11 @@
-1.4.3 :small:`Jupy 25, 2021`
+1.4.4 :small:`October 22, 2021`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Use PegasusIO *v0.4.0+* for data manipulation.
+
+* Add ``calculate_z_score`` function to calculate standardized z-scored count matrix.
+
+1.4.3 :small:`July 25, 2021`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Allow ``run_harmony`` function to use GPU for computation.
