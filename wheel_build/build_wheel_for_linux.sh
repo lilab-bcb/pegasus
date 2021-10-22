@@ -16,6 +16,7 @@ declare -a PythonVersions=("cp37-cp37m" "cp38-cp38" "cp39-cp39")
 for val in ${PythonVersions[@]}; do
     if [ $val == "cp39-cp39" ]; then
         yum -y install flex libxml2-devel zlib-devel
+        /opt/python/$val/bin/pip install setuptools==57.5.0
     fi
     /opt/python/$val/bin/pip install -r /src/requirements.txt
     /opt/python/$val/bin/pip wheel /src/ --no-deps -w /wheelhouse/
