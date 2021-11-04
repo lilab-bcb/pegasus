@@ -16,7 +16,7 @@ class TestPipeline(unittest.TestCase):
         f_list = glob.glob("tests/cb_cc.*.pdf")
         self.assertEqual(len(f_list), 4, "Demux diagnosis plots are missing!")
         self.assertIn('cb_cc.out.demuxEM.zarr.zip', os.listdir('tests'), "Demultiplexed RNA matrix is lost!")
-    
+
     def test_citeseq(self):
         data = pg.read_input("tests/cb_cc_citeseq.zarr.zip")
         self.assertSetEqual(set(data.list_data()), set(['GRCh38-citeseq', 'GRCh38-rna']), "Some modality is missing!")
@@ -25,7 +25,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(data.shape, (737280, 33694), "RNA data shape differs!")
         data.select_data('GRCh38-citeseq')
         self.assertEqual(data.shape, (578353, 31), "CITE-Seq data shape differs!")
-    
+
     def test_clustering(self):
         data = pg.read_input("tests/citeseq_result.zarr.zip")
         self.assertSetEqual(set(data.list_data()), set(['GRCh38-citeseq', 'GRCh38-rna']), "Some modality is missing!")
