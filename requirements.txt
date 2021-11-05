@@ -20,7 +20,7 @@ natsort
 numba
 numpy
 pandas>=1.2.0
-pegasusio>=0.4.0.post1
+pegasusio>=0.4.1
 pybind11
 python-igraph
 scanorama
@@ -31,6 +31,6 @@ seaborn
 setuptools
 statsmodels
 torch
-umap-learn>=0.4
+umap-learn>=0.4,<=0.5.1
 wordcloud
 xlsxwriter
