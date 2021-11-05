@@ -22,9 +22,9 @@ class TestPipeline(unittest.TestCase):
         self.assertSetEqual(set(data.list_data()), set(['GRCh38-citeseq', 'GRCh38-rna']), "Some modality is missing!")
         self.assertNotIn('demux_type', data.obs.columns, "Demux type is not removed!")
         self.assertIn('assignment', data.obs.columns, "Cell assignment is lost!")
-        self.assertEqual(data.shape, (737280, 33694), "RNA data shape differs!")
+        self.assertEqual(data.shape, (14363, 33694), "RNA data shape differs!")
         data.select_data('GRCh38-citeseq')
-        self.assertEqual(data.shape, (578353, 31), "CITE-Seq data shape differs!")
+        self.assertEqual(data.shape, (14363, 31), "CITE-Seq data shape differs!")
 
     def test_clustering(self):
         data = pg.read_input("tests/citeseq_result.zarr.zip")
