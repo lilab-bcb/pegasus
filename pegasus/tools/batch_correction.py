@@ -196,6 +196,7 @@ def run_harmony(
     n_clusters: int = None,
     random_state: int = 0,
     use_gpu: bool = False,
+    max_iter_harmony: int = 10,
 ) -> str:
     """Batch correction on PCs using Harmony.
 
@@ -223,6 +224,9 @@ def run_harmony(
 
     use_gpu: ``bool``, optional, default: ``False``.
         If ``True``, use GPU if available. Otherwise, use CPU only.
+        
+    max_iter_harmony: ``int``, optional, default: ``10``.
+        Maximum iterations on running Harmony if not converged.
 
     Returns
     -------
@@ -261,6 +265,7 @@ def run_harmony(
         n_jobs = n_jobs,
         random_state = random_state,
         use_gpu = use_gpu,
+        max_iter_harmony = max_iter_harmony,
     )
     return out_rep
 
