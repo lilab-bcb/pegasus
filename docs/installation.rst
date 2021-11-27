@@ -182,7 +182,7 @@ You can install Anaconda_, or Miniconda_ (a minimal installer of conda). In this
 
 1. Download `Miniconda installer`_ for your OS. For example, if on 64-bit Linux, then use the following commands to install Miniconda::
 
-	export $CONDA_PATH=/home/foo
+	export CONDA_PATH=/home/foo
 	bash Miniconda3-latest-Linux-x86_64.sh -p $CONDA_PATH/miniconda3
 	mv Miniconda3-latest-Linux-x86_64.sh $CONDA_PATH/miniconda3
 	source ~/.bashrc
