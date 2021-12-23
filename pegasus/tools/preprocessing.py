@@ -326,7 +326,7 @@ def log_norm(
     if isinstance(data, MultimodalData):
         data = data.current_data()
 
-    assert data.get_modality() == "rna"
+    assert data.get_modality() in  {"rna", "visium"}
 
     if backup_matrix not in data.list_keys():
         data.add_matrix(backup_matrix, data.X)
