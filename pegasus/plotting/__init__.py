@@ -2,6 +2,7 @@ from .plot_library import (
     scatter,
     compo_plot,
     scatter_groups,
+    scatter_spatial,
     violin,
     heatmap,
     dotplot,

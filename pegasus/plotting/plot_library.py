@@ -44,6 +44,7 @@ def scatter(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
+    marker_size: Optional[float] = None,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     show_neg_for_sig: Optional[bool] = False,
@@ -93,8 +94,10 @@ def scatter(
         This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.4`)
         This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
-    hspace: `float`, optional (defualt: `0.15`)
+    hspace: `float`, optional (default: `0.15`)
         This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
+    marker_size: ``float``, optional (default: ``None``)
+        Manually set the marker size in the plot. If ``None``, automatically adjust the marker size to the plot size.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -136,7 +139,7 @@ def scatter(
 
 
     basis = _transform_basis(basis)
-    global_marker_size = _get_marker_size(x.size)
+    global_marker_size = _get_marker_size(x.size) if marker_size is None else marker_size
     nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
@@ -176,14 +179,14 @@ def scatter(
                     values = slicing(data.X, col = loc)
                 else:
                     obsm_key, sep, component = attr.partition("@")
-                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
                         raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
                     values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
-                marker_size = global_marker_size
-                if (not fix_corners) and (is_numeric_dtype(values) or (not show_background)):
-                    marker_size = _get_marker_size(selected.sum())
+                local_marker_size = global_marker_size
+                if (marker_size is None) and (not fix_corners) and (is_numeric_dtype(values) or (not show_background)):
+                    local_marker_size = _get_marker_size(selected.sum())
 
                 if is_numeric_dtype(values):
                     cmap = cmaps.get(attr, squeeze = True)
@@ -191,13 +194,13 @@ def scatter(
                         raise KeyError(f"Please set colormap for attribute {attr} or set a default colormap!")
 
                     if fix_corners:
-                        _plot_corners(ax, corners, marker_size)
+                        _plot_corners(ax, corners, local_marker_size)
 
                     img = ax.scatter(
                         x[selected],
                         y[selected],
                         c=values[selected],
-                        s=marker_size,
+                        s=local_marker_size,
                         marker=".",
                         alpha=alpha[pos],
                         edgecolors="none",
@@ -205,6 +208,7 @@ def scatter(
                         vmin=vmin,
                         vmax=vmax,
                         rasterized=True,
+                        **kwargs,
                     )
 
                     left, bottom, width, height = ax.get_position().bounds
@@ -239,12 +243,13 @@ def scatter(
                                     x[idx],
                                     y[idx],
                                     c=palette[k],
-                                    s=marker_size,
+                                    s=local_marker_size,
                                     **scatter_kwargs,
+                                    **kwargs,
                                 )
                             else:
                                 if fix_corners:
-                                    _plot_corners(ax, corners, marker_size)
+                                    _plot_corners(ax, corners, local_marker_size)
 
                     if attr != '_all':
                         if legend_loc[pos] == "right margin":
@@ -401,7 +406,7 @@ def scatter_groups(
         values = slicing(data.X, col = loc)
     else:
         obsm_key, sep, component = attr.partition("@")
-        if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+        if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
             raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
         values = data.obsm[obsm_key][:, int(component)]
 
@@ -527,6 +532,49 @@ def scatter_groups(
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
+
+    return fig if return_fig else None
+
+
+def scatter_spatial(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    attrs: Optional[Union[str, List[str]]] = None,
+    basis: str = 'spatial',
+    resolution: str = 'hires',
+    alpha: Union[float, List[float]] = 1.0,
+    dpi: float = 300.0,
+    return_fig: bool = False,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Scatter plot on spatial coordinates.
+    """
+    assert f"X_{basis}" in data.obsm.keys(), f"'X_{basis}' coordinates do not exist!"
+    assert hasattr(data, 'img'), "The spatial image data are missing!"
+    assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
+
+    image_item = data.img.loc[data.img['image_id']==resolution]
+    image_obj = image_item['data'].values[0]
+    scale_factor = image_item['scale_factor'].values[0]
+    spot_diameter = image_item['spot_diameter'].values[0]
+
+    fig = scatter(
+        data=data,
+        attrs=attrs,
+        basis=basis,
+        marker_size=spot_diameter,
+        dpi=dpi,
+        alpha=alpha,
+        return_fig=True,
+        **kwargs,
+    )
+
+    for i in range(len(attrs)):
+        ax = fig.axes[i]
+        ax.invert_yaxis()
+        cur_coords = np.concatenate([ax.get_xlim(), ax.get_ylim()])
+        ax.imshow(image_obj, alpha=alpha)
+        ax.set_xlim(cur_coords[0], cur_coords[1])
+        ax.set_ylim(cur_coords[2], -cur_coords[3])
 
     return fig if return_fig else None
 
@@ -938,7 +986,7 @@ def heatmap(
 
         cell_colors = np.zeros(df.shape[0], dtype=object)
         palette = _get_palette(cluster_ids.categories.size)
-        
+
         for k, cat in enumerate(cluster_ids.categories):
             cell_colors[cluster_ids == cat] = palette[k]
 
@@ -1008,7 +1056,7 @@ def heatmap(
     else:
         cg.ax_heatmap.xaxis.tick_top()
         cg.ax_col_dendrogram.set_visible(False)
-    
+
     cg.ax_cbar.tick_params(labelsize=cbar_labelsize)
     cg.fig.dpi = dpi
 
@@ -1016,7 +1064,7 @@ def heatmap(
         if groupby_cluster:
             from matplotlib.patches import Patch
             legend_elements = [Patch(color = color, label = label) for color, label in zip(palette, cluster_ids.categories)]
-            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)           
+            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)
         else:
             values = cluster_ids.value_counts().values
             ticks = np.cumsum(values) - values / 2
@@ -1301,7 +1349,7 @@ def dendrogram(
         Metric used to compute the linkage, used by hierarchical clustering. Valid values for metric are:
             - From scikit-learn: ``cityblock``, ``cosine``, ``euclidean``, ``l1``, ``l2``, ``manhattan``.
             - From scipy.spatial.distance: ``braycurtis``, ``canberra``, ``chebyshev``, ``correlation``, ``dice``, ``hamming``, ``jaccard``, ``kulsinski``, ``mahalanobis``, ``minkowski``, ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``, ``sokalsneath``, ``sqeuclidean``, ``yule``.
-            
+
         Default is the correlation distance. See `scikit-learn distance documentation <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise_distances.html>`_ for details.
     linkage: ``str``, optional, default: ``complete``
         Which linkage criterion to use, used by hierarchical clustering. Below are available options:
@@ -1309,7 +1357,7 @@ def dendrogram(
             - ``avarage`` uses the average of the distances of each observation of the two sets.
             - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
             - ``single`` uses the minimum of the distances between all observations of the two sets.
-            
+
         See `scikit-learn documentation <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html>`_ for details.
     compute_full_tree: ``str`` or ``bool``, optional, default: ``auto``
         Stop early the construction of the tree at ``n_clusters``, used by hierarchical clustering. It must be ``True`` if ``distance_threshold`` is not ``None``.
@@ -1910,7 +1958,7 @@ def wordcloud(
     dpi: Optional[float] = 300.0,
     **kwargs,
 ) -> Union[plt.Figure, None]:
-    """Generate one word cloud image for factor (starts from 0) in data.uns['W']. 
+    """Generate one word cloud image for factor (starts from 0) in data.uns['W'].
 
     Parameters
     ----------
@@ -1957,10 +2005,8 @@ def wordcloud(
     from wordcloud import WordCloud
     wc = WordCloud(background_color="white", max_words=max_words, random_state=random_state, colormap=colormap, width=width, height=height)
     wc.generate_from_frequencies(word_dict)
-    
+
     ax.imshow(wc)
     ax.axis('off')
 
     return fig if return_fig else None
-
-
