@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse, csr_matrix
 from typing import Union, List, Tuple
 from anndata import AnnData
+from pegasusio import UnimodalData, MultimodalData
 
 from pegasus.tools import _cpu_count
 
@@ -150,3 +152,19 @@ def simulate_doublets(X: Union[csr_matrix, np.ndarray], sim_doublet_ratio: float
         results = simulate_doublets_dense(n_sim, X.shape[1], data, doublet_indices)
 
     return results, doublet_indices
+
+
+def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: str, warning_msg: str) -> bool:
+    if batch is None:
+        return False
+
+    if batch not in data.obs:
+        logger.warning(f"Batch key {batch} does not exist. {warning_msg}")
+        return False
+    else:
+        if not is_categorical_dtype(data.obs[batch]):
+            data.obs[batch] = pd.Categorical(data.obs[batch].values)
+        if data.obs[batch].cat.categories.size == 1:
+            logger.warning(f"Batch key {batch} only contains one batch. {warning_msg}")
+            return False
+    return True

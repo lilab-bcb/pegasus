@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_categorical_dtype
 
 import numba
 from numba import njit
@@ -8,7 +7,7 @@ from numba.typed import List as numbaList
 
 from typing import List, Union
 from pegasusio import UnimodalData, MultimodalData
-from pegasus.tools import slicing, eff_n_jobs, calculate_nearest_neighbors
+from pegasus.tools import slicing, eff_n_jobs, calculate_nearest_neighbors, check_batch_key
 
 import logging
 logger = logging.getLogger(__name__)
@@ -370,14 +369,8 @@ def integrative_nmf(
     --------
     >>> pg.integrative_nmf(data)
     """
-    if not is_categorical_dtype(data.obs[batch]):
-        data.obs[batch] = pd.Categorical(data.obs[batch])
-    if data.obs[batch].cat.categories.size  == 1:
-        logger.warning("Warning: data only contains 1 batch. Cannot apply integrative_nmf!")
-        return 'pca'
-
-    # import time
-    # _start = time.perf_counter()
+    if not check_batch_key(data, batch, "Cannot apply integrative_nmf!"):
+        return "pca"
 
     Xs = _select_and_scale_features(data, features=features, space=space, batch=batch)
 

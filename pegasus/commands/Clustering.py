@@ -18,7 +18,6 @@ Options:
   -p <number>, --threads <number>                  Number of threads. [default: 1]
   --processed                                      Input file is processed. Assume quality control, data normalization and log transformation, highly variable gene selection, batch correction/PCA and kNN graph building is done.
 
-  --channel <channel_attr>                         Use <channel_attr> to create a 'Channel' column metadata field. All cells within a channel are assumed to come from a same batch.
   --black-list <black_list>                        Cell barcode attributes in black list will be popped out. Format is "attr1,attr2,...,attrn".
 
   --select-singlets                                Only select DemuxEM-predicted singlets for analysis.
@@ -52,18 +51,18 @@ Options:
   --no-select-hvf                                  Do not select highly variable features.
   --plot-hvf                                       Plot highly variable feature selection.
 
-  --correct-batch-effect                           Correct for batch effects.
-  --correction-method <method>                     Batch correction method, can be either 'L/S' for location/scale adjustment algorithm (Li and Wong. The analysis of Gene Expression Data 2003), 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019), 'scanorama' for Scanorama (Hie et al. Nature Biotechnology 2019) or 'inmf' for integrative NMF (Yang and Michailidis Bioinformatics 2016, Welch et al. Cell 2019, Gao et al. Natuer Biotechnology 2021) [default: harmony]
-  --batch-group-by <expression>                    Only valid if correction method is L/S. Batch correction assumes the differences in gene expression between channels are due to batch effects. However, in many cases, we know that channels can be partitioned into several groups and each group is biologically different from others. In this case, we will only perform batch correction for channels within each group. This option defines the groups. If <expression> is None, we assume all channels are from one group. Otherwise, groups are defined according to <expression>. <expression> takes the form of either 'attr', or 'attr1+attr2+...+attrn', or 'attr=value11,...,value1n_1;value21,...,value2n_2;...;valuem1,...,valuemn_m'. In the first form, 'attr' should be an existing sample attribute, and groups are defined by 'attr'. In the second form, 'attr1',...,'attrn' are n existing sample attributes and groups are defined by the Cartesian product of these n attributes. In the last form, there will be m + 1 groups. A cell belongs to group i (i > 0) if and only if its sample attribute 'attr' has a value among valuei1,...,valuein_i. A cell belongs to group 0 if it does not belong to any other groups.
-  --harmony-nclusters <nclusters>                  Number of clusters used for Harmony batch correction.
-  --inmf-lambda <lambda>                           Coefficient of regularization for iNMF. [default: 5.0]
+  --pca-n <number>                                 Number of principal components. If Scanorama is used for batch correction, this parameter also sets Scanorama number of components. [default: 50]
 
   --random-state <seed>                            Random number generator seed. [default: 0]
   --temp-folder <temp_folder>                      Joblib temporary folder for memmapping numpy arrays.
 
   --calc-signature-scores <sig_list>               Calculate signature scores for gene sets in <sig_list>. <sig_list> is a comma-separated list of strings. Each string should either be a <GMT_file> or one of 'cell_cycle_human', 'cell_cycle_mouse', 'gender_human', 'gender_mouse', 'mitochondrial_genes_human', 'mitochondrial_genes_mouse', 'ribosomal_genes_human' and 'ribosomal_genes_mouse'.
 
-  --pca-n <number>                                 Number of principal components. If Scanorama is used for batch correction, this parameter also sets Scanorama number of components. [default: 50]
+  --correct-batch-effect                           Correct for batch effects.
+  --batch <batch_attr>                             Use <batch_attr> as batches for batch correction. [default: Channel]
+  --correction-method <method>                     Batch correction method, can be either 'harmony' for Harmony (Korsunsky et al. Nature Methods 2019), 'scanorama' for Scanorama (Hie et al. Nature Biotechnology 2019) or 'inmf' for integrative NMF (Yang and Michailidis Bioinformatics 2016, Welch et al. Cell 2019, Gao et al. Natuer Biotechnology 2021) [default: harmony]
+  --harmony-nclusters <nclusters>                  Number of clusters used for Harmony batch correction.
+  --inmf-lambda <lambda>                           Coefficient of regularization for iNMF. [default: 5.0]
 
   --nmf                                            Compute nonnegative matrix factorization (NMF) on highly variable features.
   --nmf-n <number>                                 Number of NMF components. IF iNMF is used for batch correction, this parameter also sets iNMF number of components. [default: 20]
@@ -167,7 +166,6 @@ Examples:
         kwargs = {
             "n_jobs": int(self.args["--threads"]),
             "processed": self.args["--processed"],
-            "channel_attr": self.args["--channel"],
             "black_list": self.args["--black-list"],
             "subcluster": False,
             "select_singlets": self.args["--select-singlets"],
@@ -201,8 +199,8 @@ Examples:
             else None,
             "plot_hvf": self.args["<output_name>"] if self.args["--plot-hvf"] else None,
             "batch_correction": self.args["--correct-batch-effect"],
+            "batch_attr": self.args["--batch"],
             "correction_method": self.args["--correction-method"],
-            "group_attribute": self.args["--batch-group-by"],
             "harmony_nclusters": self.convert_to_int(self.args["--harmony-nclusters"]),
             "inmf_lambda": self.convert_to_float(self.args["--inmf-lambda"]),
             "random_state": int(self.args["--random-state"]),
