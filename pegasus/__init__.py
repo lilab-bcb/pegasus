@@ -38,8 +38,6 @@ from .tools import (
     nmf,
     integrative_nmf,
     highly_variable_features,
-    set_group_attribute,
-    correct_batch,
     run_harmony,
     run_scanorama,
     get_neighbors,
