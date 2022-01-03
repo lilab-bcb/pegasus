@@ -195,6 +195,7 @@ def run_harmony(
     n_jobs: int = -1,
     n_clusters: int = None,
     random_state: int = 0,
+    max_iter_harmony: int = 10,
     use_gpu: bool = False,
 ) -> str:
     """Batch correction on PCs using Harmony.
@@ -260,6 +261,7 @@ def run_harmony(
         n_clusters = n_clusters,
         n_jobs = n_jobs,
         random_state = random_state,
+        max_iter_harmony = max_iter_harmony,
         use_gpu = use_gpu,
     )
     return out_rep
