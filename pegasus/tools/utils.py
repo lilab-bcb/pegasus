@@ -6,6 +6,9 @@ from typing import Union, List, Tuple
 from anndata import AnnData
 from pegasusio import UnimodalData, MultimodalData
 
+import logging
+logger = logging.getLogger(__name__)
+
 from pegasus.tools import _cpu_count
 
 def eff_n_jobs(n_jobs: int) -> int:
