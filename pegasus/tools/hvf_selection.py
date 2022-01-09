@@ -1,16 +1,13 @@
 import numpy as np
 import pandas as pd
-from typing import Union
-from pandas.api.types import is_categorical_dtype
-
 from scipy.sparse import csr_matrix
 from collections import defaultdict
 from joblib import Parallel, delayed, parallel_backend
 import skmisc.loess as sl
-from typing import List
-from pegasusio import MultimodalData
+from typing import List, Union
+from pegasusio import UnimodalData, MultimodalData
 
-from pegasus.tools import eff_n_jobs, calc_mean_and_var, calc_expm1, calc_stat_per_batch
+from pegasus.tools import eff_n_jobs, calc_mean_and_var, calc_expm1, calc_stat_per_batch, check_batch_key
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,87 +16,23 @@ from pegasusio import timer
 
 
 
-def _check_channel(data: MultimodalData) -> None:
-    if "Channel" not in data.obs:
-        data.obs["Channel"] = pd.Categorical.from_codes(codes = np.zeros(data.shape[0], dtype = np.int32), categories = [""])
-    elif not is_categorical_dtype(data.obs["Channel"]):
-        data.obs["Channel"] = pd.Categorical(data.obs["Channel"].values)
-
-    if "Channels" not in data.uns:
-        data.uns["Channels"] = data.obs["Channel"].cat.categories.values
-
-def _check_group(data: MultimodalData) -> None:
-    if "Group" not in data.obs:
-        data.obs["Group"] = pd.Categorical.from_codes(codes = np.zeros(data.shape[0], dtype = np.int32), categories = ["one_group"])
-    elif not is_categorical_dtype(data.obs["Group"]):
-        data.obs["Group"] = pd.Categorical(data.obs["Group"].values)
-
-    if "Groups" not in data.uns:
-        data.uns["Groups"] = data.obs["Group"].cat.categories.values
-
 @timer(logger=logger)
-def estimate_feature_statistics(data: MultimodalData, consider_batch: bool) -> None:
+def estimate_feature_statistics(data: Union[MultimodalData, UnimodalData], batch: str) -> None:
     """ Estimate feature (gene) statistics per channel, such as mean, var etc.
     """
-    if consider_batch:
-        # The reason that we test if 'Channel' and 'Channels' exist in addition to the highly_variable_features function is for the case that we do not perform feature selection but do batch correction
-        _check_channel(data)
-        if data.uns["Channels"].size == 1:
-            return None
-        _check_group(data)
-
-        channels = data.uns["Channels"]
-        groups = data.uns["Groups"]
-
-        ncells, means, partial_sum = calc_stat_per_batch(data.X, data.obs["Channel"].values)
+    if batch is None:
+        data.var["mean"], data.var["var"] = calc_mean_and_var(data.X, axis=0)
+    else:
+        ncells, means, partial_sum = calc_stat_per_batch(data.X, data.obs[batch].values)
         partial_sum[partial_sum < 1e-6] = 0.0
 
-        group_dict = defaultdict(list)
-        if groups.size == 1:
-            group_dict[groups[0]] = list(range(channels.size))
-        else:
-            for i, channel in enumerate(channels):
-                idx = np.isin(data.obs["Channel"], channel)
-                group = data.obs["Group"][idx.nonzero()[0][0]]
-                group_dict[group].append(i)
-
-        overall_means = np.dot(means, ncells) / data.shape[0]
-        batch_adjusted_vars = np.zeros(data.shape[1])
-
-        c2gid = np.zeros(channels.size, dtype=int)
-        gncells = np.zeros(groups.size)
-        gmeans = np.zeros((data.shape[1], groups.size))
-        gstds = np.zeros((data.shape[1], groups.size))
-
-        for i, group in enumerate(groups):
-            gchannels = group_dict[group]
-            c2gid[gchannels] = i
-            gncells[i] = ncells[gchannels].sum()
-            gmeans[:, i] = np.dot(means[:, gchannels], ncells[gchannels]) / gncells[i]
-            gstds[:, i] = (
-                partial_sum[:, gchannels].sum(axis=1) / gncells[i]
-            ) ** 0.5  # calculate std
-            if groups.size > 1:
-                batch_adjusted_vars += gncells[i] * (
-                    (gmeans[:, i] - overall_means) ** 2
-                )
-
+        data.uns["ncells"] = ncells
         data.varm["means"] = means
         data.varm["partial_sum"] = partial_sum
-        data.uns["ncells"] = ncells
 
-        data.varm["gmeans"] = gmeans
-        data.varm["gstds"] = gstds
-        data.uns["gncells"] = gncells
-        data.uns["c2gid"] = c2gid
-
-        data.var["mean"] = overall_means
-        data.var["var"] = (batch_adjusted_vars + partial_sum.sum(axis=1)) / (
-            data.shape[0] - 1.0
-        )
-    else:
-        data.var["mean"], data.var["var"] = calc_mean_and_var(data.X, axis=0)
-
+        data.var["mean"] = np.dot(means, ncells) / data.shape[0]
+        data.var["var"] = partial_sum.sum(axis=1) / (data.shape[0] - 1.0)
+        
 
 def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> object:
     try:
@@ -111,14 +44,14 @@ def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> objec
 
 
 def select_hvf_pegasus(
-    data: MultimodalData, consider_batch: bool, n_top: int = 2000, span: float = 0.02
+    data: Union[MultimodalData, UnimodalData], batch: str, n_top: int = 2000, span: float = 0.02
 ) -> None:
     """ Select highly variable features using the pegasus method
     """
     if "robust" not in data.var:
         raise ValueError("Please run `identify_robust_genes` to identify robust genes")
 
-    estimate_feature_statistics(data, consider_batch)
+    estimate_feature_statistics(data, batch)
 
     robust_idx = data.var["robust"].values
     hvf_index = np.zeros(robust_idx.sum(), dtype=bool)
@@ -208,8 +141,8 @@ def select_hvf_seurat_single(
 
 def select_hvf_seurat_multi(
     X: Union[csr_matrix, np.ndarray],
-    channels: List[str],
-    cell2channel: List[str],
+    batches: List[str],
+    cell2batch: List[str],
     n_top: int,
     n_jobs: int,
     min_disp: float,
@@ -218,8 +151,8 @@ def select_hvf_seurat_multi(
     max_mean: float,
 ) -> List[int]:
     Xs = []
-    for channel in channels:
-        Xs.append(X[np.isin(cell2channel, channel)])
+    for batch in batches:
+        Xs.append(X[np.isin(cell2batch, batch)])
 
     n_jobs = eff_n_jobs(n_jobs)
     with parallel_backend("loky", inner_max_num_threads=1):
@@ -228,7 +161,7 @@ def select_hvf_seurat_multi(
                 delayed(select_hvf_seurat_single)(
                     Xs[i], n_top, min_disp, max_disp, min_mean, max_mean
                 )
-                for i in range(channels.size)
+                for i in range(batches.size)
             )
         )
 
@@ -248,8 +181,8 @@ def select_hvf_seurat_multi(
 
 
 def select_hvf_seurat(
-    data: MultimodalData,
-    consider_batch: bool,
+    data: Union[MultimodalData, UnimodalData],
+    batch: str,
     n_top: int,
     min_disp: float,
     max_disp: float,
@@ -264,21 +197,21 @@ def select_hvf_seurat(
     X = data.X[:, robust_idx]
 
     hvf_rank = (
-        select_hvf_seurat_multi(
+        select_hvf_seurat_single(
             X,
-            data.uns["Channels"],
-            data.obs["Channel"],
-            n_top,
-            n_jobs=n_jobs,
+            n_top=n_top,
             min_disp=min_disp,
             max_disp=max_disp,
             min_mean=min_mean,
             max_mean=max_mean,
         )
-        if consider_batch
-        else select_hvf_seurat_single(
+        if batch is None
+        else select_hvf_seurat_multi(
             X,
-            n_top=n_top,
+            data.obs[batch].cat.categories.values,
+            data.obs[batch],
+            n_top,
+            n_jobs=n_jobs,
             min_disp=min_disp,
             max_disp=max_disp,
             min_mean=min_mean,
@@ -296,8 +229,8 @@ def select_hvf_seurat(
 
 @timer(logger=logger)
 def highly_variable_features(
-    data: MultimodalData,
-    consider_batch: bool = False,
+    data: Union[MultimodalData, UnimodalData],
+    batch: str = None,
     flavor: str = "pegasus",
     n_top: int = 2000,
     span: float = 0.02,
@@ -314,8 +247,8 @@ def highly_variable_features(
     data: ``pegasusio.MultimodalData``
         Annotated data matrix with rows for cells and columns for genes.
 
-    consider_batch: ``bool``, optional, default: ``False``
-        Whether consider batch effects or not.
+    batch: ``str``, optional, default: ``None``
+        A key in data.obs specifying batch information. If `batch` is not set, do not consider batch effects in selecting highly variable features. Otherwise, if `data.obs[batch]` is not categorical, `data.obs[batch]` will be automatically converted into categorical before highly variable feature selection.
 
     flavor: ``str``, optional, default: ``"pegasus"``
         The HVF selection method to use. Available choices are ``"pegasus"`` or ``"Seurat"``.
@@ -352,20 +285,15 @@ def highly_variable_features(
     --------
     >>> pg.highly_variable_features(data, consider_batch = False)
     """
-    _check_channel(data)
-    if data.uns["Channels"].size == 1 and consider_batch:
-        consider_batch = False
-        logger.warning(
-            "Warning: only contains one channel, no need to consider batch for selecting highly variable features."
-        )
+    check_batch_key(data, batch, "Switch to not not consider batch effects for selecting highly variable features.")
 
     if flavor == "pegasus":
-        select_hvf_pegasus(data, consider_batch, n_top=n_top, span=span)
+        select_hvf_pegasus(data, batch, n_top=n_top, span=span)
     else:
         assert flavor == "Seurat"
         select_hvf_seurat(
             data,
-            consider_batch,
+            batch,
             n_top=n_top,
             min_disp=min_disp,
             max_disp=max_disp,
@@ -376,8 +304,4 @@ def highly_variable_features(
 
     data.uns.pop("_tmp_fmat_highly_variable_features", None) # Pop up cached feature matrix
 
-    logger.info(
-        "{} highly variable features have been selected.".format(
-            data.var["highly_variable_features"].sum()
-        )
-    )
+    logger.info(f"{data.var['highly_variable_features'].sum()} highly variable features have been selected.")

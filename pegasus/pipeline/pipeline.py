@@ -18,19 +18,8 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
     logger.info(f"Begin to analyze UnimodalData {unidata.get_uid()}.")
 
     if is_raw:
-        if kwargs["channel_attr"] is not None:
-            unidata.obs["Channel"] = unidata.obs[kwargs["channel_attr"]]
-
-        if "Channel" in unidata.obs:
-            from pandas.api.types import is_categorical_dtype
-            if not is_categorical_dtype(unidata.obs["Channel"]):
-                unidata.obs["Channel"] = pd.Categorical(unidata.obs["Channel"])
-
         # normailize counts and then transform to log space
         tools.log_norm(unidata, kwargs["norm_count"])
-        # set group attribute
-        if kwargs["batch_correction"] and kwargs["group_attribute"] is not None:
-            tools.set_group_attribute(unidata, kwargs["group_attribute"])
 
         # select highly variable features
         standardize = False # if no select HVF, False
@@ -41,7 +30,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 standardize = True
                 tools.highly_variable_features(
                     unidata,
-                    kwargs["batch_correction"],
+                    kwargs["batch_attr"] if kwargs["batch_correction"] else None,
                     flavor=kwargs["hvf_flavor"],
                     n_top=kwargs["hvf_ngenes"],
                     n_jobs=kwargs["n_jobs"],
@@ -52,13 +41,23 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                         fig = hvfplot(unidata, return_fig = True)
                         fig.savefig(f"{kwargs['plot_hvf']}.hvf.pdf")
 
-        # batch correction: L/S
-        if kwargs["batch_correction"] and kwargs["correction_method"] == "L/S":
-            tools.correct_batch(unidata, features="highly_variable_features")
 
         n_pc = min(kwargs["pca_n"], unidata.shape[0], unidata.shape[1])
         if n_pc < kwargs["pca_n"]:
             logger.warning(f"UnimodalData {unidata.get_uid()} has either dimension ({unidata.shape[0]}, {unidata.shape[1]}) less than the specified number of PCs {kwargs['pca_n']}. Reduce the number of PCs to {n_pc}.")
+
+        # Run PCA irrespect of which batch correction method would apply
+        tools.pca(
+            unidata,
+            n_components=n_pc,
+            features="highly_variable_features",
+            standardize=standardize,
+            n_jobs=kwargs["n_jobs"],
+            random_state=kwargs["random_state"],
+        )
+        dim_key = "pca"
+
+
 
         if kwargs["nmf"] or (kwargs["batch_correction"] and kwargs["correction_method"] == "inmf"):
             n_nmf = min(kwargs["nmf_n"], unidata.shape[0], unidata.shape[1])
@@ -77,26 +76,17 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                     random_state=kwargs["random_state"],
                 )
 
-        # batch correction: Scanorama and iNMF
-        if kwargs["batch_correction"] and kwargs["correction_method"] == "scanorama":
-            dim_key = tools.run_scanorama(unidata, batch="Channel", n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
-        elif kwargs["batch_correction"] and kwargs["correction_method"] == "inmf":
-            dim_key = tools.integrative_nmf(unidata, batch="Channel", n_components=n_nmf, features="highly_variable_features", lam=kwargs["inmf_lambda"], n_jobs=kwargs["n_jobs"], random_state = kwargs["random_state"])
-        else:
-            # PCA
-            tools.pca(
-                unidata,
-                n_components=n_pc,
-                features="highly_variable_features",
-                standardize=standardize,
-                n_jobs=kwargs["n_jobs"],
-                random_state=kwargs["random_state"],
-            )
-            dim_key = "pca"
 
-        # batch correction: Harmony
-        if kwargs["batch_correction"] and kwargs["correction_method"] == "harmony":
-            dim_key = tools.run_harmony(unidata, batch="Channel", rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
+        if kwargs["batch_correction"]:
+            if kwargs["correction_method"] == "harmony":
+                dim_key = tools.run_harmony(unidata, batch=kwargs["batch_attr"], rep="pca", n_jobs=kwargs["n_jobs"], n_clusters=kwargs["harmony_nclusters"], random_state = kwargs["random_state"])
+            elif kwargs["correction_method"] == "inmf":
+                dim_key = tools.integrative_nmf(unidata, batch=kwargs["batch_attr"], n_components=n_nmf, features="highly_variable_features", lam=kwargs["inmf_lambda"], n_jobs=kwargs["n_jobs"], random_state = kwargs["random_state"])
+            elif kwargs["correction_method"] == "scanorama":
+                dim_key = tools.run_scanorama(unidata, batch=kwargs["batch_attr"], n_components=n_pc, features="highly_variable_features", standardize=standardize, random_state=kwargs["random_state"])
+            else:
+                raise ValueError(f"Unknown batch correction method {kwargs['correction_method']}!")
+
 
         # Find K neighbors
         tools.neighbors(

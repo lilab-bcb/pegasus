@@ -4,7 +4,7 @@ if _cpu_count is None:
     _cpu_count = psutil.cpu_count(logical=True)
 
 
-from .utils import eff_n_jobs, update_rep, X_from_rep, W_from_rep, slicing, calc_mean, calc_mean_and_var, calc_expm1, calc_stat_per_batch, normalize_by_count, calc_sig_background, simulate_doublets
+from .utils import eff_n_jobs, update_rep, X_from_rep, W_from_rep, slicing, calc_mean, calc_mean_and_var, calc_expm1, calc_stat_per_batch, normalize_by_count, calc_sig_background, simulate_doublets, check_batch_key
 
 from .preprocessing import (
     qc_metrics,
@@ -21,7 +21,7 @@ from .preprocessing import (
     regress_out,
 )
 from .hvf_selection import estimate_feature_statistics, highly_variable_features
-from .batch_correction import set_group_attribute, correct_batch, run_harmony, run_scanorama
+from .batch_correction import run_harmony, run_scanorama
 from .nearest_neighbors import (
     calculate_nearest_neighbors,
     get_neighbors,
