@@ -9,7 +9,6 @@ from scipy.stats import zscore
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
 
-
 import anndata
 from pegasusio import UnimodalData, MultimodalData
 
@@ -19,7 +18,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasus.tools import X_from_rep, slicing
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palette, RestrictionParser, DictWithDefault, _generate_categories, _plot_corners
+from .plot_utils import (
+    _transform_basis,
+    _get_nrows_and_ncols,
+    _get_marker_size,
+    _get_dot_size,
+    _get_subplot_layouts,
+    _get_legend_ncol,
+    _get_palette,
+    RestrictionParser,
+    DictWithDefault,
+    _generate_categories,
+    _plot_corners,
+    _plot_circles,
+)
 
 
 def scatter(
@@ -45,6 +57,7 @@ def scatter(
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
     marker_size: Optional[float] = None,
+    scale_factor: Optional[float] = None,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     show_neg_for_sig: Optional[bool] = False,
@@ -98,6 +111,8 @@ def scatter(
         This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
     marker_size: ``float``, optional (default: ``None``)
         Manually set the marker size in the plot. If ``None``, automatically adjust the marker size to the plot size.
+    scale_factor: ``float``, optional (default: ``None``)
+        Manually set the scale factor in the plot if it's not ``None``.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -189,6 +204,7 @@ def scatter(
                     local_marker_size = _get_marker_size(selected.sum())
 
                 if is_numeric_dtype(values):
+                    # Numeric attribute
                     cmap = cmaps.get(attr, squeeze = True)
                     if cmap is None:
                         raise KeyError(f"Please set colormap for attribute {attr} or set a default colormap!")
@@ -196,20 +212,35 @@ def scatter(
                     if fix_corners:
                         _plot_corners(ax, corners, local_marker_size)
 
-                    img = ax.scatter(
-                        x[selected],
-                        y[selected],
-                        c=values[selected],
-                        s=local_marker_size,
-                        marker=".",
-                        alpha=alpha[pos],
-                        edgecolors="none",
-                        cmap=cmap,
-                        vmin=vmin,
-                        vmax=vmax,
-                        rasterized=True,
-                        **kwargs,
-                    )
+                    if marker_size is None:
+                        img = ax.scatter(
+                            x[selected]*scale_factor if scale_factor is not None else x[selected],
+                            y[selected]*scale_factor if scale_factor is not None else y[selected],
+                            c=values[selected],
+                            s=local_marker_size,
+                            marker=".",
+                            alpha=alpha[pos],
+                            edgecolors="none",
+                            cmap=cmap,
+                            vmin=vmin,
+                            vmax=vmax,
+                            rasterized=True,
+                            **kwargs,
+                        )
+                    else:
+                        img = _plot_circles(
+                            x[selected]*scale_factor if scale_factor is not None else x[selected],
+                            y[selected]*scale_factor if scale_factor is not None else y[selected],
+                            c=values[selected],
+                            s=local_marker_size,
+                            alpha=alpha[pos],
+                            edgecolors="none",
+                            cmap=cmap,
+                            vmin=vmin,
+                            vmax=vmax,
+                            rasterized=True,
+                            ax=ax,
+                        )
 
                     left, bottom, width, height = ax.get_position().bounds
                     rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
@@ -217,6 +248,7 @@ def scatter(
                     fig.colorbar(img, cax=ax_colorbar)
 
                 else:
+                    # Categorical attribute
                     labels, with_background = _generate_categories(values, restr_obj.get_satisfied(data, attr))
                     label_size = labels.categories.size
 
@@ -230,29 +262,44 @@ def scatter(
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
                         if idx.sum() > 0:
-                            scatter_kwargs = {"marker": ".", "alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
+                            scatter_kwargs = {"alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
 
                             if cat != "":
-                                if legend_loc[pos] != "on data":
+                                if (legend_loc[pos] != "on data") and (marker_size is None):
                                     scatter_kwargs["label"] = cat
                                 else:
                                     text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
 
                             if cat != "" or (cat == "" and show_background):
-                                ax.scatter(
-                                    x[idx],
-                                    y[idx],
-                                    c=palette[k],
-                                    s=local_marker_size,
-                                    **scatter_kwargs,
-                                    **kwargs,
-                                )
+                                if marker_size is None:
+                                    ax.scatter(
+                                        x[idx],
+                                        y[idx],
+                                        c=palette[k],
+                                        s=local_marker_size,
+                                        marker=".",
+                                        **scatter_kwargs,
+                                        **kwargs,
+                                    )
+                                else:
+                                    _plot_circles(
+                                        x[idx]*scale_factor if scale_factor is not None else x[idx],
+                                        y[idx]*scale_factor if scale_factor is not None else y[idx],
+                                        c=palette[k],
+                                        s=local_marker_size,
+                                        ax=ax,
+                                        **scatter_kwargs,
+                                        **kwargs,
+                                    )
                             else:
                                 if fix_corners:
                                     _plot_corners(ax, corners, local_marker_size)
 
                     if attr != '_all':
                         if legend_loc[pos] == "right margin":
+                            if marker_size is not None:
+                                for k, cat in enumerate(labels.categories):
+                                    ax.scatter([], [], c=palette[k], label=cat)
                             legend = ax.legend(
                                 loc="center left",
                                 bbox_to_anchor=(1, 0.5),
@@ -261,7 +308,7 @@ def scatter(
                                 ncol=_get_legend_ncol(label_size, legend_ncol),
                             )
                             for handle in legend.legendHandles:
-                                handle.set_sizes([300.0])
+                                handle.set_sizes([300.0 if marker_size is None else 100.0])
                         elif legend_loc[pos] == "on data":
                             texts = []
                             for px, py, txt in text_list:
@@ -536,45 +583,81 @@ def scatter_groups(
     return fig if return_fig else None
 
 
-def scatter_spatial(
+def spatial(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attrs: Optional[Union[str, List[str]]] = None,
     basis: str = 'spatial',
     resolution: str = 'hires',
+    cmaps: Optional[Union[str, List[str]]] = 'viridis',
     alpha: Union[float, List[float]] = 1.0,
     dpi: float = 300.0,
     return_fig: bool = False,
     **kwargs,
 ) -> Union[plt.Figure, None]:
     """Scatter plot on spatial coordinates.
+    This function is inspired by SCANPY's `pl.spatial <https://scanpy.readthedocs.io/en/latest/generated/scanpy.pl.spatial.html#scanpy-pl-spatial>`_ function.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData`` or ``pegasusio.UnimodalData`` or ``anndata.AnnData``
+       Use current selected modality in data.
+    attr: ``str``, optional, default: ``None``
+        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+        If ``None``, just plot data points of the same color.
+    basis: ``str``, optional, default: ``spatial``
+        Basis to be used to generate spatial plots. Must be the 2D array showing the spatial coordinates of data points.
+    resolution: ``str``, optional, default: ``hires``
+        Use the spatial image whose value is specified in ``data.img['image_id']`` to show in background.
+        For 10X Visium data, user can either specify ``hires`` or ``lowres`` to use High or Low resolution spatial images, respectively.
+    cmaps: ``str`` or ``List[str]``, optional, default: ``viridis``
+        The colormap(s) for plotting numeric attributes. The default ``viridis`` colormap theme follows the spatial plot function in SCANPY (``scanpy.pl.spatial``).
+    alpha: ``float`` or ``List[float]``, optional, default: ``1.0``
+        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque).
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution of the figure in dots-per-inch.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+
+    Returns
+    -------
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> pg.spatial(data, attrs=['louvain_labels', 'Channel'])
+    >>> pg.spatial(data, attrs=['CD14', 'TRAC'], resolution='lowres')
     """
     assert f"X_{basis}" in data.obsm.keys(), f"'X_{basis}' coordinates do not exist!"
     assert hasattr(data, 'img'), "The spatial image data are missing!"
     assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
 
+    if (attrs is None) or (not is_list_like(attrs)):
+        nattrs = 1
+    else:
+        nattrs = len(attrs)
+
     image_item = data.img.loc[data.img['image_id']==resolution]
-    image_obj = image_item['data'].values[0]
-    scale_factor = image_item['scale_factor'].values[0]
-    spot_diameter = image_item['spot_diameter'].values[0]
+    image_obj = image_item['data'].iat[0]
+    scale_factor = image_item['scale_factor'].iat[0]
+    spot_radius = image_item['spot_diameter'].iat[0] * 0.5
 
     fig = scatter(
         data=data,
         attrs=attrs,
         basis=basis,
-        marker_size=spot_diameter,
+        marker_size=spot_radius,
+        scale_factor=scale_factor,
+        cmaps=cmaps,
         dpi=dpi,
         alpha=alpha,
         return_fig=True,
         **kwargs,
     )
 
-    for i in range(len(attrs)):
+    for i in range(nattrs):
         ax = fig.axes[i]
-        ax.invert_yaxis()
-        cur_coords = np.concatenate([ax.get_xlim(), ax.get_ylim()])
         ax.imshow(image_obj, alpha=alpha)
-        ax.set_xlim(cur_coords[0], cur_coords[1])
-        ax.set_ylim(cur_coords[2], -cur_coords[3])
 
     return fig if return_fig else None
 

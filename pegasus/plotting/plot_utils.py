@@ -417,3 +417,54 @@ def _plot_corners(ax: Axes, corners: np.ndarray, marker_size: float) -> None:
         edgecolors="none",
         rasterized=True,
     )
+
+def _plot_circles(x, y, c, s, ax, vmin=None, vmax=None, **kwargs):
+    """
+    This function is take from https://github.com/theislab/scanpy/blob/0dfd353abd968f3ecaafd5fac77a50a7e0dd87ee/scanpy/plotting/_utils.py#L1063-L1117,
+    which originates from here: https://gist.github.com/syrte/592a062c562cd2a98a83.
+    This function aims to making scatter plot of circle markers, with size of circles defined in data scale.
+
+    Parameters
+    ----------
+    x, y: scalar or array_like, shape (n, )
+        2-D coordinates of data points.
+    c: color or sequence of color
+        `c` can be a single color format string, or a sequence of color
+        specifications of length `N`, or a sequence of `N` numbers to be
+        mapped to colors using the `cmap` and `norm` specified via kwargs.
+        Note that `c` should not be a single numeric RGB or RGBA sequence
+        because that is indistinguishable from an array of values
+        to be colormapped. (If you insist, use `color` instead.)
+        `c` can be a 2-D array in which the rows are RGB or RGBA, however.
+    s: scalar or array_like, shape (n, )
+        Radius of circles.
+    ax: `matplotlib.axes.Axes`
+        The Axes object to which the generated PatchCollection is attached.
+    vmin, vmax : scalar, optional, default: None
+        `vmin` and `vmax` are the norm limits for image scaling.
+        If either are `None`, the min and max of the color array is used.
+    kwargs : `matplotlib.collections.Collection` properties
+        Eg. alpha, edgecolor(ec), facecolor(fc), linewidth(lw), linestyle(ls),
+        norm, cmap, transform, etc.
+    License
+    --------
+    This code is under [The BSD 3-Clause License]
+    (http://opensource.org/licenses/BSD-3-Clause)
+    """
+
+    from matplotlib.patches import Circle
+    from matplotlib.collections import PatchCollection
+
+    patches = [Circle((x_, y_), s_) for x_, y_, s_ in np.broadcast(x, y, s)]
+    collection = PatchCollection(patches, **kwargs)
+    if isinstance(c, np.ndarray) and np.issubdtype(c.dtype, np.number):
+        # Numeric
+        collection.set_array(np.ma.masked_invalid(c))
+        collection.set_clim(vmin, vmax)
+    else:
+        # Categorical
+        collection.set_facecolor(c)
+
+    ax.add_collection(collection)
+
+    return collection

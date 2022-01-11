@@ -75,7 +75,7 @@ from .plotting import (
     scatter,
     compo_plot,
     scatter_groups,
-    scatter_spatial,
+    spatial,
     violin,
     heatmap,
     dotplot,
