@@ -279,7 +279,6 @@ def scatter(
                                         s=local_marker_size,
                                         marker=".",
                                         **scatter_kwargs,
-                                        **kwargs,
                                     )
                                 else:
                                     _plot_circles(
@@ -289,7 +288,6 @@ def scatter(
                                         s=local_marker_size,
                                         ax=ax,
                                         **scatter_kwargs,
-                                        **kwargs,
                                     )
                             else:
                                 if fix_corners:
