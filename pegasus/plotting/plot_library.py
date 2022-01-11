@@ -225,7 +225,6 @@ def scatter(
                             vmin=vmin,
                             vmax=vmax,
                             rasterized=True,
-                            **kwargs,
                         )
                     else:
                         img = _plot_circles(
