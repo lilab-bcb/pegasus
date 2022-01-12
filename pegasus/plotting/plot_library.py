@@ -112,7 +112,7 @@ def scatter(
     marker_size: ``float``, optional (default: ``None``)
         Manually set the marker size in the plot. If ``None``, automatically adjust the marker size to the plot size.
     scale_factor: ``float``, optional (default: ``None``)
-        Manually set the scale factor in the plot if it's not ``None``.
+        Manually set the scale factor in the plot if it's not ``None``. This is used by generating the spatial plots for 10x Visium data.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -212,10 +212,10 @@ def scatter(
                     if fix_corners:
                         _plot_corners(ax, corners, local_marker_size)
 
-                    if marker_size is None:
+                    if scale_factor is None:
                         img = ax.scatter(
-                            x[selected]*scale_factor if scale_factor is not None else x[selected],
-                            y[selected]*scale_factor if scale_factor is not None else y[selected],
+                            x[selected],
+                            y[selected],
                             c=values[selected],
                             s=local_marker_size,
                             marker=".",
@@ -228,8 +228,8 @@ def scatter(
                         )
                     else:
                         img = _plot_spots(
-                            x[selected]*scale_factor if scale_factor is not None else x[selected],
-                            y[selected]*scale_factor if scale_factor is not None else y[selected],
+                            x[selected] * scale_factor,
+                            y[selected] * scale_factor,
                             c=values[selected],
                             s=local_marker_size,
                             alpha=alpha[pos],
@@ -264,13 +264,13 @@ def scatter(
                             scatter_kwargs = {"alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
 
                             if cat != "":
-                                if (legend_loc[pos] != "on data") and (marker_size is None):
+                                if (legend_loc[pos] != "on data") and (scale_factor is None):
                                     scatter_kwargs["label"] = cat
                                 else:
                                     text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
 
                             if cat != "" or (cat == "" and show_background):
-                                if marker_size is None:
+                                if scale_factor is None:
                                     ax.scatter(
                                         x[idx],
                                         y[idx],
@@ -281,8 +281,8 @@ def scatter(
                                     )
                                 else:
                                     _plot_spots(
-                                        x[idx]*scale_factor if scale_factor is not None else x[idx],
-                                        y[idx]*scale_factor if scale_factor is not None else y[idx],
+                                        x[idx] * scale_factor,
+                                        y[idx] * scale_factor,
                                         c=palette[k],
                                         s=local_marker_size,
                                         ax=ax,
@@ -294,7 +294,7 @@ def scatter(
 
                     if attr != '_all':
                         if legend_loc[pos] == "right margin":
-                            if marker_size is not None:
+                            if scale_factor is not None:
                                 for k, cat in enumerate(labels.categories):
                                     ax.scatter([], [], c=palette[k], label=cat)
                             legend = ax.legend(
@@ -586,7 +586,10 @@ def spatial(
     basis: str = 'spatial',
     resolution: str = 'hires',
     cmaps: Optional[Union[str, List[str]]] = 'viridis',
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
     alpha: Union[float, List[float]] = 1.0,
+    alpha_img: float = 1.0,
     dpi: float = 300.0,
     return_fig: bool = False,
     **kwargs,
@@ -609,7 +612,9 @@ def spatial(
     cmaps: ``str`` or ``List[str]``, optional, default: ``viridis``
         The colormap(s) for plotting numeric attributes. The default ``viridis`` colormap theme follows the spatial plot function in SCANPY (``scanpy.pl.spatial``).
     alpha: ``float`` or ``List[float]``, optional, default: ``1.0``
-        Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque).
+        Alpha value for blending the attribute layers, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
+    alpha_img: ``float``, optional, default: ``1.0``
+        Alpha value for blending the background spatial image, from 0.0 (transparent) to 1.0 (opaque).
     dpi: ``float``, optional, default: ``300.0``
         The resolution of the figure in dots-per-inch.
     return_fig: ``bool``, optional, default: ``False``
@@ -646,15 +651,16 @@ def spatial(
         marker_size=spot_radius,
         scale_factor=scale_factor,
         cmaps=cmaps,
+        vmin=vmin,
+        vmax=vmax,
         dpi=dpi,
         alpha=alpha,
         return_fig=True,
-        **kwargs,
     )
 
     for i in range(nattrs):
         ax = fig.axes[i]
-        ax.imshow(image_obj, alpha=alpha)
+        ax.imshow(image_obj, alpha=alpha_img)
 
     return fig if return_fig else None
 

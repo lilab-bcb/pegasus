@@ -420,10 +420,10 @@ def _plot_corners(ax: Axes, corners: np.ndarray, marker_size: float) -> None:
         rasterized=True,
     )
 
-def _plot_spots(x: np.ndarray, y: np.ndarray, c: Union[str, np.ndarray], s: float, vmin: float = None, vmax: float = None, ax: Axes, **kwargs) -> PatchCollection:
-    """
-    This function is simplified from https://github.com/theislab/scanpy/blob/0dfd353abd968f3ecaafd5fac77a50a7e0dd87ee/scanpy/plotting/_utils.py#L1063-L1117,
-    which originates from: https://gist.github.com/syrte/592a062c562cd2a98a83. The original code at gist is under [The BSD 3-Clause License] (http://opensource.org/licenses/BSD-3-Clause).
+def _plot_spots(x: np.ndarray, y: np.ndarray, c: Union[str, np.ndarray], s: float, ax: Axes, vmin: float = None, vmax: float = None, **kwargs) -> PatchCollection:
+    """This function is simplified from https://github.com/theislab/scanpy/blob/0dfd353abd968f3ecaafd5fac77a50a7e0dd87ee/scanpy/plotting/_utils.py#L1063-L1117,
+    which originates from: https://gist.github.com/syrte/592a062c562cd2a98a83.
+    The original code at gist is under `The BSD 3-Clause License <http://opensource.org/licenses/BSD-3-Clause>`_.
 
     x, y: coordinates; c: either a string representing one color or an array of real values for cmap; s: spot radius; vmin, vmax: colormap lower/upper limits; kwargs: all other parameters.
     """
