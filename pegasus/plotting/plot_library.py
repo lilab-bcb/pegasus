@@ -30,7 +30,7 @@ from .plot_utils import (
     DictWithDefault,
     _generate_categories,
     _plot_corners,
-    _plot_circles,
+    _plot_spots,
 )
 
 
@@ -227,7 +227,7 @@ def scatter(
                             rasterized=True,
                         )
                     else:
-                        img = _plot_circles(
+                        img = _plot_spots(
                             x[selected]*scale_factor if scale_factor is not None else x[selected],
                             y[selected]*scale_factor if scale_factor is not None else y[selected],
                             c=values[selected],
@@ -280,7 +280,7 @@ def scatter(
                                         **scatter_kwargs,
                                     )
                                 else:
-                                    _plot_circles(
+                                    _plot_spots(
                                         x[idx]*scale_factor if scale_factor is not None else x[idx],
                                         y[idx]*scale_factor if scale_factor is not None else y[idx],
                                         c=palette[k],
