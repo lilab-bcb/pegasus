@@ -305,7 +305,7 @@ def scatter(
                                 ncol=_get_legend_ncol(label_size, legend_ncol),
                             )
                             for handle in legend.legendHandles:
-                                handle.set_sizes([300.0 if marker_size is None else 100.0])
+                                handle.set_sizes([300.0 if scale_factor is None else 100.0])
                         elif legend_loc[pos] == "on data":
                             texts = []
                             for px, py, txt in text_list:
@@ -611,6 +611,10 @@ def spatial(
         For 10X Visium data, user can either specify ``hires`` or ``lowres`` to use High or Low resolution spatial images, respectively.
     cmaps: ``str`` or ``List[str]``, optional, default: ``viridis``
         The colormap(s) for plotting numeric attributes. The default ``viridis`` colormap theme follows the spatial plot function in SCANPY (``scanpy.pl.spatial``).
+    vmin: ``float``, optional, default: ``None``
+        Minimum value to show on a numeric scatter plot (feature plot).
+    vmax: ``float``, optional, default: ``None``
+        Maximum value to show on a numeric scatter plot (feature plot).
     alpha: ``float`` or ``List[float]``, optional, default: ``1.0``
         Alpha value for blending the attribute layers, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     alpha_img: ``float``, optional, default: ``1.0``
