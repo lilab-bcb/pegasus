@@ -9,7 +9,6 @@ from scipy.stats import zscore
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
 
-
 import anndata
 from pegasusio import UnimodalData, MultimodalData
 
@@ -19,7 +18,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasus.tools import X_from_rep, slicing
-from .plot_utils import _transform_basis, _get_nrows_and_ncols, _get_marker_size, _get_dot_size, _get_subplot_layouts, _get_legend_ncol, _get_palette, RestrictionParser, DictWithDefault, _generate_categories, _plot_corners
+from .plot_utils import (
+    _transform_basis,
+    _get_nrows_and_ncols,
+    _get_marker_size,
+    _get_dot_size,
+    _get_subplot_layouts,
+    _get_legend_ncol,
+    _get_palette,
+    RestrictionParser,
+    DictWithDefault,
+    _generate_categories,
+    _plot_corners,
+    _plot_spots,
+)
 
 
 def scatter(
@@ -44,6 +56,8 @@ def scatter(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.4,
     hspace: Optional[float] = 0.15,
+    marker_size: Optional[float] = None,
+    scale_factor: Optional[float] = None,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     show_neg_for_sig: Optional[bool] = False,
@@ -93,8 +107,12 @@ def scatter(
         This parameter sets the figure's bottom margin as a fraction of panel's height (bottom * panel_size[1]).
     wspace: `float`, optional (default: `0.4`)
         This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
-    hspace: `float`, optional (defualt: `0.15`)
+    hspace: `float`, optional (default: `0.15`)
         This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
+    marker_size: ``float``, optional (default: ``None``)
+        Manually set the marker size in the plot. If ``None``, automatically adjust the marker size to the plot size.
+    scale_factor: ``float``, optional (default: ``None``)
+        Manually set the scale factor in the plot if it's not ``None``. This is used by generating the spatial plots for 10x Visium data.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -136,7 +154,7 @@ def scatter(
 
 
     basis = _transform_basis(basis)
-    global_marker_size = _get_marker_size(x.size)
+    global_marker_size = _get_marker_size(x.size) if marker_size is None else marker_size
     nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
 
@@ -176,36 +194,52 @@ def scatter(
                     values = slicing(data.X, col = loc)
                 else:
                     obsm_key, sep, component = attr.partition("@")
-                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
                         raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
                     values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
-                marker_size = global_marker_size
-                if (not fix_corners) and (is_numeric_dtype(values) or (not show_background)):
-                    marker_size = _get_marker_size(selected.sum())
+                local_marker_size = global_marker_size
+                if (marker_size is None) and (not fix_corners) and (is_numeric_dtype(values) or (not show_background)):
+                    local_marker_size = _get_marker_size(selected.sum())
 
                 if is_numeric_dtype(values):
+                    # Numeric attribute
                     cmap = cmaps.get(attr, squeeze = True)
                     if cmap is None:
                         raise KeyError(f"Please set colormap for attribute {attr} or set a default colormap!")
 
                     if fix_corners:
-                        _plot_corners(ax, corners, marker_size)
+                        _plot_corners(ax, corners, local_marker_size)
 
-                    img = ax.scatter(
-                        x[selected],
-                        y[selected],
-                        c=values[selected],
-                        s=marker_size,
-                        marker=".",
-                        alpha=alpha[pos],
-                        edgecolors="none",
-                        cmap=cmap,
-                        vmin=vmin,
-                        vmax=vmax,
-                        rasterized=True,
-                    )
+                    if scale_factor is None:
+                        img = ax.scatter(
+                            x[selected],
+                            y[selected],
+                            c=values[selected],
+                            s=local_marker_size,
+                            marker=".",
+                            alpha=alpha[pos],
+                            edgecolors="none",
+                            cmap=cmap,
+                            vmin=vmin,
+                            vmax=vmax,
+                            rasterized=True,
+                        )
+                    else:
+                        img = _plot_spots(
+                            x[selected] * scale_factor,
+                            y[selected] * scale_factor,
+                            c=values[selected],
+                            s=local_marker_size,
+                            alpha=alpha[pos],
+                            edgecolors="none",
+                            cmap=cmap,
+                            vmin=vmin,
+                            vmax=vmax,
+                            rasterized=True,
+                            ax=ax,
+                        )
 
                     left, bottom, width, height = ax.get_position().bounds
                     rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
@@ -213,6 +247,7 @@ def scatter(
                     fig.colorbar(img, cax=ax_colorbar)
 
                 else:
+                    # Categorical attribute
                     labels, with_background = _generate_categories(values, restr_obj.get_satisfied(data, attr))
                     label_size = labels.categories.size
 
@@ -226,28 +261,42 @@ def scatter(
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
                         if idx.sum() > 0:
-                            scatter_kwargs = {"marker": ".", "alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
+                            scatter_kwargs = {"alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
 
                             if cat != "":
-                                if legend_loc[pos] != "on data":
+                                if (legend_loc[pos] != "on data") and (scale_factor is None):
                                     scatter_kwargs["label"] = cat
                                 else:
                                     text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
 
                             if cat != "" or (cat == "" and show_background):
-                                ax.scatter(
-                                    x[idx],
-                                    y[idx],
-                                    c=palette[k],
-                                    s=marker_size,
-                                    **scatter_kwargs,
-                                )
+                                if scale_factor is None:
+                                    ax.scatter(
+                                        x[idx],
+                                        y[idx],
+                                        c=palette[k],
+                                        s=local_marker_size,
+                                        marker=".",
+                                        **scatter_kwargs,
+                                    )
+                                else:
+                                    _plot_spots(
+                                        x[idx] * scale_factor,
+                                        y[idx] * scale_factor,
+                                        c=palette[k],
+                                        s=local_marker_size,
+                                        ax=ax,
+                                        **scatter_kwargs,
+                                    )
                             else:
                                 if fix_corners:
-                                    _plot_corners(ax, corners, marker_size)
+                                    _plot_corners(ax, corners, local_marker_size)
 
                     if attr != '_all':
                         if legend_loc[pos] == "right margin":
+                            if scale_factor is not None:
+                                for k, cat in enumerate(labels.categories):
+                                    ax.scatter([], [], c=palette[k], label=cat)
                             legend = ax.legend(
                                 loc="center left",
                                 bbox_to_anchor=(1, 0.5),
@@ -256,7 +305,7 @@ def scatter(
                                 ncol=_get_legend_ncol(label_size, legend_ncol),
                             )
                             for handle in legend.legendHandles:
-                                handle.set_sizes([300.0])
+                                handle.set_sizes([300.0 if scale_factor is None else 100.0])
                         elif legend_loc[pos] == "on data":
                             texts = []
                             for px, py, txt in text_list:
@@ -401,7 +450,7 @@ def scatter_groups(
         values = slicing(data.X, col = loc)
     else:
         obsm_key, sep, component = attr.partition("@")
-        if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()): 
+        if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
             raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
         values = data.obsm[obsm_key][:, int(component)]
 
@@ -527,6 +576,104 @@ def scatter_groups(
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
+
+    return fig if return_fig else None
+
+
+def spatial(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    attrs: Optional[Union[str, List[str]]] = None,
+    basis: str = 'spatial',
+    resolution: str = 'hires',
+    cmaps: Optional[Union[str, List[str]]] = 'viridis',
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    alpha: Union[float, List[float]] = 1.0,
+    alpha_img: float = 1.0,
+    dpi: float = 300.0,
+    return_fig: bool = False,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Scatter plot on spatial coordinates.
+    This function is inspired by SCANPY's `pl.spatial <https://scanpy.readthedocs.io/en/latest/generated/scanpy.pl.spatial.html#scanpy-pl-spatial>`_ function.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData`` or ``pegasusio.UnimodalData`` or ``anndata.AnnData``
+       Use current selected modality in data.
+    attr: ``str``, optional, default: ``None``
+        Color scatter plots by attribute 'attr'. This attribute should be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If it is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used.
+        If ``None``, just plot data points of the same color.
+    basis: ``str``, optional, default: ``spatial``
+        Basis to be used to generate spatial plots. Must be the 2D array showing the spatial coordinates of data points.
+    resolution: ``str``, optional, default: ``hires``
+        Use the spatial image whose value is specified in ``data.img['image_id']`` to show in background.
+        For 10X Visium data, user can either specify ``hires`` or ``lowres`` to use High or Low resolution spatial images, respectively.
+    cmaps: ``str`` or ``List[str]``, optional, default: ``viridis``
+        The colormap(s) for plotting numeric attributes. The default ``viridis`` colormap theme follows the spatial plot function in SCANPY (``scanpy.pl.spatial``).
+    vmin: ``float``, optional, default: ``None``
+        Minimum value to show on a numeric scatter plot (feature plot).
+    vmax: ``float``, optional, default: ``None``
+        Maximum value to show on a numeric scatter plot (feature plot).
+    alpha: ``float`` or ``List[float]``, optional, default: ``1.0``
+        Alpha value for blending the attribute layers, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
+    alpha_img: ``float``, optional, default: ``1.0``
+        Alpha value for blending the background spatial image, from 0.0 (transparent) to 1.0 (opaque).
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution of the figure in dots-per-inch.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+
+    Returns
+    -------
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> pg.spatial(data, attrs=['louvain_labels', 'Channel'])
+    >>> pg.spatial(data, attrs=['CD14', 'TRAC'], resolution='lowres')
+    """
+    assert f"X_{basis}" in data.obsm.keys(), f"'X_{basis}' coordinates do not exist!"
+    assert hasattr(data, 'img'), "The spatial image data are missing!"
+    assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
+
+    if (attrs is None) or (not is_list_like(attrs)):
+        nattrs = 1
+    else:
+        nattrs = len(attrs)
+
+    image_item = data.img.loc[data.img['image_id']==resolution]
+    image_obj = image_item['data'].iat[0]
+    scale_factor = image_item['scale_factor'].iat[0]
+    spot_radius = image_item['spot_diameter'].iat[0] * 0.5
+
+    fig = scatter(
+        data=data,
+        attrs=attrs,
+        basis=basis,
+        marker_size=spot_radius,
+        scale_factor=scale_factor,
+        cmaps=cmaps,
+        vmin=vmin,
+        vmax=vmax,
+        dpi=dpi,
+        alpha=alpha,
+        return_fig=True,
+    )
+
+    coord_x = (data.obsm[f"X_{basis}"][:, 0].min() * scale_factor,
+               data.obsm[f"X_{basis}"][:, 0].max() * scale_factor)
+    coord_y = (data.obsm[f"X_{basis}"][:, 1].min() * scale_factor,
+               data.obsm[f"X_{basis}"][:, 1].max() * scale_factor)
+
+    margin_offset = 50
+
+    for i in range(nattrs):
+        ax = fig.axes[i]
+        ax.imshow(image_obj, alpha=alpha_img)
+        ax.set_xlim(coord_x[0]-margin_offset, coord_x[1]+margin_offset)
+        ax.set_ylim(coord_y[1]+margin_offset, coord_y[0]-margin_offset)
 
     return fig if return_fig else None
 
@@ -938,7 +1085,7 @@ def heatmap(
 
         cell_colors = np.zeros(df.shape[0], dtype=object)
         palette = _get_palette(cluster_ids.categories.size)
-        
+
         for k, cat in enumerate(cluster_ids.categories):
             cell_colors[cluster_ids == cat] = palette[k]
 
@@ -1008,7 +1155,7 @@ def heatmap(
     else:
         cg.ax_heatmap.xaxis.tick_top()
         cg.ax_col_dendrogram.set_visible(False)
-    
+
     cg.ax_cbar.tick_params(labelsize=cbar_labelsize)
     cg.fig.dpi = dpi
 
@@ -1016,7 +1163,7 @@ def heatmap(
         if groupby_cluster:
             from matplotlib.patches import Patch
             legend_elements = [Patch(color = color, label = label) for color, label in zip(palette, cluster_ids.categories)]
-            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)           
+            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)
         else:
             values = cluster_ids.value_counts().values
             ticks = np.cumsum(values) - values / 2
@@ -1301,7 +1448,7 @@ def dendrogram(
         Metric used to compute the linkage, used by hierarchical clustering. Valid values for metric are:
             - From scikit-learn: ``cityblock``, ``cosine``, ``euclidean``, ``l1``, ``l2``, ``manhattan``.
             - From scipy.spatial.distance: ``braycurtis``, ``canberra``, ``chebyshev``, ``correlation``, ``dice``, ``hamming``, ``jaccard``, ``kulsinski``, ``mahalanobis``, ``minkowski``, ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``, ``sokalsneath``, ``sqeuclidean``, ``yule``.
-            
+
         Default is the correlation distance. See `scikit-learn distance documentation <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise_distances.html>`_ for details.
     linkage: ``str``, optional, default: ``complete``
         Which linkage criterion to use, used by hierarchical clustering. Below are available options:
@@ -1309,7 +1456,7 @@ def dendrogram(
             - ``avarage`` uses the average of the distances of each observation of the two sets.
             - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
             - ``single`` uses the minimum of the distances between all observations of the two sets.
-            
+
         See `scikit-learn documentation <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html>`_ for details.
     compute_full_tree: ``str`` or ``bool``, optional, default: ``auto``
         Stop early the construction of the tree at ``n_clusters``, used by hierarchical clustering. It must be ``True`` if ``distance_threshold`` is not ``None``.
@@ -1910,7 +2057,7 @@ def wordcloud(
     dpi: Optional[float] = 300.0,
     **kwargs,
 ) -> Union[plt.Figure, None]:
-    """Generate one word cloud image for factor (starts from 0) in data.uns['W']. 
+    """Generate one word cloud image for factor (starts from 0) in data.uns['W'].
 
     Parameters
     ----------
@@ -1957,10 +2104,8 @@ def wordcloud(
     from wordcloud import WordCloud
     wc = WordCloud(background_color="white", max_words=max_words, random_state=random_state, colormap=colormap, width=width, height=height)
     wc.generate_from_frequencies(word_dict)
-    
+
     ax.imshow(wc)
     ax.axis('off')
 
     return fig if return_fig else None
-
-

@@ -142,6 +142,7 @@ Plotting
 
     scatter
     scatter_groups
+    spatial
     compo_plot
     violin
     heatmap
