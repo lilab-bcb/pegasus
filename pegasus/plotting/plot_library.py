@@ -662,9 +662,13 @@ def spatial(
         return_fig=True,
     )
 
+    coord_x = fig.axes[0].get_xlim()
+    coord_y = fig.axes[0].get_ylim()
     for i in range(nattrs):
         ax = fig.axes[i]
         ax.imshow(image_obj, alpha=alpha_img)
+    fig.axes[0].set_xlim(coord_x[0], coord_x[1])
+    fig.axes[0].set_ylim(coord_y[1], coord_y[0])
 
     return fig if return_fig else None
 
