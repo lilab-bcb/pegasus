@@ -662,13 +662,18 @@ def spatial(
         return_fig=True,
     )
 
-    coord_x = fig.axes[0].get_xlim()
-    coord_y = fig.axes[0].get_ylim()
+    coord_x = (data.obsm[f"X_{basis}"][:, 0].min() * scale_factor,
+               data.obsm[f"X_{basis}"][:, 0].max() * scale_factor)
+    coord_y = (data.obsm[f"X_{basis}"][:, 1].min() * scale_factor,
+               data.obsm[f"X_{basis}"][:, 1].max() * scale_factor)
+
+    margin_offset = 50
+
     for i in range(nattrs):
         ax = fig.axes[i]
         ax.imshow(image_obj, alpha=alpha_img)
-    fig.axes[0].set_xlim(coord_x[0], coord_x[1])
-    fig.axes[0].set_ylim(coord_y[1], coord_y[0])
+        ax.set_xlim(coord_x[0]-margin_offset, coord_x[1]+margin_offset)
+        ax.set_ylim(coord_y[1]+margin_offset, coord_y[0]-margin_offset)
 
     return fig if return_fig else None
 
