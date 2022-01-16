@@ -114,7 +114,7 @@ def calc_umap(
     if X.shape[0] < 4096 or knn_indices is None:
         logger.info(f"Using umap kNN graph because number of cells {X.shape[0]} is smaller than 4096 or knn_indices is not provided.")
     else:
-        assert knn_dists is not None, "kNN graph must be computed before calculating the UMAP embedding!"
+        assert knn_dists is not None, "No kNN graph is found! Please calculate it by 'pegasus.neighbors' function first!"
         dummy_nnd = DummyNNDescent()
         umap_obj.precomputed_knn = (knn_indices, knn_dists, dummy_nnd)
 
