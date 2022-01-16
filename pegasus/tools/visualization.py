@@ -7,6 +7,7 @@ import uuid
 
 from threadpoolctl import threadpool_limits
 from pegasusio import MultimodalData
+from pynndescent import NNDescent
 
 from pegasus.tools import (
     eff_n_jobs,
@@ -69,6 +70,9 @@ def calc_tsne(
         mom_switch_iter=mom_switch_iter,
     )
 
+class DummyNNDescent(NNDescent):
+    def __init__(self):
+        None
 
 # Running umap using our own kNN indices
 def calc_umap(
@@ -78,6 +82,10 @@ def calc_umap(
     min_dist,
     spread,
     random_state,
+    densmap,
+    dens_lambda,
+    dens_frac,
+    dens_var_shift,
     init="spectral",
     n_epochs=None,
     learning_rate=1.0,
@@ -96,98 +104,21 @@ def calc_umap(
         init=init,
         n_epochs=n_epochs,
         learning_rate=learning_rate,
+        densmap=densmap,
+        dens_lambda=dens_lambda,
+        dens_frac=dens_frac,
+        dens_var_shift=dens_var_shift,
         verbose=True,
     )
 
-    embedding = None
     if X.shape[0] < 4096 or knn_indices is None:
-        embedding = umap_obj.fit_transform(X)
         logger.info(f"Using umap kNN graph because number of cells {X.shape[0]} is smaller than 4096 or knn_indices is not provided.")
     else:
-        assert knn_dists is not None
-        # preprocessing codes adopted from UMAP's umap_.py fit function in order to use our own kNN graphs
-        from sklearn.utils import check_random_state, check_array
+        assert knn_dists is not None, "kNN graph must be computed before calculating the UMAP embedding!"
+        dummy_nnd = DummyNNDescent()
+        umap_obj.precomputed_knn = (knn_indices, knn_dists, dummy_nnd)
 
-        X = check_array(X, dtype=np.float32, accept_sparse="csr")
-        umap_obj._raw_data = X
-        if umap_obj.a is None or umap_obj.b is None:
-            umap_obj._a, umap_obj._b = umap_module.umap_.find_ab_params(
-                umap_obj.spread, umap_obj.min_dist
-            )
-        else:
-            umap_obj._a = umap_obj.a
-            umap_obj._b = umap_obj.b
-        umap_obj._metric_kwds = (
-            umap_obj.metric_kwds if umap_obj.metric_kwds is not None else {}
-        )
-        umap_obj._target_metric_kwds = {}
-        _init = (
-            check_array(umap_obj.init, dtype=np.float32, accept_sparse=False)
-            if isinstance(umap_obj.init, np.ndarray)
-            else umap_obj.init
-        )
-        umap_obj._initial_alpha = umap_obj.learning_rate
-        umap_obj._validate_parameters()
-
-        if umap_obj.verbose:
-            logger.info(str(umap_obj))
-
-        if scipy.sparse.isspmatrix_csr(X):
-            if not X.has_sorted_indices:
-                X.sort_indices()
-            umap_obj._sparse_data = True
-        else:
-            umap_obj._sparse_data = False
-
-        _random_state = check_random_state(umap_obj.random_state)
-
-        if umap_obj.verbose:
-            logger.info("Construct fuzzy simplicial set")
-
-        umap_obj._small_data = False
-        umap_obj.graph_, umap_obj._sigmas, umap_obj._rhos = umap_module.umap_.fuzzy_simplicial_set(
-            X=X,
-            n_neighbors=umap_obj.n_neighbors,
-            random_state=_random_state,
-            metric=umap_obj.metric,
-            metric_kwds=umap_obj._metric_kwds,
-            knn_indices=knn_indices,
-            knn_dists=knn_dists,
-            angular=umap_obj.angular_rp_forest,
-            set_op_mix_ratio=umap_obj.set_op_mix_ratio,
-            local_connectivity=umap_obj.local_connectivity,
-            verbose=umap_obj.verbose,
-        )
-
-        _n_epochs = umap_obj.n_epochs if umap_obj.n_epochs is not None else 0
-        if umap_obj.verbose:
-            logger.info("Construct embedding")
-
-        def simplicial_set_embedding(*args, **kwargs):
-            from packaging import version
-            if version.parse(umap_module.__version__) >= version.parse('0.5.0'): # For umap-learn v0.5+
-                kwargs.update({'densmap': False, 'densmap_kwds': {}, 'output_dens': False})
-            embedding = umap_module.umap_.simplicial_set_embedding(*args, **kwargs)
-            return (embedding[0] if isinstance(embedding, tuple) else embedding)
-
-        embedding = simplicial_set_embedding(
-            data=X,
-            graph=umap_obj.graph_,
-            n_components=umap_obj.n_components,
-            initial_alpha=umap_obj._initial_alpha,
-            a=umap_obj._a,
-            b=umap_obj._b,
-            gamma=umap_obj.repulsion_strength,
-            negative_sample_rate=umap_obj.negative_sample_rate,
-            n_epochs=_n_epochs,
-            init=_init,
-            random_state=_random_state,
-            metric=umap_obj.metric,
-            metric_kwds=umap_obj._metric_kwds,
-            verbose=umap_obj.verbose,
-        )
-
-    return embedding
+    return umap_obj.fit_transform(X)
 
 
 def calc_force_directed_layout(
@@ -304,7 +235,7 @@ def tsne(
         if initialization.dtype != np.float64:
             initialization = initialization.astype(np.float64)
 
-    key = f"X_{out_basis}"            
+    key = f"X_{out_basis}"
     data.obsm[key] = calc_tsne(
         X,
         n_jobs,
@@ -326,6 +257,10 @@ def umap(
     n_neighbors: int = 15,
     min_dist: float = 0.5,
     spread: float = 1.0,
+    densmap: bool = False,
+    dens_lambda: float = 2.0,
+    dens_frac: float = 0.3,
+    dens_var_shift: float = 0.1,
     n_jobs: int = -1,
     full_speed: bool = False,
     random_state: int = 0,
@@ -356,6 +291,25 @@ def umap(
 
     spread: ``float``, optional, default: ``1.0``
         The effective scale of embedded data points.
+
+    densmap: ``bool``, optional, default: ``False``
+        Whether the density-augmented objective of densMAP should be used for optimization, which will generate an embedding where
+        local densities are encouraged to be correlated with those in the original space.
+
+    dens_lambda: ``float``, optional, default: ``2.0``
+        Controls the regularization weight of the density correlation term in densMAP. Only works when *densmap* is ``True``.
+        Larger values prioritize density preservation over the UMAP objective, while values closer to 0 for the opposite direction.
+        Notice that setting this parameter to ``0`` is equivalent to running the original UMAP algorithm.
+
+    dens_frac: ``float``, optional, default: ``0.3``
+        Controls the fraction of epochs (between 0 and 1) where the density-augmented objective is used in densMAP. Only works when
+        *densmap* is ``True``.
+        The first ``(1 - dens_frac)`` fraction of epochs optimize the original UMAP objective before introducing the density
+        correlation term.
+
+    dens_var_shift: ``float``, optional, default, ``0.1``
+        A small constant added to the variance of local radii in the embedding when calculating the density correlation objective to
+        prevent numerical instability from dividing by a small number. Only works when *densmap* is ``True``.
 
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use for computing kNN graphs. If ``-1``, use all physical CPU cores.
@@ -392,14 +346,18 @@ def umap(
     knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
     knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
 
-    key = f"X_{out_basis}"    
+    key = f"X_{out_basis}"
     data.obsm[key] = calc_umap(
         X,
-        n_components,
-        n_neighbors,
-        min_dist,
-        spread,
-        random_state,
+        n_components=n_components,
+        n_neighbors=n_neighbors,
+        min_dist=min_dist,
+        spread=spread,
+        densmap=densmap,
+        dens_lambda=dens_lambda,
+        dens_frac=dens_frac,
+        dens_var_shift=dens_var_shift,
+        random_state=random_state,
         knn_indices=knn_indices,
         knn_dists=knn_dists,
     )
@@ -499,7 +457,7 @@ def fle(
             full_speed=full_speed,
         )
 
-    key = f"X_{out_basis}"    
+    key = f"X_{out_basis}"
     data.obsm[key] = calc_force_directed_layout(
         W_from_rep(data, rep),
         file_name,
@@ -551,6 +509,10 @@ def net_umap(
     n_neighbors: int = 15,
     min_dist: float = 0.5,
     spread: float = 1.0,
+    densmap: bool = False,
+    dens_lambda: float = 2.0,
+    dens_frac: float = 0.3,
+    dens_var_shift: float = 0.1,
     random_state: int = 0,
     select_frac: float = 0.1,
     select_K: int = 25,
@@ -593,6 +555,25 @@ def net_umap(
 
     spread: ``float``, optional, default: ``1.0``
         The effective scale of embedded data points.
+
+    densmap: ``bool``, optional, default: ``False``
+        Whether the density-augmented objective of densMAP should be used for optimization, which will generate an embedding where
+        local densities are encouraged to be correlated with those in the original space.
+
+    dens_lambda: ``float``, optional, default: ``2.0``
+        Controls the regularization weight of the density correlation term in densMAP. Only works when *densmap* is ``True``.
+        Larger values prioritize density preservation over the UMAP objective, while values closer to 0 for the opposite direction.
+        Notice that setting this parameter to ``0`` is equivalent to running the original UMAP algorithm.
+
+    dens_frac: ``float``, optional, default: ``0.3``
+        Controls the fraction of epochs (between 0 and 1) where the density-augmented objective is used in densMAP. Only works when
+        *densmap* is ``True``.
+        The first ``(1 - dens_frac)`` fraction of epochs optimize the original UMAP objective before introducing the density
+        correlation term.
+
+    dens_var_shift: ``float``, optional, default, ``0.1``
+        A small constant added to the variance of local radii in the embedding when calculating the density correlation objective to
+        prevent numerical instability from dividing by a small number. Only works when *densmap* is ``True``.
 
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
@@ -676,11 +657,15 @@ def net_umap(
 
     X_umap = calc_umap(
         X,
-        n_components,
-        n_neighbors,
-        min_dist,
-        spread,
-        random_state,
+        n_components=n_components,
+        n_neighbors=n_neighbors,
+        min_dist=min_dist,
+        spread=spread,
+        densmap=densmap,
+        dens_lambda=dens_lambda,
+        dens_frac=dens_frac,
+        dens_var_shift=dens_var_shift,
+        random_state=random_state,
         knn_indices=knn_indices,
         knn_dists=knn_dists,
     )
@@ -703,11 +688,15 @@ def net_umap(
     key = f"X_{out_basis}"
     data.obsm[key] = calc_umap(
         X_full,
-        n_components,
-        n_neighbors,
-        min_dist,
-        spread,
-        random_state,
+        n_components=n_components,
+        n_neighbors=n_neighbors,
+        min_dist=min_dist,
+        spread=spread,
+        densmap=densmap,
+        dens_lambda=dens_lambda,
+        dens_frac=dens_frac,
+        dens_var_shift=dens_var_shift,
+        random_state=random_state,
         init=Y_init,
         n_epochs=polish_n_epochs,
         learning_rate=polish_learning_rate,
@@ -894,4 +883,3 @@ def net_fle(
         init=Y_init,
     )
     data.register_attr(key, "basis")
-
