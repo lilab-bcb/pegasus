@@ -6,7 +6,6 @@ demuxEM.__doc__ = demuxEM.__doc__.replace('demuxEM ', 'pegasus demuxEM ')
 
 from .Clustering import Clustering as cluster
 from .DeAnalysis import DeAnalysis as de_analysis
-from .Enrichment import Enrichment as enrichment
 from .AnnotateCluster import AnnotateCluster as annotate_cluster
 from .Plotting import Plotting as plot
 # from .SubClustering import SubClustering as subcluster
