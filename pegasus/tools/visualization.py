@@ -2,12 +2,15 @@ import time
 import numpy as np
 import scipy
 import umap as umap_module
-import forceatlas2 as fa2
 import uuid
 
 from threadpoolctl import threadpool_limits
 from pegasusio import MultimodalData
 from pynndescent import NNDescent
+try:
+    from importlib.metadata import PackageNotFoundError
+except ImportError:  # < Python 3.8: Use backport module
+    from importlib_metadata import PackageNotFoundError
 
 from pegasus.tools import (
     eff_n_jobs,
@@ -54,7 +57,11 @@ def calc_tsne(
     if fftw3_loc is None:
         raise Exception("Please install 'fftw3' first to use the FIt-SNE feature!")
 
-    from fitsne import FItSNE
+    try:
+        from fitsne import FItSNE
+    except PackageNotFoundError:
+        print("FItSNE package is not installed")
+        exit()
 
     return FItSNE(
         X,
@@ -136,18 +143,22 @@ def calc_force_directed_layout(
     TODO: Typing
     """
     G = construct_graph(W)
+    try:
+        import forceatlas2 as fa2
+    except PackageNotFoundError:
+        print("Please install module forceatlas2")
+        exit()
     return fa2.forceatlas2(
-        file_name,
-        graph=G,
-        n_jobs=n_jobs,
-        target_change_per_node=target_change_per_node,
-        target_steps=target_steps,
-        is3d=is3d,
-        memory=memory,
-        random_state=random_state,
-        init=init,
-    )
-
+            file_name,
+            graph=G,
+            n_jobs=n_jobs,
+            target_change_per_node=target_change_per_node,
+            target_steps=target_steps,
+            is3d=is3d,
+            memory=memory,
+            random_state=random_state,
+            init=init,
+        )
 
 @timer(logger=logger)
 def tsne(

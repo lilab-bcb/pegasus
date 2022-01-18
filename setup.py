@@ -50,7 +50,12 @@ setup(
     extras_require=dict(
         tsne=["fitsne"],
         leiden=["leidenalg"],
-        mkl=["mkl"]
+        louvain=["louvain"],
+        demuxEM=["demuxEM"],
+        scanorama=["scanorama"],
+        gprofiler=["gprofiler-official"],
+        torch=["torch"],
+        forceatlas=["forceatlas2-python"]
     ),
     python_requires="~=3.6",
     package_data={
