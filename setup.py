@@ -52,11 +52,10 @@ setup(
         leiden=["leidenalg"],
         louvain=["louvain"],
         scanorama=["scanorama"],
-        gprofiler=["gprofiler-official"],
-        torch=["torch"],
+        torch=["torch", "harmony-pytorch", "nmf-torch"],
         forceatlas=["forceatlas2-python"],
         mkl=["mkl"],
-        all=["all"]
+        all=["fitsne", "leidenalg", "louvain", "scanorama", "torch", "forceatlas2-python", "mkl"]
     ),
     python_requires="~=3.6",
     package_data={

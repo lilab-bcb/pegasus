@@ -7,10 +7,6 @@ import uuid
 from threadpoolctl import threadpool_limits
 from pegasusio import MultimodalData
 from pynndescent import NNDescent
-try:
-    from importlib.metadata import PackageNotFoundError
-except ImportError:  # < Python 3.8: Use backport module
-    from importlib_metadata import PackageNotFoundError
 
 from pegasus.tools import (
     eff_n_jobs,
@@ -59,8 +55,8 @@ def calc_tsne(
 
     try:
         from fitsne import FItSNE
-    except PackageNotFoundError:
-        print("FItSNE package is not installed")
+    except ModuleNotFoundError:
+        print("FItSNE package is not installed, please install fitsne: pip install fitsne")
         exit()
 
     return FItSNE(
@@ -145,8 +141,8 @@ def calc_force_directed_layout(
     G = construct_graph(W)
     try:
         import forceatlas2 as fa2
-    except PackageNotFoundError:
-        print("Please install module forceatlas2")
+    except ModuleNotFoundError:
+        print("Please install module forceatlas2: pip install forceatlas2-python")
         exit()
     return fa2.forceatlas2(
             file_name,
