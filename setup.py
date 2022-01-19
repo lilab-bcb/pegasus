@@ -51,11 +51,12 @@ setup(
         tsne=["fitsne"],
         leiden=["leidenalg"],
         louvain=["louvain"],
-        demuxEM=["demuxEM"],
         scanorama=["scanorama"],
         gprofiler=["gprofiler-official"],
         torch=["torch"],
-        forceatlas=["forceatlas2-python"]
+        forceatlas=["forceatlas2-python"],
+        mkl=["mkl"],
+        all=["all"]
     ),
     python_requires="~=3.6",
     package_data={
