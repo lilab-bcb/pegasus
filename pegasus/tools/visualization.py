@@ -142,7 +142,7 @@ def calc_force_directed_layout(
     try:
         import forceatlas2 as fa2
     except ModuleNotFoundError:
-        print("Please install module forceatlas2: pip install forceatlas2-python")
+        print("Please install module forceatlas2-python: pip install forceatlas2-python")
         exit()
     return fa2.forceatlas2(
             file_name,
