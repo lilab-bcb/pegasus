@@ -56,7 +56,7 @@ def calc_tsne(
     try:
         from fitsne import FItSNE
     except ModuleNotFoundError:
-        print("FItSNE package is not installed, please install fitsne: pip install fitsne")
+        print("Exception: FItSNE package is not installed, please install fitsne: pip install fitsne")
         exit()
 
     return FItSNE(
@@ -142,7 +142,7 @@ def calc_force_directed_layout(
     try:
         import forceatlas2 as fa2
     except ModuleNotFoundError:
-        print("Please install module forceatlas2-python: pip install forceatlas2-python")
+        print("Exception: Please install module forceatlas2-python: pip install forceatlas2-python")
         exit()
     return fa2.forceatlas2(
             file_name,

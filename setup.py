@@ -49,13 +49,12 @@ setup(
     setup_requires=["Cython", "setuptools_scm"],
     extras_require=dict(
         tsne=["fitsne"],
-        leiden=["leidenalg"],
         louvain=["louvain"],
         scanorama=["scanorama"],
         torch=["torch", "harmony-pytorch", "nmf-torch"],
         forceatlas=["forceatlas2-python"],
         mkl=["mkl"],
-        all=["fitsne", "leidenalg", "louvain", "scanorama", "torch", "forceatlas2-python", "mkl"]
+        all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "forceatlas2-python"]
     ),
     python_requires="~=3.6",
     package_data={

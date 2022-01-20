@@ -10,6 +10,7 @@ threadpoolctl
 joblib>=0.14
 lightgbm>=2.2.1
 loompy
+leidenalg
 matplotlib>=2.0.0
 natsort
 numba
