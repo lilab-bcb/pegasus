@@ -28,7 +28,7 @@ jobs:
         sudo apt install -y libfftw3-dev default-jdk
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest setuptools wheel
-        python -m pip install -e .
+        python -m pip install -e .[all]
         python -m pip install fitsne leidenalg
     - name: Lint with flake8
       run: |
