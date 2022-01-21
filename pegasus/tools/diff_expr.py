@@ -181,7 +181,7 @@ def _de_test(
                     )
                     for i in posvec
                 )
-                
+
             for i in range(posvec.size):
                 oddsratios[:, posvec[i]] = result_list[i][0]
                 pvals[:, posvec[i]] = result_list[i][1]

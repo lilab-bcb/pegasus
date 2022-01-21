@@ -2,7 +2,6 @@ import time
 import numpy as np
 import scipy
 import umap as umap_module
-import forceatlas2 as fa2
 import uuid
 
 from threadpoolctl import threadpool_limits
@@ -54,7 +53,11 @@ def calc_tsne(
     if fftw3_loc is None:
         raise Exception("Please install 'fftw3' first to use the FIt-SNE feature!")
 
-    from fitsne import FItSNE
+    try:
+        from fitsne import FItSNE
+    except ModuleNotFoundError:
+        print("Exception: FItSNE package is not installed, please install fitsne: pip install fitsne")
+        exit()
 
     return FItSNE(
         X,
@@ -136,18 +139,22 @@ def calc_force_directed_layout(
     TODO: Typing
     """
     G = construct_graph(W)
+    try:
+        import forceatlas2 as fa2
+    except ModuleNotFoundError:
+        print("Exception: Please install module forceatlas2-python: pip install forceatlas2-python")
+        exit()
     return fa2.forceatlas2(
-        file_name,
-        graph=G,
-        n_jobs=n_jobs,
-        target_change_per_node=target_change_per_node,
-        target_steps=target_steps,
-        is3d=is3d,
-        memory=memory,
-        random_state=random_state,
-        init=init,
-    )
-
+            file_name,
+            graph=G,
+            n_jobs=n_jobs,
+            target_change_per_node=target_change_per_node,
+            target_steps=target_steps,
+            is3d=is3d,
+            memory=memory,
+            random_state=random_state,
+            init=init,
+        )
 
 @timer(logger=logger)
 def tsne(

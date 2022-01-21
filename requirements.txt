@@ -3,9 +3,6 @@ anndata>=0.7.1
 Cython
 docopt
 demuxEM
-forceatlas2-python
-harmony-pytorch>=0.1.6
-nmf-torch>=0.1.1
 hnswlib
 importlib_metadata>=0.7; python_version < '3.8'
 psutil
@@ -13,7 +10,7 @@ threadpoolctl
 joblib>=0.14
 lightgbm>=2.2.1
 loompy
-louvain>=0.7.0
+leidenalg
 matplotlib>=2.0.0
 natsort
 numba
@@ -21,15 +18,13 @@ numpy
 pandas>=1.2.0
 pegasusio>=0.4.1
 pybind11
-python-igraph
-scanorama
 scikit-learn>=0.23.2
 scikit-misc
 scipy
 seaborn
 setuptools
 statsmodels
-torch
 umap-learn>=0.5.2
 wordcloud
 xlsxwriter
+python-igraph
