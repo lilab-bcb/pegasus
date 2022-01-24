@@ -46,8 +46,6 @@ Batch Correction
 .. autosummary::
     :toctree: .
 
-    set_group_attribute
-    correct_batch
     run_harmony
     run_scanorama
     integrative_nmf

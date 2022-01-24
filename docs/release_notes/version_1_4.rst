@@ -1,3 +1,8 @@
+1.4.5 :small:`January 24, 2022`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Make several dependencies optional to meet with different use cases.
+
 1.4.4 :small:`October 22, 2021`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
