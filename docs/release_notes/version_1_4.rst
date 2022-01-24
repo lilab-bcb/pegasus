@@ -3,6 +3,8 @@
 
 * Make several dependencies optional to meet with different use cases.
 
+* Adjust to *umap-learn v0.5.2* interface.
+
 1.4.4 :small:`October 22, 2021`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
