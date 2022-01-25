@@ -39,6 +39,7 @@ def calculate_nearest_neighbors(
     efS: int = 200,
     random_state: int = 0,
     full_speed: int = False,
+    dist: str = 'l2',
 ):
     """Calculate nearest neighbors
     X is the sample by feature matrix
@@ -62,7 +63,7 @@ def calculate_nearest_neighbors(
 
         assert not issparse(X)
         # Build hnsw index
-        knn_index = hnswlib.Index(space="l2", dim=X.shape[1])
+        knn_index = hnswlib.Index(space=dist, dim=X.shape[1])
         knn_index.init_index(
             max_elements=nsample, ef_construction=efC, M=M, random_seed=random_state
         )
@@ -110,6 +111,7 @@ def get_neighbors(
     random_state: int = 0,
     full_speed: bool = False,
     use_cache: bool = True,
+    dist: str = "l2",
 ) -> Tuple[List[int], List[float]]:
     """Find K nearest neighbors for each data point and return the indices and distances arrays.
 
@@ -130,6 +132,8 @@ def get_neighbors(
         If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
     use_cache: `bool`, optional (default: True)
         If use_cache and found cached knn results, will not recompute.
+    dist: `str`, optional (default: 'l2')
+        Distance metric to use. By default, use squared L2 distance. Available options, inner product 'ip' or cosine similarity 'cosine'.
 
     Returns
     -------
@@ -156,6 +160,7 @@ def get_neighbors(
             n_jobs=eff_n_jobs(n_jobs),
             random_state=random_state,
             full_speed=full_speed,
+            dist=dist,
         )
         data.obsm[indices_key] = indices
         data.register_attr(indices_key, "knn")
@@ -224,6 +229,7 @@ def neighbors(
     random_state: int = 0,
     full_speed: bool = False,
     use_cache: bool = True,
+    dist: str = "l2",
 ) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
@@ -254,6 +260,9 @@ def neighbors(
     use_cache: ``bool``, optional, default: ``True``
         * If ``True`` and found cached knn results, Pegasus will use cached results and do not recompute.
         * Otherwise, compute kNN irrespective of caching status.
+        
+    dist: `str`, optional (default: 'l2')
+        Distance metric to use. By default, use squared L2 distance. Available options, inner product 'ip' or cosine similarity 'cosine'.
 
     Returns
     -------
@@ -281,6 +290,7 @@ def neighbors(
         random_state=random_state,
         full_speed=full_speed,
         use_cache=use_cache,
+        dist=dist,
     )
 
     # calculate affinity matrix
