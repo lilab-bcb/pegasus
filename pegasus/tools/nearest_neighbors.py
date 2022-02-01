@@ -260,9 +260,9 @@ def neighbors(
     use_cache: ``bool``, optional, default: ``True``
         * If ``True`` and found cached knn results, Pegasus will use cached results and do not recompute.
         * Otherwise, compute kNN irrespective of caching status.
-        
-    dist: `str`, optional (default: 'l2')
-        Distance metric to use. By default, use squared L2 distance. Available options, inner product 'ip' or cosine similarity 'cosine'.
+
+    dist: ``str``, optional (default: ``"l2"``)
+        Distance metric to use. By default, use squared L2 distance. Available options, inner product ``"ip"`` or cosine similarity ``"cosine"``.
 
     Returns
     -------
