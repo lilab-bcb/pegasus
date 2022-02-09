@@ -132,6 +132,14 @@ Annotate clusters
     infer_cell_types
     annotate
 
+Pseudo-bulk analysis
+-----------------------
+
+.. autosummary::
+    :toctree: .
+
+    pseudobulk
+
 Plotting
 --------
 
