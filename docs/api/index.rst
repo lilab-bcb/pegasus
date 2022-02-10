@@ -113,6 +113,14 @@ Gene Module Score
 
     calc_signature_score
 
+Pseudo-bulk Analysis
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    pseudobulk
+
 Differential Expression Analysis
 ---------------------------------
 
@@ -131,14 +139,6 @@ Annotate clusters
 
     infer_cell_types
     annotate
-
-Pseudo-bulk analysis
------------------------
-
-.. autosummary::
-    :toctree: .
-
-    pseudobulk
 
 Plotting
 --------
