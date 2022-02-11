@@ -48,3 +48,4 @@ from .subcluster_utils import clone_subset
 from .signature_score import calc_signature_score, calculate_z_score
 from .doublet_detection import infer_doublets, mark_doublets
 from .nmf import nmf, integrative_nmf
+from .pseudobulk import pseudobulk

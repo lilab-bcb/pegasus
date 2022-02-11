@@ -33,10 +33,6 @@ References
    "Fast, sensitive and accurate integration of single-cell data with Harmony",
    In `Nature Methods <https://www.nature.com/articles/s41592-019-0619-0>`__, 2019.
 
-.. [Li-and-Wong03] C. Li, and W.H. Wong,
-   "DNA-Chip analyzer (dChip)",
-   In `The Analysis of Gene Expression Data <https://link.springer.com/chapter/10.1007/0-387-21679-0_5>`__, Page 120-141, Springer, 2003.
-
 .. [Li20] B. Li, J. Gould, Y. Yang, et al.,
    "Cumulus provides cloud-based data analysis for large-scale single-cell and single-nucleus RNA-seq",
    In `Nature Methods <https://www.nature.com/articles/s41592-020-0905-x>`__, 2020.

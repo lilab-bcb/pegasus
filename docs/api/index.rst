@@ -113,6 +113,14 @@ Gene Module Score
 
     calc_signature_score
 
+Pseudo-bulk Analysis
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    pseudobulk
+
 Differential Expression Analysis
 ---------------------------------
 
