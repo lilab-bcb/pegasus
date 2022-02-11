@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
 
+import logging
+logger = logging.getLogger(__name__)
+
 from pegasusio import MultimodalData, UnimodalData
 from pandas.api.types import is_categorical_dtype, is_numeric_dtype
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Tuple
 
 
 def set_bulk_value(col):
@@ -24,6 +27,7 @@ def get_pseudobulk_count(X, df, attr, bulk_list):
     return np.array(M, dtype=np.int32)
 
 
+@timer(logger=logger)
 def pseudobulk(
     data: MultimodalData,
     sample: str,
@@ -144,3 +148,75 @@ def pseudobulk(
     data.add_data(udata)
 
     return udata
+
+
+@timer(logger=logger)
+def deseq2(
+    pseudobulk: UnimodalData,
+    design: str,
+    contrast: Tuple[str, str, str],
+    de_key: str = "deseq2",
+    replaceOutliers: bool = True,
+) -> None:
+    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data.
+
+    DE analysis will be performed on all pseudo-bulk matrices in pseudobulk.
+
+    Parameters
+    ----------
+    pseudobulk: ``UnimodalData``
+        Pseudobulk data with rows for samples and columns for genes. If pseudobulk contains multiple matrices, DESeq2 will apply to all matrices.
+
+    design: ``str``
+        Design formula that will be passed to DESeq2
+
+    contrast: ``Tuple[str, str, str]``
+        A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as numeritor of fold change, and a level as denominator of fold change.
+    
+    de_key: ``str``, optional, default: ``"deseq2"``
+        Key name of DE analysis results stored. For cluster.X, stored key will be cluster.de_key
+
+    replaceOutliers: ``bool``, optional, default: ``True``
+        If execute DESeq2's replaceOutliers step. If set to ``False``, we will set minReplicatesForReplace=Inf in ``DESeq`` function and set cooksCutoff=False in ``results`` function.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``pseudobulk.varm``:
+        ``data.varm[de_key]``: DE analysis result for pseudo-bulk count matrix.
+        ``data.varm[cluster.de_key]``: DE results for cluster-specific pseudo-bulk count matrices.
+
+    Examples
+    --------
+    >>> pg.deseq2(pseudobulk, '~gender', ('gender', 'female', 'male'))
+    """
+    import rpy2.robjects as robjects
+    from rpy2.robjects import pandas2ri, Formula
+    pandas2ri.activate() # Do we need to deactivate?
+    from rpy2.robjects.packages import importr
+    deseq2 = importr('DESeq2')
+    import math
+
+    import rpy2.robjects as ro
+    from rpy2.robjects.conversion import localconverter
+    to_dataframe = robjects.r('function(x) data.frame(x)')
+
+    for mat_key in pseudobulk.list_keys():
+        dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
+        if replaceOutliers:
+            dds = deseq.DESeq(dds)
+            res= deseq.results(dds, contrast=robjects.StrVector(contrast))
+        else:
+            dds = deseq.DESeq(dds, minReplicatesForReplace=math.inf)
+            res= deseq.results(dds, contrast=robjects.StrVector(contrast), cooksCutoff=False)
+
+        with localconverter(ro.default_converter + pandas2ri.converter):
+          res_df = ro.conversion.rpy2py(to_dataframe(res))
+          res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
+
+        de_res_key = de_key if mat_key.find('.') < 0 else f"{mat_key.partition('.')[0]}.{de_key}"
+        pseudobulk.varm[de_res_key] = res_df.to_records(index=False)
+
+
+
