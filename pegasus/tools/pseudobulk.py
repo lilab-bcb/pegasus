@@ -4,7 +4,7 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasusio import MultimodalData, UnimodalData
+from pegasusio import MultimodalData, UnimodalData, timer
 from pandas.api.types import is_categorical_dtype, is_numeric_dtype
 from typing import Union, Optional, List, Tuple
 
@@ -193,23 +193,31 @@ def deseq2(
     """
     import rpy2.robjects as robjects
     from rpy2.robjects import pandas2ri, Formula
-    pandas2ri.activate() # Do we need to deactivate?
+    pandas2ri.activate() 
     from rpy2.robjects.packages import importr
-    deseq2 = importr('DESeq2')
+    try:
+        de_seq = importr('DESeq2')
+    except ModuleNotFoundError:
+        text = """Please install DESeq2 in order to run this function.\n
+                To install this package, start R (version "4.1") and enter:\n
+                if (!require("BiocManager", quietly = TRUE))
+                    install.packages("BiocManager")
+                BiocManager::install("DESeq2")"""
+        print(text)
+        exit(0)
     import math
-
     import rpy2.robjects as ro
     from rpy2.robjects.conversion import localconverter
     to_dataframe = robjects.r('function(x) data.frame(x)')
 
     for mat_key in pseudobulk.list_keys():
-        dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
+        dds = de_seq.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
         if replaceOutliers:
-            dds = deseq.DESeq(dds)
-            res= deseq.results(dds, contrast=robjects.StrVector(contrast))
+            dds = de_seq.DESeq(dds)
+            res= de_seq.results(dds, contrast=robjects.StrVector(contrast))
         else:
-            dds = deseq.DESeq(dds, minReplicatesForReplace=math.inf)
-            res= deseq.results(dds, contrast=robjects.StrVector(contrast), cooksCutoff=False)
+            dds = de_seq.DESeq(dds, minReplicatesForReplace=math.inf)
+            res= de_seq.results(dds, contrast=robjects.StrVector(contrast), cooksCutoff=False)
 
         with localconverter(ro.default_converter + pandas2ri.converter):
           res_df = ro.conversion.rpy2py(to_dataframe(res))

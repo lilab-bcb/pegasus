@@ -69,6 +69,7 @@ from .tools import (
     mark_doublets,
     clone_subset,
     pseudobulk,
+    deseq2
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes, find_outlier_clusters
