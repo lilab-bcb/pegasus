@@ -225,6 +225,6 @@ def deseq2(
 
         de_res_key = de_key if mat_key.find('.') < 0 else f"{mat_key.partition('.')[0]}.{de_key}"
         pseudobulk.varm[de_res_key] = res_df.to_records(index=False)
-
+        pandas2ri.deactivate()
 
 
