@@ -9,6 +9,7 @@ from pandas.api.types import is_categorical_dtype, is_numeric_dtype
 from typing import Union, Optional, List, Tuple
 
 
+
 def set_bulk_value(col):
     if is_numeric_dtype(col):
         return col.mean()
@@ -191,40 +192,45 @@ def deseq2(
     --------
     >>> pg.deseq2(pseudobulk, '~gender', ('gender', 'female', 'male'))
     """
-    import rpy2.robjects as robjects
-    from rpy2.robjects import pandas2ri, Formula
-    pandas2ri.activate() 
-    from rpy2.robjects.packages import importr
     try:
-        de_seq = importr('DESeq2')
+        import rpy2.robjects as robjects
+        from rpy2.robjects import pandas2ri, Formula
+        from rpy2.robjects.packages import importr
+        from rpy2.robjects import numpy2ri
+    except ModuleNotFoundError as e:
+        logger.error(f"{e}\nNeed rpy2! Try 'pip install rpy2'.")
+        exit(-1)
+    try:
+        deseq2 = importr('DESeq2')
     except ModuleNotFoundError:
         text = """Please install DESeq2 in order to run this function.\n
-                To install this package, start R (version "4.1") and enter:\n
+                To install this package, start R and enter:\n
                 if (!require("BiocManager", quietly = TRUE))
                     install.packages("BiocManager")
                 BiocManager::install("DESeq2")"""
-        print(text)
-        exit(0)
+                
+        logger.error(text)
+        exit(-1)
     import math
     import rpy2.robjects as ro
     from rpy2.robjects.conversion import localconverter
     to_dataframe = robjects.r('function(x) data.frame(x)')
 
     for mat_key in pseudobulk.list_keys():
-        dds = de_seq.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
+        with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
+            dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
+        
         if replaceOutliers:
-            dds = de_seq.DESeq(dds)
-            res= de_seq.results(dds, contrast=robjects.StrVector(contrast))
+            dds = deseq2.DESeq(dds)
+            res= deseq2.results(dds, contrast=robjects.StrVector(contrast))
         else:
-            dds = de_seq.DESeq(dds, minReplicatesForReplace=math.inf)
-            res= de_seq.results(dds, contrast=robjects.StrVector(contrast), cooksCutoff=False)
-
+            dds = deseq2.DESeq(dds, minReplicatesForReplace=math.inf)
+            res= deseq2.results(dds, contrast=robjects.StrVector(contrast), cooksCutoff=False)
         with localconverter(ro.default_converter + pandas2ri.converter):
           res_df = ro.conversion.rpy2py(to_dataframe(res))
           res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
 
         de_res_key = de_key if mat_key.find('.') < 0 else f"{mat_key.partition('.')[0]}.{de_key}"
         pseudobulk.varm[de_res_key] = res_df.to_records(index=False)
-    pandas2ri.deactivate()
 
 
