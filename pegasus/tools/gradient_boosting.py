@@ -92,8 +92,9 @@ def find_markers(
     try:
         from lightgbm import LGBMClassifier
     except ImportError:
+        import sys
         logger.error("Need lightgbm! Try 'pip install lightgbm'.")
-        exit(-1)
+        sys.exit(-1)
     start_lgb = time.time()
     lgb = LGBMClassifier(n_jobs=n_jobs, metric="multi_error", importance_type="gain")
     lgb.fit(
