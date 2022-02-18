@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -198,11 +197,13 @@ def deseq2(
         from rpy2.robjects.packages import importr
         from rpy2.robjects import numpy2ri
     except ModuleNotFoundError as e:
+        import sys
         logger.error(f"{e}\nNeed rpy2! Try 'pip install rpy2'.")
-        exit(-1)
+        sys.exit(-1)
     try:
         deseq2 = importr('DESeq2')
     except ModuleNotFoundError:
+        import sys
         text = """Please install DESeq2 in order to run this function.\n
                 To install this package, start R and enter:\n
                 if (!require("BiocManager", quietly = TRUE))
@@ -210,7 +211,7 @@ def deseq2(
                 BiocManager::install("DESeq2")"""
                 
         logger.error(text)
-        exit(-1)
+        sys.exit(-1)
     import math
     import rpy2.robjects as ro
     from rpy2.robjects.conversion import localconverter
