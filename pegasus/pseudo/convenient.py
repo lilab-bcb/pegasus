@@ -203,7 +203,7 @@ def volcano(
 
     columns = de_res.dtype.names
     if (fcstr not in columns) or (pstr not in columns) or (qstr not in columns):
-        logger.warning(f"Please conduct DE test {de_test} first!")
+        logger.warning("Please conduct DE test first!")
         return None
 
     log2fc = de_res[fcstr]
