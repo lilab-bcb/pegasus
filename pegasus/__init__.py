@@ -89,6 +89,7 @@ from .plotting import (
     ridgeplot,
     wordcloud,
 )
+from . import pseudo
 
 try:
     from importlib.metadata import version, PackageNotFoundError
