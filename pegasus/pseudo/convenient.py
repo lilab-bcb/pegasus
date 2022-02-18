@@ -39,15 +39,15 @@ def markers(
     -------
     results: ``Dict[str, pd.DataFrame]``
         A Python dictionary containing DE results. This dictionary contains two keywords: 'up' and 'down'.
-        'up' refers to up-regulated genes, which should have 'auroc' > 0.5.
-        'down' refers to down-regulated genes, which should have 'auroc' < 0.5.
+        'up' refers to up-regulated genes, which should have 'log2FoldChange' > 0.5.
+        'down' refers to down-regulated genes, which should have 'log2FoldChange' < 0.5.
 
     Examples
     --------
-    >>> markers = pg.pseduo.markers(pseudobulk)
+    >>> markers = pg.pseudo.markers(pseudobulk)
     """
-    if de_key not in data.varm.keys():
-        raise ValueError("Please run DE analysis first!")
+    if de_key not in pseudobulk.varm.keys():
+        raise ValueError("Please run DE analysis first")
 
     res_dict = {}    
     df = pd.DataFrame(data=pseudobulk.varm[de_key], index=pseudobulk.var_names)
@@ -56,8 +56,7 @@ def markers(
     idx_up = idx & (df["log2FoldChange"].values > 0.0)
     df_up = df.loc[idx_up].sort_values(by="log2FoldChange", ascending=False, inplace=False)
     res_dict["up"] = pd.DataFrame(df_up if head is None else df_up.iloc[0:head])
-
-    idx_down = idx & (df["auroc"].values < 0.0)
+    idx_down = idx & (df["log2FoldChange"].values < 0.0)
     df_down = df.loc[idx_down].sort_values(by="log2FoldChange", ascending=True, inplace=False)
     res_dict["down"] = pd.DataFrame(df_down if head is None else df_down.iloc[0:head])
 
@@ -192,11 +191,11 @@ def volcano(
     ---------
     >>> pg.pseudo.volcano(pseudobulk, dpi=200)
     """
-    if de_key not in data.varm:
+    if de_key not in pseudobulk.varm:
         logger.warning(f"Cannot find DE results '{de_key}'. Please conduct DE analysis first!")
         return None
 
-    de_res = data.varm[de_key]
+    de_res = pseudobulk.varm[de_key]
 
     fcstr = "log2FoldChange"
     pstr = "pvalue"
@@ -253,13 +252,13 @@ def volcano(
     posvec = np.argsort(log2fc[idx])[::-1][0:top_n]
     for pos in posvec:
         gid = idx[pos]
-        texts.append(ax.text(log2fc[gid], neglog10p[gid], data.var_names[gid], fontsize=5))
+        texts.append(ax.text(log2fc[gid], neglog10p[gid], pseudobulk.var_names[gid], fontsize=5))
 
     idx = np.where(idxsig & (log2fc <= -log2fc_threshold))[0]
     posvec = np.argsort(log2fc[idx])[0:top_n]
     for pos in posvec:
         gid = idx[pos]
-        texts.append(ax.text(log2fc[gid], neglog10p[gid], data.var_names[gid], fontsize=5))
+        texts.append(ax.text(log2fc[gid], neglog10p[gid], pseudobulk.var_names[gid], fontsize=5))
 
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
