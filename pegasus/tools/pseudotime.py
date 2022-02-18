@@ -1,10 +1,13 @@
 import time
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
+
+import logging
+logger = logging.getLogger(__name__)
 try:
     import igraph
 except ImportError as error:
-    print("Need python-igraph!")
+    logger.error("Need python-igraph!  Try 'pip install python-igraph'.")
 from collections import deque
 
 from typing import List

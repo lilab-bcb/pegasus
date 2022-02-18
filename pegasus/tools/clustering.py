@@ -177,8 +177,8 @@ def louvain(
     try:
         import louvain as louvain_module
     except ImportError:
-        print("Need louvain! Try 'pip install louvain-github'.")
-
+        logger.error("Need louvain! Try 'pip install louvain-github'.")
+        exit(-1)
     rep_key = "W_" + rep
     if rep_key not in data.obsp:
         raise ValueError("Cannot find affinity matrix. Please run neighbors first!")
@@ -251,7 +251,8 @@ def leiden(
     try:
         import leidenalg
     except ImportError:
-        print("Need leidenalg! Try 'pip install leidenalg'.")
+        logger.error("Need leidenalg! Try 'pip install leidenalg'.")
+        exit(-1)
 
     rep_key = "W_" + rep
     if rep_key not in data.obsp:
@@ -380,7 +381,8 @@ def spectral_louvain(
     try:
         import louvain as louvain_module
     except ImportError:
-        print("Need louvain! Try 'pip install louvain-github'.")
+        logger.error("Need louvain! Try 'pip install louvain-github'.")
+        exit(-1)
 
     if f"X_{rep_kmeans}" not in data.obsm.keys():
         logger.warning(f"{rep_kmeans} is not calculated, switch to pca instead.")
@@ -479,7 +481,8 @@ def spectral_leiden(
     try:
         import leidenalg
     except ImportError:
-        print("Need leidenalg! Try 'pip install leidenalg'.")
+        logger.error("Need leidenalg! Try 'pip install leidenalg'.")
+        exit(-1)
 
     if f"X_{rep_kmeans}" not in data.obsm.keys():
         logger.warning(f"{rep_kmeans} is not calculated, switch to pca instead.")
