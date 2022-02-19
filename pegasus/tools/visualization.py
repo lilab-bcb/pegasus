@@ -3,7 +3,6 @@ import numpy as np
 import scipy
 import umap as umap_module
 import uuid
-
 from threadpoolctl import threadpool_limits
 from pegasusio import MultimodalData
 from pynndescent import NNDescent
@@ -56,8 +55,9 @@ def calc_tsne(
     try:
         from fitsne import FItSNE
     except ModuleNotFoundError:
-        print("Exception: FItSNE package is not installed, please install fitsne: pip install fitsne")
-        exit()
+        import sys
+        logger.error("Need FItSNE!  Try 'pip install fitsne'.")
+        sys.exit(-1)
 
     return FItSNE(
         X,
@@ -142,8 +142,9 @@ def calc_force_directed_layout(
     try:
         import forceatlas2 as fa2
     except ModuleNotFoundError:
-        print("Exception: Please install module forceatlas2-python: pip install forceatlas2-python")
-        exit()
+        import sys
+        logger.error("Need forceatlas2-python!  Try 'pip install forceatlas2-python'.")
+        sys.exit(-1)
     return fa2.forceatlas2(
             file_name,
             graph=G,

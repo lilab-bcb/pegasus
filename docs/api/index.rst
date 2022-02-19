@@ -113,14 +113,6 @@ Gene Module Score
 
     calc_signature_score
 
-Pseudo-bulk Analysis
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-    :toctree: .
-
-    pseudobulk
-
 Differential Expression Analysis
 ---------------------------------
 
@@ -158,6 +150,18 @@ Plotting
     qcviolin
     ridgeplot
     volcano
+
+Pseudo-bulk analysis
+---------------------
+
+.. autosummary::
+    :toctree: .
+
+    pseudobulk
+    deseq2
+    pseudo.markers
+    pseudo.write_results_to_excel
+    pseudo.volcano
 
 Demultiplexing
 ---------------

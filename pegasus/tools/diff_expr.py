@@ -560,8 +560,7 @@ def markers(
         raise ValueError("Please run de_analysis first!")
 
     rec_array = data.varm[de_key]
-    gene_names = data.var_names.copy()
-    gene_names.name = "feature"
+    gene_names = data.var_names
 
     de_clust = len(rec_array.dtype.names[0].split(":")) == 2
 

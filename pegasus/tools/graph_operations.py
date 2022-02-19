@@ -1,10 +1,13 @@
 import time
 import numpy as np
 from scipy.sparse import issparse, csr_matrix
+
+import logging
+logger = logging.getLogger(__name__)
 try:
     import igraph
 except ImportError:
-    print("Need python-igraph!")
+    logger.error("Need python-igraph!  Try 'pip install python-igraph'.")
 
 import logging
 logger = logging.getLogger(__name__)
