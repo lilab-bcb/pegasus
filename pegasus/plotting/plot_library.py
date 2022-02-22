@@ -2109,3 +2109,63 @@ def wordcloud(
     ax.axis('off')
 
     return fig if return_fig else None
+
+
+def _make_one_gsea_plot(df, ax, color, size=10):
+    if df.shape[0] == 0:
+        ax.axis('off')
+        return None
+    df_plot = df.sort_values(['Log Q', 'NES Abs'], ascending=False)
+    df_plot = df_plot.iloc[0:size]
+    ax = sns.barplot(x='Log Q', y='pathway', data=df_plot, color=color, ax=ax)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.tick_params(axis='y', labelsize=5)
+
+def plot_gsea(
+    data: Union[MultimodalData, UnimodalData],
+    gsea_keyword: str,
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Generate GSEA barplots
+
+    Parameters
+    ----------
+
+    data : ``UnimodalData`` or ``MultimodalData`` object
+        The main data object.
+    gsea_keyword: ``str``
+        Keyword in data.uns that stores the fGSEA results in pandas data frame
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> fig = pg.plot_gsea(data, 'fgsea_out', dpi = 500)
+    """
+    df = data.uns[gsea_keyword]
+    df['Log Q'] = -np.log10(df['padj'])
+    df['NES Abs'] = np.abs(df['NES'])
+    df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
+
+    fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6)
+    df_up = df.loc[df['NES']>0]
+    _make_one_gsea_plot(df_up, axes[0], color='red')
+    df_dn = df.loc[df['NES']<0]
+    _make_one_gsea_plot(df_dn, axes[1], color='green')
+    axes[1].set_xlabel('-log10(q-value)')
+
+    return fig if return_fig else None

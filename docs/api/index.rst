@@ -113,8 +113,8 @@ Gene Module Score
 
     calc_signature_score
 
-Differential Expression Analysis
----------------------------------
+Differential Expression and Gene Set Enrichment Analysis
+--------------------------------------------------------
 
 .. autosummary::
     :toctree: .
@@ -122,6 +122,7 @@ Differential Expression Analysis
     de_analysis
     markers
     write_results_to_excel
+    fgsea
 
 Annotate clusters
 -------------------
@@ -148,8 +149,11 @@ Plotting
     dendrogram
     hvfplot
     qcviolin
-    ridgeplot
     volcano
+    rank_plot
+    ridgeplot
+    wordcloud
+    plot_gsea
 
 Pseudo-bulk analysis
 ---------------------

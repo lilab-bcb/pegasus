@@ -6,3 +6,5 @@
 6) Ribosomal genes mouse are collected from GENCODE gencode.vM25.primary_assembly.annotation.gtf / "gene"/"protein_coding"/"\Rpl"/"\"Rps". 78 in total.
 7) Gender-specific genes for human: female XIST, DONSON, RPS4X. Male: selected genes from chrY from GENCODE gencode.v34.primary_assembly.annotation.gtf.
 8) Gender-specific genes for mouse: Mapped from human symbols.
+9) Hallmark gene sets from MSigDB v7.5.1 (h.all.v7.5.1.symbols.gmt).
+10) Canonical pathways gene sets from C2 (curated gene sets) of MSigDB v7.5.1 (c2.cp.v7.5.1.symbols.gmt).

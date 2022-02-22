@@ -2,18 +2,25 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse, csr_matrix
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Dict
 from anndata import AnnData
 from pegasusio import UnimodalData, MultimodalData
 
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasus.tools import _cpu_count
+
 
 def eff_n_jobs(n_jobs: int) -> int:
     """ If n_jobs < 0, set it as the number of physical cores _cpu_count """
-    return n_jobs if n_jobs > 0 else _cpu_count
+    if n_jobs > 0:
+        return n_jobs
+
+    import psutil
+    _cpu_count = psutil.cpu_count(logical=False)
+    if _cpu_count is None:
+        _cpu_count = psutil.cpu_count(logical=True)
+    return _cpu_count
 
 
 def update_rep(rep: str) -> str:
@@ -171,3 +178,34 @@ def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: str, warni
             logger.warning(f"Batch key {batch} only contains one batch. {warning_msg}")
             return False
     return True
+
+
+
+import pkg_resources
+
+predefined_signatures = dict(
+    cell_cycle_human=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_human.gmt"),
+    cell_cycle_mouse=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_mouse.gmt"),
+    gender_human=pkg_resources.resource_filename("pegasus", "data_files/gender_human.gmt"),
+    gender_mouse=pkg_resources.resource_filename("pegasus", "data_files/gender_mouse.gmt"),
+    mitochondrial_genes_human=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_human.gmt"),
+    mitochondrial_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_mouse.gmt"),
+    ribosomal_genes_human=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_human.gmt"),
+    ribosomal_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_mouse.gmt"),
+    apoptosis_human=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_human.gmt"),
+    apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),    
+)
+
+predefined_pathways = dict(
+    hallmark=pkg_resources.resource_filename("pegasus", "data_files/h.all.v7.5.1.symbols.gmt"),
+    canonical_pathways=pkg_resources.resource_filename("pegasus", "data_files/c2.cp.v7.5.1.symbols.gmt"),
+)
+
+def load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:
+    signatures = {}
+    with open(input_file) as fin:
+        for line in fin:
+            items = line.strip().split('\t')
+            signatures[items[0]] = list(set(items[2:]))
+    logger.info(f"Loaded signatures from GMT file {input_file}.")
+    return signatures

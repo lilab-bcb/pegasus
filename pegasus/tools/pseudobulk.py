@@ -158,7 +158,7 @@ def deseq2(
     de_key: str = "deseq2",
     replaceOutliers: bool = True,
 ) -> None:
-    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data.
+    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data. This function calls R package DESeq2, requiring DESeq2 in R installed.
 
     DE analysis will be performed on all pseudo-bulk matrices in pseudobulk.
 
@@ -184,22 +184,23 @@ def deseq2(
     ``None``
 
     Update ``pseudobulk.varm``:
-        ``data.varm[de_key]``: DE analysis result for pseudo-bulk count matrix.
-        ``data.varm[cluster.de_key]``: DE results for cluster-specific pseudo-bulk count matrices.
+        ``pseudobulk.varm[de_key]``: DE analysis result for pseudo-bulk count matrix.
+        ``pseudobulk.varm[cluster.de_key]``: DE results for cluster-specific pseudo-bulk count matrices.
 
     Examples
     --------
     >>> pg.deseq2(pseudobulk, '~gender', ('gender', 'female', 'male'))
     """
     try:
-        import rpy2.robjects as robjects
-        from rpy2.robjects import pandas2ri, Formula
+        import rpy2.robjects as ro
+        from rpy2.robjects import pandas2ri, numpy2ri, Formula
         from rpy2.robjects.packages import importr
-        from rpy2.robjects import numpy2ri
+        from rpy2.robjects.conversion import localconverter
     except ModuleNotFoundError as e:
         import sys
         logger.error(f"{e}\nNeed rpy2! Try 'pip install rpy2'.")
         sys.exit(-1)
+
     try:
         deseq2 = importr('DESeq2')
     except ModuleNotFoundError:
@@ -212,10 +213,9 @@ def deseq2(
                 
         logger.error(text)
         sys.exit(-1)
-    import math
-    import rpy2.robjects as ro
-    from rpy2.robjects.conversion import localconverter
-    to_dataframe = robjects.r('function(x) data.frame(x)')
+
+    import math    
+    to_dataframe = ro.r('function(x) data.frame(x)')
 
     for mat_key in pseudobulk.list_keys():
         with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
@@ -223,15 +223,13 @@ def deseq2(
         
         if replaceOutliers:
             dds = deseq2.DESeq(dds)
-            res= deseq2.results(dds, contrast=robjects.StrVector(contrast))
+            res= deseq2.results(dds, contrast=ro.StrVector(contrast))
         else:
             dds = deseq2.DESeq(dds, minReplicatesForReplace=math.inf)
-            res= deseq2.results(dds, contrast=robjects.StrVector(contrast), cooksCutoff=False)
+            res= deseq2.results(dds, contrast=ro.StrVector(contrast), cooksCutoff=False)
         with localconverter(ro.default_converter + pandas2ri.converter):
           res_df = ro.conversion.rpy2py(to_dataframe(res))
           res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
 
         de_res_key = de_key if mat_key.find('.') < 0 else f"{mat_key.partition('.')[0]}.{de_key}"
         pseudobulk.varm[de_res_key] = res_df.to_records(index=False)
-
-
