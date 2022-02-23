@@ -2125,6 +2125,8 @@ def _make_one_gsea_plot(df, ax, color, size=10):
 def plot_gsea(
     data: Union[MultimodalData, UnimodalData],
     gsea_keyword: str,
+    alpha: Optional[float] = 0.1,
+    top_n: Optional[int] = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
@@ -2138,7 +2140,11 @@ def plot_gsea(
     data : ``UnimodalData`` or ``MultimodalData`` object
         The main data object.
     gsea_keyword: ``str``
-        Keyword in data.uns that stores the fGSEA results in pandas data frame
+        Keyword in data.uns that stores the fGSEA results in pandas data frame.
+    alpha: ``float``, optional, default: ``0.1``
+        False discovery rate threshold.
+    top_n: ``int``, optional, default: ``20``
+        Only show top_n up/down regulated pathways.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
     return_fig: ``bool``, optional, default: ``False``
@@ -2150,18 +2156,20 @@ def plot_gsea(
     -------
 
     `Figure` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``.
+        Each figure contains two panels. The top panel shows up-regulated pathways (color: red) and the bottom panel shows down-regulated pathways (color: green).
 
     Examples
     --------
     >>> fig = pg.plot_gsea(data, 'fgsea_out', dpi = 500)
     """
     df = data.uns[gsea_keyword]
+    df = df[df['padj'] <= alpha].copy()
     df['Log Q'] = -np.log10(df['padj'])
     df['NES Abs'] = np.abs(df['NES'])
     df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
 
-    fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6)
+    fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2)
     df_up = df.loc[df['NES']>0]
     _make_one_gsea_plot(df_up, axes[0], color='red')
     df_dn = df.loc[df['NES']<0]
