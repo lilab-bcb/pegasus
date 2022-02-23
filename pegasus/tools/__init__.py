@@ -1,10 +1,21 @@
-import psutil
-_cpu_count = psutil.cpu_count(logical=False)
-if _cpu_count is None:
-    _cpu_count = psutil.cpu_count(logical=True)
-
-
-from .utils import eff_n_jobs, update_rep, X_from_rep, W_from_rep, slicing, calc_mean, calc_mean_and_var, calc_expm1, calc_stat_per_batch, normalize_by_count, calc_sig_background, simulate_doublets, check_batch_key
+from .utils import (
+    eff_n_jobs,
+    update_rep,
+    X_from_rep,
+    W_from_rep,
+    slicing,
+    calc_mean,
+    calc_mean_and_var,
+    calc_expm1,
+    calc_stat_per_batch,
+    normalize_by_count,
+    calc_sig_background,
+    simulate_doublets,
+    check_batch_key,
+    predefined_signatures,
+    predefined_pathways,
+    load_signatures_from_file,
+)
 
 from .preprocessing import (
     qc_metrics,
@@ -49,3 +60,4 @@ from .signature_score import calc_signature_score, calculate_z_score
 from .doublet_detection import infer_doublets, mark_doublets
 from .nmf import nmf, integrative_nmf
 from .pseudobulk import pseudobulk, deseq2
+from .fgsea import fgsea

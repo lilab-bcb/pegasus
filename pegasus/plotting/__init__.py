@@ -13,4 +13,5 @@ from .plot_library import (
     rank_plot,
     ridgeplot,
     wordcloud,
+    plot_gsea,
 )

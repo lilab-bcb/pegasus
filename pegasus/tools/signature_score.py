@@ -5,27 +5,12 @@ from typing import Dict, List, Union
 from sklearn.cluster import KMeans
 
 import anndata
-from pegasusio import UnimodalData, MultimodalData
-from pegasus.tools import calc_mean, calc_sig_background
+from pegasusio import UnimodalData, MultimodalData, timer
+from pegasus.tools import calc_mean, calc_sig_background, predefined_signatures, load_signatures_from_file
 
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasusio import timer
-
-import pkg_resources
-predefined_signatures = dict(
-    cell_cycle_human=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_human.gmt"),
-    cell_cycle_mouse=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_mouse.gmt"),
-    gender_human=pkg_resources.resource_filename("pegasus", "data_files/gender_human.gmt"),
-    gender_mouse=pkg_resources.resource_filename("pegasus", "data_files/gender_mouse.gmt"),
-    mitochondrial_genes_human=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_human.gmt"),
-    mitochondrial_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_mouse.gmt"),
-    ribosomal_genes_human=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_human.gmt"),
-    ribosomal_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_mouse.gmt"),
-    apoptosis_human=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_human.gmt"),
-    apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),
-)
 
 
 def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
@@ -52,17 +37,6 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         data.obsm["sig_bkg_mean"], data.obsm["sig_bkg_std"] = calc_sig_background(data.X, bins, mean_vec)
 
     return True
-
-
-def _load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:
-    signatures = {}
-    with open(input_file) as fin:
-        for line in fin:
-            items = line.strip().split('\t')
-            signatures[items[0]] = list(set(items[2:]))
-    logger.info(f"Loaded signatures from GMT file {input_file}.")
-    return signatures
-
 
 def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_omitted_genes: bool = False, skip_threshold: int = 1) -> None:
     for key, gene_list in signatures.items():
@@ -195,7 +169,7 @@ def calc_signature_score(
     if isinstance(signatures, str):
         sig_string = signatures
         if sig_string in predefined_signatures:
-            signatures = _load_signatures_from_file(predefined_signatures[sig_string])
+            signatures = load_signatures_from_file(predefined_signatures[sig_string])
             from threadpoolctl import threadpool_limits
 
             if sig_string.startswith("cell_cycle"):
@@ -238,7 +212,7 @@ def calc_signature_score(
             else:
                 assert False
         else:
-            signatures = _load_signatures_from_file(sig_string)
+            signatures = load_signatures_from_file(sig_string)
             _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
     else:
         _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)

@@ -70,6 +70,7 @@ from .tools import (
     clone_subset,
     pseudobulk,
     deseq2,
+    fgsea,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes, find_outlier_clusters
@@ -88,6 +89,7 @@ from .plotting import (
     rank_plot,
     ridgeplot,
     wordcloud,
+    plot_gsea,
 )
 from . import pseudo
 
