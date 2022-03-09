@@ -19,10 +19,14 @@
 
         * Requires `rpy2 <https://rpy2.github.io/doc.html>`_ and the original *fgsea* R package installed.
 * API Changes:
-    * Function ``correct_batch`` is obsolete.
-    * Add
+    * Function ``correct_batch``, which implements the L/S adjustment batch correction method, is obsolete.
+      We recommend using ``run_harmony`` instead, which is also the default of ``--correct-batch-effect`` option in ``pegasus cluster`` command.
+    * ``pegasus.highly_variable_features`` allows specify custom attribute key for batches (``batch`` option), and thus remove ``consider_batch`` option.
+      To select HVGs without considering batch effects, simply use the default, or equivalently use ``batch=None`` option.
     * Add ``dist`` option to ``pegasus.neighbors`` function to allow use distance other than L2. (Contribution by `hoondy <https://github.com/hoondy>`_ in `PR 233 <https://github.com/klarman-cell-observatory/pegasus/pull/233>`_)
 
         * Available options: ``l2`` for L2 (default), ``ip`` for inner product, and ``cosine`` for cosine similarity.
+    * The kNN graph returned by ``pegasus.neighbors`` function is now stored in ``obsm`` field of the data object, no longer in ``uns`` field.
+      Moreover, the kNN affinity matrix is stored in ``obsp`` field.
 * Improvements:
     * Adjust ``pegasus.write_output`` function to work with `Zarr <https://zarr.readthedocs.io>`_ v2.11.0+.
