@@ -18,5 +18,5 @@ importlib_metadata; python_version < '3.8'
 umap-learn
 forceatlas2-python
 pyarrow
-pegasusio
+pegasusio>=0.5.1
 demuxEM

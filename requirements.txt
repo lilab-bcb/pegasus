@@ -16,7 +16,7 @@ natsort
 numba
 numpy
 pandas>=1.2.0
-pegasusio>=0.4.1
+pegasusio>=0.5.1
 pybind11
 scikit-learn>=0.23.2
 scikit-misc
