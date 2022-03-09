@@ -59,7 +59,10 @@ def calculate_nearest_neighbors(
     n_jobs = eff_n_jobs(n_jobs)
 
     if method == "hnsw":
-        import hnswlib
+        try:
+            import hnswlib
+        except ImportError:
+            raise ImportError("Need hnswlib! Try 'pip install hnswlib'.")
 
         assert not issparse(X)
         # Build hnsw index

@@ -32,7 +32,7 @@ def estimate_feature_statistics(data: Union[MultimodalData, UnimodalData], batch
 
         data.var["mean"] = np.dot(means, ncells) / data.shape[0]
         data.var["var"] = partial_sum.sum(axis=1) / (data.shape[0] - 1.0)
-        
+
 
 def fit_loess(x: List[float], y: List[float], span: float, degree: int) -> object:
     try:
@@ -283,7 +283,8 @@ def highly_variable_features(
 
     Examples
     --------
-    >>> pg.highly_variable_features(data, consider_batch = False)
+    >>> pg.highly_variable_features(data)
+    >>> pg.highly_variable_features(data, batch="Channel")
     """
     check_batch_key(data, batch, "Switch to not not consider batch effects for selecting highly variable features.")
 

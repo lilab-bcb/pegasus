@@ -23,22 +23,22 @@ import pegasus
 # -- Project information -----------------------------------------------------
 
 project = "Pegasus"
-copyright = "2020 - 2021 The Broad Institute, Inc. and The General Hospital Corporation. All rights reserved."
+copyright = "2020 - 2022 The Broad Institute, Inc. and Genentech, Inc. All rights reserved."
 author = (
     "Yiming Yang, Joshua Gould and Bo Li"
 )
 
 # The short X.Y version
-version = "1.4"
+version = "1.5"
 # The full version, including alpha/beta/rc tags
-release = "1.4.5"
+release = "1.5.0"
 
 
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-needs_sphinx = '1.7'
+#needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
