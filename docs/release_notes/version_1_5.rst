@@ -37,6 +37,5 @@
 * The kNN graph returned by ``pegasus.neighbors`` function is now stored in ``obsm`` field of the data object, no longer in ``uns`` field.
   Moreover, the kNN affinity matrix is stored in ``obsp`` field.
 
-**Improvements**
-
-* Adjust ``pegasus.write_output`` function to work with `Zarr <https://zarr.readthedocs.io>`_ v2.11.0+.
+* Improvements:
+    * Adjust ``pegasus.write_output`` function to work with `Zarr <https://zarr.readthedocs.io>`_ v2.11.0+.
