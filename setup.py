@@ -21,7 +21,7 @@ setup(
     use_scm_version=True,
     description="Pegasus is a Python package for analyzing sc/snRNA-seq data of millions of cells",
     long_description=long_description,
-    url="https://github.com/klarman-cell-observatory/pegasus",
+    url="https://github.com/lilab-bcb/pegasus",
     author="Yiming Yang, Joshua Gould and Bo Li",
     author_email="cumulus-support@googlegroups.com",
     classifiers=[  # https://pypi.python.org/pypi?%3Aaction=list_classifiers

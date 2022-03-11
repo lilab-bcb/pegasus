@@ -23,7 +23,7 @@ import pegasus
 # -- Project information -----------------------------------------------------
 
 project = "Pegasus"
-copyright = "2020 - 2022 The Broad Institute, Inc. and Genentech, Inc. All rights reserved."
+copyright = "2020 - 2022 Genentech, Inc. and the Broad Institute, Inc. All rights reserved."
 author = (
     "Yiming Yang, Joshua Gould and Bo Li"
 )
@@ -131,7 +131,7 @@ html_static_path = ["_static"]
 
 html_context = dict(
     display_github=True,  # Integrate GitHub
-    github_user="klarman-cell-observatory",  # Username
+    github_user="lilab-bcb",  # Username
     github_repo="pegasus",  # Repo name
     github_version="master",  # Version
     conf_py_path="/docs/",  # Path in the checkout to the docs root

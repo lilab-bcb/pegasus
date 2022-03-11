@@ -582,7 +582,7 @@ to see the usage information::
 		Output basis for net-FLE. [default: net_fle]
 
 	-\-infer-doublets
-		Infer doublets using the method described `here <https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf>`_. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
+		Infer doublets using the method described `here <https://github.com/lilab-bcb/pegasus/raw/master/doublet_detection.pdf>`_. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
 
  	-\-expected-doublet-rate <rate>
  		The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.

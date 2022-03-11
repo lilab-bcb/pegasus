@@ -67,7 +67,7 @@ Alternatively, you can create from a custom environment if you want to use an ol
 In the cloud environment setting page:
 
 * In *Application configuration* field, choose ``Custom Environment`` (see the first red rectangle above).
-* In *Container image* input, type ``cumulusprod/pegasus-terra:<version>`` (see the second red rectangle above), where ``<version>`` should be chosen from `this list <https://github.com/klarman-cell-observatory/cumulus/blob/master/docker/pegasus-terra/CHANGELOG.md>`_.
+* In *Container image* input, type ``cumulusprod/pegasus-terra:<version>`` (see the second red rectangle above), where ``<version>`` should be chosen from `this list <https://github.com/lilab-bcb/cumulus/blob/master/docker/pegasus-terra/CHANGELOG.md>`_.
   All the tags are for different versions of Pegasus.
 * In *Cloud compute profile* field, set the computing resources (CPUs and Memory size) you want to use.
 * In *Compute type* field, choose ``Standard VM``, as this is the cheapest type and is enough for using Pegasus.

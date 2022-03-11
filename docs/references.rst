@@ -39,11 +39,11 @@ References
 
 .. [Li20-1] B. Li,
    "A streamlined method for signature score calculation",
-   In `Pegasus repository <https://github.com/klarman-cell-observatory/pegasus/raw/master/signature_score.pdf>`__, 2020.
+   In `Pegasus repository <https://github.com/lilab-bcb/pegasus/raw/master/signature_score.pdf>`__, 2020.
 
 .. [Li20-2] B. Li,
    "Doublet detection in Pegasus",
-   In `Pegasus repository <https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf>`__, 2020.
+   In `Pegasus repository <https://github.com/lilab-bcb/pegasus/raw/master/doublet_detection.pdf>`__, 2020.
 
 .. [Linderman19] G.C. Linderman, et al.,
    "Fast interpolation-based t-SNE for improved visualization of single-cell RNA-seq data",

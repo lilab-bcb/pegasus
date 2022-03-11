@@ -30,7 +30,7 @@
 * ``pegasus.highly_variable_features`` allows specify custom attribute key for batches (``batch`` option), and thus remove ``consider_batch`` option.
   To select HVGs without considering batch effects, simply use the default, or equivalently use ``batch=None`` option.
 
-* Add ``dist`` option to ``pegasus.neighbors`` function to allow use distance other than L2. (Contribution by `hoondy <https://github.com/hoondy>`_ in `PR 233 <https://github.com/klarman-cell-observatory/pegasus/pull/233>`_)
+* Add ``dist`` option to ``pegasus.neighbors`` function to allow use distance other than L2. (Contribution by `hoondy <https://github.com/hoondy>`_ in `PR 233 <https://github.com/lilab-bcb/pegasus/pull/233>`_)
 
     * Available options: ``l2`` for L2 (default), ``ip`` for inner product, and ``cosine`` for cosine similarity.
 

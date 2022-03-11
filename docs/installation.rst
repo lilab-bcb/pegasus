@@ -313,7 +313,7 @@ Please refer to `Singularity image interaction guide`_ for details.
 Development Version
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To install Pegasus development version directly from `its GitHub respository <https://github.com/klarman-cell-observatory/pegasus>`_, please do the following steps:
+To install Pegasus development version directly from `its GitHub respository <https://github.com/lilab-bcb/pegasus>`_, please do the following steps:
 
 1. Install prerequisite libraries as mentioned in above sections.
 
@@ -321,7 +321,7 @@ To install Pegasus development version directly from `its GitHub respository <ht
 
 3. Use git to fetch repository source code, and install from it::
 
-	git clone https://github.com/klarman-cell-observatory/pegasus.git
+	git clone https://github.com/lilab-bcb/pegasus.git
 	cd pegasus
 	pip install -e .[all]
 
@@ -335,5 +335,5 @@ where ``-e`` option of ``pip`` means to install in editing mode, so that your Pe
 .. _Singularity: http://singularity.lbl.gov/
 .. _blog post: https://vsoch.github.io//2021/singularity-hub-archive/
 .. _install Singularity: https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps
-.. _Singularity spec file: https://raw.githubusercontent.com/klarman-cell-observatory/pegasus/master/Singularity
+.. _Singularity spec file: https://raw.githubusercontent.com/lilab-bcb/pegasus/master/Singularity
 .. _Singularity image interaction guide: https://singularityhub.github.io/singularityhub-docs/docs/interact

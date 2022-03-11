@@ -136,7 +136,7 @@ Options:
   --net-fle-polish-target-steps <steps>            After running the deep regressor to predict new coordinate, what is the number of force atlas 2 iterations. [default: 1500]
   --net-fle-out-basis <basis>                      Output basis for net-FLE. [default: net_fle]
 
-  --infer-doublets                                 Infer doublets using the method described in https://github.com/klarman-cell-observatory/pegasus/raw/master/doublet_detection.pdf. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
+  --infer-doublets                                 Infer doublets using the method described in https://github.com/lilab-bcb/pegasus/raw/master/doublet_detection.pdf. Obs attribute 'doublet_score' stores Scrublet-like doublet scores and attribute 'demux_type' stores 'doublet/singlet' assignments.
   --expected-doublet-rate <rate>                   The expected doublet rate per sample. By default, calculate the expected rate based on number of cells from the 10x multiplet rate table.
   --dbl-cluster-attr <attr>                        <attr> refers to a cluster attribute containing cluster labels (e.g. 'louvain_labels'). Doublet clusters will be marked based on <attr> with the following criteria: passing the Fisher's exact test and having >= 50% of cells identified as doublets. By default, the first computed cluster attribute in the list of leiden, louvain, spectral_ledein and spectral_louvain is used.
 
