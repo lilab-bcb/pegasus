@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
+import numba
+from numba import njit
+
 from typing import List, Union
 from pegasusio import UnimodalData, MultimodalData
 
