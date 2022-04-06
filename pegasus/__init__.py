@@ -10,6 +10,7 @@ import logging
 import warnings
 
 logger = logging.getLogger("pegasus")
+logger.propagate = False
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.INFO)
