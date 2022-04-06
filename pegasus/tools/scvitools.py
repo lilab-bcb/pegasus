@@ -7,6 +7,7 @@ from numba import njit
 
 from typing import List, Optional, Union
 from pegasusio import UnimodalData, MultimodalData
+from pegasus.tools import eff_n_jobs
 
 import anndata
 
@@ -182,10 +183,7 @@ def run_scvi(
 
     adata = _gen_anndata(data, features, obs_columns, matkey) # gen AnnData
 
-    if n_jobs == -1:
-        import multiprocessing
-        n_jobs = multiprocessing.cpu_count()
-    scvi.settings.num_threads = n_jobs # set n_jobs
+    scvi.settings.num_threads = eff_n_jobs(n_jobs) # set n_jobs
     scvi.settings.seed = random_state # set random_state, see [here](https://docs.scvi-tools.org/en/stable/_modules/scvi/_settings.html) for more details.
 
     if max_epochs is None:
@@ -296,10 +294,7 @@ def train_scarches_scanvi(
 
     adata = _gen_anndata(data, features, obs_columns, matkey) # gen AnnData
 
-    if n_jobs == -1:
-        import multiprocessing
-        n_jobs = multiprocessing.cpu_count()
-    scvi.settings.num_threads = n_jobs # set n_jobs
+    scvi.settings.num_threads = eff_n_jobs(n_jobs) # set n_jobs
     scvi.settings.seed = random_state # set random_state, see [here](https://docs.scvi-tools.org/en/stable/_modules/scvi/_settings.html) for more details.
 
     # unsupervised
@@ -413,10 +408,7 @@ def predict_scarches_scanvi(
     features = scvi.model.SCANVI.prepare_query_anndata(None, dir_path, return_reference_var_names=True)
     adata = _gen_query_anndata(data, features, obs_columns, matkey) # gen AnnData
 
-    if n_jobs == -1:
-        import multiprocessing
-        n_jobs = multiprocessing.cpu_count()
-    scvi.settings.num_threads = n_jobs # set n_jobs
+    scvi.settings.num_threads = eff_n_jobs(n_jobs) # set n_jobs
     scvi.settings.seed = random_state # set random_state, see [here](https://docs.scvi-tools.org/en/stable/_modules/scvi/_settings.html) for more details.
 
     if max_epochs is None:
