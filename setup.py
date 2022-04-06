@@ -55,7 +55,8 @@ setup(
         forceatlas=["forceatlas2-python"],
         mkl=["mkl"],
         rpy2=["rpy2"],
-        all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "rpy2", "forceatlas2-python"]
+        scvi=["scvi-tools"],
+        all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "rpy2", "forceatlas2-python", "scvi-tools"]
     ),
     python_requires="~=3.6",
     package_data={

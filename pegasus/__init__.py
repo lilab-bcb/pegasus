@@ -71,6 +71,9 @@ from .tools import (
     pseudobulk,
     deseq2,
     fgsea,
+    run_scvi,
+    train_scarches_scanvi,
+    predict_scarches_scanvi,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes, find_outlier_clusters
