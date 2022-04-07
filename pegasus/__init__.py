@@ -10,6 +10,7 @@ import logging
 import warnings
 
 logger = logging.getLogger("pegasus")
+logger.propagate = False
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.INFO)
@@ -71,6 +72,9 @@ from .tools import (
     pseudobulk,
     deseq2,
     fgsea,
+    run_scvi,
+    train_scarches_scanvi,
+    predict_scarches_scanvi,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes, find_outlier_clusters

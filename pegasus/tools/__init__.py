@@ -61,3 +61,8 @@ from .doublet_detection import infer_doublets, mark_doublets
 from .nmf import nmf, integrative_nmf
 from .pseudobulk import pseudobulk, deseq2
 from .fgsea import fgsea
+from .scvitools import (
+    run_scvi,
+    train_scarches_scanvi,
+    predict_scarches_scanvi,
+)
