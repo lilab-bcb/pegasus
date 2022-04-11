@@ -114,6 +114,15 @@ Gene Module Score
 
     calc_signature_score
 
+Label Transfer
+~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    train_scarches_scanvi
+    predict_scarches_scanvi
+
 Differential Expression and Gene Set Enrichment Analysis
 --------------------------------------------------------
 

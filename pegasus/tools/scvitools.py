@@ -165,6 +165,7 @@ def run_scvi(
 
     Examples
     --------
+    >>> pg.run_scvi(data, batch="Channel")
     >>> pg.run_scvi(data, categorical_covariate_keys=["cell_source", "donor"], continuous_covariate_keys=["percent_mito", "percent_ribo"])
     """
     try:
