@@ -49,6 +49,7 @@ Batch Correction
     run_harmony
     run_scanorama
     integrative_nmf
+    run_scvi
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~
@@ -112,6 +113,15 @@ Gene Module Score
     :toctree: .
 
     calc_signature_score
+
+Label Transfer
+~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    train_scarches_scanvi
+    predict_scarches_scanvi
 
 Differential Expression and Gene Set Enrichment Analysis
 --------------------------------------------------------

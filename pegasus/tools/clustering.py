@@ -178,7 +178,7 @@ def louvain(
         import louvain as louvain_module
     except ImportError:
         import sys
-        logger.error("Need louvain! Try 'pip install louvain'.")
+        logger.error("Need louvain! Try 'pip install louvain' or 'conda install -c conda-forge louvain'.")
         sys.exit(-1)
     rep_key = "W_" + rep
     if rep_key not in data.obsp:
@@ -384,7 +384,7 @@ def spectral_louvain(
         import louvain as louvain_module
     except ImportError:
         import sys
-        logger.error("Need louvain! Try 'pip install louvain'.")
+        logger.error("Need louvain! Try 'pip install louvain' or 'conda install -c conda-forge louvain'.")
         sys.exit(-1)
 
     if f"X_{rep_kmeans}" not in data.obsm.keys():

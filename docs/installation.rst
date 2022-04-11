@@ -68,10 +68,17 @@ Alternatively, you can install Pegasus with some of the additional optional depe
 
 	python3 -m pip install pegasuspy[scanorama]
 
-- **mkl**: This includes ``mkl`` packages, which improve math routines for science and engineering applications. Notice that *mkl* not included in **pegasuspy[all]** above::
+- **mkl**: This includes ``mkl`` package, which improve math routines for science and engineering applications. Notice that *mkl* not included in **pegasuspy[all]** above::
 
 	python3 -m pip install pegasuspy[mkl]
 
+- **rpy2**: This includes ``rpy2`` package, which is used by Pegasus wrapper on R functions, such as ``fgsea`` and ``DESeq2``::
+
+	python3 -m pip install pegasuspy[rpy2]
+
+- **scvi**: This includes ``scvi-tools`` package for data integration::
+
+	python3 -m pip install pegasuspy[scvi]
 
 
 
@@ -145,9 +152,17 @@ Alternatively, you can install Pegasus with some of the additional optional depe
 
 	python3.8 -m pip install pegasuspy[scanorama]
 
-- **mkl**: This includes ``mkl`` packages, which improve math routines for science and engineering applications. Notice that *mkl* not included in **pegasuspy[all]** above::
+- **mkl**: This includes ``mkl`` package, which improve math routines for science and engineering applications. Notice that *mkl* not included in **pegasuspy[all]** above::
 
 	python3.8 -m pip install pegasuspy[mkl]
+
+- **rpy2**: This includes ``rpy2`` package, which is used by Pegasus wrapper on R functions, such as ``fgsea`` and ``DESeq2``::
+
+	python3.8 -m pip install pegasuspy[rpy2]
+
+- **scvi**: This includes ``scvi-tools`` package for data integration::
+
+	python3.8 -m pip install pegasuspy[scvi]
 
 
 .. _Ubuntu/Debian install via PyPI: ./installation.html#ubuntu-debian-install-via-pypi
@@ -220,6 +235,14 @@ Alternatively, you can install Pegasus with some of the additional optional depe
 
 	python3 -m pip install pegasuspy[mkl]
 
+- **rpy2**: This includes ``rpy2`` package, which is used by Pegasus wrapper on R functions, such as ``fgsea`` and ``DESeq2``::
+
+	python3 -m pip install pegasuspy[rpy2]
+
+- **scvi**: This includes ``scvi-tools`` package for data integration::
+
+	python3 -m pip install pegasuspy[scvi]
+
 
 ----------------------
 
@@ -249,27 +272,11 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 	conda activate pegasus
 
-4. Install the following dependency::
+4. Install Pegasus via conda::
 
-	conda install -y -c conda-forge cython python-annoy
+	conda install -y -c bioconda pegasuspy
 
-5. Install Pegasus with required dependencies via *pip*::
-
-	pip install pegasuspy
-
-or install Pegasus with all optional dependencies::
-
-	pip install pegasuspy[all]
-
-6. (Optional) If you want to use the FIt-SNE plot functionality in Pegasus, do the following::
-
-	conda install -y -c conda-forge pyfit-sne
-
-Use the following command to enable the Louvain clustering functionality::
-
-	conda install -y -c conda-forge louvain
-
-Enable support on ``harmony-pytorch`` and ``nmf-torch``::
+5. (Optional) Use the following command to add support on ``harmony-pytorch`` and ``nmf-torch``::
 
 	conda install -y -c bioconda harmony-pytorch
 	pip install nmf-torch
@@ -281,6 +288,14 @@ Enalbe Force Atlas 2 for trajectory analysis::
 Enable support on ``scanorama``::
 
 	conda install -y -c bioconda scanorama
+
+Enable support on ``fgsea`` and ``deseq2`` packages::
+
+	conda install -y -c bioconda rpy2 bioconductor-fgsea bioconductor-deseq2
+
+Enable support on ``scvi-tools``::
+
+	conda install -y -c conda-forge scvi-tools
 
 --------------------------
 
@@ -299,9 +314,11 @@ Singularity_ is a container engine similar to Docker. Its main difference from D
 
 	it will just give you a Singularity container of Pegasus v1.2.0 running on Ubuntu Linux 20.04 base with Python 3.8, in the name ``pegasus_latest.sif`` of about 2.4 GB.
 
-On your local machine, first `install Singularity`_, then you can use our `Singularity spec file`_ to build a Singularity container by yourself.
+On your local machine, first `install Singularity`_, then you can use our `Singularity spec file`_ to build a Singularity container by yourself::
 
-Say the built container file has name ``pegasus.sif``. Now you can interact with it, e.g.::
+	singularity build pegasus.sif Singularity
+
+After that, you can interact with it by running the following command::
 
 	singularity run pegasus.sif
 
@@ -334,6 +351,6 @@ where ``-e`` option of ``pip`` means to install in editing mode, so that your Pe
 .. _Miniconda installer: https://docs.conda.io/en/latest/miniconda.html
 .. _Singularity: http://singularity.lbl.gov/
 .. _blog post: https://vsoch.github.io//2021/singularity-hub-archive/
-.. _install Singularity: https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps
+.. _install Singularity: https://sylabs.io/guides/3.8/user-guide/quick_start.html#quick-installation-steps
 .. _Singularity spec file: https://raw.githubusercontent.com/lilab-bcb/pegasus/master/Singularity
 .. _Singularity image interaction guide: https://singularityhub.github.io/singularityhub-docs/docs/interact
