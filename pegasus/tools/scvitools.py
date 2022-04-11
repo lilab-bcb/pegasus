@@ -71,7 +71,7 @@ def _select_csr(data, indices, indptr, indexer, new_size):
                 data_new[cnt] = data[j]
                 indices_new[cnt] = new_idx
                 cnt += 1
-    indptr_new[indptr.size - 1] = cnt    
+    indptr_new[indptr.size - 1] = cnt
 
     return data_new, indices_new, indptr_new
 
@@ -127,7 +127,7 @@ def run_scvi(
     categorical_covariate_keys: Optional[List[str]] = None,
     continuous_covariate_keys: Optional[List[str]] = None,
     use_gpu: Union[str, int, bool, None] = None,
-) -> None:
+) -> str:
     """Run scVI embedding.
 
     This is a wrapper of `scvitools <https://github.com/scverse/scvi-tools>`_ package.
@@ -153,10 +153,13 @@ def run_scvi(
     continuous_covariate_keys: ``List[str]``
         A list of obs keys listing continuous covariates that should be corrected for, default is ``None``.
     use_gpu: ``str | int | bool | None``
-        Use default GPU if available (if None or True), or index of GPU to use (if int), or name of GPU (if str, e.g., ‘cuda:0’), or use CPU (if False).
+        Use default GPU if available (if None or True), or index of GPU to use (if int), or name of GPU (if str, e.g., ``cuda:0``), or use CPU (if False).
 
     Returns
     -------
+    out_rep: ``str``
+        The keyword in ``data.obsm`` referring to the embedding calculated by integrative NMF algorithm. out_rep is always equal to "scVI"
+
     Update ``data.obsm``:
         * ``data.obsm['X_scVI']``: The embedding calculated by scVI.
 
@@ -199,6 +202,8 @@ def run_scvi(
     model.train(max_epochs=max_epochs, use_gpu=use_gpu) # train model
     data.obsm["X_scVI"] = model.get_latent_representation() # Get embedding
     data.register_attr("X_scVI", "embedding") # Register X_scVI as an embedding
+
+    return "scVI"
 
 
 @timer(logger=logger)

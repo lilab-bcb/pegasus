@@ -49,6 +49,7 @@ Batch Correction
     run_harmony
     run_scanorama
     integrative_nmf
+    run_scvi
 
 Nearest Neighbors
 ~~~~~~~~~~~~~~~~~

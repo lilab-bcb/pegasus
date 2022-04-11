@@ -62,7 +62,7 @@ def calculate_nearest_neighbors(
         try:
             import hnswlib
         except ImportError:
-            raise ImportError("Need hnswlib! Try 'pip install hnswlib'.")
+            raise ImportError("Need hnswlib! Try 'pip install hnswlib' or 'conda install -c conda-forge hnswlib'.")
 
         assert not issparse(X)
         # Build hnsw index

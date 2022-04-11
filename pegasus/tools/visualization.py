@@ -56,7 +56,7 @@ def calc_tsne(
         from fitsne import FItSNE
     except ModuleNotFoundError:
         import sys
-        logger.error("Need FItSNE!  Try 'pip install fitsne'.")
+        logger.error("Need FItSNE!  Try 'pip install fitsne' or 'conda install -c conda-forge pyfit-sne'.")
         sys.exit(-1)
 
     return FItSNE(
