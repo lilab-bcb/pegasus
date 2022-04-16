@@ -276,9 +276,8 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 	conda install -y -c bioconda pegasuspy
 
-5. (Optional) Use the following command to add support on ``harmony-pytorch`` and ``nmf-torch``::
+5. (Optional) Use the following command to add support ``nmf-torch``::
 
-	conda install -y -c bioconda harmony-pytorch
 	pip install nmf-torch
 
 Enalbe Force Atlas 2 for trajectory analysis::
