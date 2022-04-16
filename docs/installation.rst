@@ -317,6 +317,8 @@ On your local machine, first `install Singularity`_, then you can use our `Singu
 
 	singularity build pegasus.sif Singularity
 
+where ``Singularity`` is the spec filename.
+
 After that, you can interact with it by running the following command::
 
 	singularity run pegasus.sif
