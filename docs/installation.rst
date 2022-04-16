@@ -274,7 +274,7 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 4. Install Pegasus via conda::
 
-	conda install -y -c bioconda pegasuspy
+	conda install -c bioconda pegasuspy
 
 5. (Optional) Use the following command to add support ``nmf-torch``::
 
@@ -282,19 +282,19 @@ Also notice that Python ``3.8`` is used in this tutorial. To choose a different 
 
 Enalbe Force Atlas 2 for trajectory analysis::
 
-	conda install -y -c bioconda forceatlas2-python
+	conda install -c bioconda forceatlas2-python
 
 Enable support on ``scanorama``::
 
-	conda install -y -c bioconda scanorama
+	conda install -c bioconda scanorama
 
 Enable support on ``fgsea`` and ``deseq2`` packages::
 
-	conda install -y -c bioconda rpy2 bioconductor-fgsea bioconductor-deseq2
+	conda install -c bioconda rpy2 bioconductor-fgsea bioconductor-deseq2
 
 Enable support on ``scvi-tools``::
 
-	conda install -y -c conda-forge scvi-tools
+	conda install -c conda-forge scvi-tools
 
 --------------------------
 
