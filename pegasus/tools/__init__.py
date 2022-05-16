@@ -15,6 +15,7 @@ from .utils import (
     predefined_signatures,
     predefined_pathways,
     load_signatures_from_file,
+    largest_variance_from_random_matrix,
 )
 
 from .preprocessing import (

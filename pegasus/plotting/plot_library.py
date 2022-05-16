@@ -17,7 +17,7 @@ from typing import List, Tuple, Union, Optional, Callable
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasus.tools import X_from_rep, slicing
+from pegasus.tools import X_from_rep, slicing, largest_variance_from_random_matrix
 from .plot_utils import (
     _transform_basis,
     _get_nrows_and_ncols,
@@ -44,6 +44,7 @@ def scatter(
     fix_corners: Optional[bool] = True,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[Union[str, List[str]]] = "right margin",
+    legend_fontsize: Optional[Union[int, List[int]]] = 10, 
     legend_ncol: Optional[str] = None,
     palettes: Optional[Union[str, List[str]]] = None,
     cmaps: Optional[Union[str, List[str]]] = "YlOrRd",
@@ -85,6 +86,8 @@ def scatter(
         Alpha value for blending, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     legend_loc: ``str`` or ``List[str]``, optional, default: ``right margin``
         Legend location. Can be either "right margin" or "on data". If a list is provided, set 'legend_loc' for each attribute in 'attrs' separately.
+    legend_fontsize: ``int`` or ``List[int]``, optional, default: ``10``
+        Legend fontsize. If a list is provided, set 'legend_fontsize' for each attribute in 'attrs' separately.
     legend_ncol: ``str``, optional, default: None
         Only applicable if legend_loc == "right margin". Set number of columns used to show legends.
     palettes: ``str`` or ``List[str]``, optional, default: None
@@ -164,7 +167,9 @@ def scatter(
 
     if not is_list_like(legend_loc):
         legend_loc = [legend_loc] * nattrs
-    legend_fontsize = [5 if x == "on data" else 10 for x in legend_loc]
+
+    if not is_list_like(legend_fontsize):
+        legend_fontsize = [legend_fontsize] * nattrs
 
     palettes = DictWithDefault(palettes)
     cmaps = DictWithDefault(cmaps)
@@ -2175,5 +2180,64 @@ def plot_gsea(
     df_dn = df.loc[df['NES']<0]
     _make_one_gsea_plot(df_dn, axes[1], color='green')
     axes[1].set_xlabel('-log10(q-value)')
+
+    return fig if return_fig else None
+
+
+def elbowplot(
+    data: Union[MultimodalData, UnimodalData],
+    rep: str = "pca",
+    pval: str = "0.05",
+    panel_size: Optional[Tuple[float, float]] = (6, 4),
+    return_fig: Optional[bool] = False,
+    dpi: Optional[float] = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """Generate Elbowplot and suggest n_comps to select based on random matrix theory (see utils.largest_variance_from_random_matrix).
+
+    Parameters
+    ----------
+
+    data : ``UnimodalData`` or ``MultimodalData`` object.
+        The main data object.
+    rep: ``str``, optional, default: ``pca``
+        Representation to consider, either "pca" or "tsvd".
+    pval: ``str``, optional (default: "0.05").
+        P value cutoff on the null distribution (random matrix), choosing from "0.01" and "0.05".
+    top_n: ``int``, optional, default: ``20``
+        Only show top_n up/down regulated pathways.
+    panel_size: `tuple`, optional (default: `(6, 4)`)
+        The plot size (width, height) in inches.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``.
+
+    Update ``data.uns``:
+
+        * ``{rep}_ncomps``: Recommended components to pick.
+
+    Examples
+    --------
+    >>> fig = pg.elbowplot(data, dpi = 500)
+    """
+    assert rep in data.uns
+    thre = largest_variance_from_random_matrix(data.shape[0], data.var[data.uns[f"{rep}_features"]].sum(), pval)
+    ncomps = (data.uns[rep]["variance"] > thre).sum()
+    data.uns[f"{rep}_ncomps"] = ncomps
+    logger.info(f"Selecting {ncomps} is recommended!")
+
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
+    ax.scatter(range(1, data.uns[rep]["variance"].size + 1), data.uns[rep]["variance"], s=8, c='k')
+    ax.set_yscale('log')
+    ax.set_xlabel(rep.upper())
+    ax.set_ylabel("Variance")
+    ax.axvline(x = ncomps + 0.5, ls = "--", c = "r", linewidth=1)
 
     return fig if return_fig else None

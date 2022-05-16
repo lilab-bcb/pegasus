@@ -29,7 +29,7 @@ def update_rep(rep: str) -> str:
     return rep if rep is not None else "mat"
 
 
-def X_from_rep(data: AnnData, rep: str) -> np.array:
+def X_from_rep(data: AnnData, rep: str, n_comps: int = None) -> np.array:
     """
     If rep is not mat, first check if X_rep is in data.obsm. If not, raise an error.
     If rep is None, return data.X as a numpy array
@@ -38,7 +38,12 @@ def X_from_rep(data: AnnData, rep: str) -> np.array:
         rep_key = "X_" + rep
         if rep_key not in data.obsm.keys():
             raise ValueError("Cannot find {0} matrix. Please run {0} first".format(rep))
-        return data.obsm[rep_key]
+        if n_comps is None:
+            return data.obsm[rep_key]
+        else:
+            assert n_comps > 0
+            n_dim = min(n_comps, data.obsm[rep_key].shape[1])
+            return data.obsm[rep_key][:, 0:n_dim]
     else:
         return data.X if not issparse(data.X) else data.X.toarray()
 
@@ -209,3 +214,40 @@ def load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:
             signatures[items[0]] = list(set(items[2:]))
     logger.info(f"Loaded signatures from GMT file {input_file}.")
     return signatures
+
+
+def largest_variance_from_random_matrix(
+    ncells: int,
+    nfeatures: int,
+    pval: str = "0.05",
+) -> float:
+    """ Select the largest variance from a random generated matrix. See [Johnstone 2001](https://projecteuclid.org/journals/annals-of-statistics/volume-29/issue-2/On-the-distribution-of-the-largest-eigenvalue-in-principal/10.1214/aos/1009210544.full) and [Shekhar et al. 2022](https://elifesciences.org/articles/73809) for more details. 
+
+    Parameters
+    ----------
+    ncells: ``int``.
+        Number of cells.
+
+    nfeatures: ``int``.
+        Number of featuers (e.g. highly variable genes)
+
+    pval: ``str``, optional (default: "0.05").
+        P value cutoff on the null distribution (random matrix), choosing from "0.01" and "0.05".
+
+    Returns
+    -------
+    ``float``, the largest variance from a random matrix at pval.
+
+    Examples
+    --------
+    >>> pg.largest_variance_from_random_matrix(10000, 2000)
+    """
+    quantiles = {"0.01": 2.023335, "0.05": 0.9792895} # quantiles from the Tracy-Widom distribution of order 1.
+    assert pval in ["0.01", "0.05"]
+    val1 = (ncells - 1) ** 0.5
+    val2 = nfeatures ** 0.5  
+    mu = (val1 + val2) ** 2
+    sigma = (val1 + val2) * (1.0 / val1 + 1.0 / val2) ** (1.0 / 3.0)
+    res = (quantiles[pval] * sigma + mu) / (ncells - 1)
+
+    return res
