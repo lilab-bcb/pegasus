@@ -2174,7 +2174,7 @@ def plot_gsea(
     df['NES Abs'] = np.abs(df['NES'])
     df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
 
-    fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2)
+    fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
     df_up = df.loc[df['NES']>0]
     _make_one_gsea_plot(df_up, axes[0], color='red')
     df_dn = df.loc[df['NES']<0]
