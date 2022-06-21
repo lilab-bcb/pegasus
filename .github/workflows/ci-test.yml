@@ -39,7 +39,7 @@ jobs:
         sudo apt install -y git
         eval `ssh-agent -s`
         ssh-add - <<< '${{ secrets.PEGASUS_ACTIONS }}'
-        git clone https://github.com/lilab-bcb/pegasus-test-data.git ./tests/data
+        git clone git@github.com:lilab-bcb/pegasus.git ./tests/data
     - name: Pipeline test
       run: |
         bash tests/run_pipeline.sh
