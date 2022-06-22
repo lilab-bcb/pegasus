@@ -1,3 +1,6 @@
+"""
+Unittest module for inmf
+"""
 import unittest
 
 import numpy as np
