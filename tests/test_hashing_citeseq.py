@@ -1,3 +1,7 @@
+"""
+Unittest module for hashing_citeseq
+"""
+
 import os
 import glob
 import unittest

@@ -37,7 +37,9 @@ jobs:
     - name: Fetch test data
       run: |
         sudo apt install -y git
-        git clone https://github.com/lilab-bcb/pegasus-test-data.git ./tests/data
+        eval `ssh-agent -s`
+        ssh-add - <<< '${{ secrets.PEGASUS_ACTIONS }}'
+        git clone git@github.com:lilab-bcb/pegasus-test-data.git ./tests/data
     - name: Pipeline test
       run: |
         bash tests/run_pipeline.sh
