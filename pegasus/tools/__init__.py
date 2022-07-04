@@ -25,6 +25,7 @@ from .preprocessing import (
     identify_robust_genes,
     _run_filter_data,
     log_norm,
+    arcsinh_transform,
     select_features,
     pca,
     pc_transform,

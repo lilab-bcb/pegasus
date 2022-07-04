@@ -30,6 +30,7 @@ from .tools import (
     filter_data,
     identify_robust_genes,
     log_norm,
+    arcsinh_transform,
     select_features,
     pca,
     pc_transform,

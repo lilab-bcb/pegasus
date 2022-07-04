@@ -36,8 +36,9 @@ from .plot_utils import (
 
 def scatter(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
-    attrs: Union[str, List[str]] = None,
-    basis: Optional[str] = "umap",
+    attrs: Optional[Union[str, List[str]]] = None,
+    basis: Optional[Union[str, List[str]]] = "umap",
+    components: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = (1, 2),
     matkey: Optional[str] = None,
     restrictions: Optional[Union[str, List[str]]] = None,
     show_background: Optional[bool] = False,
@@ -72,8 +73,10 @@ def scatter(
        Use current selected modality in data.
     attrs: ``str`` or ``List[str]``, default: None
         Color scatter plots by attrs. Each attribute in attrs can be one key in data.obs, data.var_names (e.g. one gene) or data.obsm (attribute has the format of 'obsm_key@component', like 'X_pca@0'). If one attribute is categorical, a palette will be used to color each category separately. Otherwise, a color map will be used. If no attributes are provided, plot the basis for all data.
-    basis: ``str``, optional, default: ``umap``
-        Basis to be used to generate scatter plots. Can be either 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'.
+    basis: ``str`` or ``List[str]``, optional, default: ``umap``
+        Basis to be used to generate scatter plots. Can be either 'pca', 'diffmap', 'umap', 'tsne', 'fitsne', 'fle', 'net_tsne', 'net_fitsne', 'net_umap' or 'net_fle'. If `basis` is a list, each of element in `attrs` will be plotted for each basis in `basis`.
+    components: ``Tuple[int, int]`` or ``List[Tuple[int, int]]``, optional, default: ``(1, 2)``
+        Components in basis to be used. Default to the first two components. If `components` is a list, for each element in `attrs` and each `basis`, all components enumeration will be plotted.
     matkey: ``str``, optional, default: None
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     restrictions: ``str`` or ``List[str]``, optional, default: None
@@ -134,14 +137,6 @@ def scatter(
     >>> pg.scatter(data, attrs=['louvain_labels', 'Channel'], basis='fitsne')
     >>> pg.scatter(data, attrs=['CD14', 'TRAC'], basis='umap')
     """
-    if attrs is None:
-        attrs = ['_all'] # default, plot all points
-        if palettes is None:
-            palettes = '_all:slategrey'
-    elif not is_list_like(attrs):
-        attrs = [attrs]
-    nattrs = len(attrs)
-
     if not isinstance(data, anndata.AnnData):
         cur_matkey = data.current_matrix()
 
@@ -149,17 +144,33 @@ def scatter(
         assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
-    x = data.obsm[f"X_{basis}"][:, 0]
-    y = data.obsm[f"X_{basis}"][:, 1]
 
-    # four corners of the plot
-    corners = np.array(np.meshgrid([x.min(), x.max()], [y.min(), y.max()])).T.reshape(-1, 2)
+    if attrs is None:
+        attrs = ['_all'] # default, plot all points
+        if palettes is None:
+            palettes = '_all:slategrey'
+    elif not is_list_like(attrs):
+        attrs = [attrs]
 
+    if isinstance(basis, str):
+        basis = [basis]
+    if isinstance(components, tuple):
+        components = [components]
 
-    basis = _transform_basis(basis)
-    global_marker_size = _get_marker_size(x.size) if marker_size is None else marker_size
-    nrows, ncols = _get_nrows_and_ncols(nattrs, nrows, ncols)
-    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False)
+    # check validity for basis and components
+    max_comp = max(max([x[0] for x in components]), max([x[1] for x in components]))
+    for basis_key in basis:
+        rep = f"X_{basis_key}"
+        if rep not in data.obsm:
+            raise KeyError(f"Basis {basis_key} does not exist!")
+        if data.obsm[rep].shape[1] < max_comp:
+            raise KeyError(f"Basis {basis_key} only has {data.obsm[rep].shape[1]} components, less than max component {max_comp} specified in components!")
+
+    nattrs = len(attrs)
+    nbasis = len(basis)
+    ncomps = len(components)
+    nfigs = nattrs * nbasis * ncomps
+    share_xy = (nbasis == 1) and (ncomps == 1)
 
 
     if not is_list_like(alpha):
@@ -176,16 +187,42 @@ def scatter(
     restr_obj = RestrictionParser(restrictions)
     restr_obj.calc_default(data)
 
+    global_marker_size = None
+
+    nrows, ncols = _get_nrows_and_ncols(nfigs, nrows, ncols)
+    fig, axes = _get_subplot_layouts(nrows=nrows, ncols=ncols, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=hspace, squeeze=False, sharex=share_xy, sharey=share_xy)
+
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[i, j]
             ax.grid(False)
             ax.set_xticks([])
             ax.set_yticks([])
+            if i * ncols + j >= nfigs:
+                ax.set_frame_on(False)
 
-            if i * ncols + j < nattrs:
-                pos = i * ncols + j
-                attr = attrs[pos]
+    offset_start_ = 0
+    offset_inc_ = nbasis * ncomps
+    for basis_key in basis:
+        basis_ = _transform_basis(basis_key)
+        for comp_key in components:
+            x = data.obsm[f"X_{basis_key}"][:, comp_key[0]-1]
+            y = data.obsm[f"X_{basis_key}"][:, comp_key[1]-1]
+
+            # four corners of the plot
+            corners = np.array(np.meshgrid([x.min(), x.max()], [y.min(), y.max()])).T.reshape(-1, 2)
+
+            if global_marker_size == None:
+                global_marker_size = _get_marker_size(x.size) if marker_size is None else marker_size
+            
+            x_label = f"{basis_}{comp_key[0]}"
+            y_label = f"{basis_}{comp_key[1]}"
+
+            pos = offset_start_
+            for attr_id, attr in enumerate(attrs):
+                i = pos // ncols
+                j = pos % ncols
+                ax = axes[i, j]
 
                 if attr == '_all': # if default
                     values = pd.Categorical.from_codes(np.zeros(data.shape[0], dtype=int), categories=['cell'])
@@ -224,7 +261,7 @@ def scatter(
                             c=values[selected],
                             s=local_marker_size,
                             marker=".",
-                            alpha=alpha[pos],
+                            alpha=alpha[attr_id],
                             edgecolors="none",
                             cmap=cmap,
                             vmin=vmin,
@@ -237,7 +274,7 @@ def scatter(
                             y[selected] * scale_factor,
                             c=values[selected],
                             s=local_marker_size,
-                            alpha=alpha[pos],
+                            alpha=alpha[attr_id],
                             edgecolors="none",
                             cmap=cmap,
                             vmin=vmin,
@@ -250,7 +287,6 @@ def scatter(
                     rect = [left + width * (1.0 + 0.05), bottom, width * 0.1, height]
                     ax_colorbar = fig.add_axes(rect)
                     fig.colorbar(img, cax=ax_colorbar)
-
                 else:
                     # Categorical attribute
                     labels, with_background = _generate_categories(values, restr_obj.get_satisfied(data, attr))
@@ -266,10 +302,10 @@ def scatter(
                     for k, cat in enumerate(labels.categories):
                         idx = labels == cat
                         if idx.sum() > 0:
-                            scatter_kwargs = {"alpha": alpha[pos], "edgecolors": "none", "rasterized": True}
+                            scatter_kwargs = {"alpha": alpha[attr_id], "edgecolors": "none", "rasterized": True}
 
                             if cat != "":
-                                if (legend_loc[pos] != "on data") and (scale_factor is None):
+                                if (legend_loc[attr_id] != "on data") and (scale_factor is None):
                                     scatter_kwargs["label"] = cat
                                 else:
                                     text_list.append((np.median(x[idx]), np.median(y[idx]), cat))
@@ -298,7 +334,7 @@ def scatter(
                                     _plot_corners(ax, corners, local_marker_size)
 
                     if attr != '_all':
-                        if legend_loc[pos] == "right margin":
+                        if legend_loc[attr_id] == "right margin":
                             if scale_factor is not None:
                                 for k, cat in enumerate(labels.categories):
                                     ax.scatter([], [], c=palette[k], label=cat)
@@ -306,27 +342,30 @@ def scatter(
                                 loc="center left",
                                 bbox_to_anchor=(1, 0.5),
                                 frameon=False,
-                                fontsize=legend_fontsize[pos],
+                                fontsize=legend_fontsize[attr_id],
                                 ncol=_get_legend_ncol(label_size, legend_ncol),
                             )
                             for handle in legend.legendHandles:
                                 handle.set_sizes([300.0 if scale_factor is None else 100.0])
-                        elif legend_loc[pos] == "on data":
+                        elif legend_loc[attr_id] == "on data":
                             texts = []
                             for px, py, txt in text_list:
-                                texts.append(ax.text(px, py, txt, fontsize=legend_fontsize[pos], fontweight = "bold", ha = "center", va = "center"))
+                                texts.append(ax.text(px, py, txt, fontsize=legend_fontsize[attr_id], fontweight = "bold", ha = "center", va = "center"))
                             # from adjustText import adjust_text
                             # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
                 if attr != '_all':
                     ax.set_title(attr)
-            else:
-                ax.set_frame_on(False)
 
-            if i == nrows - 1:
-                ax.set_xlabel(f"{basis}1")
-            if j == 0:
-                ax.set_ylabel(f"{basis}2")
+                if (share_xy and (i + 1) * ncols + j >= nfigs) or (not share_xy):
+                    ax.set_xlabel(x_label)
+
+                if (share_xy and j == 0) or (not share_xy):
+                    ax.set_ylabel(y_label)
+
+                pos += offset_inc_
+
+            offset_start_ += 1
 
     # Reset current matrix if needed.
     if not isinstance(data, anndata.AnnData):
@@ -2228,7 +2267,9 @@ def elbowplot(
     >>> fig = pg.elbowplot(data, dpi = 500)
     """
     assert rep in data.uns
-    thre = largest_variance_from_random_matrix(data.shape[0], data.var[data.uns[f"{rep}_features"]].sum(), pval)
+    repf = data.uns[f"{rep}_features"]
+    nfeatures = data.var[repf].sum() if repf != None else data.shape[1]
+    thre = largest_variance_from_random_matrix(data.shape[0], nfeatures, pval)
     ncomps = (data.uns[rep]["variance"] > thre).sum()
     data.uns[f"{rep}_ncomps"] = ncomps
     logger.info(f"Selecting {ncomps} is recommended!")

@@ -18,6 +18,7 @@ def run_harmony(
     data: Union[MultimodalData, UnimodalData],
     batch: str = "Channel",
     rep: str = "pca",
+    n_comps: int = None,
     n_jobs: int = -1,
     n_clusters: int = None,
     random_state: int = 0,
@@ -38,6 +39,9 @@ def run_harmony(
 
     rep: ``str``, optional, default: ``"pca"``.
         Which representation to use as input of Harmony, default is PCA.
+
+    n_comps: `int`, optional (default: None)
+        Number of components to be used in the `rep`. If n_comps == None, use all components; otherwise, use the minimum of n_comps and rep's dimensions.
 
     n_jobs : ``int``, optional, default: ``-1``.
         Number of threads to use in Harmony. ``-1`` refers to using all physical CPU cores.
@@ -81,7 +85,7 @@ def run_harmony(
     logger.info("Start integration using Harmony.")
     out_rep = rep + "_harmony"
     data.obsm["X_" + out_rep] = harmonize(
-        X_from_rep(data, rep),
+        X_from_rep(data, rep, n_comps),
         data.obs,
         batch,
         n_clusters = n_clusters,

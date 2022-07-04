@@ -268,7 +268,7 @@
 				}
 			],
 			"subtypes" : {
-				"title" : "SMC subtype markers",
+				"title" : "Fibro/Myofib subtype markers",
 				"cell_types" : [
 					{
 						"name" : "Adventitial fibroblast",
