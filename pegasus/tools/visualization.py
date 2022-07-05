@@ -184,7 +184,7 @@ def tsne(
 
     rep: ``str``, optional, default: ``"pca"``
         Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
-    
+
     rep_ncomps: `int`, optional (default: None)
         Number of components to be used in `rep`. If rep_ncomps == None, use all components; otherwise, use the minimum of rep_ncomps and rep's dimensions.
 

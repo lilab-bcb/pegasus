@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse, csr_matrix
-from typing import Union, List, Tuple, Dict
+from typing import Union, List, Tuple, Dict, Optional
 from anndata import AnnData
 from pegasusio import UnimodalData, MultimodalData
 
@@ -48,14 +48,18 @@ def X_from_rep(data: AnnData, rep: str, n_comps: int = None) -> np.array:
         return data.X if not issparse(data.X) else data.X.toarray()
 
 
-def W_from_rep(data: AnnData, rep: str) -> csr_matrix:
+def W_from_rep(
+    data: Union[MultimodalData, UnimodalData, AnnData],
+    rep: str,
+    n_comps: Optional[int] = None,
+) -> csr_matrix:
     """
     Return affinity matrix W based on representation rep.
     """
     rep_key = "W_" + rep
     if rep_key not in data.obsp:
         raise ValueError("Affinity matrix does not exist. Please run neighbors first!")
-    return data.obsp[rep_key]
+    return data.obsp[rep_key] if n_comps is None else data.obsp[rep_key][:, 0:n_comps]
 
 
 # slicing is not designed to work at extracting one element, convert to dense matrix
@@ -198,7 +202,7 @@ predefined_signatures = dict(
     ribosomal_genes_human=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_human.gmt"),
     ribosomal_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_mouse.gmt"),
     apoptosis_human=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_human.gmt"),
-    apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),    
+    apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),
 )
 
 predefined_pathways = dict(
@@ -221,7 +225,7 @@ def largest_variance_from_random_matrix(
     nfeatures: int,
     pval: str = "0.05",
 ) -> float:
-    """ Select the largest variance from a random generated matrix. See [Johnstone 2001](https://projecteuclid.org/journals/annals-of-statistics/volume-29/issue-2/On-the-distribution-of-the-largest-eigenvalue-in-principal/10.1214/aos/1009210544.full) and [Shekhar et al. 2022](https://elifesciences.org/articles/73809) for more details. 
+    """ Select the largest variance from a random generated matrix. See [Johnstone 2001](https://projecteuclid.org/journals/annals-of-statistics/volume-29/issue-2/On-the-distribution-of-the-largest-eigenvalue-in-principal/10.1214/aos/1009210544.full) and [Shekhar et al. 2022](https://elifesciences.org/articles/73809) for more details.
 
     Parameters
     ----------
@@ -245,7 +249,7 @@ def largest_variance_from_random_matrix(
     quantiles = {"0.01": 2.023335, "0.05": 0.9792895} # quantiles from the Tracy-Widom distribution of order 1.
     assert pval in ["0.01", "0.05"]
     val1 = (ncells - 1) ** 0.5
-    val2 = nfeatures ** 0.5  
+    val2 = nfeatures ** 0.5
     mu = (val1 + val2) ** 2
     sigma = (val1 + val2) * (1.0 / val1 + 1.0 / val2) ** (1.0 / 3.0)
     res = (quantiles[pval] * sigma + mu) / (ncells - 1)
