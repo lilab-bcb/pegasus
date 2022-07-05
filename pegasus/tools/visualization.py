@@ -480,7 +480,7 @@ def fle(
 
     key = f"X_{out_basis}"
     data.obsm[key] = calc_force_directed_layout(
-        W_from_rep(data, rep, rep_ncomps),
+        W_from_rep(data, rep),
         file_name,
         n_jobs,
         target_change_per_node,

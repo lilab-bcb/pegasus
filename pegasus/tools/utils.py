@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse, csr_matrix
-from typing import Union, List, Tuple, Dict, Optional
+from typing import Union, List, Tuple, Dict
 from anndata import AnnData
 from pegasusio import UnimodalData, MultimodalData
 
@@ -51,7 +51,6 @@ def X_from_rep(data: AnnData, rep: str, n_comps: int = None) -> np.array:
 def W_from_rep(
     data: Union[MultimodalData, UnimodalData, AnnData],
     rep: str,
-    n_comps: Optional[int] = None,
 ) -> csr_matrix:
     """
     Return affinity matrix W based on representation rep.
@@ -59,7 +58,7 @@ def W_from_rep(
     rep_key = "W_" + rep
     if rep_key not in data.obsp:
         raise ValueError("Affinity matrix does not exist. Please run neighbors first!")
-    return data.obsp[rep_key] if n_comps is None else data.obsp[rep_key][:, 0:n_comps]
+    return data.obsp[rep_key]
 
 
 # slicing is not designed to work at extracting one element, convert to dense matrix
