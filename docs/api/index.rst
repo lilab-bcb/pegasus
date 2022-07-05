@@ -32,6 +32,7 @@ Preprocess
     filter_data
     identify_robust_genes
     log_norm
+    arcsinh_transform
     highly_variable_features
     select_features
     pca
@@ -164,6 +165,7 @@ Plotting
     ridgeplot
     wordcloud
     plot_gsea
+    elbowplot
 
 Pseudo-bulk analysis
 ---------------------

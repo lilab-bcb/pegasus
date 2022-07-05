@@ -419,7 +419,7 @@ def fle(
     rep: ``str``, optional, default: ``"diffmap"``
         Representation of data used for the calculation. By default, use Diffusion Map coordinates. If ``None``, use the count matrix ``data.X``.
 
-    rep_ncomps: `int`, optional (default: None)
+    rep_ncomps: ``int``, optional (default: None)
         Number of components to be used in `rep`. If rep_ncomps == None, use all components; otherwise, use the minimum of rep_ncomps and rep's dimensions.
 
     K: ``int``, optional, default: ``50``
