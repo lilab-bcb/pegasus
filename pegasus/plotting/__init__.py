@@ -14,4 +14,5 @@ from .plot_library import (
     ridgeplot,
     wordcloud,
     plot_gsea,
+    elbowplot,
 )

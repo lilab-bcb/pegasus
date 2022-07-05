@@ -161,6 +161,7 @@ def calc_force_directed_layout(
 def tsne(
     data: MultimodalData,
     rep: str = "pca",
+    rep_ncomps: int = None,
     n_jobs: int = -1,
     n_components: int = 2,
     perplexity: float = 30,
@@ -183,6 +184,9 @@ def tsne(
 
     rep: ``str``, optional, default: ``"pca"``
         Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    rep_ncomps: `int`, optional (default: None)
+        Number of components to be used in `rep`. If rep_ncomps == None, use all components; otherwise, use the minimum of rep_ncomps and rep's dimensions.
 
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all physical CPU cores.
@@ -222,7 +226,7 @@ def tsne(
 
     rep = update_rep(rep)
     n_jobs = eff_n_jobs(n_jobs)
-    X = X_from_rep(data, rep).astype(np.float64)
+    X = X_from_rep(data, rep, rep_ncomps).astype(np.float64)
 
     if learning_rate == "auto":
         learning_rate = max(X.shape[0] / early_exaggeration, 200.0)
@@ -261,6 +265,7 @@ def tsne(
 def umap(
     data: MultimodalData,
     rep: str = "pca",
+    rep_ncomps: int = None,
     n_components: int = 2,
     n_neighbors: int = 15,
     min_dist: float = 0.5,
@@ -287,6 +292,9 @@ def umap(
 
     rep: ``str``, optional, default: ``"pca"``
         Representation of data used for the calculation. By default, use PCA coordinates. If ``None``, use the count matrix ``data.X``.
+
+    rep_ncomps: `int`, optional (default: None)
+        Number of components to be used in `rep`. If rep_ncomps == None, use all components; otherwise, use the minimum of rep_ncomps and rep's dimensions.
 
     n_components: ``int``, optional, default: ``2``
         Dimension of calculated UMAP coordinates. By default, generate 2-dimensional data for 2D visualization.
@@ -344,7 +352,7 @@ def umap(
     >>> pg.umap(data)
     """
     rep = update_rep(rep)
-    X = X_from_rep(data, rep)
+    X = X_from_rep(data, rep, rep_ncomps)
 
     if data.shape[0] < n_neighbors:
         logger.warning(f"Warning: Number of samples = {data.shape[0]} < K = {n_neighbors}!\n Set K to {data.shape[0]}.")
@@ -378,6 +386,7 @@ def fle(
     file_name: str = None,
     n_jobs: int = -1,
     rep: str = "diffmap",
+    rep_ncomps: int = None,
     K: int = 50,
     full_speed: bool = False,
     target_change_per_node: float = 2.0,
@@ -409,6 +418,9 @@ def fle(
 
     rep: ``str``, optional, default: ``"diffmap"``
         Representation of data used for the calculation. By default, use Diffusion Map coordinates. If ``None``, use the count matrix ``data.X``.
+
+    rep_ncomps: `int`, optional (default: None)
+        Number of components to be used in `rep`. If rep_ncomps == None, use all components; otherwise, use the minimum of rep_ncomps and rep's dimensions.
 
     K: ``int``, optional, default: ``50``
         Number of nearest neighbors to be considered during the computation.
@@ -460,6 +472,7 @@ def fle(
             data,
             K=K,
             rep=rep,
+            n_comps=rep_ncomps,
             n_jobs=n_jobs,
             random_state=random_state,
             full_speed=full_speed,

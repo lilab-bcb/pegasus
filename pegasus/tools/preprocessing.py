@@ -340,6 +340,66 @@ def log_norm(
     data.uns["norm_count"] = norm_count
 
 
+@timer(logger=logger)
+def arcsinh_transform(data: Union[MultimodalData, UnimodalData], 
+    cofactor: float = 5.0,
+    jitter = False,
+    random_state = 0,
+    backup_matrix: str = "raw.X",
+) -> None:
+    """Conduct arcsinh transform on the current matrix.
+
+    If jitter == True, jittering by adding a randomized value in U([-0.5, 0.5)). This will also make the matrix dense. Mimic Cytobank.
+
+    Parameters
+    ----------
+    cofactor: ``float``, optional, default: ``5.0``
+        Cofactor used in cytobank, arcsinh(x / cofactor).
+
+    jitter: ``bool``, optional, default: ``False``
+        Add a 'arcsinh.jitter' matrix in dense format, jittering by adding a randomized value in U([-0.5, 0.5)).
+
+    random_state: ``int``, optional, default: ``0``
+        Random seed for generating jitters.
+
+    backup_matrix: ``str``, optional, default: ``raw.X``.
+        The key name of the backup count matrix, usually the raw counts.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.X`` with count matrix after log-normalization. In addition, back up the original count matrix as ``backup_matrix``.
+
+    In case of rerunning normalization while ``backup_matrix`` already exists, use ``backup_matrix`` instead of ``data.X`` for normalization.
+
+    Examples
+    --------
+    >>> pg.arcsinh_transform(data)
+    """
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
+
+    assert data.get_modality() in  {"rna"}
+
+    if backup_matrix not in data.list_keys():
+        data.add_matrix(backup_matrix, data.X)
+        data.X = data.X.astype(np.float32)  # force copy
+    else:
+        # The case of rerunning log_norm. Use backup matrix as source.
+        data.X = data.get_matrix(backup_matrix).astype(np.float32)  # force copy
+        logger.warning("Rerun log-normalization. Use the raw counts in backup instead.")
+
+    if not jitter:
+        data.X.data = np.arcsinh(data.X.data / cofactor, dtype = np.float32)
+    else:
+        np.random.seed(random_state)
+        jitters = np.random.uniform(low = -0.5, high = 0.5, size = data.X.shape)
+        signal = np.add(data.X.toarray(), jitters, dtype = np.float32)
+        signal = np.arcsinh(signal / cofactor, dtype = np.float32)
+        data.X = signal
+
+
 @run_gc
 def select_features(
     data: Union[MultimodalData, UnimodalData],
@@ -428,7 +488,7 @@ def pca(
         Number of Principal Components to get.
 
     features: ``str``, optional, default: ``"highly_variable_features"``.
-        Keyword in ``data.var`` to specify features used for PCA.
+        Keyword in ``data.var`` to specify features used for PCA. If ``None``, all features will be selected.
 
     standardize: ``bool``, optional, default: ``True``.
         Whether to scale the data to unit variance and zero mean.

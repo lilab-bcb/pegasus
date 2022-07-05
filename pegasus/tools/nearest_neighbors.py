@@ -110,6 +110,7 @@ def get_neighbors(
     data: MultimodalData,
     K: int = 100,
     rep: str = "pca",
+    n_comps: int = None,
     n_jobs: int = -1,
     random_state: int = 0,
     full_speed: bool = False,
@@ -127,6 +128,8 @@ def get_neighbors(
         Number of neighbors, including the data point itself.
     rep : `str`, optional (default: 'pca')
         Representation used to calculate kNN. If `None` use data.X
+    n_comps: `int`, optional (default: None)
+        Number of components to be used in the `rep`. If n_comps == None, use all components; otherwise, use the minimum of n_comps and rep's dimensions.
     n_jobs : `int`, optional (default: -1)
         Number of threads to use. -1 refers to using all physical CPU cores.
     random_state: `int`, optional (default: 0)
@@ -158,7 +161,7 @@ def get_neighbors(
         logger.info("Found cached kNN results, no calculation is required.")
     else:
         indices, distances = calculate_nearest_neighbors(
-            X_from_rep(data, rep),
+            X_from_rep(data, rep, n_comps),
             K=K,
             n_jobs=eff_n_jobs(n_jobs),
             random_state=random_state,
@@ -228,6 +231,7 @@ def neighbors(
     data: MultimodalData,
     K: int = 100,
     rep: "str" = "pca",
+    n_comps: int = None,
     n_jobs: int = -1,
     random_state: int = 0,
     full_speed: bool = False,
@@ -249,6 +253,9 @@ def neighbors(
 
     rep: ``str``, optional, default: ``"pca"``
         Embedding representation used to calculate kNN. If ``None``, use ``data.X``; otherwise, keyword ``'X_' + rep`` must exist in ``data.obsm``.
+
+    n_comps: `int`, optional (default: None)
+        Number of components to be used in the `rep`. If n_comps == None, use all components; otherwise, use the minimum of n_comps and rep's dimensions.
 
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all physical CPU cores.
@@ -289,6 +296,7 @@ def neighbors(
         data,
         K=K,
         rep=rep,
+        n_comps=n_comps,
         n_jobs=n_jobs,
         random_state=random_state,
         full_speed=full_speed,
