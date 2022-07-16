@@ -117,21 +117,6 @@ def calc_stat_per_batch(X: Union[csr_matrix, np.ndarray], batch: Union[pd.Catego
         return calc_stat_per_batch_dense(X.shape[0], X.shape[1], X, nbatch, codes)
 
 
-def normalize_by_count(X: Union[csr_matrix, np.ndarray], robust: List[bool], norm_count: float, log_transform: bool) -> np.ndarray:
-    scale = None
-    if issparse(X):
-        from pegasus.cylib.fast_utils import normalize_by_count_sparse
-        scale = normalize_by_count_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, robust, norm_count)
-        if log_transform:
-            np.log1p(X.data, out = X.data)
-    else:
-        from pegasus.cylib.fast_utils import normalize_by_count_dense
-        scale = normalize_by_count_dense(X.shape[0], X.shape[1], X, robust, norm_count)
-        if log_transform:
-            np.log1p(X, out = X)
-    return scale
-
-
 def calc_sig_background(X: Union[csr_matrix, np.ndarray], bins: pd.Categorical, mean_vec: List[float]) -> Tuple[np.ndarray, np.ndarray]:
     n_bins = bins.categories.size
     codes = bins.codes.astype(np.int32)

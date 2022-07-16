@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
-from pegasus.tools import eff_n_jobs, normalize_by_count
+from pegasus.tools import eff_n_jobs
 
 import logging
 logger = logging.getLogger(__name__)
@@ -292,13 +292,71 @@ def _run_filter_data(
         identify_robust_genes(unidata, percent_cells = percent_cells)
 
 
+def _get_base_mat(data, base_matrix):
+    X = None
+    if base_matrix == None:
+        X = data.X.astype(np.float32)
+        base_matrix = data.current_matrix()
+    else:
+        X = data.get_matrix(base_matrix).astype(np.float32)
+    return X, base_matrix
+
+def _select_features(data):
+    return data.var["robust"].values if ("robust" in data.var) else np.ones(data.shape[1], dtype=np.bool_)
+
+def _normalize_by_count(X, robust, norm_count):
+    scale = None
+    if issparse(X):
+        from pegasus.cylib.fast_utils import normalize_by_count_sparse
+        scale = normalize_by_count_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, robust, norm_count)
+    else:
+        from pegasus.cylib.fast_utils import normalize_by_count_dense
+        scale = normalize_by_count_dense(X.shape[0], X.shape[1], X, robust, norm_count)
+    return scale
+
+def _log1p(X):
+    if issparse(X):
+        np.log1p(X.data, out = X.data)
+    else:
+        np.log1p(X, out = X)
+    return X
+
+def _arcsinh(X, jitter, cofactor, random_state):
+    if not jitter:
+        if issparse(X):
+            X.data = np.arcsinh(X.data / cofactor, dtype = np.float32)
+        else:
+            X = np.arcsinh(X / cofactor, dtype = np.float32)
+    else:
+        if issparse(X):
+            X = X.toarray()
+        np.random.seed(random_state)
+        jitters = np.random.uniform(low = -0.5, high = 0.5, size = X.shape)
+        X = np.add(X, jitters, dtype = np.float32)
+        X = np.arcsinh(X / cofactor, dtype = np.float32)
+    return X
+
+def _set_target_mat(data, X, target_matrix, select, base_matrix, suffix):
+    if target_matrix == None:
+        target_matrix = f"{base_matrix}.{suffix}"
+
+    if target_matrix in data.matrices:
+       logger.warning(f"{target_matrix} is in data's matrices. It will be rewritten.")
+
+    data.add_matrix(target_matrix, X)
+
+    if select:
+        data.select_matrix(target_matrix)
+
 @timer(logger=logger)
 def log_norm(
     data: Union[MultimodalData, UnimodalData],
-    norm_count: float = 1e5, 
-    backup_matrix: str = "raw.X",
+    norm_count: float = 1e5,
+    base_matrix: str = None,
+    target_matrix: str = None,
+    select: bool = True,
 ) -> None:
-    """Normalization, and then apply natural logarithm to the data.
+    """Normalize each cell by total counts, and then apply natural logarithm to the data.
 
     Parameters
     ----------
@@ -308,16 +366,20 @@ def log_norm(
     norm_count: ``int``, optional, default: ``1e5``.
         Total counts of one cell after normalization.
 
-    backup_matrix: ``str``, optional, default: ``raw.X``.
-        The key name of the backup count matrix, usually the raw counts.
+    base_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to perform log_norm. If None, the current matrix.
+
+    target_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to store the log_normed results. If None, base_matrix + ".log_norm".
+
+    select: ``bool``, optional, default: ``None``.
+        Select the log_normed matrix as the current matrix (can be accessed via data.X).
 
     Returns
     -------
     ``None``
 
-    Update ``data.X`` with count matrix after log-normalization. In addition, back up the original count matrix as ``backup_matrix``.
-
-    In case of rerunning normalization while ``backup_matrix`` already exists, use ``backup_matrix`` instead of ``data.X`` for normalization.
+    Add the log-normalized matrix to ``data.matrices``. Add the normalization scale vector to ``data.obs["scale"]`` and ``norm_count`` parameter to ``data.uns["norm_count"]``.
 
     Examples
     --------
@@ -325,27 +387,108 @@ def log_norm(
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
-
-    assert data.get_modality() in  {"rna", "visium"}
-
-    if backup_matrix not in data.list_keys():
-        data.add_matrix(backup_matrix, data.X)
-        data.X = data.X.astype(np.float32)  # force copy
-    else:
-        # The case of rerunning log_norm. Use backup matrix as source.
-        data.X = data.get_matrix(backup_matrix).astype(np.float32)  # force copy
-        logger.warning("Rerun log-normalization. Use the raw counts in backup instead.")
-
-    data.obs["scale"] = normalize_by_count(data.X, data.var["robust"].values, norm_count, True)
+    X, base_matrix = _get_base_mat(data, base_matrix)
+    selected_features = _select_features(data)
+    data.obs["scale"] = _normalize_by_count(X, selected_features, norm_count)
     data.uns["norm_count"] = norm_count
+    X = _log1p(X)
+    _set_target_mat(data, X, target_matrix, select, base_matrix, "log_norm")
 
 
 @timer(logger=logger)
-def arcsinh_transform(data: Union[MultimodalData, UnimodalData], 
+def normalize(
+    data: Union[MultimodalData, UnimodalData],
+    norm_count: float = 1e5,
+    base_matrix: str = None,
+    target_matrix: str = None,
+    select: bool = True,
+) -> None:
+    """Normalize each cell by total count.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Use current selected modality in data, which should contain one RNA expression matrix.
+
+    norm_count: ``int``, optional, default: ``1e5``.
+        Total counts of one cell after normalization.
+
+    base_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to perform normalize. If None, the current matrix.
+
+    target_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to store the normalize results. If None, base_matrix + ".norm".
+
+    select: ``bool``, optional, default: ``None``.
+        Select the normalized matrix as the current matrix (can be accessed via data.X).
+
+    Returns
+    -------
+    ``None``
+
+    Add the normalized matrix to ``data.matrices``. Add the normalization scale vector to ``data.obs["scale"]`` and ``norm_count`` parameter to ``data.uns["norm_count"]``.
+
+    Examples
+    --------
+    >>> pg.normalize(data)
+    """
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
+    X, base_matrix = _get_base_mat(data, base_matrix)
+    selected_features = _select_features(data)
+    data.obs["scale"] = _normalize_by_count(X, selected_features, norm_count)
+    data.uns["norm_count"] = norm_count
+    _set_target_mat(data, X, target_matrix, select, base_matrix, "norm")
+
+
+@timer(logger=logger)
+def log1p(
+    data: Union[MultimodalData, UnimodalData],
+    base_matrix: str = None,
+    target_matrix: str = None,
+    select: bool = True,
+) -> None:
+    """Normalize each cell by total count.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Use current selected modality in data, which should contain one RNA expression matrix.
+
+    base_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to perform normalize. If None, the current matrix.
+
+    target_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to store the normalize results. If None, base_matrix + ".log1p".
+
+    select: ``bool``, optional, default: ``None``.
+        Select the normalized matrix as the current matrix (can be accessed via data.X).
+
+    Returns
+    -------
+    ``None``
+
+    Add the log1p matrix to ``data.matrices``.
+
+    Examples
+    --------
+    >>> pg.log1p(data)
+    """
+    if isinstance(data, MultimodalData):
+        data = data.current_data()
+    X, base_matrix = _get_base_mat(data, base_matrix)
+    X = _log1p(X)
+    _set_target_mat(data, X, target_matrix, select, base_matrix, "log1p")
+
+
+@timer(logger=logger)
+def arcsinh(data: Union[MultimodalData, UnimodalData], 
     cofactor: float = 5.0,
     jitter = False,
     random_state = 0,
-    backup_matrix: str = "raw.X",
+    base_matrix: str = None,
+    target_matrix: str = None,
+    select: bool = True,
 ) -> None:
     """Conduct arcsinh transform on the current matrix.
 
@@ -362,42 +505,30 @@ def arcsinh_transform(data: Union[MultimodalData, UnimodalData],
     random_state: ``int``, optional, default: ``0``
         Random seed for generating jitters.
 
-    backup_matrix: ``str``, optional, default: ``raw.X``.
-        The key name of the backup count matrix, usually the raw counts.
+    base_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to perform arcsinh. If None, the current matrix.
+
+    target_matrix: ``str``, optional, default: ``None``.
+        The key name of the matrix to store the arcsinh results. If None, base_matrix + ".arcsinh".
+
+    select: ``bool``, optional, default: ``None``.
+        Select the arcsinh matrix as the current matrix (can be accessed via data.X).
 
     Returns
     -------
     ``None``
 
-    Update ``data.X`` with count matrix after log-normalization. In addition, back up the original count matrix as ``backup_matrix``.
-
-    In case of rerunning normalization while ``backup_matrix`` already exists, use ``backup_matrix`` instead of ``data.X`` for normalization.
+    Add the arcsinh matrix to ``data.matrices``. 
 
     Examples
     --------
-    >>> pg.arcsinh_transform(data)
+    >>> pg.arcsinh(data)
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
-
-    assert data.get_modality() in  {"rna"}
-
-    if backup_matrix not in data.list_keys():
-        data.add_matrix(backup_matrix, data.X)
-        data.X = data.X.astype(np.float32)  # force copy
-    else:
-        # The case of rerunning log_norm. Use backup matrix as source.
-        data.X = data.get_matrix(backup_matrix).astype(np.float32)  # force copy
-        logger.warning("Rerun log-normalization. Use the raw counts in backup instead.")
-
-    if not jitter:
-        data.X.data = np.arcsinh(data.X.data / cofactor, dtype = np.float32)
-    else:
-        np.random.seed(random_state)
-        jitters = np.random.uniform(low = -0.5, high = 0.5, size = data.X.shape)
-        signal = np.add(data.X.toarray(), jitters, dtype = np.float32)
-        signal = np.arcsinh(signal / cofactor, dtype = np.float32)
-        data.X = signal
+    X, base_matrix = _get_base_mat(data, base_matrix)
+    X = _arcsinh(X, jitter, cofactor, random_state)
+    _set_target_mat(data, X, target_matrix, select, base_matrix, "arcsinh")
 
 
 @run_gc
@@ -569,7 +700,8 @@ def pc_transform(
 
     # normalize and log transform X
     X = X.astype(np.float32) # convert to float
-    _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"], True)
+    _ = _normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"])
+    X = _log1p(X)
 
     # select features
     if data.uns["pca_features"] is not None:
@@ -745,7 +877,8 @@ def tsvd_transform(
 
     # normalize and log transform X
     X = X.astype(np.float32) # convert to float
-    _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"], True)
+    _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"])
+    X = _log1p(X)
 
     # select features
     if (data.uns["tsvd_features"] is not None) and (data.var[data.uns["tsvd_features"]].sum() < X.shape[1]):
