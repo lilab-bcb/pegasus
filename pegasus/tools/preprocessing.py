@@ -492,7 +492,7 @@ def log1p(
 
 
 @timer(logger=logger)
-def arcsinh(data: Union[MultimodalData, UnimodalData], 
+def arcsinh(data: Union[MultimodalData, UnimodalData],
     cofactor: float = 5.0,
     jitter = False,
     random_state = 0,
@@ -528,7 +528,7 @@ def arcsinh(data: Union[MultimodalData, UnimodalData],
     -------
     ``None``
 
-    Add the arcsinh matrix to ``data.matrices``. 
+    Add the arcsinh matrix to ``data.matrices``.
 
     Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
     
@@ -582,10 +582,10 @@ def select_features(
             X = data.X[:, data.var[features].values]
         else:
             X = data.X
-        
+
         from pegasus.tools import slicing
         X = slicing(X, copy=True)
-        
+
     if standardize:
         m1 = X.mean(axis=0)
         psum = np.multiply(X, X).sum(axis=0)
@@ -889,7 +889,7 @@ def tsvd_transform(
 
     # normalize and log transform X
     X = X.astype(np.float32) # convert to float
-    _ = normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"])
+    _ = _normalize_by_count(X, data.var["robust"].values, data.uns["norm_count"])
     X = _log1p(X)
 
     # select features
