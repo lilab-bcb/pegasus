@@ -1972,6 +1972,7 @@ def rank_plot(
 def ridgeplot(
     data: Union[MultimodalData, UnimodalData],
     features: Union[str, List[str]],
+    matrix_key: Optional[str] = None,
     donor_attr: Optional[str] = None,
     qc_attr: Optional[str] = None,
     overlap: Optional[float] = 0.5,
@@ -1987,9 +1988,11 @@ def ridgeplot(
     ----------
 
     data : `UnimodalData` or `MultimodalData` object
-        CITE-Seq or Cyto data.
+        Data matrix.
     features : `str` or `List[str]`
         One or more features to display.
+    matrix_key: `str`, optional, default None
+        Which matrix to search features for. If None, use the current matrix.
     donor_attr: `str`, optional, default None
         If not None, `features` must contain only one feature, plot this feature by donor indicated as `donor_attr`.
     qc_attr: `str`, optional, default None
@@ -2013,8 +2016,8 @@ def ridgeplot(
 
     Examples
     --------
-    >>> fig = pg.ridgeplot(data, features = ['CD8', 'CD4', 'CD3'], show = False, dpi = 500)
-    >>> fig = pg.ridgeplot(data, features = 'CD3', donor_attr = 'assignment', show = False, dpi = 500)
+    >>> fig = pg.ridgeplot(data, features = ['CD8', 'CD4', 'CD3'], dpi = 500)
+    >>> fig = pg.ridgeplot(data, features = 'CD3', donor_attr = 'assignment', dpi = 500)
     """
     sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
 
@@ -2026,6 +2029,9 @@ def ridgeplot(
         logger.warning("At most 8 features are allowed to be plotted together!")
         return None
 
+    if matrix_key == None:
+        matrix_key = data.current_matrix()
+
     df = None
     if donor_attr is None:
         exprs = []
@@ -2034,7 +2040,7 @@ def ridgeplot(
         size = idx.sum()
         for feature in features:
             fid = data.var_names.get_loc(feature)
-            exprs.append(slicing(data.get_matrix("arcsinh.transformed"), idx, fid))
+            exprs.append(slicing(data.get_matrix(matrix_key), idx, fid))
             feats.append(np.repeat(feature, size))
 
         df = pd.DataFrame({"expression": np.concatenate(exprs), "feature": np.concatenate(feats)})
