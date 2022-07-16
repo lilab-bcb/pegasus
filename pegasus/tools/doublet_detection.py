@@ -220,6 +220,7 @@ def _calc_expected_doublet_rate(ncells):
 @timer(logger=logger)
 def _run_scrublet(
     data: Union[MultimodalData, UnimodalData],
+    raw_mat_key: Optional[str] = 'counts',
     name: Optional[str] = '',
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
@@ -236,7 +237,10 @@ def _run_scrublet(
     Parameters
     -----------
     data: ``Union[MultimodalData, UnimodalData]`` object.
-        Annotated data matrix with rows for cells and columns for genes. Data must be low quality cell and gene filtered and log-transformed. Assume 'raw.X' stores the raw count matrix.
+        Annotated data matrix with rows for cells and columns for genes. Data must be low quality cell and gene filtered and log-transformed.
+
+    raw_mat_key: ``str``, optional, default: ``counts``
+        Matrix key for the raw count matrix.
 
     name: ``str``, optional, default: ``''``
         Name of the sample.
@@ -294,7 +298,7 @@ def _run_scrublet(
     rho = expected_doublet_rate
 
     # subset the raw count matrix
-    rawX = data.get_matrix("raw.X")
+    rawX = data.get_matrix(raw_mat_key)
     obs_umis = rawX.sum(axis = 1, dtype = np.int32).A1
     rawX = rawX[:, data.var["highly_variable_features"].values]
     # Simulate synthetic doublets
@@ -467,6 +471,7 @@ def infer_doublets(
     data: MultimodalData,
     channel_attr: Optional[str] = None,
     clust_attr: Optional[str] = None,
+    raw_mat_key: Optional[str] = 'counts',
     min_cell: Optional[int] = 100,
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
@@ -538,9 +543,9 @@ def infer_doublets(
     """
     assert data.get_modality() == "rna"
     try:
-        rawX = data.get_matrix("raw.X")
+        rawX = data.get_matrix(raw_mat_key)
     except ValueError:
-        raise ValueError("Cannot detect the raw count matrix raw.X; stop inferring doublets!")
+        raise ValueError(f"Cannot detect the raw count matrix {raw_mat_key}; stop inferring doublets!")
 
     if_plot = plot_hist is not None
 
@@ -552,7 +557,7 @@ def infer_doublets(
 
     if channel_attr is None:
         if data.shape[0] >= min_cell:
-            fig = _run_scrublet(data, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
+            fig = _run_scrublet(data, raw_mat_key, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
                                 n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot, manual_correction = mancor.get('', None))
             if if_plot:
                 fig.savefig(f"{plot_hist}.dbl.png")
@@ -578,14 +583,15 @@ def infer_doublets(
             if idx.size >= min_cell:
                 unidata = UnimodalData({"barcodekey": data.obs_names[idx]}, 
                                        {"featurekey": data.var_names},
-                                       {"X": rawX[idx]},
-                                       {"genome": genome, "modality": modality})
+                                       {"counts": rawX[idx]},
+                                       {"genome": genome, "modality": modality},
+                                       cur_matrix = "counts")
                 # Identify robust genes, count and log normalized and select top 2,000 highly variable features
                 identify_robust_genes(unidata)
                 log_norm(unidata)
                 highly_variable_features(unidata)
                 # Run _run_scrublet
-                fig = _run_scrublet(unidata, name = channel, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
+                fig = _run_scrublet(unidata, raw_mat_key, name = channel, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
                                     n_prin_comps = n_prin_comps, k = k, n_jobs = n_jobs, random_state = random_state, plot_hist = if_plot, manual_correction = mancor.get(channel, None))
                 if if_plot:
                     fig.savefig(f"{plot_hist}.{channel}.dbl.png")

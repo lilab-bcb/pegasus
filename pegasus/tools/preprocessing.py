@@ -299,6 +299,10 @@ def _get_base_mat(data, base_matrix):
         base_matrix = data.current_matrix()
     else:
         X = data.get_matrix(base_matrix).astype(np.float32)
+    if base_matrix == "X": # if count matrix has a name of "X", change it to counts
+        base_mat = data.matrices.pop(base_matrix)
+        data.matrices["counts"] = base_mat
+        base_matrix = "counts"
     return X, base_matrix
 
 def _select_features(data):
@@ -381,6 +385,8 @@ def log_norm(
 
     Add the log-normalized matrix to ``data.matrices``. Add the normalization scale vector to ``data.obs["scale"]`` and ``norm_count`` parameter to ``data.uns["norm_count"]``.
 
+    Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
+
     Examples
     --------
     >>> pg.log_norm(data)
@@ -428,6 +434,8 @@ def normalize(
 
     Add the normalized matrix to ``data.matrices``. Add the normalization scale vector to ``data.obs["scale"]`` and ``norm_count`` parameter to ``data.uns["norm_count"]``.
 
+    Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
+
     Examples
     --------
     >>> pg.normalize(data)
@@ -470,6 +478,8 @@ def log1p(
 
     Add the log1p matrix to ``data.matrices``.
 
+    Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
+    
     Examples
     --------
     >>> pg.log1p(data)
@@ -520,6 +530,8 @@ def arcsinh(data: Union[MultimodalData, UnimodalData],
 
     Add the arcsinh matrix to ``data.matrices``. 
 
+    Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
+    
     Examples
     --------
     >>> pg.arcsinh(data)
