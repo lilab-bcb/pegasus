@@ -328,7 +328,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 append_df = append_df.copy()
                 append_df.index = append_df.index.map(lambda x: f"Ab-{x}")
 
-            rawX = hstack([unidata.get_matrix("raw.X"), Z], format = "csr")
+            rawX = hstack([unidata.get_matrix("counts"), Z], format = "csr")
 
             Zt = Z.astype(np.float32)
             if not kwargs["citeseq"]:
@@ -337,7 +337,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             else:
                 Zt.data = np.arcsinh(Zt.data / 5.0, dtype = np.float32)
 
-            X = hstack([unidata.get_matrix("X"), Zt], format = "csr")
+            X = hstack([unidata.get_matrix(unidata.current_matrix()), Zt], format = "csr")
 
             new_genome = unidata.get_genome()
             if new_genome != append_data.get_genome():
@@ -346,7 +346,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
             feature_metadata = pd.concat([unidata.feature_metadata, append_df], axis = 0)
             feature_metadata.reset_index(inplace = True)
             _fillna(feature_metadata)
-            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {"X": X, "raw.X": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
+            unidata = UnimodalData(unidata.barcode_metadata, feature_metadata, {unidata.current_matrix(): X, "counts": rawX}, unidata.uns.mapping, unidata.obsm.mapping, unidata.varm.mapping) # uns.mapping, obsm.mapping and varm.mapping are passed by reference
             unidata.uns["genome"] = new_genome
 
             if kwargs["citeseq"] and kwargs["citeseq_umap"]:
