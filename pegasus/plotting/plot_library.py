@@ -2060,12 +2060,12 @@ def ridgeplot(
 
     g = sns.FacetGrid(df, row="feature", hue="feature", aspect=8, height=1.0)
     try:
-        g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5)
-        g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1)
+        g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=0)
+        g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=0.5)
     except RuntimeError as re:
         if str(re).startswith("Selected KDE bandwidth is 0. Cannot estimate density."):
-            g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=1.5, bw=0.1)
-            g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=1, bw=0.1)
+            g.map(sns.kdeplot, "expression", clip_on=False, shade=True, alpha=1, lw=0, bw=0.1)
+            g.map(sns.kdeplot, "expression", clip_on=False, color="k", lw=0.5, bw=0.1)
         else:
             raise re
     g.map(plt.axhline, y=0, lw=1, clip_on=False)
@@ -2080,6 +2080,7 @@ def ridgeplot(
 
     g.set_titles("")
     g.set_xlabels("")
+    g.set_ylabels("")
     g.set(yticks=[])
     g.despine(bottom=True, left=True)
 
