@@ -32,7 +32,7 @@ def pseudobulk(
     data: MultimodalData,
     sample: str,
     attrs: Optional[Union[List[str], str]] = None,
-    mat_key: Optional[str] = None,
+    mat_key: Optional[str] = "counts",
     cluster: Optional[str] = None,
 ) -> UnimodalData:
     """Generate Pseudo-bulk count matrices.
@@ -52,10 +52,9 @@ def pseudobulk(
         Notice that for a categorical attribute, each pseudo-bulk's value is the one of highest frequency among its cells,
         and for a numeric attribute, each pseudo-bulk's value is the mean among its cells.
 
-    mat_key: ``str``, optional, default: ``None``
+    mat_key: ``str``, optional, default: ``counts``
         Specify the single-cell count matrix used for aggregating pseudo-bulk counts:
-        If ``None``, use the raw count matrix in ``data``: look for ``raw.X`` key in its matrices first; if not exists, use ``X`` key.
-        Otherwise, if specified, use the count matrix with key ``mat_key`` from matrices of ``data``.
+        If specified, use the count matrix with key ``mat_key`` from matrices of ``data``; otherwise, default is ``counts``.
 
     cluster: ``str``, optional, default: ``None``
         If set, additionally generate pseudo-bulk matrices per cluster specified in ``data.obs[cluster]``.
@@ -77,14 +76,7 @@ def pseudobulk(
     --------
     >>> pg.pseudobulk(data, sample="Channel")
     """
-    if mat_key is None:
-        X = (
-            data.get_matrix("raw.X")
-            if "raw.X" in data._unidata.matrices
-            else data.get_matrix("X")
-        )
-    else:
-        X = data.get_matrix(mat_key)
+    X = data.get_matrix(mat_key)
 
     assert sample in data.obs.columns, f"Sample key '{sample}' must exist in data.obs!"
 
@@ -97,7 +89,7 @@ def pseudobulk(
 
     df_barcode = data.obs.reset_index()
 
-    mat_dict = {"X": get_pseudobulk_count(X, df_barcode, sample, bulk_list)}
+    mat_dict = {"counts": get_pseudobulk_count(X, df_barcode, sample, bulk_list)}
 
     # Generate pseudo-bulk attributes if specified
     bulk_attr_list = []
@@ -142,7 +134,7 @@ def pseudobulk(
         matrices=mat_dict,
         genome=sample,
         modality="pseudobulk",
-        cur_matrix="X",
+        cur_matrix="counts",
     )
 
     data.add_data(udata)

@@ -25,10 +25,11 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt -q update
-        sudo apt install -y libfftw3-dev default-jdk
+        sudo apt install -y libfftw3-dev default-jdk git
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest setuptools wheel cython
         python -m pip install zarr
+        python -m pip install git+https://github.com/lilab-bcb/pegasusio@master
         python -m pip install -e .[all]
     - name: Lint with flake8
       run: |

@@ -20,7 +20,7 @@ def _gen_anndata(
     data: Union[MultimodalData, UnimodalData],
     features: str = "highly_variable_features",
     obs_columns: Optional[List[str]] = None,
-    matkey: str = "raw.X",
+    matkey: str = "counts",
 ) -> anndata.AnnData:
     """ Generate a new Anndata object for scvitools
 
@@ -32,7 +32,7 @@ def _gen_anndata(
         Keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
     obs_columns: ``List[str]``
         A list of obs keys that should be included in the new anndata.
-    matkey: ``str``, optional, default: ``"raw.X"``
+    matkey: ``str``, optional, default: ``"counts"``
         Matrix key for the raw count
 
     Returns
@@ -80,7 +80,7 @@ def _gen_query_anndata(
     data: Union[MultimodalData, UnimodalData],
     ref_features: pd.Index,
     obs_columns: Optional[List[str]] = None,
-    matkey: str = "raw.X",
+    matkey: str = "counts",
 ) -> anndata.AnnData:
     """ Generate a new query Anndata object for scvitools
 
@@ -92,7 +92,7 @@ def _gen_query_anndata(
         A pandas index of reference feature names
     obs_columns: ``List[str]``
         A list of obs keys that should be included in the new anndata.
-    matkey: ``str``, optional, default: ``"raw.X"``
+    matkey: ``str``, optional, default: ``"counts"``
         Matrix key for the raw count
 
     Returns
@@ -119,7 +119,7 @@ def _gen_query_anndata(
 def run_scvi(
     data: Union[MultimodalData, UnimodalData],
     features: str = "highly_variable_features",
-    matkey: str = "raw.X",
+    matkey: str = "counts",
     n_jobs: int = -1,
     random_state: int = 0,
     max_epochs: Union[int, None] = None,
@@ -138,7 +138,7 @@ def run_scvi(
         Annotated data matrix with rows for cells and columns for genes.
     features: ``str``, optional, default: ``"highly_variable_features"``
         Keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
-    matkey: ``str``, optional, default: ``"raw.X"``
+    matkey: ``str``, optional, default: ``"counts"``
         Matrix key for the raw count
     n_jobs : ``int``, optional, default: ``-1``.
         Number of threads to use. ``-1`` refers to using all physical CPU cores.
@@ -214,7 +214,7 @@ def train_scarches_scanvi(
     label: str,
     unlabeled_category: str = "Unknown",
     features: str = "highly_variable_features",
-    matkey: str = "raw.X",
+    matkey: str = "counts",
     n_jobs: int = -1,
     random_state: int = 0,
     max_epochs: Union[int, None] = None,
@@ -248,7 +248,7 @@ def train_scarches_scanvi(
         Value used for unlabeled cells in ``label``.
     features: ``str``, optional, default: ``"highly_variable_features"``
         Keyword in ``data.var``, which refers to a boolean array. If ``None``, all features will be selected.
-    matkey: ``str``, optional, default: ``"raw.X"``
+    matkey: ``str``, optional, default: ``"counts"``
         Matrix key for the raw count
     n_jobs : ``int``, optional, default: ``-1``.
         Number of threads to use. ``-1`` refers to using all physical CPU cores.
@@ -344,7 +344,7 @@ def predict_scarches_scanvi(
     dir_path: str,
     label: str,
     predictions: str = "predictions",
-    matkey: str = "raw.X",
+    matkey: str = "counts",
     n_jobs: int = -1,
     random_state: int = 0,
     max_epochs: Union[int, None] = None,
@@ -367,7 +367,7 @@ def predict_scarches_scanvi(
         The obs key representing labels.
     predictions: ``str``, , optional, default: ``"predictions"``
         The obs key to store predicted labels.
-    matkey: ``str``, optional, default: ``"raw.X"``
+    matkey: ``str``, optional, default: ``"counts"``
         Matrix key for the raw count
     n_jobs : ``int``, optional, default: ``-1``.
         Number of threads to use. ``-1`` refers to using all physical CPU cores.
