@@ -456,7 +456,7 @@ def log1p(
     target_matrix: str = None,
     select: bool = True,
 ) -> None:
-    """Normalize each cell by total count.
+    """Apply the Log(1+x) transformation on the given count matrix.
 
     Parameters
     ----------
@@ -464,13 +464,13 @@ def log1p(
         Use current selected modality in data, which should contain one RNA expression matrix.
 
     base_matrix: ``str``, optional, default: ``None``.
-        The key name of the matrix to perform normalize. If None, the current matrix.
+        The key name of the matrix to perform the transformation. If None, the current matrix.
 
     target_matrix: ``str``, optional, default: ``None``.
-        The key name of the matrix to store the normalize results. If None, base_matrix + ".log1p".
+        The key name of the matrix to store the transformed results. If None, base_matrix + ".log1p".
 
     select: ``bool``, optional, default: ``None``.
-        Select the normalized matrix as the current matrix (can be accessed via data.X).
+        Select the transformed matrix as the current matrix (can be accessed via data.X).
 
     Returns
     -------
@@ -479,7 +479,7 @@ def log1p(
     Add the log1p matrix to ``data.matrices``.
 
     Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
-    
+
     Examples
     --------
     >>> pg.log1p(data)
@@ -531,7 +531,7 @@ def arcsinh(data: Union[MultimodalData, UnimodalData],
     Add the arcsinh matrix to ``data.matrices``.
 
     Note that if the detected `base_matrix`==`X`, we'll change the name to `counts` instead.
-    
+
     Examples
     --------
     >>> pg.arcsinh(data)

@@ -1,3 +1,10 @@
+1.7.1 :small:`July 25, 2022`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Make command-line tool and API work with PegasusIO v0.7.0.
+* Rename function ``arcsinh_transform`` to ``arcsinh``, and allow set a user-specified count matrix for the transformation.
+* Add functions `log1p <./api/pegasus.log1p.html>`_ and `normalize <./api/pegasus.normalize.html>`_ for preprocessing the count matrix.
+
 1.7.0 :small:`July 5, 2022`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

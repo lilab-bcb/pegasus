@@ -32,7 +32,9 @@ Preprocess
     filter_data
     identify_robust_genes
     log_norm
-    arcsinh_transform
+    log1p
+    normalize
+    arcsinh
     highly_variable_features
     select_features
     pca
