@@ -1,4 +1,4 @@
-1.7.1 :small:`July 25, 2022`
+1.7.1 :small:`July 29, 2022`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Make command-line tool and API work with PegasusIO v0.7.0.
