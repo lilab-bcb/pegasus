@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 try:
     import igraph
 except ImportError as error:
-    logger.error("Need python-igraph!  Try 'pip install python-igraph'.")
+    logger.error("Need igraph!  Try 'pip install igraph'.")
 from collections import deque
 
 from typing import List
