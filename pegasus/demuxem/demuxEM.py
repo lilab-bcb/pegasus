@@ -268,6 +268,7 @@ def demultiplex(
     
     data.update(hashing_data)
     data.update(filt_hto)
+    data.select_data('filt_hto')
     logger.info("Demultiplexing is done.")
 
 def attach_demux_results(input_rna_file: str, rna_data: UnimodalData) -> MultimodalData:
