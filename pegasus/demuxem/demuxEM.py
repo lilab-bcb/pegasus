@@ -110,31 +110,31 @@ def get_droplet_info(probs: List[float], sample_names: List[str]) -> Tuple[str, 
     )
 
 
-def calc_demux(hashing_data: UnimodalData, nsample: int, min_signal: float, probs: str = "raw_probs") -> None:
-    demux_type = np.full(hashing_data.shape[0], "unknown", dtype="object")
-    assignments = np.full(hashing_data.shape[0], "", dtype="object")
+def calc_demux(raw_hto: UnimodalData, filt_hto: UnimodalData, nsample: int, min_signal: float, probs: str = "raw_probs") -> None:
+    demux_type = np.full(raw_hto.shape[0], "unknown", dtype="object")
+    assignments = np.full(raw_hto.shape[0], "", dtype="object")
 
-    signals = hashing_data.obs["counts"].reindex(hashing_data.obs_names, fill_value=0.0).values * (
-        1.0 - hashing_data.obsm[probs][:, nsample]
+    signals = filt_hto.obs["counts"].reindex(raw_hto.obs_names, fill_value=0.0).values * (
+        1.0 - raw_hto.obsm[probs][:, nsample]
     )
     idx = signals >= min_signal
 
-    tmp = hashing_data.obsm[probs][idx,]
+    tmp = raw_hto.obsm[probs][idx,]
     norm_probs = tmp[:, 0:nsample] / (1.0 - tmp[:, nsample])[:, None]
 
     values1 = []
     values2 = []
     for i in range(norm_probs.shape[0]):
-        droplet_type, droplet_id = get_droplet_info(norm_probs[i,], hashing_data.var_names)
+        droplet_type, droplet_id = get_droplet_info(norm_probs[i,], filt_hto.var_names)
         values1.append(droplet_type)
         values2.append(droplet_id)
 
     demux_type[idx] = values1
-    hashing_data.obs["demux_type"] = pd.Categorical(
+    raw_hto.obs["demux_type"] = pd.Categorical(
         demux_type, categories=["singlet", "doublet", "unknown"]
     )
     assignments[idx] = values2
-    hashing_data.obs["assignment"] = pd.Categorical(
+    raw_hto.obs["assignment"] = pd.Categorical(
         assignments, categories=natsorted(np.unique(assignments))
     )
 
@@ -207,66 +207,66 @@ def demultiplex(
     --------
     >>> demultiplex(hashing_data)
     """
-    hashing_data = data.get_data(modality="hashing")
-    prob_vector = estimate_background_probs(hashing_data, random_state=kwargs["random_state"])
+    raw_hto = data.get_data(modality="hashing")
+    prob_vector = estimate_background_probs(raw_hto, random_state=kwargs["random_state"])
 
     required_barcodes = pd.DataFrame(columns=['barcodekey', 'n_genes', 'n_counts'])
     required_barcodes.set_index('barcodekey')
 
     for i,required in enumerate(selected):
         if required == True:
-            required_barcodes.append(hashing_data.obs.iloc[[i]])
+            required_barcodes.append(raw_hto.obs.iloc[[i]])
 
     filt_hto = UnimodalData(required_barcodes,
-                            hashing_data.var,
-                            {"X":hashing_data.X},
+                            raw_hto.var,
+                            {"X":raw_hto.X},
                             None,
                             None,
                             None,
                             None,
                             None,
                             "X",
-                            hashing_data.get_genome(),
-                            hashing_data.get_modality(),
+                            raw_hto.get_genome(),
+                            raw_hto.get_modality(),
                             "filt_hto")
 
     filt_hto.uns["background_probs"] = prob_vector
 
-    nsample = hashing_data.shape[1]
-    assert (hashing_data.uns["background_probs"] <= 0.0).sum() == 0
+    nsample = raw_hto.shape[1]
+    assert (raw_hto.uns["background_probs"] <= 0.0).sum() == 0
 
     if nsample == 1:
         logger.warning("Detected only one barcode, no need to demultiplex!")
-        hashing_data.obsm["raw_probs"] = np.zeros((filt_hto.shape[0], nsample + 1))
-        hashing_data.obsm["raw_probs"][:, 0] = 1.0
-        hashing_data.obsm["raw_probs"][:, 1] = 0.0
-        hashing_data.obs["demux_type"] = "singlet"
-        hashing_data.obs["assignment"] = hashing_data.var_names[0]
+        raw_hto.obsm["raw_probs"] = np.zeros((filt_hto.shape[0], nsample + 1))
+        raw_hto.obsm["raw_probs"][:, 0] = 1.0
+        raw_hto.obsm["raw_probs"][:, 1] = 0.0
+        raw_hto.obs["demux_type"] = "singlet"
+        raw_hto.obs["assignment"] = raw_hto.var_names[0]
     else:
         if nsample == 2:
             logger.warning("Detected only two barcodes, demultiplexing accuracy might be affected!")
        
         ncalc = filt_hto.shape[0]
   
-        hto_small = hashing_data.X.toarray()
+        hto_small = raw_hto.X.toarray()
 
-        hashing_data.obsm["raw_probs"] = np.zeros((hashing_data.shape[0], nsample + 1))
-        hashing_data.obsm["raw_probs"][:, nsample] = 1.0
+        raw_hto.obsm["raw_probs"] = np.zeros((raw_hto.shape[0], nsample + 1))
+        raw_hto.obsm["raw_probs"][:, nsample] = 1.0
 
         iter_array = [
-            (hto_small[i,], hashing_data.uns["background_probs"], alpha, alpha_noise, tol)
+            (hto_small[i,], raw_hto.uns["background_probs"], alpha, alpha_noise, tol)
             for i in range(ncalc)
         ]
         with multiprocessing.Pool(n_threads) as pool:
-            hashing_data.obsm["raw_probs"] = pool.starmap(estimate_probs, iter_array)
+            raw_hto.obsm["raw_probs"] = pool.starmap(estimate_probs, iter_array)
 
-        calc_demux(hashing_data, nsample, min_signal)
+        calc_demux(raw_hto, filt_hto, nsample, min_signal)
 
-        if has_duplicate_names(hashing_data.var_names):
-            hashing_data.obs["assignment.dedup"] = hashing_data.obs["assignment"]
-            hashing_data.obs["assignment"] = remove_suffix(hashing_data.obs["assignment"].values)
+        if has_duplicate_names(raw_hto.var_names):
+            raw_hto.obs["assignment.dedup"] = raw_hto.obs["assignment"]
+            raw_hto.obs["assignment"] = remove_suffix(raw_hto.obs["assignment"].values)
     
-    data.update(hashing_data)
+    #data.update(hashing_data)
     data.update(filt_hto)
     data.select_data('filt_hto')
     logger.info("Demultiplexing is done.")
