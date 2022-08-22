@@ -11,8 +11,6 @@ from pegasus import tools, misc
 import logging
 logger = logging.getLogger("pegasus")
 
-
-
 def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, append_data: UnimodalData, **kwargs) -> None:
     print()
     logger.info(f"Begin to analyze UnimodalData {unidata.get_uid()}.")
