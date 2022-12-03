@@ -267,7 +267,7 @@ def _run_scrublet(
         If True, plot diagnostic histograms. Each sample would have a figure consisting of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets.
 
     manual_correction: ``str``, optional, default: ``None``
-        If present, use human guide provided in manual_correction to select threshold. Currently only support manual_correction='peak', which means cut at the center of the peak.
+        If present, use human guide provided in manual_correction to select threshold. Currently support 'peak' and 'expected'. 'peak' means cutting at the center of the peak and 'expected' means cutting at the expected doublet rate.
 
     Returns
     --------
@@ -414,9 +414,12 @@ def _run_scrublet(
 
     threshold_auto = None
     if manual_correction is not None:
-        assert case_num == 2
         threshold_auto = threshold
-        threshold = np.exp(x[maxima_by_x[-1]])
+        if manual_correction == "peak":
+            assert case_num == 2
+            threshold = np.exp(x[maxima_by_x[-1]])
+        elif manual_correction == "expected":
+            threshold = threshold_theory
 
     data.obs["doublet_score"] = obs_scores.astype(np.float32)
     data.obs["pred_dbl"] = obs_scores > threshold
@@ -526,7 +529,7 @@ def infer_doublets(
         If not None, plot diagnostic histograms using ``plot_hist`` as the prefix. If `channel_attr` is None, ``plot_hist.dbl.png`` is generated; Otherwise, ``plot_hist.channel_name.dbl.png`` files are generated. Each figure consists of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets. Each plot contains two dashed lines. The red dashed line represents the theoretical cutoff (calucalted based on number of cells and 10x doublet table) and the black dashed line represents the cutof inferred from the data.
     
     manual_correction: ``str``, optional, default: ``None``
-        Use human guide to correct doublet threshold for certain channels. This is string representing a comma-separately list. Each item in the list represent one sample and the sample name and correction guide are separated using ':'. The only correction guide supported is 'peak', which means cut at the center of the peak. If only one sample available, use '' as the sample name.
+        Use human guide to correct doublet threshold for certain channels. This is string representing a comma-separately list. Each item in the list represent one sample and the sample name and correction guide are separated using ':'. The orrection guides supported are 'peak' and 'expected'. 'peak' means cutting at the center of the peak and 'expected' means cutting at the expected doublet rate. If only one sample available, use '' as the sample name.
 
     Returns
     -------
