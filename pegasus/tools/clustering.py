@@ -643,6 +643,7 @@ def split_one_cluster(
     n_clust: int,
     res_label: str,
     rep: str = "pca",
+    n_comps: int = None,
     random_state: int = 0,
 ) -> None:
     """
@@ -668,6 +669,9 @@ def split_one_cluster(
     rep: ``str``, optional, default: ``"pca"``
         The embedding representation used for Kmeans clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
 
+    n_comps: `int`, optional (default: None)
+        Number of components to be used in the `rep`. If n_comps == None, use all components; otherwise, use the minimum of n_comps and rep's dimensions.
+
     n_jobs : `int`, optional (default: -1)
         Number of threads to use for the KMeans step in 'spectral_louvain' and 'spectral_leiden'. -1 refers to using all physical CPU cores.
 
@@ -688,7 +692,7 @@ def split_one_cluster(
     idx = np.where(data.obs[clust_label] == clust_id)[0]
     tmpdat = data[idx].copy()
     from pegasus.tools import neighbors
-    neighbors(tmpdat, rep=rep, use_cache=False)
+    neighbors(tmpdat, rep=rep, n_comps=n_comps, use_cache=False)
     leiden(tmpdat, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
     new_clust = data.obs[clust_label].values.astype(int)
     new_label = new_clust.max() + 1
