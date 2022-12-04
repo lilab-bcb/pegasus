@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 try:
     import igraph
 except ImportError:
-    logger.error("Need python-igraph!  Try 'pip install python-igraph'.")
+    logger.error("Need igraph!  Try 'pip install igraph'.")
 
 import logging
 logger = logging.getLogger(__name__)
