@@ -120,12 +120,22 @@
 						]
 					},
 					{
+						"name" : "Naive B cell",
+						"markers" : [
+							{
+								"genes" : ["TCL1A+", "FCER2+"],
+								"weight" : 1.0,
+								"comments" : "markers for naive B cell, collected from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper. Validated using ICA pbmc data."
+							}
+						]
+					},
+					{
 						"name" : "Memory B cell",
 						"markers" : [
 							{
-								"genes" : ["CD27+"],
+								"genes" : ["CD27+", "TNFRSF13B+"],
 								"weight" : 1.0,
-								"comments" : "marker for memory B cell"
+								"comments" : "markers for memory B cell, collected from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper. Validated using ICA pbmc data."
 							}
 						]
 					}

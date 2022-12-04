@@ -233,13 +233,6 @@ def infer_cluster_names(
                     cell_name = "CD4+ Naive T cell" if subname == "T helper cell" else "CD8+ Naive T cell"
                 else:
                     cell_name = subname
-            elif is_human_immune and ct.name == "B cell":
-                subname = None
-                for subt in ct.subtypes:
-                    if subt.score >= threshold:
-                        subname = subt.name
-                        break
-                cell_name = subname if subname is not None else "Naive B cell"
             elif is_human_immune and ct.name == "CD1C+ dendritic cell":
                 cell_name = ct.name
                 for ctype in ct_list[1:]:
