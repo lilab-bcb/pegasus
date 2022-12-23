@@ -188,14 +188,9 @@
 					"comment" : "CD19, CD20 and CD79"
 				},
 				{
-					"genes" : ["CD38+", "BCL6+", "BCL2-", "RGS13+"],
-					"weight" : 0.6,
-					"comment" : "First 3 markers are from Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 1 & 2). The last marker is from Xing et al. Science Advances 2021 Table S2 (Germinal center B)"
-				},
-				{
-					"genes" : ["PCNA+", "MKI67+"],
-					"weight" : 0.1,
-					"comment" : "From Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 2)"
+					"genes" : ["CD38+", "BCL6+", "BCL2-", "RGS13+", "MEF2B"],
+					"weight" : 0.7,
+					"comment" : "First 3 markers are from Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 1 & 2). The last 2 markers are from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper"
 				}
 			],
 			"subtypes" : {

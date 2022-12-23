@@ -210,7 +210,9 @@ def calc_signature_score(
             elif sig_string.startswith("apoptosis"):
                 _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
             else:
-                assert False
+                assert sig_string in predefined_signatures
+                signatures = load_signatures_from_file(predefined_signatures[sig_string])
+                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)                
         else:
             signatures = load_signatures_from_file(sig_string)
             _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
