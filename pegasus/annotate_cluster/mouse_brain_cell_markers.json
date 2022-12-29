@@ -287,7 +287,7 @@
 				{
 					"genes" : ["Flt1+", "Pecam1+", "Ly6a+", "Slco1a4+", "Mecom+", "Ptprb+", "Id1+"],
 					"weight" : 1.0,
-					"comment" : "Endo specific markers from Yao et al. Nature 2021"
+					"comment" : "Endo specific markers from Yao et al. Nature 2021; Slco1a4 is specific to mouse brain: see https://journals.plos.org/plosone/article/figures?id=10.1371/journal.pone.0013741"
 				}
 			]
 		},
