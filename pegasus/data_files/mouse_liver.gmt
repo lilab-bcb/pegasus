@@ -18,6 +18,6 @@ MonoI	Inflammatory monocyte	Ly6c2	F13a1	Chil3	Ms4a4c	Ccr2
 MonoP	Patrolling monocyte	Ace	Eno3	Ear2	Treml4	Fabp4
 PeriMac	Peritoneal macrophage	Lyz1	Saa3	Prg4	Retnla	Cbr2
 Mac	Macrophage	Cd14	Ms4a7	Cx3cr1	Trem2	Hpgds
-Kupffer	Kupffer cell	Cd5l	Clec4f	Vig4	Folr2	Timd4
+Kupffer	Kupffer cell	Cd5l	Clec4f	Vsig4	Folr2	Timd4
 Neutrophil	Neutrophil	S100a8	S100a9	Retnlg	Mmp9	Clec4d
-Basophil	Basophil	Fcer1a	Cyp11a	Cd200r3	Il6	Ms4a2
+Basophil	Basophil	Fcer1a	Cyp11a1	Cd200r3	Il6	Ms4a2

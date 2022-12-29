@@ -51,7 +51,7 @@
 			"name" : "Kupffer cell",
 			"markers" : [
 				{
-					"genes" : ["Cd5l+", "Clec4f+", "Vig4+", "Folr2+", "Timd4+"],
+					"genes" : ["Cd5l+", "Clec4f+", "Vsig4+", "Folr2+", "Timd4+"],
 					"weight" : 1.0,
 					"comment" : "Kupffer cell markers from Kaptein et al. Cell 2022"
 				}

@@ -278,7 +278,8 @@ def infer_cell_types(
             * ``'mouse_immune'`` for mouse immune cells;
             * ``'human_brain'`` for human brain cells;
             * ``'mouse_brain'`` for mouse brain cells;
-            * ``'human_lung'`` for human lung cells.
+            * ``'human_lung'`` for human lung cells;
+            * ``'mouse_liver'`` for mouse liver cells.
         * If ``Dict``, it refers to a Python dictionary describing the markers.
 
     de_test: ``str``, optional, default: ``"mwu"``
@@ -320,6 +321,7 @@ def infer_cell_types(
         human_brain="human_brain_cell_markers.json",
         mouse_brain="mouse_brain_cell_markers.json",
         human_lung="human_lung_cell_markers.json",
+        mouse_liver="mouse_liver_cell_markers.json",
     )
 
     if isinstance(markers, str):

@@ -189,6 +189,7 @@ predefined_signatures = dict(
     apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),
     human_lung=pkg_resources.resource_filename("pegasus", "data_files/human_lung.gmt"),
     mouse_brain=pkg_resources.resource_filename("pegasus", "data_files/mouse_brain.gmt"),
+    mouse_liver=pkg_resources.resource_filename("pegasus", "data_files/mouse_liver.gmt"),
 )
 
 predefined_pathways = dict(

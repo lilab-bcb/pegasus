@@ -206,11 +206,11 @@
 			"name" : "Basophil",
 			"markers" : [
 				{
-					"genes" : ["Fcer1a+", "Cyp11a+", "Cd200r3+", "Il6+", "Ms4a2+"],
+					"genes" : ["Fcer1a+", "Cyp11a1+", "Cd200r3+", "Il6+", "Ms4a2+"],
 					"weight" : 1.0,
 					"comment" : "Basophil markers from Kaptein et al. Cell 2022"
 				}
 			]
-		},
+		}
 	]
 }
