@@ -1359,9 +1359,9 @@ def dotplot(
     yticks = summarized_df.index.map(str).values
 
     if switch_axes:
-        x, y = y, x
-        xlabel, ylabel = ylabel, xlabel
-        xticks, yticks = yticks, xticks
+        x, y = y[::-1], x[::-1]
+        xlabel, ylabel = ylabel[::-1], xlabel[::-1]
+        xticks, yticks = yticks[::-1], xticks[::-1]
 
     dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
                     xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
