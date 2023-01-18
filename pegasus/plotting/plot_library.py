@@ -1076,7 +1076,7 @@ def heatmap(
 
     Examples
     --------
-    >>> pg.heatmap(data, genes=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
+    >>> pg.heatmap(data, attrs=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
 
     """
     if not isinstance(data, anndata.AnnData):
