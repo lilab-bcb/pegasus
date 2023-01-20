@@ -190,6 +190,7 @@ predefined_signatures = dict(
     human_lung=pkg_resources.resource_filename("pegasus", "data_files/human_lung.gmt"),
     mouse_brain=pkg_resources.resource_filename("pegasus", "data_files/mouse_brain.gmt"),
     mouse_liver=pkg_resources.resource_filename("pegasus", "data_files/mouse_liver.gmt"),
+    emt_human=pkg_resources.resource_filename("pegasus", "data_files/emt_human.gmt"),
 )
 
 predefined_pathways = dict(
