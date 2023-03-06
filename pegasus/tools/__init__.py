@@ -56,7 +56,7 @@ from .visualization import (
     net_umap,
     net_fle,
 )
-from .diff_expr import de_analysis, markers, write_results_to_excel, run_de_analysis
+from .diff_expr import de_analysis, markers, write_results_to_excel, cluster_specific_markers, run_de_analysis
 from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import clone_subset
 from .signature_score import calc_signature_score, calculate_z_score

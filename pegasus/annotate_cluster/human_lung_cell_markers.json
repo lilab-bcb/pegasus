@@ -84,7 +84,7 @@
 				{
 					"genes" : ["CALCA+", "CHGA+", "ASCL1+", "SLC35D3+", "KIF1A+"],
 					"weight" : 1.0,
-					"comment" : "Plumonary neuroendocrien cell markers from Travaglini et al."
+					"comment" : "Plumonary neuroendocrine cell markers from Travaglini et al."
 				}
 			]
 		},

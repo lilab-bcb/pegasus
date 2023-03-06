@@ -3,12 +3,12 @@
 	"comment": "Markers are collected from Kaptein et al. Cell 2022",
 	"cell_types" : [
 		{
-			"name" : "Hepatocye",
+			"name" : "Hepatocyte",
 			"markers" : [
 				{
 					"genes" : ["Acaa1b+", "Arg1+", "Sult2a8+", "Hgd+", "Otc+"],
 					"weight" : 1.0,
-					"comment" : "Hepatocye markers from Kaptein et al. Cell 2022"
+					"comment" : "Hepatocyte markers from Kaptein et al. Cell 2022"
 				}
 			]
 		},
@@ -47,6 +47,7 @@
 			]
 		},
 
+
 		{
 			"name" : "Kupffer cell",
 			"markers" : [
@@ -67,6 +68,42 @@
 					"comment" : "Peritoneal macrophage markers from Kaptein et al. Cell 2022; Note that Lyve1 is also a good marker but it is also expressed in endothelial cells"
 				}
 			]
+		},
+
+		{
+			"name" : "Macrophage",
+			"markers" : [
+				{
+					"genes" : ["Cd14+", "Ms4a7+", "Cx3cr1+", "Trem2+", "Hpgds+"],
+					"weight" : 1.0,
+					"comment" : "Machrophage markers from Kaptein et al. Cell 2022"
+				}
+			],
+			"subtypes" : {
+				"title" : "Macrophage subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Cd207+ macrophage",
+						"markers" : [
+							{
+								"genes" : ["Cd207+", "Tmem119+", "Olfml3+", "Mmp13+"],
+								"weight" : 1.0,
+								"comments" : "Cd207+ macrophage markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Bile-duct lipid-associated macrophage",
+						"markers" : [
+							{
+								"genes" : ["Gpnmb+", "Spp1+", "Syngr1+", "Cd93+"],
+								"weight" : 1.0,
+								"comments" : "Bile-duct LAM markers from Kaptein et al. Cell 2022"
+							}
+						]
+					}
+				]
+			}
 		},
 
 
