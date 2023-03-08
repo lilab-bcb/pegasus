@@ -287,5 +287,27 @@
 				}
 			]
 		},
+
+		{
+			"name" : "Alveolar macrophage",
+			"markers" : [
+				{
+					"genes" : ["Atp6v0d2+", "Olr1+", "F7+", "Ear1+", "Tfec+", "Gpnmb+", "Lrp12+", "Marco+"],
+					"weight" : 1.0,
+					"comment" : "Alveolar macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		},
+
+		{
+			"name" : "Interstitial macrophage",
+			"markers" : [
+				{
+					"genes" : ["C1qa+", "C1qb+", "C1qc+", "Pf4+", "Ms4a7+", "Fcrls+"],
+					"weight" : 1.0,
+					"comment" : "Interstitial macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		}
 	]
 }

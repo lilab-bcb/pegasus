@@ -6,7 +6,7 @@ Fibro	Fibroblast	Col1a1	Mrc2	Plcxd3	Fndc1	Cpxm1
 Hepatocyte	Hepatocye	Acaa1b	Arg1	Sult2a8	Hgd	Otc
 Cholangiocyte	Cholangiocyte	Spp1	Ddit4l	Sox9	Fgfr3	Plet1
 HSPC	Hepatic stem and progenitor cell	Chrm3	Dmbt1	Slc4a4	Parm1	Pcdh11x	
-T	T cell	Cd3d	Cd3e	Cd3g	Trac	Cd28
+T	T cell	Cd3d	Cd3e	Lat	Thy1	Lef1	Trac	Cd28
 B	B cell	Cd19	Ms4a1	Cd79a	Cd79b	Ebf1	Pax5	Fcmr	Bank1
 NK	NK cell	Eomes	Cma1	Klra4	Klra7	Klra8
 ILC1	Innate lymphoid cell type 1	Xcl1	Cd160	Klrc1	Cd200r2	Gzmc

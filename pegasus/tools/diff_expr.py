@@ -806,11 +806,10 @@ def cluster_specific_markers(
     n = idx.sum()
     if n >= n_lo and n <= n_up:
         return df[idx]
-    elif n < n_lo:
-        res = df[idx_auc].sort_values('percentage_fold_change', ascending=False)
-        return res.iloc[0:n_lo]
     else:
-        return df[idx].iloc[0:n_up]
+        res = df[idx_auc].sort_values('percentage_fold_change', ascending=False)
+        res = res.iloc[0:(n_lo if n < n_lo else n_up)].sort_values('auroc', ascending=False)
+        return res
 
 
 @timer(logger=logger)

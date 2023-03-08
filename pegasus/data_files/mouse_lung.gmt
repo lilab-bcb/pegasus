@@ -13,7 +13,10 @@ Pericyte	Pericyte markers inferred from Hurskainen et al. Nat. Commun. 2021 data
 Fibroblast	Fibroblast markers inferred from Hurskainen et al. Nat. Commun. 2021 data	Dpt	Clec3b	Pcolce2	Vegfd	Vcam1
 Myofibroblast	Myofibroblast markers inferred from Hurskainen et al. Nat. Commun. 2021 data	Egfem1	Agt	Prag1	Etv1	Trim67
 SMC	Smooth muscle cell markers inferred from Hurskainen et al. Nat. Commun. 2021 data	Tnnt2	Sgcg	Sntg2	Nrtn	Mrvi1	Sbspon
+AlvMf	Alveolar macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021	Atp6v0d2	Olr1	F7	Ear1	Tfec	Gpnmb	Lrp12	Marco
+IntMf	Interstitial macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021	C1qa	C1qb	C1qc	Pf4	Ms4a7	Fcrls
 ILC2	Innate lymphoid cell type 2 markers inferred from Hurskainen et al. Nat. Commun. 2021 data	Gata3	Il1rl1	Arg1	Areg	Il2ra	Csf2	Ccl1	Ccdc184	Calca	Il5
+T	T cell markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021 data	Cd3d	Cd3e	Lat	Thy1	Lef1	Trac	Cd28
 B	B cell markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021 data	Cd19	Ms4a1	Cd79a	Cd79b	Ebf1	Pax5	Fcmr	Bank1
 NK	NK cell markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021 data	Gzma	Klrb1c	Ncr1	Klre1	Klrc2	Eomes	Cma1	Klra4	Klra7	Klra8
 cDC1	cDC1 markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021 data	Xcr1	Ifi205	Rab7b	Tlr3	Sept3	Hepacam2	Gcsam	Snx22	Itgae	Xlr
@@ -26,13 +29,3 @@ Neutrophil	Neutrophil markers inferred from Kaptein et al. Cell 2022 and Hurskai
 Basophil	Basophil markers inferred from Matsumara et al. Nat. Commun. 2022 data	Cd200r3	Aqp9	Il6	Hgf	Adora2b	Il4	L1cam	Grm6
 Eosinophil	Eosinophil markers inferred from Matsumara et al. Nat. Commun. 2022 data	Epx	Prg3	Eml5	Il5ra	Qsox2	L2hgdh
 Mast	Mast cell markers inferred from Matsumara et al. Nat. Commun. 2022 data	Tph1	Clnk	Hs6st2	Plcg1
-
-
-
-Macrophage	Macro	CD68	CD163	C1QA	MRC1	MS4A6A	MSR1	MERTK
-T cell	T cell markers	CD3D	CD3E	CD3G	TRAC
-
-Plasma cell	Plasma cell markers	CD38	XBP1	CD27	SLAMF7	TNFRSF17	TNFRSF13B
-
-
-Neutrophil	Neutrophil markers	FUT4	MPO	CEACAM8	ELANE	CXCR1	CXCR2	LY6G6D

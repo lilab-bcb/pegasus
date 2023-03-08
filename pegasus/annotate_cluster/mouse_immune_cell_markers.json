@@ -5,9 +5,9 @@
 			"name" : "T cell",
 			"markers" : [
 				{
-					"genes" : ["Cd3d+", "Cd3e+", "Cd3g+", "Trac+", "Cd28+"],
+					"genes" : ["Cd3d+", "Cd3e+", "Lat+", "Thy1+", "Lef1+", "Trac+", "Cd28+"],
 					"weight" : 1.0,
-					"comment" : "T cell markers from Kaptein et al. Cell 2022"
+					"comment" : "T cell markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021"
 				}
 			],
 			"subtypes" : {
@@ -63,6 +63,17 @@
 				{
 					"genes" : ["C1qb+", "C1qc+", "Mrc1+", "Cd52+"],
 					"weight" : 0.2
+				}
+			]
+		},
+
+		{
+			"name" : "Immature B cell",
+			"markers" : [
+				{
+					"genes" : ["Tifa+", "Cecr2+", "Rag1+", "Atp1b1+", "Myb+", "Irf4+", "Fam129c+"],
+					"weight" : 1.0,
+					"comment" : "Immature B cell markers from Hurskainen et al. Nat. Commun. 2021"
 				}
 			]
 		},
