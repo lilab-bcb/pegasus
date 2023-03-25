@@ -53,6 +53,40 @@ cpdef tuple csr_to_csc(const float[:] input_data, indices_type[:] input_indices,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cpdef tuple csr_to_csc_naive(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int M, int N):
+    """ This routine does not group cells by clusters"""
+    cdef Py_ssize_t i, j, pos, col
+
+    output_indptr = np.zeros(N+1, dtype = np.int64)
+    cdef long[:] indptr = output_indptr
+    cdef long[:] counter = np.zeros(N, dtype = np.int64)
+
+    for i in range(input_indices.size):
+        if input_data[i] != 0.0: # in case there are extra 0s in the sparse matrix
+            indptr[input_indices[i]+1] += 1
+    for i in range(N):
+        counter[i] = indptr[i]
+        indptr[i + 1] += indptr[i]
+
+    output_data = np.zeros(indptr[N], dtype = np.float32)
+    output_indices = np.zeros(indptr[N], dtype = np.int64)
+    cdef float[:] data = output_data
+    cdef long[:] indices = output_indices
+
+    for i in range(M):
+        for j in range(input_indptr[i], input_indptr[i+1]):
+            if input_data[j] != 0.0:
+                col = input_indices[j]
+                pos = counter[col]
+                data[pos] = input_data[j]
+                indices[pos] = i
+                counter[col] += 1
+
+    return output_data, output_indices, output_indptr
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef tuple csr_to_csc_cond(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int N, const long[:] ords, const long[:] cumsum):
     cdef Py_ssize_t i, j, k, pos, col
     cdef Py_ssize_t n, start, end, fr, to
@@ -121,6 +155,149 @@ cdef void partition_indices(const long[:] indices, const long[:] cumsum, long[:]
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cdef void get_zero_counts(
+    const long[:] indices,
+    const int[:] cluster_code,
+    const int ref_code,
+    const int[:] cluster_sizes,
+    int[:] n_zero_clusters,
+):
+    cdef int[:] non_zero_clusters = np.zeros(cluster_sizes.size, dtype = np.int)
+    cdef Py_ssize_t i, j
+
+    for i in indices:
+        non_zero_clusters[cluster_code[i]] += 1
+
+    for i in range(cluster_sizes.size):
+        n_zero_clusters[i] = cluster_sizes[i] - non_zero_clusters[i]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cpdef tuple calc_mwu_ref_cluster(
+    int start_pos,
+    int end_pos,
+    const float[:] data,
+    const long[:] indices,
+    const long[:] indptr,
+    const int ref_code,
+    const int[:] cluster_code,
+    const int[:] cluster_sizes,
+    int nsample,
+    bint verbose,
+):
+    cdef Py_ssize_t ngene, ncluster
+    cdef Py_ssize_t i, j, k
+    cdef Py_ssize_t n_nonzero, n_zero, ptr_ref
+    cdef Py_ssize_t cur_ptr, cur_idx, cur_label
+    cdef float cur_val
+
+    ngene = end_pos - start_pos
+    ncluster = cluster_sizes.size
+
+    U_stats_np = np.zeros((ngene, ncluster), dtype = np.float64)
+    pvals_np = np.ones((ngene, ncluster), dtype = np.float32)
+    aurocs_np = np.full((ngene, ncluster), 0.5, dtype = np.float32)
+    n1n2_np = np.zeros(ncluster, dtype = np.float64)
+    mean_U = np.zeros(ncluster, dtype = np.float64)
+    sd_U = np.zeros(ncluster, dtype = np.float64)
+    greaters_np = np.zeros((nsample,), dtype = np.int)
+    ties_np = np.zeros((nsample,), dtype = np.int)
+
+    cdef int[:] n_zero_clusters = np.zeros(ncluster, dtype = np.int)
+    cdef Py_ssize_t buffer_size = ngene * (ncluster - 1)
+    cdef Py_ssize_t buffer_pos = 0
+    cdef double[:] zscores = np.zeros(buffer_size, dtype = np.float64)
+
+    # memoryviews
+    cdef double[:, :] U_stats = U_stats_np
+    cdef float[:, :] pvals = pvals_np
+    cdef float[:, :] aurocs = aurocs_np
+    cdef int[:] greaters = greaters_np
+    cdef int[:] ties = ties_np
+    cdef double[:] n1n2 = n1n2_np
+
+    for j in range(ncluster):
+        if j == ref_code:
+            continue
+        n1n2[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code]
+        mean_U[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code] / 2.0
+        sd_U[j] = np.sqrt(n1n2[j] * (cluster_sizes[j] + cluster_sizes[ref_code] + 1) / 12.0)
+
+    for i in range(start_pos, end_pos):
+        pos_i = i - start_pos
+        n_nonzero = indptr[i + 1] - indptr[i]
+        n_zero = nsample - n_nonzero
+        ptr_ref = -1
+
+        if n_nonzero == 0:  # No cell expressing this gene.
+            for j in range(ncluster):
+                if j == ref_code:
+                    continue
+                U_stats[pos_i, j] = (<double>(cluster_sizes[j] * cluster_sizes[ref_code])) / 2.0
+        else:
+            # non-zero counts
+            ptr_sorted = np.argsort(data[indptr[i]:indptr[i + 1]])
+            for k in ptr_sorted:
+                cur_idx = indices[k]
+                cur_val = data[k]
+                cur_label = cluster_code[cur_idx]
+                if cur_label == ref_code:  # Cell in reference cluster
+                    if ptr_ref >= 0:
+                        if cur_val > data[ptr_ref]:
+                            greaters[cur_idx] = greaters[indices[ptr_ref]] + ties[indices[ptr_ref]] + 1
+                        else:
+                            greaters[cur_idx] = greaters[indices[ptr_ref]]
+                            ties[cur_idx] = ties[indices[ptr_ref]] + 1
+                    ptr_ref = k
+                else:  # Cell in normal clusters
+                    if ptr_ref == -1:
+                        continue
+                    if cur_val > data[ptr_ref]:
+                        greaters[cur_idx] = greaters[indices[ptr_ref]] + ties[indices[ptr_ref]] + 1
+                    else:
+                        greaters[cur_idx] = greaters[indices[ptr_ref]]
+                        ties[cur_idx] = ties[indices[ptr_ref]] + 1
+                    # Update U_stats
+                    U_stats[pos_i, cur_label] += greaters[cur_idx] + 0.5 * ties[cur_idx]
+
+            # zero counts
+            if n_zero > 0:
+                get_zero_counts(indices[indptr[i]: indptr[i+1]], cluster_code, ref_code, cluster_sizes, n_zero_clusters)
+                for j in range(ncluster):
+                    if j == ref_code:
+                        continue
+                    U_stats[pos_i, j] += (cluster_sizes[j] - n_zero_clusters[j]) * n_zero_clusters[ref_code] + 0.5 * n_zero_clusters[ref_code] * n_zero_clusters[j]
+
+        # Calculate AUROC and p-values
+        for j in range(ncluster):
+            if j == ref_code:
+                continue
+            aurocs[pos_i, j] = U_stats[pos_i, j] / n1n2[j]
+            z = (max(U_stats[pos_i, j], n1n2[j] - U_stats[pos_i, j]) - mean_U[j]) / sd_U[j]
+            zscores[buffer_pos] = z
+            buffer_pos += 1
+
+    cdef double[:] buffer_pvals = ss.norm.sf(zscores[0:buffer_pos]) * 2.0
+    buffer_pos = 0
+    for i in range(start_pos, end_pos):
+        if indptr[i + 1] > indptr[i]:
+            for j in range(ncluster):
+                if j == ref_code:
+                    continue
+                if cluster_sizes[j] > 0 and cluster_sizes[ref_code] > 0:
+                    pvals[i - start_pos, j] = buffer_pvals[buffer_pos]
+                    buffer_pos += 1
+
+    if verbose:
+        print(f"calc_mwu_ref_cluster finished for genes in [{start_pos}, {end_pos}).")
+
+    return U_stats_np, pvals_np, aurocs_np
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 @cython.cdivision(True)
 cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long[:] indices, const long[:] indptr, const long[:] n1arr, const long[:] n2arr, const long[:] cumsum, int first_j, int second_j, bint verbose):
     """ Run Mann-Whitney U test for all clusters in cluster_labels, focusing only on genes in [start_pos, end_pos)
@@ -132,7 +309,7 @@ cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long
     cdef Py_ssize_t n_nonzero, n_zero
     cdef double sd_factor, avg_zero_rank
     cdef double R1, U1, U2, mean_U, sd_U
-    
+
     ngene = end_pos - start_pos
     ncluster = cumsum.size
     nsample = cumsum[ncluster - 1]
@@ -252,7 +429,7 @@ cpdef list calc_stat(const float[:] data, const long[:] indices, const long[:] i
     cdef double M_LOG2E2 = M_LOG2E * M_LOG2E
     cdef double tot_sum2, s1sqr, s2sqr, var_est
     cdef double[:] sum2s = np.zeros(ncluster, dtype = np.float64)
-    
+
     cdef float[:,:,:] t_arr # t_tstat, t_pval
     cdef Py_ssize_t ttest_pos = 0
     cdef double[:] tscore, upsilon

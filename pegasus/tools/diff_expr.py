@@ -201,6 +201,91 @@ def _de_test(
     return df
 
 
+def _de_test_ref_cluster(X: csr_matrix,
+    cluster_labels: pd.Categorical,
+    ref_cluster_id: str,
+    gene_names: List[str],
+    n_jobs: int,
+    t: Optional[bool] = False,
+    fisher: Optional[bool] = False,
+    temp_folder: Optional[str] = None,
+    verbose: Optional[bool] = True,
+) -> pd.DataFrame:
+    """ For each cluster other than the reference one, run DE test in one vs. reference cluster
+    """
+    from pegasus.cylib.de_utils import csr_to_csc_naive, calc_mwu_ref_cluster
+
+    start = time.perf_counter()
+
+    data, indices, indptr = csr_to_csc_naive(X.data, X.indices, X.indptr, X.shape[0], X.shape[1])
+    ref_code = cluster_labels.categories.get_loc(ref_cluster_id)
+    cluster_code = cluster_labels.code
+    cluster_sizes = cluster_labels.value_counts(sort=False).values
+    label_cat_list = cluster_labels.categories.delete(ref_code)
+
+    if verbose:
+        end = time.perf_counter()
+        logger.info(f"CSR matrix is converted to CSC matrix. Time spent = {end - start: .4f}s.")
+        start = end
+
+    n_genes = X.shape[1]
+    quotient = n_genes // n_jobs
+    residue = n_genes % n_jobs
+    intervals = []
+    start_pos = end_pos = 0
+    for i in range(n_jobs):
+        end_pos = start_pos + quotient + (i < residue)
+        if end_pos == start_pos:
+            break
+        intervals.append((start_pos, end_pos))
+        start_pos = end_pos
+
+    with parallel_backend("loky", inner_max_num_threads=1):
+        result_list = Parallel(n_jobs=len(intervals), temp_folder=temp_folder)(
+            delayed(calc_mwu_ref_cluster)(
+                start_pos,
+                end_pos,
+                data,
+                indices,
+                indptr,
+                ref_code,
+                cluster_code,
+                cluster_sizes,
+                X.shape[0],
+                verbose,
+            )
+            for start_pos, end_pos in intervals
+        )
+
+    Ulist = []
+    plist = []
+    alist = []
+    for U_stats, pvals, aurocs in result_list:
+        # Drop columns of reference cluster
+        Ulist.append(np.delete(U_stats, ref_code, axis=1))
+        plist.append(np.delete(pvals, ref_code, axis=1))
+        alist.append(np.delete(aurocs, ref_code, axis=1))
+
+    U_stats = np.concatenate(Ulist, axis=0)
+    pvals = np.concatenate(plist, axis=0)
+    alist = np.concatenate(aurocs, axis=0)
+    qvals = _calc_qvals(U_stats.shape[1], pvals, -1, -1)
+
+    dfU = pd.DataFrame(U_stats, index=gene_names, columns=[f"{x}:mwu_U" for x in label_cat_list])
+    dfUp = pd.DataFrame(pvals, index=gene_names, columns=[f"{x}:mwu_pval" for x in label_cat_list])
+    dfUq = pd.DataFrame(qvals, index=gene_names, columns=[f"{x}:mwu_qval" for x in label_cat_list])
+    dfUa = pd.DataFrame(aurocs, index=gene_names, columns=[f"{x}:auroc" for x in label_cat_list])
+
+    if verbose:
+        end = time.perf_counter()
+        logger.info(f"MWU test and AUROC calculation are finished. Time spent = {end - start:.4f}s.")
+        start = end
+
+    df_list = [dfU, dfUp, dfUq, dfUa]
+    df = pd.concat(df_list, axis=1)
+
+    return df
+
 
 def _perform_de_cond(
     clust_ids: List[str],
@@ -381,6 +466,7 @@ def de_analysis(
     cluster: str,
     condition: Optional[str] = None,
     subset: Optional[List[str]] = None,
+    ref_cluster_id: Optional[str] = None,
     de_key: Optional[str] = "de_res",
     n_jobs: Optional[int] = -1,
     t: Optional[bool] = False,
@@ -413,6 +499,9 @@ def de_analysis(
     subset: ``List[str]``, optional, default: ``None``
         Perform DE analysis on only a subset of cluster IDs. Cluster ID subset is specified as a list of strings, such as ``[clust_1,clust_3,clust_5]``, where all IDs must exist in ``data.obs[cluster]``.
 
+    ref_cluster_id: ``str``, optional, default: ``None``
+        If not ``None``, perform DE analysis of all the other clusters against a reference cluster. This cluster ID must be shown in the labels of ``cluster``.
+
     de_key: ``str``, optional, default: ``"de_res"``
         Key name of DE analysis results stored.
 
@@ -442,6 +531,7 @@ def de_analysis(
     --------
     >>> pg.de_analysis(data, cluster='spectral_leiden_labels')
     >>> pg.de_analysis(data, cluster='louvain_labels', condition='anno')
+    >>> pg.de_analysis(data, cluster='leiden_labels', ref_cluster_id='1')
     """
     if cluster not in data.obs:
         raise ValueError("Cannot find cluster label!")
@@ -493,6 +583,9 @@ def de_analysis(
 
     if cond_labels is None:
         df = _de_test(X, cluster_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
+    elif ref_cluster_id is not None:
+        assert ref_cluster_id in cluster_labels.categories, f"'{ref_cluster_id}' does not exist in data.obs['{cluster}']!"
+        df = _de_test_ref_cluster(X, cluster_labels, ref_cluster_id, gene_names, n_jobs, t, fisher, temp_folder, verbose)
     else:
         df = _de_test_cond(X, cluster_labels, cond_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
 
