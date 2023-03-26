@@ -159,10 +159,10 @@ cdef void get_zero_counts(
     const long[:] indices,
     const int[:] cluster_code,
     const int ref_code,
-    const int[:] cluster_sizes,
-    int[:] n_zero_clusters,
+    const long[:] cluster_sizes,
+    long[:] n_zero_clusters,
 ):
-    cdef int[:] non_zero_clusters = np.zeros(cluster_sizes.size, dtype = np.int)
+    cdef long[:] non_zero_clusters = np.zeros(cluster_sizes.size, dtype = np.int64)
     cdef Py_ssize_t i, j
 
     for i in indices:
@@ -183,7 +183,7 @@ cpdef tuple calc_mwu_ref_cluster(
     const long[:] indptr,
     const int ref_code,
     const int[:] cluster_code,
-    const int[:] cluster_sizes,
+    const long[:] cluster_sizes,
     int nsample,
     bint verbose,
 ):
@@ -202,10 +202,10 @@ cpdef tuple calc_mwu_ref_cluster(
     n1n2_np = np.zeros(ncluster, dtype = np.float64)
     mean_U = np.zeros(ncluster, dtype = np.float64)
     sd_U = np.zeros(ncluster, dtype = np.float64)
-    greaters_np = np.zeros((nsample,), dtype = np.int)
-    ties_np = np.zeros((nsample,), dtype = np.int)
+    greaters_np = np.zeros((nsample,), dtype = np.int32)
+    ties_np = np.zeros((nsample,), dtype = np.int32)
 
-    cdef int[:] n_zero_clusters = np.zeros(ncluster, dtype = np.int)
+    cdef long[:] n_zero_clusters = np.zeros(ncluster, dtype = np.int64)
     cdef Py_ssize_t buffer_size = ngene * (ncluster - 1)
     cdef Py_ssize_t buffer_pos = 0
     cdef double[:] zscores = np.zeros(buffer_size, dtype = np.float64)

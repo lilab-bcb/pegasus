@@ -201,7 +201,8 @@ def _de_test(
     return df
 
 
-def _de_test_ref_cluster(X: csr_matrix,
+def _de_test_ref_cluster(
+    X: csr_matrix,
     cluster_labels: pd.Categorical,
     ref_cluster_id: str,
     gene_names: List[str],
@@ -219,8 +220,8 @@ def _de_test_ref_cluster(X: csr_matrix,
 
     data, indices, indptr = csr_to_csc_naive(X.data, X.indices, X.indptr, X.shape[0], X.shape[1])
     ref_code = cluster_labels.categories.get_loc(ref_cluster_id)
-    cluster_code = cluster_labels.code
-    cluster_sizes = cluster_labels.value_counts(sort=False).values
+    cluster_code = cluster_labels.codes.astype(np.int32)
+    cluster_sizes = cluster_labels.value_counts().values
     label_cat_list = cluster_labels.categories.delete(ref_code)
 
     if verbose:
@@ -268,7 +269,7 @@ def _de_test_ref_cluster(X: csr_matrix,
 
     U_stats = np.concatenate(Ulist, axis=0)
     pvals = np.concatenate(plist, axis=0)
-    alist = np.concatenate(aurocs, axis=0)
+    aurocs = np.concatenate(alist, axis=0)
     qvals = _calc_qvals(U_stats.shape[1], pvals, -1, -1)
 
     dfU = pd.DataFrame(U_stats, index=gene_names, columns=[f"{x}:mwu_U" for x in label_cat_list])
