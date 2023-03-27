@@ -5,7 +5,7 @@ import scipy.stats as ss
 cimport cython
 
 from libc.math cimport sqrt, log2, M_LOG2E, fabs
-from libc.stdio cimport printf
+#from libc.stdio cimport printf
 
 ctypedef fused indices_type:
     int
@@ -192,6 +192,7 @@ cpdef tuple calc_mwu_ref_cluster(
     cdef Py_ssize_t n_nonzero, n_zero, ptr_ref
     cdef Py_ssize_t cur_ptr, cur_idx, cur_label
     cdef float cur_val
+    cdef int gt_cnt, eq_cnt
 
     ngene = end_pos - start_pos
     ncluster = cluster_sizes.size
@@ -202,8 +203,6 @@ cpdef tuple calc_mwu_ref_cluster(
     n1n2_np = np.zeros(ncluster, dtype = np.float64)
     mean_U = np.zeros(ncluster, dtype = np.float64)
     sd_U = np.zeros(ncluster, dtype = np.float64)
-    greaters_np = np.zeros((nsample,), dtype = np.int32)
-    ties_np = np.zeros((nsample,), dtype = np.int32)
 
     cdef long[:] n_zero_clusters = np.zeros(ncluster, dtype = np.int64)
     cdef Py_ssize_t buffer_size = ngene * (ncluster - 1)
@@ -214,8 +213,6 @@ cpdef tuple calc_mwu_ref_cluster(
     cdef double[:, :] U_stats = U_stats_np
     cdef float[:, :] pvals = pvals_np
     cdef float[:, :] aurocs = aurocs_np
-    cdef int[:] greaters = greaters_np
-    cdef int[:] ties = ties_np
     cdef double[:] n1n2 = n1n2_np
 
     for j in range(ncluster):
@@ -230,6 +227,8 @@ cpdef tuple calc_mwu_ref_cluster(
         n_nonzero = indptr[i + 1] - indptr[i]
         n_zero = nsample - n_nonzero
         ptr_ref = -1
+        gt_cnt = 0
+        eq_cnt = 0
 
         if n_nonzero == 0:  # No cell expressing this gene.
             for j in range(ncluster):
@@ -237,6 +236,14 @@ cpdef tuple calc_mwu_ref_cluster(
                     continue
                 U_stats[pos_i, j] = (<double>(cluster_sizes[j] * cluster_sizes[ref_code])) / 2.0
         else:
+            # zero counts
+            if n_zero > 0:
+                get_zero_counts(indices[indptr[i]: indptr[i+1]], cluster_code, ref_code, cluster_sizes, n_zero_clusters)
+                for j in range(ncluster):
+                    if j == ref_code:
+                        continue
+                    U_stats[pos_i, j] = (cluster_sizes[j] - n_zero_clusters[j]) * n_zero_clusters[ref_code] + 0.5 * n_zero_clusters[ref_code] * n_zero_clusters[j]
+
             # non-zero counts
             cur_data = data[indptr[i]:indptr[i + 1]]
             cur_indices = indices[indptr[i]:indptr[i + 1]]
@@ -248,34 +255,23 @@ cpdef tuple calc_mwu_ref_cluster(
                 if cur_label == ref_code:  # Cell in reference cluster
                     if ptr_ref >= 0:
                         if cur_val > cur_data[ptr_ref]:
-                            greaters[cur_idx] = greaters[cur_indices[ptr_ref]] + ties[cur_indices[ptr_ref]] + 1
-                            ties[cur_idx] = 0
+                            gt_cnt += 1
+                            if eq_cnt > 0:
+                                gt_cnt += eq_cnt
+                            eq_cnt = 0
                         else:
-                            greaters[cur_idx] = greaters[cur_indices[ptr_ref]]
-                            ties[cur_idx] = ties[cur_indices[ptr_ref]] + 1
-                    else:
-                        greaters[cur_idx] = 0
-                        ties[cur_idx] = 0
+                            eq_cnt += 1
                     ptr_ref = k
                 else:  # Cell in normal clusters
                     if ptr_ref == -1:
                         continue
-                    if cur_val > cur_data[ptr_ref]:
-                        greaters[cur_idx] = greaters[cur_indices[ptr_ref]] + ties[cur_indices[ptr_ref]] + 1
-                        ties[cur_idx] = 0
-                    else:
-                        greaters[cur_idx] = greaters[cur_indices[ptr_ref]]
-                        ties[cur_idx] = ties[cur_indices[ptr_ref]] + 1
                     # Update U_stats
-                    U_stats[pos_i, cur_label] += greaters[cur_idx] + 0.5 * ties[cur_idx]
-
-            # zero counts
-            if n_zero > 0:
-                get_zero_counts(indices[indptr[i]: indptr[i+1]], cluster_code, ref_code, cluster_sizes, n_zero_clusters)
-                for j in range(ncluster):
-                    if j == ref_code:
-                        continue
-                    U_stats[pos_i, j] += (cluster_sizes[j] - n_zero_clusters[j]) * n_zero_clusters[ref_code] + 0.5 * n_zero_clusters[ref_code] * n_zero_clusters[j]
+                    if cur_val > cur_data[ptr_ref]:
+                        U_stats[pos_i, cur_label] += gt_cnt + 1
+                        if eq_cnt > 0:
+                            U_stats[pos_i, cur_label] += eq_cnt
+                    else:
+                        U_stats[pos_i, cur_label] += gt_cnt + 0.5 * (eq_cnt + 1)
 
         # Calculate AUROC and p-values
         for j in range(ncluster):
