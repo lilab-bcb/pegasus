@@ -5,7 +5,7 @@ import scipy.stats as ss
 cimport cython
 
 from libc.math cimport sqrt, log2, M_LOG2E, fabs
-# from libc.stdio cimport printf
+from libc.stdio cimport printf
 
 ctypedef fused indices_type:
     int
@@ -238,27 +238,34 @@ cpdef tuple calc_mwu_ref_cluster(
                 U_stats[pos_i, j] = (<double>(cluster_sizes[j] * cluster_sizes[ref_code])) / 2.0
         else:
             # non-zero counts
-            ptr_sorted = np.argsort(data[indptr[i]:indptr[i + 1]])
+            cur_data = data[indptr[i]:indptr[i + 1]]
+            cur_indices = indices[indptr[i]:indptr[i + 1]]
+            ptr_sorted = np.argsort(cur_data)
             for k in ptr_sorted:
-                cur_idx = indices[k]
-                cur_val = data[k]
+                cur_idx = cur_indices[k]
+                cur_val = cur_data[k]
                 cur_label = cluster_code[cur_idx]
                 if cur_label == ref_code:  # Cell in reference cluster
                     if ptr_ref >= 0:
-                        if cur_val > data[ptr_ref]:
-                            greaters[cur_idx] = greaters[indices[ptr_ref]] + ties[indices[ptr_ref]] + 1
+                        if cur_val > cur_data[ptr_ref]:
+                            greaters[cur_idx] = greaters[cur_indices[ptr_ref]] + ties[cur_indices[ptr_ref]] + 1
+                            ties[cur_idx] = 0
                         else:
-                            greaters[cur_idx] = greaters[indices[ptr_ref]]
-                            ties[cur_idx] = ties[indices[ptr_ref]] + 1
+                            greaters[cur_idx] = greaters[cur_indices[ptr_ref]]
+                            ties[cur_idx] = ties[cur_indices[ptr_ref]] + 1
+                    else:
+                        greaters[cur_idx] = 0
+                        ties[cur_idx] = 0
                     ptr_ref = k
                 else:  # Cell in normal clusters
                     if ptr_ref == -1:
                         continue
-                    if cur_val > data[ptr_ref]:
-                        greaters[cur_idx] = greaters[indices[ptr_ref]] + ties[indices[ptr_ref]] + 1
+                    if cur_val > cur_data[ptr_ref]:
+                        greaters[cur_idx] = greaters[cur_indices[ptr_ref]] + ties[cur_indices[ptr_ref]] + 1
+                        ties[cur_idx] = 0
                     else:
-                        greaters[cur_idx] = greaters[indices[ptr_ref]]
-                        ties[cur_idx] = ties[indices[ptr_ref]] + 1
+                        greaters[cur_idx] = greaters[cur_indices[ptr_ref]]
+                        ties[cur_idx] = ties[cur_indices[ptr_ref]] + 1
                     # Update U_stats
                     U_stats[pos_i, cur_label] += greaters[cur_idx] + 0.5 * ties[cur_idx]
 
