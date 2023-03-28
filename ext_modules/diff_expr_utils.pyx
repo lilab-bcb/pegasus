@@ -5,7 +5,7 @@ import scipy.stats as ss
 cimport cython
 
 from libc.math cimport sqrt, log2, M_LOG2E, fabs
-#from libc.stdio cimport printf
+from libc.stdio cimport printf
 
 ctypedef fused indices_type:
     int
@@ -208,6 +208,7 @@ cpdef tuple calc_mwu_ref_cluster(
     cdef Py_ssize_t buffer_size = ngene * (ncluster - 1)
     cdef Py_ssize_t buffer_pos = 0
     cdef double[:] zscores = np.zeros(buffer_size, dtype = np.float64)
+    cdef long[:] nsample_cmp = np.zeros(ncluster, dtype = np.int64)
 
     # memoryviews
     cdef double[:, :] U_stats = U_stats_np
@@ -219,8 +220,9 @@ cpdef tuple calc_mwu_ref_cluster(
         if j == ref_code:
             continue
         n1n2[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code]
-        mean_U[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code] / 2.0
-        sd_U[j] = np.sqrt(n1n2[j] * (cluster_sizes[j] + cluster_sizes[ref_code] + 1) / 12.0)
+        mean_U[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code] / 2.0 + 0.5  # continuity correction
+        nsample_cmp[j] = cluster_sizes[ref_code] + cluster_sizes[j]
+        sd_U[j] = np.sqrt(n1n2[j] * (nsample_cmp[j] + 1) / 12.0)
 
     for i in range(start_pos, end_pos):
         pos_i = i - start_pos
@@ -252,6 +254,8 @@ cpdef tuple calc_mwu_ref_cluster(
                 cur_idx = cur_indices[k]
                 cur_val = cur_data[k]
                 cur_label = cluster_code[cur_idx]
+                #if pos_i == 65:
+                #    printf("\tk = %d, cur_idx = %d, cur_val = %f, cur_label = %d, ptr_ref = %d;\t", k, cur_idx, cur_val, cur_label, ptr_ref)
                 if cur_label == ref_code:  # Cell in reference cluster
                     if ptr_ref >= 0:
                         if cur_val > cur_data[ptr_ref]:
@@ -273,14 +277,20 @@ cpdef tuple calc_mwu_ref_cluster(
                     else:
                         U_stats[pos_i, cur_label] += gt_cnt + 0.5 * (eq_cnt + 1)
 
-        # Calculate AUROC and p-values
-        for j in range(ncluster):
-            if j == ref_code:
-                continue
-            aurocs[pos_i, j] = U_stats[pos_i, j] / n1n2[j]
-            z = (max(U_stats[pos_i, j], n1n2[j] - U_stats[pos_i, j]) - mean_U[j]) / sd_U[j]
-            zscores[buffer_pos] = z
-            buffer_pos += 1
+            # Calculate AUROC and Z score
+            ranks = ss.rankdata(cur_data)
+            for j in range(ncluster):
+                if j == ref_code:
+                    continue
+                aurocs[pos_i, j] = U_stats[pos_i, j] / n1n2[j]
+                #indices_j = np.intersect1d(np.where(np.logical_or(cluster_code==j, cluster_code==ref_code))[0], cur_indices, assume_unique=True)
+                #_, ties = np.unique(ranks[indices_j], return_counts=True)
+                #if n_zero_clusters[j] > 0 or n_zero_clusters[ref_code] > 0:
+                #    ties = np.concatenate(([n_zero_clusters[j] + n_zero_clusters[ref_code]], ties))
+                #sd_U[j] *= np.sqrt(1 - (ties**3.0 - ties).sum() / (nsample_cmp[j]**3 - nsample_cmp[j]))
+                z = (max(U_stats[pos_i, j], n1n2[j] - U_stats[pos_i, j]) - mean_U[j]) / sd_U[j]
+                zscores[buffer_pos] = z
+                buffer_pos += 1
 
     cdef double[:] buffer_pvals = ss.norm.sf(zscores[0:buffer_pos]) * 2.0
     buffer_pos = 0
