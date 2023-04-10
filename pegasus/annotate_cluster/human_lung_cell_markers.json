@@ -102,8 +102,6 @@
 
 
 
-
-
 		{
 			"name" : "Vascular endothelial cell",
 			"markers" : [
@@ -122,22 +120,22 @@
 				"title" : "Vascular endothelial cell subtype markers",
 				"cell_types" : [
 					{
-						"name" : "Aerocyte",
+						"name" : "EC artery",
 						"markers" : [
 							{
-								"genes" : ["EDNRB+", "TBX2+", "EDA+", "HPGD+", "PRKG1+", "RCSD1+", "CYP3A5+", "VWF-"],
+								"genes" : ["CXCL12+", "GJA5+", "DKK2+", "HEY1+", "IGFBP3+", "SERPINE2+", "EFNB2+", "BMX+"],
 								"weight" : 1.0,
-								"comment" : "Markers inferred from Xing et al. Science Advances 2021, Tony et al. Nature 2021 and Schupp et al. Circulation 2021"
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					},
 					{
-						"name" : "EC general capillary",
+						"name" : "EC vein",
 						"markers" : [
 							{
-								"genes" : ["VWF+", "EDN1+", "FCN3+", "CD36+", "GPIHBP1+", "NRXN3+", "BTNL8+"],
+								"genes" : ["CPE+", "C7+", "IL1R1+", "PLA1A+", "PTGIS+", "ABI3BP+", "CYP1B1+", "ADGRG6+"],
 								"weight" : 1.0,
-								"comment" : "Markers inferred from Xing et al. Science Advances 2021, Tony et al. Nature 2021 and Schupp et al. Circulation 2021"
+								"comments" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					},
@@ -145,52 +143,45 @@
 						"name" : "EC bronchial vessel",
 						"markers" : [
 							{
-								"genes" : ["SPRY1+", "PLVAP+", "VWA1+", "MPZL2+", "ESM1+"],
+								"genes" : ["SPRY1+", "PLVAP+", "VWA1+", "ABCB1+", "COL15A1+", "RUNDC3B+"],
 								"weight" : 1.0,
-								"comment" : "Markers from Travaglini et al. Nature 2020"
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					},
 					{
-						"name" : "EC pulmonary-venous",
+						"name" : "Aerocyte",
 						"markers" : [
 							{
-								"genes" : ["COL15A1+", "ZNF385D+", "EBF1+", "CPXM2+", "PLVAP+", "VWA1+", "SPRY1+"],
+								"genes" : ["HPGD+", "EDNRB+", "SOSTDC1+", "B3GALNT1+", "CYP3A5+", "TBX2+", "S100A3+", "IL1RL1+", "PRKG1+", "EXPH5+"],
 								"weight" : 1.0,
-								"comments" : "Markers inferred from Xing et al. Science Advances 2021, Tony et al. Nature 2021 and Schupp et al. Circulation 2021"
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					},
 					{
-						"name" : "EC systemic-venous",
+						"name" : "EC general capillary",
 						"markers" : [
 							{
-								"genes" : ["COL15A1-", "CPE+", "DKK3+", "EFEMP1+", "CDH11+", "PLAT+"],
+								"genes" : ["FCN3+", "IL7R+", "EDN1+", "GPIHBP1+", "SLC6A4+", "NTRK2+", "IL18R1+", "NRXN3+"],
 								"weight" : 1.0,
-								"comments" : "Markers inferred from Xing et al. Science Advances 2021, Tony et al. Nature 2021 and Schupp et al. Circulation 2021"
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
+							}
+						]
+					},
+					{
+						"name" : "EC lymphatic",
+						"markers" : [
+							{
+								"genes" : ["CCL21+", "TFF3+", "PDPN+", "PROX1+", "GPM6A+", "SEMA3D+", "TBX1+", "RELN+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					}
 				]
 			}
 		},
-		{
-			"name" : "Lymphatic endothelial cell",
-			"markers" : [
-				{
-					"genes" : ["PECAM1+", "CLDN5+", "CDH5+", "ERG+"],
-					"weight" : 0.2,
-					"comment" : "Markers for endothelial cells, from Schupp et al. Circulation 2021"
-				},
-				{
-					"genes" : ["CCL21+", "SEMA3D+", "PROX1+", "PDPN+", "MMRN1+", "RELN+", "PKHD1L1+", "TFF3+", "LYVE1+", "FLT4+", "TBX1+"],
-					"weight" : 0.8,
-					"comment" : "Lymphatic-specific markers, from Schupp et al. Circulation 2021"
-				}
-			]
-		},
-
-
 
 
 
@@ -198,26 +189,21 @@
 			"name" : "Smooth muscle cell",
 			"markers" : [
 				{
-					"genes" : ["MYH11+", "TAGLN+", "ACTG2+", "CNN1+", "PLN+"],
-					"weight" : 0.8,
-					"comment" : "Markers from Muus et al., Braga et al. and Schupp et al."
-				},
-				{
-					"genes" : ["MYL9+", "TPM2+", "ACTA2+"],
-					"weight" : 0.2,
-					"comment" : "Markers that might also expressed in other stromal cell types"
+					"genes" : ["MYH11+", "ACTG2+", "CNN1+", "PLN+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			],
 			"subtypes" : {
 				"title" : "SMC subtype markers",
 				"cell_types" : [
 					{
-						"name" : "DES+",
+						"name" : "Airway smooth muscle cell",
 						"markers" : [
 							{
-								"genes" : ["DES+"],
+								"genes" : ["DES+", "TNNT2+", "RERGL+"],
 								"weight" : 1.0,
-								"comment" : "DES+ SMC"
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020"
 							}
 						]
 					}
@@ -229,21 +215,10 @@
 			"name" : "Pericyte",
 			"markers" : [
 				{
-					"genes" : ["TRPC6+", "CSPG4+", "FAM162B+", "GJA4+", "GJC1+", "HIGD1B+", "CDH6+", "LAMC3+", "FHL5+"],
-					"weight" : 0.8,
-					"comment" : "Markers from Schupp et al. Circulation 2021 and Travaglini et al. Nature 2020"
-				},
-				{
-					"genes" : ["PDGFRB+", "TBX2+", "EBF1+"],
-					"weight" : 0.1,
-					"comment" : "Markers that are highly expressed in Pericytes but also expressed in fibroblast"
-				},
-				{
-					"genes" : [ "LGI4+", "KCNK17+", "CACNA1H+", "PTN+", "TESC+"],
-					"weight" : 0.1,
-					"comment" : "Markers that are lowly expressed"
+					"genes" : ["COX4I2+", "HIGD1B+", "NDUFA4L2+", "FAM162B+", "LAMC3+", "KCNK3+", "GJA4+", "GJC1+", "CSPG4+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
-
 			]
 		},
 
@@ -251,15 +226,15 @@
 			"name" : "Mesothelial cell",
 			"markers" : [
 				{
-					"genes" : ["WT1+", "VIPR2+", "ITLN1+", "LINC02360+", "BNC1+",  "AP000561.1+", "CALB2+", "HAS1+", "LINC01133+", "GALNT9+"],
+					"genes" : ["CPA4+", "ITLN1+", "GALNT9+", "BNC1+", "CALB2+", "WT1+", "UPK3B+"],
 					"weight" : 1.0,
-					"comment" : "Markers from Schupp et al. and Travaglini et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
 
 		{
-			"name" : "Fibroblast/Myofibroblast",
+			"name" : "Fibroblast",
 			"markers" : [
 				{
 					"genes" : ["COL1A1+", "COL1A2+", "PDGFRA+", "ELN+", "BGN+"],
@@ -268,15 +243,15 @@
 				}
 			],
 			"subtypes" : {
-				"title" : "Fibro/Myofib subtype markers",
+				"title" : "Fibroblast subtype markers",
 				"cell_types" : [
 					{
 						"name" : "Adventitial fibroblast",
 						"markers" : [
 							{
-								"genes" : ["PTGIS+", "SFRP2+", "PDGFRL+", "SCARA5+", "MFAP5+", "PI16+", "AOX1+", "GAS1+", "IGFBP6+", "CXCL14+"],
+								"genes" : ["SFRP2+", "SFRP4+", "PDGFRL+", "PI16+",  "MFAP5+", "SCARA5+"],
 								"weight" : 1.0,
-								"comment" : "Markers from Schupp et al. and Travaglini et al."
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					},
@@ -284,24 +259,46 @@
 						"name" : "Alveolar fibroblast",
 						"markers" : [
 							{
-								"genes" : ["NKD1+", "FGFR4+", "GPM6B+", "SPINT2+", "SCN7A+", "TCF21+", "CAMK2N1+", "ADAMTS8+"],
+								"genes" : ["GPC3+", "FMO2+", "SCN7A+", "FGFR4+", "NKD2+", "ADAMTS8+"],
 								"weight" : 1.0,
-								"comment" : "Markers from Schupp et al. and Travaglini et al."
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
 					},
 					{
-						"name" : "Myofibroblast",
+						"name" : "Lipofibroblast",
 						"markers" : [
 							{
-								"genes" : ["ACTA2+", "MYL9+", "MT2A+", "EEF1A1+", "TMSB10+", "FAU+", "UBA52+", "SERF2+", "PTMA+", "S100A6+"],
+								"genes" : ["MLLT11+", "HAS2+", "SEMA6A+", "LONRF2+", "HOMER1+", "PWWP3B+"],
 								"weight" : 1.0,
-								"comment" : "Markers from Schupp et al. and Travaglini et al."
+								"comment" : "Markers inferred from Travaglini et al. Nature 2020"
 							}
 						]
 					}
 				]
 			}
+		},
+
+		{
+			"name" : "Myofibroblast",
+			"markers" : [
+				{
+					"genes" : ["ASPN+", "SCARA3+", "WIF1+", "ANGPTL2+", "ITGBL1+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020"
+				}
+			]
+		},
+
+		{
+			"name" : "Fibromyocyte",
+			"markers" : [
+				{
+					"genes" : ["SBSPON+", "SCX+", "GREM2+", "KCNMB1+", "LGR6+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020"
+				}
+			]
 		}
 	]
 }

@@ -305,9 +305,9 @@
 			"name" : "Plasmacytoid dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["JCHAIN+", "LILRA4+", "GZMB+", "MZB1+", "IL3RA+", "SERPINF1+", "ITM2C+", "IRF7+"],
+					"genes" : ["LILRA4+", "SERPINF1+", "IL3RA+", "TPM2+", "SCT+", "UGCG+", "CLEC4C+", "LRRC26+", "SMPD3+", "AC119428.2+"],
 					"weight" : 1.0,
-					"comment" : "important pDC markers"
+					"comment" : "Markers derived from Immune Cell Atlas PBMC, BM and CB data"
 				}
 			]
 		},
