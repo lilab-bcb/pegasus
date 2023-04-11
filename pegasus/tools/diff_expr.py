@@ -691,7 +691,7 @@ def write_results_to_excel(
                     clust_abbrevs.append(" ".join([fields[i][:endpos[i]] for i in range(fsize)]) + suf)
 
     def format_short_output_cols(
-        df_orig: pd.DataFrame, ndigits: int = 3
+        df_orig: pd.DataFrame, ndigits: int
     ) -> pd.DataFrame:
         """ Round related float columns to ndigits decimal points.
         """
@@ -711,7 +711,7 @@ def write_results_to_excel(
     ) -> None:
         """ Add one worksheet with content as df
         """
-        df = format_short_output_cols(df_orig)
+        df = format_short_output_cols(df_orig, ndigits)
         df.reset_index(inplace=True)
         worksheet = workbook.add_worksheet(name=sheet_name)
 

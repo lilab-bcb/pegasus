@@ -2175,7 +2175,7 @@ def _make_one_gsea_plot(df, ax, color, size=10):
 
 def plot_gsea(
     data: Union[MultimodalData, UnimodalData],
-    gsea_keyword: str,
+    gsea_keyword: Optional[str] = "fgsea_out",
     alpha: Optional[float] = 0.1,
     top_n: Optional[int] = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
@@ -2190,7 +2190,7 @@ def plot_gsea(
 
     data : ``UnimodalData`` or ``MultimodalData`` object
         The main data object.
-    gsea_keyword: ``str``
+    gsea_keyword: ``str``, optional, default: ``"fgsea_out"``
         Keyword in data.uns that stores the fGSEA results in pandas data frame.
     alpha: ``float``, optional, default: ``0.1``
         False discovery rate threshold.
@@ -2221,9 +2221,9 @@ def plot_gsea(
     df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
 
     fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
-    df_up = df.loc[df['NES']>0]
+    df_up = df.loc[df['NES']>0][0:top_n]
     _make_one_gsea_plot(df_up, axes[0], color='red')
-    df_dn = df.loc[df['NES']<0]
+    df_dn = df.loc[df['NES']<0][0:top_n]
     _make_one_gsea_plot(df_dn, axes[1], color='green')
     axes[1].set_xlabel('-log10(q-value)')
 
