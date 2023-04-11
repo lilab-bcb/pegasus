@@ -30,7 +30,7 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
             bins = pd.qcut(mean_vec, n_bins, duplicates = "drop")
         if bins.value_counts().min() == 1:
             logger.warning("Detected bins with only 1 gene!")
-        bins.categories = bins.categories.astype(str)
+        bins = bins.rename_categories(dict(zip(bins.categories, bins.categories.astype(str))))
         data.var["bins"] = bins
 
         # calculate background expectations
