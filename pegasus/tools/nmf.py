@@ -406,7 +406,12 @@ def integrative_nmf(
     seeds = rg.integers(4294967295, size=nbatch)
     ref_batch = max_size = -1
     for i in range(nbatch):
-        H_new = np.ascontiguousarray(Hs[i] / np.linalg.norm(Hs[i], axis=0), dtype=np.float32) # Scale H
+        h_norm = np.linalg.norm(Hs[i], axis=0)
+        idx_h_zeros = np.where(h_norm==0)[0]
+        if idx_h_zeros.size > 0:
+            # Set norm 0 to 1 to avoid divide by zero issue
+            h_norm[idx_h_zeros] = 1.0
+        H_new = np.ascontiguousarray(Hs[i] / h_norm, dtype=np.float32) # Scale H
         Hs_new.append(H_new) # Append scaled H
 
         if not quantile_norm:
