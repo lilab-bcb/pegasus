@@ -1,0 +1,19 @@
+Epithelial	Epithelial markers from HTAPP paper	KRT8	KRT18	EPCAM	CD24
+Endothelial	Endothelial shared markers from Xing et al. Science Advances 2021, Tony et al. Nature 2021 and Schupp et al. Circulation 2021	PECAM1	CLDN5	CDH5	ERG
+Fibroblast	Fibroblast/Myofibroblast shared markers from Travaglini et al.	COL1A1	COL1A2	PDGFRA	ELN	BGN
+Macrophage	Macro	CD68	CD163	C1QA	MRC1	MS4A6A	MSR1	MERTK
+SMC	SMC from Muus et al., Braga et al. and Schupp et al.	MYH11	TAGLN	ACTG2	CNN1	PLN
+Pericyte	Pericyte from Schupp et al. and Travaglini et al.	TRPC6	CSPG4	FAM162B	GJA4	GJC1	HIGD1B	CDH6	LAMC3	FHL5
+T cell	T cell markers	CD3D	CD3E	CD3G	TRAC
+B cell	B cell markers	CD19	MS4A1	CD79A	CD79B
+Plasma cell	Plasma cell markers	CD38	XBP1	CD27	SLAMF7	TNFRSF17	TNFRSF13B
+Mast cell	Mast cell markers	KIT	CPA3	TPSB2	TPSAB1	AREG	RGS1	RGS2
+Neutrophil	Neutrophil markers	FUT4	MPO	CEACAM8	ELANE	CXCR1	CXCR2	LY6G6D
+AT1	AT1 markers from Schupp et al., Travaglini et al. and Tony et al.	AGER	CAV1	RTKN2	MYL9	SPOCK2	ANXA3	TIMP3	CAV2	ST6GALNAC5	MYRF
+AT2	AT2 markers from Schupp et al., Travaglini et al. and Tony et al.	SFTPA1	SFTPA2	SFTPC	ETV5	TTN	PLA2G4F	CCDC141	LAMP3	ABCA3	HHIP
+Basal	Basal cell markers from Schupp et al., Travaglini et al. and Tony et al.	KRT5	KRT15	KRT17	TP63	S100A2	TNS4
+Ciliated	Ciliated cell markers from Schupp et al., Travaglini et al. and Tony et al.	ERICH3	SNTN	CCDC78	SNTN	ZBBX	DNAI1	ARMC3	CFAP157	TTC29	CFAP73
+Club	Club cell markers from Schupp et al., Travaglini et al. and Tony et al.	SCGB3A2	MGP	VIM	CST3
+Goblet	Goblet cell markers from Schupp et al., Travaglini et al. and Tony et al.	MUC5AC	MUC5B	BPIFB1	MSMB	FAM3D	SERPINB11	CXCL6	SCGB1A1	FAM3D	SERPINB3
+Ionocyte	Ionocyte markers from Travaglini et al.	FOXI1	ASCL3	CLDN25	ATP6V1G3	LINC01187
+PNEC	Plumonary neuroendocrine cell markers from Travaglini et al.	CALCA	CHGA	ASCL1	SLC35D3	KIF1A

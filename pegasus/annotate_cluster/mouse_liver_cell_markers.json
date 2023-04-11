@@ -1,0 +1,246 @@
+{
+	"title" : "Mouse liver cell type markers",
+	"comment": "Markers are collected from Kaptein et al. Cell 2022",
+	"cell_types" : [
+		{
+			"name" : "Hepatocyte",
+			"markers" : [
+				{
+					"genes" : ["Acaa1b+", "Arg1+", "Sult2a8+", "Hgd+", "Otc+"],
+					"weight" : 1.0,
+					"comment" : "Hepatocyte markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Cholangiocyte",
+			"markers" : [
+				{
+					"genes" : ["Spp1+", "Ddit4l+", "Sox9+", "Fgfr3+", "Plet1+"],
+					"weight" : 1.0,
+					"comment" : "Cholangiocyte markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "HsPC",
+			"markers" : [
+				{
+					"genes" : ["Chrm3+", "Dmbt1+", "Slc4a4+", "Parm1+", "Pcdh11x+"],
+					"weight" : 1.0,
+					"comment" : "Hepatic stem and progenitor cell markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+
+		{
+			"name" : "ILC1",
+			"markers" : [
+				{
+					"genes" : ["Xcl1+", "Cd160+", "Klrc1+", "Cd200r2+", "Gzmc+"],
+					"weight" : 1.0,
+					"comment" : "Innate lymphoid cell type 1 markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+
+		{
+			"name" : "Kupffer cell",
+			"markers" : [
+				{
+					"genes" : ["Cd5l+", "Clec4f+", "Vsig4+", "Folr2+", "Timd4+"],
+					"weight" : 1.0,
+					"comment" : "Kupffer cell markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Peritoneal macrophage",
+			"markers" : [
+				{
+					"genes" : ["Lyz1+", "Saa3+", "Prg4+", "Retnla+", "Cbr2+"],
+					"weight" : 1.0,
+					"comment" : "Peritoneal macrophage markers from Kaptein et al. Cell 2022; Note that Lyve1 is also a good marker but it is also expressed in endothelial cells"
+				}
+			]
+		},
+
+		{
+			"name" : "Macrophage",
+			"markers" : [
+				{
+					"genes" : ["Cd14+", "Ms4a7+", "Cx3cr1+", "Trem2+", "Hpgds+"],
+					"weight" : 1.0,
+					"comment" : "Machrophage markers from Kaptein et al. Cell 2022"
+				}
+			],
+			"subtypes" : {
+				"title" : "Macrophage subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Cd207+ macrophage",
+						"markers" : [
+							{
+								"genes" : ["Cd207+", "Tmem119+", "Olfml3+", "Mmp13+"],
+								"weight" : 1.0,
+								"comments" : "Cd207+ macrophage markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Bile-duct lipid-associated macrophage",
+						"markers" : [
+							{
+								"genes" : ["Gpnmb+", "Spp1+", "Syngr1+", "Cd93+"],
+								"weight" : 1.0,
+								"comments" : "Bile-duct LAM markers from Kaptein et al. Cell 2022"
+							}
+						]
+					}
+				]
+			}
+		},
+
+
+		{
+			"name" : "Endothelial cell",
+			"markers" : [
+				{
+					"genes" : ["Mmrn2+", "Cldn5+", "Adgrl4+", "Tek+", "Myct1+"],
+					"weight" : 1.0,
+					"comment" : "Endothelial cell markers from Kaptein et al. Cell 2022"
+				}
+			],
+			"subtypes" : {
+				"title" : "Endothelial cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Liver sinusoidal endothelial cell",
+						"markers" : [
+							{
+								"genes" : ["Lyve1+", "Clec1b+", "Chst2+", "Wisp1+"],
+								"weight" : 1.0,
+								"comment" : "LSEC markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Central vein endothelial cell",
+						"markers" : [
+							{
+								"genes" : ["Rspo3+", "Lhx6+", "Wnt9b+", "Plppr5+"],
+								"weight" : 1.0,
+								"comment" : "CV EC markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Portal Vein endothelial cell",
+						"markers" : [
+							{
+								"genes" : ["Adgrg6+", "Nrg1+", "Gja5+","Cmklr1+"],
+								"weight" : 1.0,
+								"comment" : "PV EC markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Lymphatic Endothelial cell",
+						"markers" : [
+							{
+								"genes" : ["Mmrn1+", "Pard6g+", "Nts+", "Ccl21a+"],
+								"weight" : 1.0,
+								"comments" : "LEC markers from Kaptein et al. Cell 2022"
+							}
+						]
+					}
+				]
+			}
+		},
+
+
+		{
+			"name" : "Stellate cell",
+			"markers" : [
+				{
+					"genes" : ["Colec10+", "Rspo3+", "Mapt+", "Lama1+", "Bmp10+"],
+					"weight" : 1.0,
+					"comment" : "Stellate cell markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Vascular smooth muscle cell",
+			"markers" : [
+				{
+					"genes" : ["Cacna1c+", "Myh11+", "Notch3+", "Lmod1+", "Tagln+"],
+					"weight" : 1.0,
+					"comment" : "VSMC markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Mesothelial cell",
+			"markers" : [
+				{
+					"genes" : ["Ephb1+", "Cadm2+", "Prss12+", "Myl7+", "Prph+"],
+					"weight" : 1.0,
+					"comment" : "Mesothelial cell markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Fibroblast",
+			"markers" : [
+				{
+					"genes" : ["Col1a1+", "Mrc2+", "Plcxd3+", "Fndc1+", "Cpxm1+"],
+					"weight" : 1.0,
+					"comment" : "Fibroblast markers from Kaptein et al. Cell 2022"
+				}
+			],
+			"subtypes" : {
+				"title" : "Fibro subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Capsule fibroblast",
+						"markers" : [
+							{
+								"genes" : ["Osr1+", "Cldn10+", "Lgals7+", "Spock3+"],
+								"weight" : 1.0,
+								"comment" : "Capsule fibroblast markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Central vein fibroblast",
+						"markers" : [
+							{
+								"genes" : ["Dpt+", "Pcolce2+", "Ntrk2+", "Pi16+"],
+								"weight" : 1.0,
+								"comment" : "Central vein fibroblast markers from Kaptein et al. Cell 2022"
+							}
+						]
+					},
+					{
+						"name" : "Bile-duct fibroblast",
+						"markers" : [
+							{
+								"genes" : ["Itgbl1+", "Plcxd3+", "Nkain3+", "Clic5+"],
+								"weight" : 1.0,
+								"comment" : "Bile-duct fibroblast markers from Kaptein et al. Cell 2022"
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}

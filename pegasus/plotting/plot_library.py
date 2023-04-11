@@ -45,7 +45,7 @@ def scatter(
     fix_corners: Optional[bool] = True,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[Union[str, List[str]]] = "right margin",
-    legend_fontsize: Optional[Union[int, List[int]]] = 10, 
+    legend_fontsize: Optional[Union[int, List[int]]] = 10,
     legend_ncol: Optional[str] = None,
     palettes: Optional[Union[str, List[str]]] = None,
     cmaps: Optional[Union[str, List[str]]] = "YlOrRd",
@@ -214,7 +214,7 @@ def scatter(
 
             if global_marker_size == None:
                 global_marker_size = _get_marker_size(x.size) if marker_size is None else marker_size
-            
+
             x_label = f"{basis_}{comp_key[0]}"
             y_label = f"{basis_}{comp_key[1]}"
 
@@ -864,6 +864,7 @@ def violin(
     hue: Optional[str] = None,
     matkey: Optional[str] = None,
     stripplot: Optional[bool] = False,
+    stripsize: int = 1,
     inner: Optional[str] = None,
     scale: Optional[str] = 'width',
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
@@ -973,7 +974,7 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=1, color="k", jitter=True)
+            sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=stripsize, color="k", jitter=True)
         sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=inner, linewidth=1, ax=ax, cut=0, scale=scale, split=True, palette=palette, **kwargs)
         ax.grid(False)
 
@@ -1076,7 +1077,7 @@ def heatmap(
 
     Examples
     --------
-    >>> pg.heatmap(data, genes=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
+    >>> pg.heatmap(data, attrs=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
 
     """
     if not isinstance(data, anndata.AnnData):
@@ -1359,9 +1360,9 @@ def dotplot(
     yticks = summarized_df.index.map(str).values
 
     if switch_axes:
-        x, y = y, x
-        xlabel, ylabel = ylabel, xlabel
-        xticks, yticks = yticks, xticks
+        x, y = y[::-1], x[::-1]
+        xlabel, ylabel = ylabel[::-1], xlabel[::-1]
+        xticks, yticks = yticks[::-1], xticks[::-1]
 
     dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
                     xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
