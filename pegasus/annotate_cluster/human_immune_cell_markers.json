@@ -73,6 +73,42 @@
 		},
 
 		{
+			"name" : "Natural killer cell",
+			"markers" : [
+				{
+					"genes" : ["NCAM1+"],
+					"weight" : 0.2,
+					"comment" : "CD56"
+				},
+				{
+					"genes" : ["NKG7+"],
+					"weight" : 0.2,
+					"comment" : "natural killer cell granule protein 7"
+				},
+				{
+					"genes" : ["KLRB1+", "KLRD1+", "KLRF1+", "KLRC1+", "KLRC2+", "KLRC3+", "KLRC4+"],
+					"weight" : 0.25,
+					"comment" : "killer cell lectin like receptors"
+				},
+				{
+					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
+					"weight" : 0.15,
+					"comment" : "not T cell"
+				},
+				{
+					"genes" : ["FCGR3A+"],
+					"weight" : 0.1,
+					"comment" : "CD16a"
+				},
+				{
+					"genes" : ["ITGAL+", "ITGAM+"],
+					"weight" : 0.1,
+					"comment" : "CD11a,CD11b"
+				}
+			]
+		},
+
+		{
 			"name" : "B cell",
 			"markers" : [
 				{
@@ -152,14 +188,9 @@
 					"comment" : "CD19, CD20 and CD79"
 				},
 				{
-					"genes" : ["CD38+", "BCL6+", "BCL2-", "RGS13+"],
-					"weight" : 0.6,
-					"comment" : "First 3 markers are from Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 1 & 2). The last marker is from XXX"
-				},
-				{
-					"genes" : ["PCNA+", "MKI67+"],
-					"weight" : 0.1,
-					"comment" : "From Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 2)"
+					"genes" : ["CD38+", "BCL6+", "BCL2-", "RGS13+", "MEF2B"],
+					"weight" : 0.7,
+					"comment" : "First 3 markers are from Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 1 & 2). The last 2 markers are from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper"
 				}
 			],
 			"subtypes" : {
@@ -190,38 +221,28 @@
 		},
 
 		{
-			"name" : "Natural killer cell",
+			"name" : "Plasma cell",
 			"markers" : [
 				{
-					"genes" : ["NCAM1+"],
+					"genes" : ["CD38+", "XBP1+", "CD27+", "SLAMF7+"],
+					"weight" : 0.4,
+					"comment" : "important markers"
+				},
+				{
+					"genes" : ["TNFRSF17+", "TNFRSF13B+"],
 					"weight" : 0.2,
-					"comment" : "CD56"
+					"comment" : "TNF-receptor superfamily"
 				},
 				{
-					"genes" : ["NKG7+"],
+					"genes" : ["IGHA1+", "IGHG1+"],
 					"weight" : 0.2,
-					"comment" : "natural killer cell granule protein 7"
+					"comment" : "class switching happened"
 				},
 				{
-					"genes" : ["KLRB1+", "KLRD1+", "KLRF1+", "KLRC1+", "KLRC2+", "KLRC3+", "KLRC4+"],
-					"weight" : 0.25,
-					"comment" : "killer cell lectin like receptors"
-				},
-				{
-					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
-					"weight" : 0.15,
-					"comment" : "not T cell"
-				},
-				{
-					"genes" : ["FCGR3A+"],
-					"weight" : 0.1,
-					"comment" : "CD16a"
-				},
-				{
-					"genes" : ["ITGAL+", "ITGAM+"],
-					"weight" : 0.1,
-					"comment" : "CD11a,CD11b"
-				}
+					"genes" : ["MS4A1-"],
+					"weight" : 0.2,
+					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
+				}				
 			]
 		},
 
@@ -270,39 +291,24 @@
 		},
 
 		{
-			"name" : "Plasmacytoid dendritic cell",
+			"name" : "Migratory dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["JCHAIN+", "LILRA4+", "GZMB+", "MZB1+", "IL3RA+", "SERPINF1+", "ITM2C+", "IRF7+"],
+					"genes" : ["FSCN1+", "CCR7+", "LAMP3+", "CCL19+", "CCL22+", "CD40+", "BIRC3+"],
 					"weight" : 1.0,
-					"comment" : "important pDC markers"
+					"comment" : "Xing et al. Science Advances 2021 Table S2 (DCs-C3)"
 				}
 			]
 		},
 
 		{
-			"name" : "Plasma cell",
+			"name" : "Plasmacytoid dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["CD38+", "XBP1+", "CD27+", "SLAMF7+"],
-					"weight" : 0.4,
-					"comment" : "important markers"
-				},
-				{
-					"genes" : ["TNFRSF17+", "TNFRSF13B+"],
-					"weight" : 0.2,
-					"comment" : "TNF-receptor superfamily"
-				},
-				{
-					"genes" : ["IGHA1+", "IGHG1+"],
-					"weight" : 0.2,
-					"comment" : "class switching happened"
-				},
-				{
-					"genes" : ["MS4A1-"],
-					"weight" : 0.2,
-					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
-				}				
+					"genes" : ["LILRA4+", "SERPINF1+", "IL3RA+", "TPM2+", "SCT+", "UGCG+", "CLEC4C+", "LRRC26+", "SMPD3+", "AC119428.2+"],
+					"weight" : 1.0,
+					"comment" : "Markers derived from Immune Cell Atlas PBMC, BM and CB data"
+				}
 			]
 		},
 
