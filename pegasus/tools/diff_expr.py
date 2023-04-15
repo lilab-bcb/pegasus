@@ -218,10 +218,20 @@ def _de_test_ref_cluster(
 
     start = time.perf_counter()
 
+
     data, indices, indptr = csr_to_csc_naive(X.data, X.indices, X.indptr, X.shape[0], X.shape[1])
     ref_code = cluster_labels.categories.get_loc(ref_cluster_id)
+    cluster_sizes = cluster_labels.value_counts()
+    ref_size = cluster_sizes[ref_cluster_id]
+    if ref_size == X.shape[1]:
+        logger.info("There is no cluster other than the reference cluster!")
+        return
+    ## Sort so that reference cluster's labels appearing before all the others
+    #ords = np.argsort(cluster_labels.codes!=ref_code)
+    ## Sort all other clusters' labels
+    #ords = np.concatenate((ords[0:ref_size], ords[ref_size:][np.argsort(cluster_labels[ords[ref_size:]])]))
+
     cluster_code = cluster_labels.codes.astype(np.int32)
-    cluster_sizes = cluster_labels.value_counts().values
     label_cat_list = cluster_labels.categories.delete(ref_code)
 
     if verbose:
@@ -251,7 +261,7 @@ def _de_test_ref_cluster(
                 indptr,
                 ref_code,
                 cluster_code,
-                cluster_sizes,
+                cluster_sizes.values,
                 X.shape[0],
                 verbose,
             )

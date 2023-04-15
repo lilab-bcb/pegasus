@@ -191,8 +191,9 @@ cpdef tuple calc_mwu_ref_cluster(
     cdef Py_ssize_t i, j, k
     cdef Py_ssize_t n_nonzero, n_zero, ptr_ref
     cdef Py_ssize_t cur_ptr, cur_idx, cur_label
-    cdef float cur_val
+    cdef float cur_val, val_cmp
     cdef int gt_cnt, eq_cnt
+    cdef long n
 
     ngene = end_pos - start_pos
     ncluster = cluster_sizes.size
@@ -201,28 +202,32 @@ cpdef tuple calc_mwu_ref_cluster(
     pvals_np = np.ones((ngene, ncluster), dtype = np.float32)
     aurocs_np = np.full((ngene, ncluster), 0.5, dtype = np.float32)
     n1n2_np = np.zeros(ncluster, dtype = np.float64)
-    mean_U = np.zeros(ncluster, dtype = np.float64)
-    sd_U = np.zeros(ncluster, dtype = np.float64)
+    mean_U_np = np.zeros(ncluster, dtype = np.float64)
+    sd_U_np = np.zeros(ncluster, dtype = np.float64)
 
     cdef long[:] n_zero_clusters = np.zeros(ncluster, dtype = np.int64)
     cdef Py_ssize_t buffer_size = ngene * (ncluster - 1)
     cdef Py_ssize_t buffer_pos = 0
     cdef double[:] zscores = np.zeros(buffer_size, dtype = np.float64)
-    cdef long[:] nsample_cmp = np.zeros(ncluster, dtype = np.int64)
+    cdef double[:] tie_factor = np.zeros(ncluster, dtype = np.float64)
+    cdef long[:] tie_counts = np.zeros(ncluster, dtype = np.int64)
+    cdef long[:] nsample_ref = np.zeros(ncluster, dtype = np.int64)
 
     # memoryviews
     cdef double[:, :] U_stats = U_stats_np
     cdef float[:, :] pvals = pvals_np
     cdef float[:, :] aurocs = aurocs_np
     cdef double[:] n1n2 = n1n2_np
+    cdef double[:] mean_U = mean_U_np
+    cdef double[:] sd_U = sd_U_np
 
     for j in range(ncluster):
         if j == ref_code:
             continue
         n1n2[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code]
-        mean_U[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code] / 2.0 + 0.5  # continuity correction
-        nsample_cmp[j] = cluster_sizes[ref_code] + cluster_sizes[j]
-        sd_U[j] = np.sqrt(n1n2[j] * (nsample_cmp[j] + 1) / 12.0)
+        mean_U[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code] / 2.0
+        nsample_ref[j] = cluster_sizes[ref_code] + cluster_sizes[j]
+        tie_factor[j] = 0.0
 
     for i in range(start_pos, end_pos):
         pos_i = i - start_pos
@@ -231,6 +236,8 @@ cpdef tuple calc_mwu_ref_cluster(
         ptr_ref = -1
         gt_cnt = 0
         eq_cnt = 0
+        for j in range(ncluster):
+            tie_counts[j] = 0
 
         if n_nonzero == 0:  # No cell expressing this gene.
             for j in range(ncluster):
@@ -245,17 +252,28 @@ cpdef tuple calc_mwu_ref_cluster(
                     if j == ref_code:
                         continue
                     U_stats[pos_i, j] = (cluster_sizes[j] - n_zero_clusters[j]) * n_zero_clusters[ref_code] + 0.5 * n_zero_clusters[ref_code] * n_zero_clusters[j]
+                    tie_factor[j] = (n_zero_clusters[ref_code] + n_zero_clusters[j])**3.0 - (n_zero_clusters[ref_code] + n_zero_clusters[j])
 
             # non-zero counts
             cur_data = data[indptr[i]:indptr[i + 1]]
             cur_indices = indices[indptr[i]:indptr[i + 1]]
-            ptr_sorted = np.argsort(cur_data)
+            ptr_sorted = np.argsort(cur_data, kind='stable')
             for k in ptr_sorted:
                 cur_idx = cur_indices[k]
                 cur_val = cur_data[k]
                 cur_label = cluster_code[cur_idx]
-                #if pos_i == 65:
-                #    printf("\tk = %d, cur_idx = %d, cur_val = %f, cur_label = %d, ptr_ref = %d;\t", k, cur_idx, cur_val, cur_label, ptr_ref)
+
+                # Handle ties
+                if val_cmp != cur_val:
+                    for j in range(ncluster):
+                        if (j == ref_code) or (tie_counts[j] + tie_counts[ref_code] == 0):
+                            continue
+                        tie_factor[j] += (tie_counts[j] + tie_counts[ref_code])**3.0 - (tie_counts[j] + tie_counts[ref_code])
+                        tie_counts[j] = 0
+                    tie_counts[ref_code] = 0
+                    val_cmp = cur_val
+                tie_counts[cur_label] += 1
+
                 if cur_label == ref_code:  # Cell in reference cluster
                     if ptr_ref >= 0:
                         if cur_val > cur_data[ptr_ref]:
@@ -277,18 +295,20 @@ cpdef tuple calc_mwu_ref_cluster(
                     else:
                         U_stats[pos_i, cur_label] += gt_cnt + 0.5 * (eq_cnt + 1)
 
+            # The last tie
+            for j in range(ncluster):
+                if (j == ref_code) or (tie_counts[j] + tie_counts[ref_code] == 0):
+                    continue
+                tie_factor[j] += (tie_counts[j] + tie_counts[ref_code])**3.0 - (tie_counts[j] + tie_counts[ref_code])
+
             # Calculate AUROC and Z score
             ranks = ss.rankdata(cur_data)
             for j in range(ncluster):
                 if j == ref_code:
                     continue
                 aurocs[pos_i, j] = U_stats[pos_i, j] / n1n2[j]
-                #indices_j = np.intersect1d(np.where(np.logical_or(cluster_code==j, cluster_code==ref_code))[0], cur_indices, assume_unique=True)
-                #_, ties = np.unique(ranks[indices_j], return_counts=True)
-                #if n_zero_clusters[j] > 0 or n_zero_clusters[ref_code] > 0:
-                #    ties = np.concatenate(([n_zero_clusters[j] + n_zero_clusters[ref_code]], ties))
-                #sd_U[j] *= np.sqrt(1 - (ties**3.0 - ties).sum() / (nsample_cmp[j]**3 - nsample_cmp[j]))
-                z = (max(U_stats[pos_i, j], n1n2[j] - U_stats[pos_i, j]) - mean_U[j]) / sd_U[j]
+                sd_U[j] = sqrt(n1n2[j] / 12.0 * (nsample_ref[j] + 1 - tie_factor[j] / nsample_ref[j] / (nsample_ref[j] - 1)))
+                z = (max(U_stats[pos_i, j], n1n2[j] - U_stats[pos_i, j]) - (mean_U[j] + 0.5)) / sd_U[j]  # continuity correction
                 zscores[buffer_pos] = z
                 buffer_pos += 1
 
@@ -389,6 +409,7 @@ cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long
                     z = (max(U1, U2) - mean_U) / sd_U
 
                     zscores[buffer_pos] = z
+                    printf("original sd_U = %f\n", sd_U)
                     buffer_pos += 1
 
                     U_stats[pos_i, j] = U1
