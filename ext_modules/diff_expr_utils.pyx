@@ -409,7 +409,6 @@ cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long
                     z = (max(U1, U2) - mean_U) / sd_U
 
                     zscores[buffer_pos] = z
-                    printf("original sd_U = %f\n", sd_U)
                     buffer_pos += 1
 
                     U_stats[pos_i, j] = U1
