@@ -712,7 +712,7 @@ def split_one_cluster(
     neighbors(tmpdat, rep=rep, n_comps=n_comps, use_cache=False)
     leiden(tmpdat, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
 
-    new_clust = data.obs[clust_label].values.astype(str)
+    new_clust = data.obs[clust_label].values.astype(object)
     cats_sub = []
     for i, label in enumerate(tmpdat.obs['leiden_labels'].value_counts().index):
         sub_id = f"{clust_id}-{i+1}"
