@@ -369,9 +369,9 @@
 			"name" : "Neutrophil",
 			"markers" : [
 				{
-					"genes" : ["FUT4+", "MPO+", "CEACAM8+", "ELANE+", "CXCR1+", "CXCR2+", "LY6G6D+"],
+					"genes" : ["KCNJ15+", "IL1R2+", "LUCAT1+", "G0S2+", "TREM1+", "CSF3R+", "FCGR3B+", "CXCR1+", "CXCR2+"],
 					"weight" : 1.0,
-					"comment" : "key markers"
+					"comment" : "Neutrophil markers validated using 10x public whole blood dataset."
 				}
 			]
 		},
