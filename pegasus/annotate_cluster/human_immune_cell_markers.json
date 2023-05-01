@@ -366,12 +366,45 @@
 		},
 
 		{
+			"name" : "Pro-Neutrophil",
+			"markers" : [
+				{
+					"genes" : ["DEFA3+", "DEFA4+", "AZU1+", "MS4A3+", "ELANE+", "SLPI+", "CEACAM6+", "RNASE3+", "PRTN3+", "MPO+", "AC104232.1+", "CTSG+"],
+					"weight" : 1.0,
+					"comment" : "Pro-Neutrophil markers validated using 10x public whole blood dataset"
+				}
+			]
+		},
+
+		{
+			"name" : "Pre-Neutrophil",
+			"markers" : [
+				{
+					"genes" : ["LTF+", "LCN2+", "MMP8+", "CRISP3+", "CAMP+", "PGLYRP1+", "CD177+", "HP+"],
+					"weight" : 1.0,
+					"comment" : "Pre-Neutrophil markers validated using 10x public whole blood dataset"
+				}
+			]
+		},
+
+		{
 			"name" : "Neutrophil",
 			"markers" : [
 				{
-					"genes" : ["KCNJ15+", "IL1R2+", "LUCAT1+", "G0S2+", "TREM1+", "CSF3R+", "FCGR3B+", "CXCR1+", "CXCR2+"],
+					"genes" : ["CSF3R+", "G0S2+", "LUCAT1+", "EPHB1+", "TNFRSF10C+", "IL1R2+", "KCNJ15+", "FCGR3B+", "AC007032.1+", "HSD11B1-AS1+"],
 					"weight" : 1.0,
-					"comment" : "Neutrophil markers validated using 10x public whole blood dataset."
+					"comment" : "Neutrophil markers validated using 10x public whole blood dataset"
+				}
+			]
+		},
+
+		{
+			"name" : "Basophil",
+			"markers" : [
+				{
+					"genes" : ["AKAP12+", "HDC+", "GATA2+", "ENPP3+", "CA8+", "ITGB8+", "GCSAML+", "CRPPA+", "AC111000.4+", "LINC02223+"],
+					"weight" : 1.0,
+					"comment" : "Basophil markers validated using 10x public whole blood dataset"
 				}
 			]
 		},
