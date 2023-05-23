@@ -76,36 +76,47 @@
 			"name" : "Natural killer cell",
 			"markers" : [
 				{
-					"genes" : ["NCAM1+"],
-					"weight" : 0.2,
-					"comment" : "CD56"
+					"genes" : ["GNLY+", "KLRF1+", "KLRD1+", "TRDC+", "IL2RB+", "KLRC1+"],
+					"weight" : 0.6,
+					"comment" : "General NK cell markers also cover some T cells; derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
 				},
 				{
-					"genes" : ["NKG7+"],
+					"genes" : ["NCAM1+", "FCGR3A+"],
 					"weight" : 0.2,
-					"comment" : "natural killer cell granule protein 7"
-				},
-				{
-					"genes" : ["KLRB1+", "KLRD1+", "KLRF1+", "KLRC1+", "KLRC2+", "KLRC3+", "KLRC4+"],
-					"weight" : 0.25,
-					"comment" : "killer cell lectin like receptors"
+					"comment" : "NK subtype markers"
 				},
 				{
 					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
-					"weight" : 0.15,
-					"comment" : "not T cell"
-				},
-				{
-					"genes" : ["FCGR3A+"],
-					"weight" : 0.1,
-					"comment" : "CD16a"
-				},
-				{
-					"genes" : ["ITGAL+", "ITGAM+"],
-					"weight" : 0.1,
-					"comment" : "CD11a,CD11b"
+					"weight" : 0.2,
+					"comment" : "No T cell markers"
 				}
-			]
+			],
+			"subtypes" : {
+				"title" : "NK cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "CD56-dim NK cell",
+						"markers" : [
+							{
+								"genes" : ["FCGR3A+", "FGFBP2+", "SPON2+", "MYOM2+", "S1PR5+", "CX3CR1+", "AKR1C3+", "FCRL6+", "LAIR2+", "PRSS23+"],
+								"weight" : 1.0,
+								"comment" : "Cytotoxic NK cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
+							}
+						]
+					},
+					{
+						"name" : "CD56-bright NK cell",
+						"markers" : [
+							{
+								"genes" : ["NCAM1+", "GZMK+", "XCL1+", "SPTSSB+", "CAPG+", "IL7R+", "GPR183+", "IGFBP4+", "SPINK2+", "FUT7+"],
+								"weight" : 1.0,
+								"comment" : "Regulatory NK cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; CD56bright develops into CD56dim"
+							}
+						]
+					}
+				],
+				"comment": "There is also a CD56_dim CD16_dim population in between of the CD56-dim and CD56-bright subtypes."
+			}
 		},
 
 		{
