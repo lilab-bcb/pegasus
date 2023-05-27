@@ -586,9 +586,9 @@ def infer_doublets(
             if idx.size >= min_cell:
                 unidata = UnimodalData({"barcodekey": data.obs_names[idx]}, 
                                        {"featurekey": data.var_names},
-                                       {"counts": rawX[idx]},
+                                       {raw_mat_key: rawX[idx]},
                                        {"genome": genome, "modality": modality},
-                                       cur_matrix = "counts")
+                                       cur_matrix = raw_mat_key)
                 # Identify robust genes, count and log normalized and select top 2,000 highly variable features
                 identify_robust_genes(unidata)
                 log_norm(unidata)
