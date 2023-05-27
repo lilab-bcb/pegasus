@@ -59,6 +59,21 @@
 						]
 					},
 					{
+						"name" : "CD4 CTL",
+						"markers" : [
+							{
+								"genes" : ["CD4+", "CD8A-", "CD8B-"],
+								"weight" : 0.3,
+								"comments" : "Must be CD4 T"
+							},
+							{
+								"genes" : ["GNLY+", "AGAP1+", "ZNF683+", "RGS9+", "IL5RA+", "LAIR2+", "MTERF2+", "SH3RF2+", "RGS17+"],
+								"weight" : 0.7,
+								"comments" : "CD4 CTL markers that might also be expressed by CD8 TEM"
+							}
+						]
+					},					
+					{
 						"name" : "CD8 Naive T cell",
 						"markers" : [
 							{
