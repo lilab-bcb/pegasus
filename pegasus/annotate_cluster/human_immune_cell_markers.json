@@ -72,7 +72,17 @@
 								"comments" : "CD4 CTL markers that might also be expressed by CD8 TEM"
 							}
 						]
-					},					
+					},
+					{
+						"name" : "T follicular helper cell",
+						"markers" : [
+							{
+								"genes" : ["CD4+", "ST8SIA1+", "PDCD1+", "TIGIT+", "TOX2+", "ICOS+", "SH2D1A+", "IL21+"],
+								"weight" : 1.0,
+								"comments" : "Tfh markers"
+							}
+						]
+					},										
 					{
 						"name" : "CD8 Naive T cell",
 						"markers" : [
@@ -250,14 +260,9 @@
 			"name" : "Germinal Center B cell",
 			"markers" : [
 				{
-					"genes" : ["CD19+", "MS4A1+", "CD79A+", "CD79B+"],
-					"weight" : 0.3,
-					"comment" : "CD19, CD20 and CD79"
-				},
-				{
-					"genes" : ["CD38+", "BCL6+", "BCL2-", "RGS13+", "MEF2B"],
-					"weight" : 0.7,
-					"comment" : "First 3 markers are from Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 1 & 2). The last 2 markers are from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper"
+					"genes" : ["MEF2B+", "NEIL1+", "RGS13+", "ELL3+", "BCL7A+", "BCL6+", "NUGGC+", "MYBL1+", "EML6+", "FANCA+"],
+					"weight" : 1.0,
+					"comment" : "GC B cell markers"
 				}
 			],
 			"subtypes" : {
@@ -267,9 +272,9 @@
 						"name" : "Dark zone B cell",
 						"markers" : [
 							{
-								"genes" : ["CXCR4+", "AICDA+", "FOXP1+", "MME+"],
+								"genes" : ["NUSAP1+", "NCAPG+", "AURKB+", "HMGB2+", "HJURP+", "TOP2A+"],
 								"weight" : 1.0,
-								"comment" : "Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper"
+								"comment" : "DZ B cell markers"
 							}
 						]
 					},
@@ -378,6 +383,19 @@
 				}
 			]
 		},
+
+
+		{
+			"name" : "Follicular dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["CXCL13+", "FCAMR+", "FDCSP+", "SERPINE2+", "PAPPA+", "NPHS1+", "PKDCC+", "SYNM+", "NRG2+", "CDC42EP4+", "MUC3A+", "PRUNE2+", "B4GALNT4+", "NPPC+", "SLC1A2+", "TMEM150C+"],
+					"weight" : 1.0,
+					"comment" : "fDC markers"
+				}
+			]
+		},
+
 
 		{
 			"name" : "Hematopoietic stem cell",
