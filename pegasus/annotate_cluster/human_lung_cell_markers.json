@@ -5,9 +5,9 @@
 			"name" : "Alveolar type I cell",
 			"markers" : [
 				{
-					"genes" : ["AGER+", "CAV1+", "RTKN2+", "MYL9+", "SPOCK2+", "ANXA3+", "TIMP3+", "CAV2+", "ST6GALNAC5+", "MYRF+"],
+					"genes" : ["AGER+", "SPOCK2+", "RTKN2+", "TNNC1+", "SCEL+", "CLIC5+", "NCKAP5+", "ARHGEF26+", "GGTLC1+", "ITLN2+", "MS4A15+"],
 					"weight" : 1.0,
-					"comment" : "AT1 markers from Schupp et al., Travaglini et al. and Tony et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -16,9 +16,9 @@
 			"name" : "Alveolar type II cell",
 			"markers" : [
 				{
-					"genes" : ["SFTPA1+", "SFTPA2+", "SFTPC+", "ETV5+", "TTN+", "PLA2G4F+", "CCDC141+", "LAMP3+", "ABCA3+", "HHIP+"],
+					"genes" : ["SFTPA1+", "SFTPA2+", "SFTPC+", "PGC+", "LAMP3+", "FASN+", "HHIP+", "ETV5+", "RASGRF1+", "ABCA3+"],
 					"weight" : 1.0,
-					"comment" : "AT2 markers from Schupp et al., Travaglini et al. and Tony et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -27,9 +27,9 @@
 			"name" : "Basal cell",
 			"markers" : [
 				{
-					"genes" : ["KRT5+", "KRT15+", "KRT17+", "TP63+", "S100A2+", "TNS4+"],
+					"genes" : ["KRT17+", "S100A2+", "MIR205HG+", "KRT15+", "KRT5+", "DLK2+", "CDH3+", "TP63+", "TNS4+"],
 					"weight" : 1.0,
-					"comment" : "Basal cell markers from Schupp et al., Travaglini et al. and Tony et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -38,9 +38,9 @@
 			"name" : "Club cell",
 			"markers" : [
 				{
-					"genes" : ["SCGB3A2+", "MGP+", "VIM+", "CST3+"],
+					"genes" : ["SCGB3A2+", "MGP+", "CTSE+"],
 					"weight" : 1.0,
-					"comment" : "Club cell markers from Schupp et al., Travaglini et al. and Tony et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -49,9 +49,9 @@
 			"name" : "Ciliated cell",
 			"markers" : [
 				{
-					"genes" : ["ERICH3+", "SNTN+", "CCDC78+", "SNTN+", "ZBBX+", "DNAI1+", "ARMC3+", "CFAP157+", "TTC29+", "CFAP73+"],
+					"genes" : ["ERICH3+", "ARMC3+", "DNAI2+", "ZBBX+", "VWA3B+", "RGS22+", "TTC29+", "CDHR4+", "PPP1R42+", "CFAP46+", "CFAP52+", "CFAP73+", "CFAP77+", "CFAP157+", "DNAH3+", "DNAH9+", "ADGB+", "SNTN+", "CCDC170+", "C6orf118+"],
 					"weight" : 1.0,
-					"comment" : "Ciliated cell markers from Schupp et al., Travaglini et al. and Tony et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -60,9 +60,9 @@
 			"name" : "Goblet cell",
 			"markers" : [
 				{
-					"genes" : ["MUC5AC+", "MUC5B+", "BPIFB1+", "MSMB+", "FAM3D+", "SERPINB11+", "CXCL6+", "SCGB1A1+", "FAM3D+", "SERPINB3+"],
+					"genes" : ["MUC5AC+", "MUC5B+", "BPIFB1+", "MSMB+", "SERPINB11+", "CYP2F1+"],
 					"weight" : 1.0,
-					"comment" : "Goblet cell markers from Schupp et al., Travaglini et al. and Tony et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -71,9 +71,9 @@
 			"name" : "Ionocyte",
 			"markers" : [
 				{
-					"genes" : ["FOXI1+", "ASCL3+", "CLDN25+", "ATP6V1G3+", "LINC01187+"],
+					"genes" : ["ASCL3+", "CLCNKB+", "FOXI1+", "ATP6V1G3+", "TMPRSS11E+", "BSND+", "LINC01187+", "CLDN25+"],
 					"weight" : 1.0,
-					"comment" : "Ionocyte markers from Travaglini et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 				}
 			]
 		},
@@ -82,9 +82,20 @@
 			"name" : "Plumonary neuroendocrine cell",
 			"markers" : [
 				{
-					"genes" : ["CALCA+", "CHGA+", "ASCL1+", "SLC35D3+", "KIF1A+"],
+					"genes" : ["CHGA+", "CHGB+", "SCGN+", "SCG5+", "CPLX2+", "GRP+", "ASCL1+", "INSM1+"],
 					"weight" : 1.0,
-					"comment" : "Plumonary neuroendocrine cell markers from Travaglini et al."
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Submucosal gland serous cel",
+			"markers" : [
+				{
+					"genes" : ["PRR4+", "TCN1+", "C6orf58+", "PRB3+", "LPO+", "PRB1+", "PRH2+", "PRH1+", "ODAM+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Travaglini et al. Nature 2020"
 				}
 			]
 		},
