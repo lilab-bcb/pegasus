@@ -53,40 +53,6 @@ cpdef tuple csr_to_csc(const float[:] input_data, indices_type[:] input_indices,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef tuple csr_to_csc_naive(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int M, int N):
-    """ This routine does not group cells by clusters"""
-    cdef Py_ssize_t i, j, pos, col
-
-    output_indptr = np.zeros(N+1, dtype = np.int64)
-    cdef long[:] indptr = output_indptr
-    cdef long[:] counter = np.zeros(N, dtype = np.int64)
-
-    for i in range(input_indices.size):
-        if input_data[i] != 0.0: # in case there are extra 0s in the sparse matrix
-            indptr[input_indices[i]+1] += 1
-    for i in range(N):
-        counter[i] = indptr[i]
-        indptr[i + 1] += indptr[i]
-
-    output_data = np.zeros(indptr[N], dtype = np.float32)
-    output_indices = np.zeros(indptr[N], dtype = np.int64)
-    cdef float[:] data = output_data
-    cdef long[:] indices = output_indices
-
-    for i in range(M):
-        for j in range(input_indptr[i], input_indptr[i+1]):
-            if input_data[j] != 0.0:
-                col = input_indices[j]
-                pos = counter[col]
-                data[pos] = input_data[j]
-                indices[pos] = i
-                counter[col] += 1
-
-    return output_data, output_indices, output_indptr
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef tuple csr_to_csc_cond(const float[:] input_data, indices_type[:] input_indices, indptr_type[:] input_indptr, int N, const long[:] ords, const long[:] cumsum):
     cdef Py_ssize_t i, j, k, pos, col
     cdef Py_ssize_t n, start, end, fr, to
@@ -257,7 +223,7 @@ cpdef tuple calc_mwu_ref_cluster(
             # non-zero counts
             cur_data = data[indptr[i]:indptr[i + 1]]
             cur_indices = indices[indptr[i]:indptr[i + 1]]
-            ptr_sorted = np.argsort(cur_data, kind='stable')
+            ptr_sorted = np.argsort(cur_data, kind='stable')  # By using 'stable', each tie should have ref cluster cells appearing first.
             for k in ptr_sorted:
                 cur_idx = cur_indices[k]
                 cur_val = cur_data[k]

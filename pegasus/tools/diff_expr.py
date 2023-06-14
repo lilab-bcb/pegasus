@@ -229,7 +229,7 @@ def _de_test_ref_cluster(
     ords = np.argsort(cluster_labels.codes!=ref_code)
     data, indices, indptr = csr_to_csc(X.data, X.indices, X.indptr, X.shape[0], X.shape[1], ords)
     # Sort all other clusters' labels
-    ords = np.concatenate((ords[0:ref_size], ords[ref_size:][np.argsort(cluster_labels[ords[ref_size:]])]))
+    #ords = np.concatenate((ords[0:ref_size], ords[ref_size:][np.argsort(cluster_labels[ords[ref_size:]])]))
     #data, indices, indptr = csr_to_csc_naive(X.data, X.indices, X.indptr, X.shape[0], X.shape[1])
 
     cluster_code = cluster_labels.codes[ords].astype(np.int32)
