@@ -44,9 +44,8 @@ def calculate_nearest_neighbors(
     """Calculate nearest neighbors
     X is the sample by feature matrix
     Return K -1 neighbors, the first one is the point itself and thus omitted.
-    TODO: Documentation
+    If nsample <= 1000, method is set to "sklearn" for exact KNN search
     """
-
     nsample = X.shape[0]
 
     if nsample <= 1000:
@@ -85,6 +84,7 @@ def calculate_nearest_neighbors(
         distances = np.sqrt(distances, out=distances)
     else:
         assert method == "sklearn"
+        print("haha, exact!")
         knn = NearestNeighbors(
             n_neighbors=K - 1, n_jobs=n_jobs
         )  # eliminate the first neighbor, which is the node itself
@@ -116,6 +116,7 @@ def get_neighbors(
     full_speed: bool = False,
     use_cache: bool = True,
     dist: str = "l2",
+    method: str = "hnsw",
 ) -> Tuple[List[int], List[float]]:
     """Find K nearest neighbors for each data point and return the indices and distances arrays.
 
@@ -140,6 +141,8 @@ def get_neighbors(
         If use_cache and found cached knn results, will not recompute.
     dist: `str`, optional (default: 'l2')
         Distance metric to use. By default, use squared L2 distance. Available options, inner product 'ip' or cosine similarity 'cosine'.
+    method: `str`, optional (default: 'hnsw')
+        Choosing from 'hnsw' for approximate nearest neighbor search or 'sklearn' for exact nearest neighbor search.    
 
     Returns
     -------
@@ -164,6 +167,7 @@ def get_neighbors(
             X_from_rep(data, rep, n_comps),
             K=K,
             n_jobs=eff_n_jobs(n_jobs),
+            method=method,
             random_state=random_state,
             full_speed=full_speed,
             dist=dist,
@@ -237,6 +241,7 @@ def neighbors(
     full_speed: bool = False,
     use_cache: bool = True,
     dist: str = "l2",
+    method: str = "hnsw",
 ) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
@@ -274,6 +279,9 @@ def neighbors(
     dist: ``str``, optional (default: ``"l2"``)
         Distance metric to use. By default, use squared L2 distance. Available options, inner product ``"ip"`` or cosine similarity ``"cosine"``.
 
+    method: ``str``, optional (default: ``"hnsw"``)
+        Choose from "hnsw" or "sklearn". "hnsw" uses HNSW algorithm for approximate nearest neighbor search and "sklearn" uses sklearn package for exact nearest neighbor search.
+
     Returns
     -------
     ``None``
@@ -302,6 +310,7 @@ def neighbors(
         full_speed=full_speed,
         use_cache=use_cache,
         dist=dist,
+        method=method,
     )
 
     # calculate affinity matrix
