@@ -34,26 +34,61 @@ def calculate_nearest_neighbors(
     K: int = 100,
     n_jobs: int = -1,
     method: str = "hnsw",
+    exact_k: bool = False,
     M: int = 20,
     efC: int = 200,
     efS: int = 200,
     random_state: int = 0,
     full_speed: int = False,
     dist: str = 'l2',
-):
-    """Calculate nearest neighbors
-    X is the sample by feature matrix
-    Return K -1 neighbors, the first one is the point itself and thus omitted.
-    If nsample <= 1000, method is set to "sklearn" for exact KNN search
+) -> Tuple[List[int], List[float], int]:
+    """Find K nearest neighbors for each data point in the matrix and return the indices and distances arrays.
+
+    K is determined by min(K, int(sqrt(X.shape[0]))) if exact_k == False.
+
+    Parameters
+    ----------
+
+    X : `np.array`
+        An array of n_samples by n_features.
+    K : `int`, optional (default: 100)
+        Number of neighbors, including the data point itself. If K is None, determine K by sqrt(X.shape[0]).
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to using all physical CPU cores.
+    method: `str`, optional (default: 'hnsw')
+        Choosing from 'hnsw' for approximate nearest neighbor search or 'sklearn' for exact nearest neighbor search. If X.shape[0] <= 1000, method will be automatically set to "sklearn" for exact KNN search
+    exact_k: `bool`, optional (default: 'False')
+        If True, use exactly the K passed to the function; otherwise K is determined as min(K, sqrt(X.shape[0])).
+    M, efC, efS: `int`, optional (20, 200, 200)
+        HNSW algorithm parameters.
+    random_state: `int`, optional (default: 0)
+        Random seed for random number generator.
+    full_speed: `bool`, optional (default: False)
+        If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+    dist: `str`, optional (default: 'l2')
+        Distance metric to use. By default, use squared L2 distance. Available options, 'l2', inner product 'ip' or cosine similarity 'cosine'.
+
+    Returns
+    -------
+
+    kNN indices array, distances array and adjusted K.
+
+    Examples
+    --------
+    >>> indices, distances = calculate_nearest_neighbors(X)
     """
     nsample = X.shape[0]
 
     if nsample <= 1000:
         method = "sklearn"
 
-    if nsample < K:
-        logger.warning(f"Warning: in calculate_nearest_neighbors, number of samples = {nsample} < K = {K}!\n Set K to {nsample}.")
-        K = nsample
+    k_rot = int(nsample ** 0.5) # rot, rule of thumb
+    if (K is None) or (K > k_rot and (not exact_k)):
+        K = k_rot
+        logger.info(f"in calculate_nearest_neighbors, K is adjusted to {K}.")
+
+    if K == 1:
+        return np.zeros(0, dtype=int), np.zeros(0, dtype=np.float32), K
 
     n_jobs = eff_n_jobs(n_jobs)
 
@@ -84,18 +119,17 @@ def calculate_nearest_neighbors(
         distances = np.sqrt(distances, out=distances)
     else:
         assert method == "sklearn"
-        print("haha, exact!")
         knn = NearestNeighbors(
             n_neighbors=K - 1, n_jobs=n_jobs
         )  # eliminate the first neighbor, which is the node itself
         knn.fit(X)
         distances, indices = knn.kneighbors()
 
-    return indices, distances
+    return indices, distances, K
 
 
 def knn_is_cached(
-    data: MultimodalData, indices_key: str, distances_key: str, K: int
+    data: MultimodalData, indices_key: str, distances_key: str, K: int, exact_k: bool
 ) -> bool:
     return (
         (indices_key in data.obsm)
@@ -114,11 +148,14 @@ def get_neighbors(
     n_jobs: int = -1,
     random_state: int = 0,
     full_speed: bool = False,
-    use_cache: bool = True,
+    use_cache: bool = False,
     dist: str = "l2",
     method: str = "hnsw",
-) -> Tuple[List[int], List[float]]:
+    exact_k: bool = False,
+) -> Tuple[List[int], List[float], int]:
     """Find K nearest neighbors for each data point and return the indices and distances arrays.
+
+    K is determined by min(K, int(sqrt(data.shape[0]))) if exact_k == False.
 
     Parameters
     ----------
@@ -137,37 +174,44 @@ def get_neighbors(
         Random seed for random number generator.
     full_speed: `bool`, optional (default: False)
         If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
-    use_cache: `bool`, optional (default: True)
+    use_cache: `bool`, optional (default: False)
         If use_cache and found cached knn results, will not recompute.
     dist: `str`, optional (default: 'l2')
-        Distance metric to use. By default, use squared L2 distance. Available options, inner product 'ip' or cosine similarity 'cosine'.
+        Distance metric to use. By default, use squared L2 distance. Available options, 'l2' or inner product 'ip' or cosine similarity 'cosine'.
     method: `str`, optional (default: 'hnsw')
-        Choosing from 'hnsw' for approximate nearest neighbor search or 'sklearn' for exact nearest neighbor search.    
+        Choosing from 'hnsw' for approximate nearest neighbor search or 'sklearn' for exact nearest neighbor search.
+    exact_k: `bool`, optional (default: 'False')
+        If True, use exactly the K passed to the function; otherwise K is determined as min(K, sqrt(X.shape[0])).
 
     Returns
     -------
 
-    kNN indices and distances arrays.
+    kNN indices array, distances array, and adjusted K.
 
     Examples
     --------
-    >>> indices, distances = tools.get_neighbors(data)
+    >>> indices, distances, K = tools.get_neighbors(data)
     """
-
     rep = update_rep(rep)
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
+
+    k_rot = int(data.shape[0] ** 0.5) # rot, rule of thumb
+    if (K is None) or (K > k_rot and (not exact_k)):
+        K = k_rot
+        logger.info(f"in get_neighbors, K is adjusted to {K}.")
 
     if use_cache and knn_is_cached(data, indices_key, distances_key, K):
         indices = data.obsm[indices_key]
         distances = data.obsm[distances_key]
         logger.info("Found cached kNN results, no calculation is required.")
     else:
-        indices, distances = calculate_nearest_neighbors(
+        indices, distances, _ = calculate_nearest_neighbors(
             X_from_rep(data, rep, n_comps),
             K=K,
             n_jobs=eff_n_jobs(n_jobs),
             method=method,
+            exact_k=exact_k,
             random_state=random_state,
             full_speed=full_speed,
             dist=dist,
@@ -177,7 +221,7 @@ def get_neighbors(
         data.obsm[distances_key] = distances
         data.register_attr(distances_key, "knn")
 
-    return indices, distances
+    return indices, distances, K
 
 
 def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
@@ -239,13 +283,16 @@ def neighbors(
     n_jobs: int = -1,
     random_state: int = 0,
     full_speed: bool = False,
-    use_cache: bool = True,
+    use_cache: bool = False,
     dist: str = "l2",
     method: str = "hnsw",
+    exact_k: bool = False,
 ) -> None:
     """Compute k nearest neighbors and affinity matrix, which will be used for diffmap and graph-based community detection algorithms.
 
     The kNN calculation uses `hnswlib <https://github.com/nmslib/hnswlib>`_ introduced by [Malkov16]_.
+
+    K is determined by min(K, sqrt(data.shape[0])).
 
     Parameters
     ----------
@@ -272,15 +319,18 @@ def neighbors(
         * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
-    use_cache: ``bool``, optional, default: ``True``
+    use_cache: ``bool``, optional, default: ``False``
         * If ``True`` and found cached knn results, Pegasus will use cached results and do not recompute.
         * Otherwise, compute kNN irrespective of caching status.
 
     dist: ``str``, optional (default: ``"l2"``)
-        Distance metric to use. By default, use squared L2 distance. Available options, inner product ``"ip"`` or cosine similarity ``"cosine"``.
+        Distance metric to use. By default, use squared L2 distance. Available options, ``"l2"`` or inner product ``"ip"`` or cosine similarity ``"cosine"``.
 
     method: ``str``, optional (default: ``"hnsw"``)
         Choose from "hnsw" or "sklearn". "hnsw" uses HNSW algorithm for approximate nearest neighbor search and "sklearn" uses sklearn package for exact nearest neighbor search.
+
+    exact_k: ``bool``, optional (default: ``False``)
+        If True, use exactly the K passed to the function; otherwise K is determined as min(K, sqrt(X.shape[0])).
 
     Returns
     -------
@@ -311,6 +361,7 @@ def neighbors(
         use_cache=use_cache,
         dist=dist,
         method=method,
+        exact_k=exact_k,
     )
 
     # calculate affinity matrix
@@ -417,7 +468,7 @@ def calc_kBET(
     attr_values = data.obs[attr].values.copy()
     attr_values.categories = range(nbatch)
 
-    indices, distances = get_neighbors(
+    indices, distances, K = get_neighbors(
         data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
@@ -508,7 +559,7 @@ def calc_kSIM(
     assert attr in data.obs
     nsample = data.shape[0]
 
-    indices, distances = get_neighbors(
+    indices, distances, K = get_neighbors(
         data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
     )
     knn_indices = np.concatenate(

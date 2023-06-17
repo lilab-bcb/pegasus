@@ -349,7 +349,7 @@ def _run_scrublet(
     if k is None:
         k = int(round(0.5 * np.sqrt(obsX.shape[0])))
     k_adj = int(round(k * (1.0 + r)))
-    indices, _ = calculate_nearest_neighbors(pc_coords, K = k_adj + 1, n_jobs = n_jobs)
+    indices, _, _ = calculate_nearest_neighbors(pc_coords, K=k_adj + 1, n_jobs=n_jobs, exact_k=True)
 
     # Calculate scrublet-like doublet score
     k_d = is_doublet[indices].sum(axis = 1)
