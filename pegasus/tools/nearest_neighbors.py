@@ -88,7 +88,7 @@ def calculate_nearest_neighbors(
         logger.info(f"in calculate_nearest_neighbors, K is adjusted to {K}.")
 
     if K == 1:
-        return np.zeros(0, dtype=int), np.zeros(0, dtype=np.float32), K
+        return np.zeros((nsample, 0), dtype=int), np.zeros((nsample, 0), dtype=np.float32), K
 
     n_jobs = eff_n_jobs(n_jobs)
 
