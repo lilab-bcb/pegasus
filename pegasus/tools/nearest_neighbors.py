@@ -129,7 +129,7 @@ def calculate_nearest_neighbors(
 
 
 def knn_is_cached(
-    data: MultimodalData, indices_key: str, distances_key: str, K: int, exact_k: bool
+    data: MultimodalData, indices_key: str, distances_key: str, K: int
 ) -> bool:
     return (
         (indices_key in data.obsm)
@@ -350,7 +350,7 @@ def neighbors(
 
     # calculate kNN
     rep = update_rep(rep)
-    indices, distances = get_neighbors(
+    indices, distances, K = get_neighbors(
         data,
         K=K,
         rep=rep,
