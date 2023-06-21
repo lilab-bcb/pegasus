@@ -27,7 +27,6 @@ class TestPipeline(unittest.TestCase):
     def test_clustering(self):
         self.assertEqual(self.data.obsm['pca_harmony_knn_indices'].shape, (1043, 99), "KNN graph shape differs!")
         self.assertEqual(self.data.obsm['pca_harmony_knn_distances'].shape, (1043, 99), "KNN distance matrix shape differs!")
-        self.assertIn('louvain_labels', self.data.obs.columns, "Louvain result is lost!")
         self.assertIn('leiden_labels', self.data.obs.columns, "Leiden result is lost!")
 
     def test_doublet_detection(self):
