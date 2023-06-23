@@ -1,0 +1,18 @@
+Skeletal muscle cells	Skeletal muscle cells	MYBPC1	TNNT1	TNNC1	MYL1	MYBPH	TNNC2	TNNI1	MYH7	MYL2
+Tfh	T Follicular helper markers (one reference point is https://www.thermofisher.com/us/en/home/life-science/cell-analysis/cell-analysis-learning-center/immunology-at-work/t-follicular-helper-cell-overview.html)	CD4	ST8SIA1	PDCD1	TIGIT	TOX2	ICOS	SH2D1A	IL21
+Tregs	Tregs	CTLA4	TIGIT	IL2RA	FOXP3	CCR8	BATF
+T_Naive	Naive T cell	CCR7	SELL	IL7R	TCF7	CD27
+DC_Migratory	Migratory Conventional Dendritic cell	FSCN1	CCR7	LAMP3	CCL19	CCL22	CD40	BIRC3
+MAIT	MAIT	SLC4A10
+EC lymphatic	Schupp et al. Circulation 2021	PECAM1	CLDN5	CDH5	ERG	CCL21	SEMA3D	PROX1	PDPN	MMRN1	RELN	PKHD1L1	TFF3	LYVE1	FLT4	TBX1
+fDC	Follicular dendritic cell	CXCL13	FCAMR	FDCSP	SERPINE2	PAPPA	NPHS1	PKDCC	SYNM	NRG2	CDC42EP4	MUC3A	PRUNE2	B4GALNT4	NPPC	SLC1A2	TMEM150C
+DCs_CLEC9A	Conventional Dendritic cell type 1	CLEC9A	BATF3	IRF8	CPVL	CADM1
+DCs_CD1C	Conventional Dendritic cell type 2	CD1C	FCER1A	FCGBP	CD1A	CD207	HLA-DQB2
+pDCs	Plasmacytoid Dendritic cell	IRF4	LILRA4	TCF4	MZB1
+B_Naive	Naïve B cell	MS4A1	IGHD	TCL1A	FCER2
+B_Memory	Memory B cell	MS4A1	CD27	TNFRSF13B
+B_Germinal_Center	Germinal center B cell	MEF2B	NEIL1	RGS13	ELL3	BCL7A	BCL6	NUGGC	MYBL1	EML6	FANCA
+B_light_zone	Light Zone	CD83	LMO2
+B_dark_zone	Dark Zone	CXCR4	AICDA	FOXP1	MME
+Mono_DCs	Monocytes Derived DC	CD14	FCGR2B	CCL17	CLEC10A
+MyoF	Myofibroblast from Travaglini et al. and Tony et al.	ACTA2	MYL9	MT2A	EEF1A1	TMSB10	FAU	UBA52	SERF2	PTMA	S100A6
