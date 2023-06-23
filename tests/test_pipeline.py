@@ -59,9 +59,9 @@ class TestPipeline(unittest.TestCase):
 
     def test_plot(self):
         self.assertIn('result.compo.pdf', os.listdir('tests'), "Composition plot is lost!")
-        self.assertIn('result.louvain_labels.umap.pdf', os.listdir('tests'), "UMAP plot is lost!")
+        self.assertIn('result.leiden_labels.umap.pdf', os.listdir('tests'), "UMAP plot is lost!")
         self.assertIn('result.leiden_labels.tsne.pdf', os.listdir('tests'), "tSNE plot is lost!")
-        self.assertIn('result.louvain_labels.fle.pdf', os.listdir('tests'), 'FLE plot is lost!')
+        self.assertIn('result.leiden_labels.fle.pdf', os.listdir('tests'), 'FLE plot is lost!')
 
     def test_output(self):
         data_h5ad = pg.read_input("tests/result.mm10-rna.h5ad")
