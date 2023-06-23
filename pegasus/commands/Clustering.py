@@ -68,6 +68,7 @@ Options:
   --nmf-n <number>                                 Number of NMF components. IF iNMF is used for batch correction, this parameter also sets iNMF number of components. [default: 20]
 
   --knn-K <number>                                 Number of nearest neighbors for building kNN graph. [default: 100]
+  --exact-K                                        If use exactly the K passed to the function; otherwise K is determined as min(K, sqrt(X.shape[0])).
   --knn-full-speed                                 For the sake of reproducibility, we only run one thread for building kNN indices. Turn on this option will allow multiple threads to be used for index building. However, it will also reduce reproducibility due to the racing between multiple threads.
 
   --kBET                                           Calculate kBET.
@@ -210,6 +211,7 @@ Examples:
             "nmf": self.args["--nmf"],
             "nmf_n": int(self.args["--nmf-n"]),
             "K": int(self.args["--knn-K"]),
+            "exact_K": self.args["--exact-K"],
             "full_speed": self.args["--knn-full-speed"],
             "kBET": self.args["--kBET"],
             "kBET_batch": self.args["--kBET-batch"],
