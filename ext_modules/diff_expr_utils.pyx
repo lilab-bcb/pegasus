@@ -193,7 +193,6 @@ cpdef tuple calc_mwu_ref_cluster(
         n1n2[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code]
         mean_U[j] = (<double>cluster_sizes[j]) * cluster_sizes[ref_code] / 2.0
         nsample_ref[j] = cluster_sizes[ref_code] + cluster_sizes[j]
-        tie_factor[j] = 0.0
 
     for i in range(start_pos, end_pos):
         pos_i = i - start_pos
@@ -202,7 +201,9 @@ cpdef tuple calc_mwu_ref_cluster(
         ptr_ref = -1
         gt_cnt = 0
         eq_cnt = 0
+        val_cmp = -1
         for j in range(ncluster):
+            tie_factor[j] = 0.0
             tie_counts[j] = 0
 
         if n_nonzero == 0:  # No cell expressing this gene.
