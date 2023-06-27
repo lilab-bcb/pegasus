@@ -594,11 +594,11 @@ def de_analysis(
     n_jobs = eff_n_jobs(n_jobs)
     gene_names = data.var_names.values
 
-    if cond_labels is None:
-        df = _de_test(X, cluster_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
-    elif ref_cluster_id is not None:
+    if ref_cluster_id is not None:
         assert ref_cluster_id in cluster_labels.categories, f"'{ref_cluster_id}' does not exist in data.obs['{cluster}']!"
         df = _de_test_ref_cluster(X, cluster_labels, ref_cluster_id, gene_names, n_jobs, t, fisher, temp_folder, verbose)
+    elif cond_labels is None:
+        df = _de_test(X, cluster_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
     else:
         df = _de_test_cond(X, cluster_labels, cond_labels, gene_names, n_jobs, t, fisher, temp_folder, verbose)
 
