@@ -280,7 +280,7 @@ cpdef tuple calc_mwu_ref_cluster(
                 buffer_pos += 1
 
     cdef double[:] buffer_pvals = ss.norm.sf(zscores[0:buffer_pos]) * 2.0
-    # Case: z = Inf or -Inf
+    # Restrict p-values within [0, 1]
     for i in range(buffer_pos):
         if buffer_pvals[i] > 1.0:
             buffer_pvals[i] = 1.0
@@ -387,6 +387,11 @@ cpdef tuple calc_mwu(int start_pos, int end_pos, const float[:] data, const long
                     aurocs[pos_i, j] = U1 / n1n2[j]
 
     cdef double[:] buffer_pvals = ss.norm.sf(zscores[0:buffer_pos]) * 2.0
+    # Restrict p-values within [0, 1]
+    for i in range(buffer_pos):
+        if buffer_pvals[i] > 1.0:
+            buffer_pvals[i] = 1.0
+
     buffer_pos = 0
     for i in range(start_pos, end_pos):
         if indptr[i + 1] > indptr[i]:
