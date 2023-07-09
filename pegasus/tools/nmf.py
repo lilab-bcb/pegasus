@@ -418,7 +418,7 @@ def integrative_nmf(
             continue
 
         clusters = np.argmax(H_new, axis=1) # Assign cluster
-        indices, _ = calculate_nearest_neighbors(H_new, K=20, n_jobs=n_jobs, random_state=seeds[i]) # KNN with K=20
+        indices, _, _ = calculate_nearest_neighbors(H_new, K=20, n_jobs=n_jobs, random_state=seeds[i]) # KNN with K=20
         clusters, csum = _refine_cluster(clusters, indices, n_components) # Refine cluster
         csums.append(csum)
         ids_by_clusts.append(np.argsort(clusters, kind='stable'))
