@@ -90,7 +90,7 @@
 		},
 
 		{
-			"name" : "Submucosal gland serous cel",
+			"name" : "Submucosal gland serous cell",
 			"markers" : [
 				{
 					"genes" : ["PRR4+", "TCN1+", "C6orf58+", "PRB3+", "LPO+", "PRB1+", "PRH2+", "PRH1+", "ODAM+"],
