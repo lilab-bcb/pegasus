@@ -85,6 +85,7 @@ Cluster Algorithms
     cluster
     louvain
     leiden
+    split_one_cluster
     spectral_louvain
     spectral_leiden
 
