@@ -296,6 +296,17 @@
 					"comment" : "Mast cell markers inferred from Matsumara et al. Nat. Commun. 2022"
 				}
 			]
+		}, 
+
+		{
+			"name" : "Red blood cell",
+			"markers" : [
+				{
+					"genes" : ["Hba-a1+", "Hba-a2+", "Hbb-bs+", "Hbb-bt+"],
+					"weight" : 1.0,
+					"comment" : "Hemoglobin genes"
+				}
+			]
 		}
 	]
 }
