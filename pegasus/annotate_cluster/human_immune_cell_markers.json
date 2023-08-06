@@ -403,7 +403,7 @@
 		},
 
 		{
-			"name" : "Erythroid cells",
+			"name" : "Erythroid cell",
 			"markers" : [
 				{
 					"genes" : ["GYPA+"], 
@@ -429,7 +429,7 @@
 		},
 
 		{
-			"name" : "Megakaryocyte",
+			"name" : "Platelet",
 			"markers" : [
 				{
 					"genes" : ["PF4+", "PPBP+", "GP5+"],
