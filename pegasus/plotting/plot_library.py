@@ -31,6 +31,7 @@ from .plot_utils import (
     _generate_categories,
     _plot_corners,
     _plot_spots,
+    _get_valid_attrs,
 )
 
 
@@ -153,23 +154,7 @@ def scatter(
         attrs = [attrs]
 
     # Select only valid attributes
-    attrs_filt = []
-    attrs_drop = []
-    for attr in attrs:
-        if (attr == '_all') or (attr in data.obs) or (attr in data.var_names) or ('@' in attr):
-            if not '@' in attr:
-                attrs_filt.append(attr)
-            else:
-                obsm_key, sep, component = attr.partition("@")
-                if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
-                    attrs_drop.append(attr)
-                else:
-                    attrs_filt.append(attr)
-        else:
-            attrs_drop.append(attr)
-    attrs = attrs_filt
-    if len(attrs_drop) > 0:
-        print(f"Warning: Attributes {attrs_drop} are not in data.obs, data.var_names or data.obsm!")
+    attrs = _get_valid_attrs(data, attrs)
 
     if isinstance(basis, str):
         basis = [basis]

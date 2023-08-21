@@ -435,3 +435,24 @@ def _plot_spots(x: np.ndarray, y: np.ndarray, c: Union[str, np.ndarray], s: floa
         spots.set_clim(vmin, vmax)
     ax.add_collection(spots)
     return spots
+
+
+def _get_valid_attrs(data:Union[MultimodalData, UnimodalData], attrs: List[str]) -> List[str]:
+    attrs_filt = []
+    attrs_drop = []
+    for attr in attrs:
+        if (attr == '_all') or (attr in data.obs) or (attr in data.var_names) or ('@' in attr):
+            if not '@' in attr:
+                attrs_filt.append(attr)
+            else:
+                obsm_key, sep, component = attr.partition("@")
+                if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
+                    attrs_drop.append(attr)
+                else:
+                    attrs_filt.append(attr)
+        else:
+            attrs_drop.append(attr)
+    if len(attrs_drop) > 0:
+        print(f"Warning: Attributes {attrs_drop} are not in data.obs, data.var_names or data.obsm!")
+
+    return attrs_filt
