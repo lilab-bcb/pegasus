@@ -141,9 +141,9 @@
 			"name" : "Natural killer cell",
 			"markers" : [
 				{
-					"genes" : ["GNLY+", "KLRF1+", "KLRD1+", "TRDC+", "IL2RB+", "KLRC1+"],
+					"genes" : ["GNLY+", "KLRF1+", "KLRD1+", "TRDC+", "IL2RB+", "KLRC1+", "NCR1+"],
 					"weight" : 0.6,
-					"comment" : "General NK cell markers also cover some T cells; derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
+					"comment" : "General NK cell markers also cover some T cells; derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; Added NCR1, a pan NK cell marker"
 				},
 				{
 					"genes" : ["NCAM1+", "FCGR3A+"],
@@ -188,20 +188,15 @@
 			"name" : "B cell",
 			"markers" : [
 				{
-					"genes" : ["CD19+", "MS4A1+", "CD79A+", "CD79B+"],
-					"weight" : 0.7,
-					"comment" : "CD19, CD20 and CD79"
+					"genes" : ["MS4A1+", "CD79A+", "CD79B+", "CD19+", "BANK1+", "TNFRSF13C+", "CD22+", "BLK+", "FCRLA+", "HLA-DOB+"],
+					"weight" : 0.9,
+					"comment" : "Human and mouse shared B cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; TNFRSF13C (BAFF receptor); CD79A, CD79B, CD19, BLK, FCRLA and HLA-DOB are also expressed in Plasma cells; CD79B in addition is expressed in CD16+ monocytes & HSCs; BANK1 & BLK are expressed higher in memory B"
 				},
 				{
-					"genes" : ["BANK1+", "BLK+"],
-					"weight" : 0.2,
-					"comment" : "Extra B cell markers"
-				},
-				{
-					"genes" : ["CD74+", "HLA-DRA+", "HLA-DRB1+", "HLA-DPA1+", "HLA-DPB1+", "HLA-DQA1+", "HLA-DQB1+"],
+					"genes" : ["LINC00926+", "VPREB3+"],
 					"weight" : 0.1,
-					"comment" : "MHC II"
-				}
+					"comment" : "B cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
+				}			
 			],
 			"subtypes" : {
 				"title" : "B cell subtype markers",
@@ -235,9 +230,9 @@
 						"name" : "Naive B cell",
 						"markers" : [
 							{
-								"genes" : ["IGHD+", "TCL1A+", "FCER2+"],
+								"genes" : ["IGHD+", "TCL1A+", "FCER2+", "IL4R+", "PLPP5+"],
 								"weight" : 1.0,
-								"comments" : "markers for naive B cell, collected from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper. Validated using ICA pbmc data"
+								"comments" : "Markers for naive B cell derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; IGHD & FCER2 are shared with mouse"
 							}
 						]
 					},
@@ -245,9 +240,9 @@
 						"name" : "Memory B cell",
 						"markers" : [
 							{
-								"genes" : ["CD27+", "TNFRSF13B+"],
+								"genes" : ["IGHA1+", "IGHG1+", "CD27+", "TNFRSF13B+", "CLECL1P+", "AIM2+", "LGALS1+", "CRIP1+"],
 								"weight" : 1.0,
-								"comments" : "markers for memory B cell, collected from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper. Validated using ICA pbmc data"
+								"comments" : "Markers for memory B cell derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
 							}
 						]
 					}
@@ -295,23 +290,23 @@
 			"name" : "Plasma cell",
 			"markers" : [
 				{
-					"genes" : ["CD38+", "XBP1+", "CD27+", "SLAMF7+"],
-					"weight" : 0.4,
-					"comment" : "important markers"
+					"genes" : ["TNFRSF17+", "PRDM1+", "SLAMF7+", "IRF4+", "SDC1+"],
+					"weight" : 0.5,
+					"comment" : "Human and mouse shared markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; TNFRSF17 (BCMA), PRDM1 (BLIMP1); SDC1 is highly expressed in BMMC but not PBMC"
 				},
 				{
-					"genes" : ["TNFRSF17+", "TNFRSF13B+"],
+					"genes" : ["IGHA1+", "IGHG1+", "TNFRSF13B+"],
 					"weight" : 0.2,
-					"comment" : "TNF-receptor superfamily"
+					"comment" : "Markers expressed by both plasma and memory B cells, derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; IGHA1 & IGHG1 indicate class switch"
 				},
 				{
-					"genes" : ["IGHA1+", "IGHG1+"],
+					"genes" : ["CD38+", "ABCB9+", "CHPF+", "PLAAT2+"],
 					"weight" : 0.2,
-					"comment" : "class switching happened"
+					"comment" : "Human-specific plasma markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; PLAAT2 is highly expressed in PBMC but not BMMC"
 				},
 				{
 					"genes" : ["MS4A1-"],
-					"weight" : 0.2,
+					"weight" : 0.1,
 					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
 				}				
 			]
