@@ -54,20 +54,6 @@
 		},
 
 		{
-			"name" : "Monocyte",
-			"markers" : [
-				{
-					"genes" : ["Lyz2+", "Lyz1+", "S100a4+", "Itgam+"],
-					"weight" : 0.8
-				},
-				{
-					"genes" : ["C1qb+", "C1qc+", "Mrc1+", "Cd52+"],
-					"weight" : 0.2
-				}
-			]
-		},
-
-		{
 			"name" : "Immature B cell",
 			"markers" : [
 				{
@@ -162,12 +148,12 @@
 		},
 
 		{
-			"name" : "Inflammatory monocyte",
+			"name" : "Classical monocyte",
 			"markers" : [
 				{
-					"genes" : ["Ly6c2+", "F13a1+", "Ms4a4c+", "Ccr2+", "Gm9733+", "Mcub+"],
+					"genes" : ["Ly6c2+", "F13a1+", "Ccr2+", "Ms4a4c+", "Gm9733+", "Mcub+", "S100a4+"],
 					"weight" : 1.0,
-					"comment" : "Inflammatory monocyte markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021"
+					"comment" : "Classical monocyte markers (except S100a4) inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021; Ly6c2, F13a1, Ccr2 and Ms4a4c (in Fig. 1b) are Group III markers from Casanova-Acebes et al. Nature 2021. S100a4 is less specific to classical monocyte."
 				}
 			]
 		},
@@ -176,9 +162,9 @@
 			"name" : "Patrolling monocyte",
 			"markers" : [
 				{
-					"genes" : ["Ace+", "Eno3+", "Ear2+", "Treml4+", "Spn+", "Fcgr4+", "Lair1+", "Cd300e+", "Cd300ld+", "Adgre4+"],
+					"genes" : ["Eno3+", "Cd300e+", "Ace+", "Treml4+", "Spn+", "Adgre4+", "Lair1+", "Fcgr4+", "Ear2+", "Cd300ld+"],
 					"weight" : 1.0,
-					"comment" : "Patrolling monocyte markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021; Related papers: Domingo-Gonzalez et al. Elife 2020, Thomas et al. Arterioscler Thromb Vasc Biol. 2015, and Schyns et al. Nat. Commun. 2019."
+					"comment" : "Patrolling monocyte markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021; First 6 markers are Group IV markers in Fig. 1b of Casanova-Acebes et al. Nature paper; Eno3, Cd300e, Ace and Lair1 are very specific; Related papers: Domingo-Gonzalez et al. Elife 2020, Thomas et al. Arterioscler Thromb Vasc Biol. 2015, and Schyns et al. Nat. Commun. 2019."
 				}
 			]
 		},

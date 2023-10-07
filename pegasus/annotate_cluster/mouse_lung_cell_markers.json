@@ -292,9 +292,9 @@
 			"name" : "Alveolar macrophage",
 			"markers" : [
 				{
-					"genes" : ["Atp6v0d2+", "Olr1+", "F7+", "Ear1+", "Tfec+", "Gpnmb+", "Lrp12+", "Marco+"],
+					"genes" : ["Ear1+", "Marco+", "Atp6v0d2+", "Olr1+", "F7+", "Tfec+", "Gpnmb+", "Lrp12+", "Pparg+", "Car4+", "Krt19+", "Plet1+"],
 					"weight" : 1.0,
-					"comment" : "Alveolar macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+					"comment" : "First 8 markers are Alveolar macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021 data; Ear1 and Marco also show in Casanova-Acebes et al. Nature 2021; Last 4 are markers from Casanova-Acebes et al. Nature 2021 that are validated using Hurskainen et al. Nat. Commun. 2021 data"
 				}
 			]
 		},
