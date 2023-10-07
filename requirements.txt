@@ -4,7 +4,6 @@ Cython
 docopt
 demuxEM
 hnswlib
-importlib_metadata>=0.7; python_version < '3.8'
 psutil
 threadpoolctl
 joblib>=0.14

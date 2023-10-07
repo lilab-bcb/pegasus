@@ -1,3 +1,8 @@
+1.8.1 :small:`August 23, 2023`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Bug fix in cell marker JSON files for ``infer_cell_types`` function.
+
 1.8.0 :small:`July 21, 2023`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
