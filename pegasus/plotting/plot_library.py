@@ -1006,16 +1006,24 @@ def violin(
 def heatmap(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attrs: Union[str, List[str]],
-    groupby: str,
+    groupby: Optional[str] = None,
     matkey: Optional[str] = None,
-    on_average: bool = True,
-    switch_axes: bool = False,
+    gene_zscore: Optional[bool] = True,
+    on_average: Optional[bool] = True,
+    switch_axes: Optional[bool] = False,
     attrs_cluster: Optional[bool] = False,
     attrs_dendrogram: Optional[bool] = True,
+    attrs_method: Optional[bool] = 'ward',
+    attrs_optimal_ordering: Optional[bool] = True,
+    attrs_labelsize: Optional[float] = 10.0,
+    attrs_labelrotation: Optional[float] = 0.0,
     groupby_cluster: Optional[bool] = True,
     groupby_dendrogram: Optional[bool] = True,
-    attrs_labelsize: Optional[float] = 10.0,
+    groupby_method: Optional[bool] = 'ward',
+    groupby_optimal_ordering: Optional[bool] = True,
+    groupby_precomputed_linkage: Optional[np.array] = None,
     groupby_labelsize: Optional[float] = 10.0,
+    groupby_labelrotation: Optional[float] = 0.0,
     cbar_labelsize: Optional[float] = 10.0,
     panel_size: Tuple[float, float] = (10, 10),
     return_fig: Optional[bool] = False,
@@ -1027,7 +1035,6 @@ def heatmap(
 
     Parameters
     -----------
-
     data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
         Single-cell expression data.
     attrs: ``str`` or ``List[str]``
@@ -1035,13 +1042,16 @@ def heatmap(
         Cell attributes must exist in ``data.obs`` and must be numeric.
         Features must exist in ``data.var``.
         By default, attrs are plotted as columns.
-    groupby: ``str``
+    groupby: ``str``, optional, default: ``None``
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
         By default, data.obs['groupby'] is plotted as rows.
+        If ``None``, use data.obs_names instead.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    gene_zscore: ``bool``, optional, default: ``True``
+        If ``True``, compute and then plot z scores for gene expression.
     on_average: ``bool``, optional, default: ``True``
-        If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
+        If ``True``, plot cluster average gene expression or z score (i.e. show a Matrixplot); otherwise, plot a general heatmap.
     switch_axes: ``bool``, optional, default: ``False``
         By default, X axis is for attributes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
@@ -1049,14 +1059,28 @@ def heatmap(
         Cluster attributes and generate a attribute-wise dendrogram.
     attrs_dendrogram: ``bool``, optional, default: ``True``
         Only matters if attrs_cluster is True. Show the dendrogram if this option is True.
+    attrs_method: ``str``, optional, default: ``ward``
+        Linkage method for attrs, choosing from ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median`` and ``ward``.
+    attrs_optimal_ordering: ``bool``, optional, default: ``True``
+        Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the attrs linkage matrix will be reordered so that the distance between successive leaves is minima.
+    attrs_labelsize: ``float``, optional, default: 10.0
+        Fontsize for labels of attrs.
+    attrs_labelrotation: ``float``, optional, default: 0.0
+        Rotation of labels for attrs.
     groupby_cluster: ``bool``, optional, default: ``True``
         Cluster data.obs['groupby'] and generate a cluster-wise dendrogram.
     groupby_dendrogram: ``bool``, optional, default: ``True``
         Only matters if groupby_cluster is True. Show the dendrogram if this option is True.
-    attrs_labelsize: ``float``, optional, default: 10.0
-        Fontsize for labels of attrs.
+    groupby_method: ``str``, optional, default: ``ward``
+        Linkage method for groupby, choosing from ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median`` and ``ward``.
+    groupby_optimal_ordering: ``bool``, optional, default: ``True``
+        Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the groupby linkage matrix will be reordered so that the distance between successive leaves is minima.
+    groupby_precomputed_linkage: ``np.array``, optional, default: ``None``
+        Pass a precomputed linkage.
     groupby_labelsize: ``float``, optional, default: 10.0
         Fontsize for labels of data.obs['groupby'].
+    groupby_labelrotation: ``float``, optional, default: 0.0
+        Rotation of labels for groupby.
     cbar_labelsize: ``float``, optional, default: 10.0
         Fontsize of the color bar.
     panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
@@ -1073,7 +1097,7 @@ def heatmap(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+        A ``matplotlib.figure.Figure`` object containing the heatmap if ``return_fig == True``; Otherwise, A ``seaborn.matrix.ClusterGrid`` object is returned.
 
     Examples
     --------
@@ -1101,71 +1125,100 @@ def heatmap(
                 return None
             genes.append(key)
 
-    clusters = data.obs[groupby].values
-    if not is_categorical_dtype(clusters):
-        clusters = pd.Categorical(clusters)
-    else:
-        clusters = clusters.remove_unused_categories()
-    df_list = [pd.DataFrame({'cluster_name': clusters})]
-
+    df_list = []
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
         expr_mat = slicing(data[:, genes].X)
+        if gene_zscore:
+            from scipy.stats import zscore
+            expr_mat = zscore(expr_mat, ddof=1)
         df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
     df = pd.concat(df_list, axis = 1)
-    attr_names = df.columns[1:].values
+    df.index = data.obs_names
+    attr_names = df.columns.values
 
-    if on_average:
-        if not 'cmap' in kwargs.keys():
-            kwargs['cmap'] = 'Reds'
-        df = df.groupby('cluster_name').mean()
-        cluster_ids = df.index
-    else:
-        cluster_ids = df.pop('cluster_name').values
-        if not groupby_cluster:
-            idx = cluster_ids.argsort(kind = 'mergesort')
-            df = df.iloc[idx, :]  # organize df by category order
-            cluster_ids = cluster_ids[idx]
+    cluster_ids = df.index
+    cell_colors = None
+    if groupby is not None:
+        cluster_ids = data.obs[groupby].values
+        if not is_categorical_dtype(cluster_ids):
+            cluster_ids = pd.Categorical(cluster_ids)
+        else:
+            cluster_ids = cluster_ids.remove_unused_categories()
 
-        cell_colors = np.zeros(df.shape[0], dtype=object)
-        palette = _get_palette(cluster_ids.categories.size)
+        if on_average:
+            if not 'cmap' in kwargs.keys():
+                kwargs['cmap'] = 'Reds'
+            df['cluster_name'] = cluster_ids
+            df = df.groupby('cluster_name').mean()
+            cluster_ids = df.index
+        else:
+            if not groupby_cluster:
+                idx = cluster_ids.argsort(kind = 'mergesort')
+                df = df.iloc[idx, :]  # organize df by category order
+                cluster_ids = cluster_ids[idx]
 
-        for k, cat in enumerate(cluster_ids.categories):
-            cell_colors[cluster_ids == cat] = palette[k]
+            cell_colors = np.zeros(df.shape[0], dtype=object)
+            palette = _get_palette(cluster_ids.categories.size)
+
+            for k, cat in enumerate(cluster_ids.categories):
+                cell_colors[cluster_ids == cat] = palette[k]
+
+            cluster_ids = []
+
+
+    from scipy.cluster.hierarchy import linkage
+
+    groupby_linkage = None
+    if groupby_cluster:
+        if groupby_precomputed_linkage is not None:
+            groupby_linkage = groupby_precomputed_linkage
+        else:
+            groupby_linkage = linkage(df, groupby_method, optimal_ordering = groupby_optimal_ordering)
+    attrs_linkage = None
+    if attrs_cluster:
+        attrs_linage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
+
 
     if not switch_axes:
         cg = sns.clustermap(
             data=df,
-            row_colors=cell_colors if not on_average else None,
+            row_colors=cell_colors,
             col_colors=None,
             row_cluster=groupby_cluster,
             col_cluster=attrs_cluster,
+            row_linkage=groupby_linkage,
+            col_linkage=attrs_linkage,
             linewidths=0,
-            yticklabels=cluster_ids if on_average else [],
+            yticklabels=cluster_ids,
             xticklabels=attr_names,
             figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_ylabel("")
-        if attrs_labelsize is not None:
-            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=75)
+        cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=attrs_labelrotation)
+        if groupby is None:
+            cg.ax_heatmap.tick_params(axis='y', labelsize=groupby_labelsize, labelrotation=groupby_labelrotation)
     else:
         cg = sns.clustermap(
             data=df.T,
             row_colors=None,
-            col_colors=cell_colors if not on_average else None,
+            col_colors=cell_colors,
             row_cluster=attrs_cluster,
             col_cluster=groupby_cluster,
+            row_linkage=attrs_linkage,
+            col_linkage=groupby_linkage,
             linewidths=0,
             yticklabels=attr_names,
-            xticklabels=cluster_ids if on_average else [],
+            xticklabels=cluster_ids,
             figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_xlabel("")
-        if attrs_labelsize is not None:
-            cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize)
+        cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize, labelrotation=attrs_labelrotation)
+        if groupby is None:
+            cg.ax_heatmap.tick_params(axis='x', labelsize=groupby_labelsize, labelrotation=groupby_labelrotation)
 
     show_row_dendrogram = (attrs_cluster and attrs_dendrogram) if switch_axes else (groupby_cluster and groupby_dendrogram)
     show_col_dendrogram = (groupby_cluster and groupby_dendrogram) if switch_axes else (attrs_cluster and attrs_dendrogram)
@@ -1194,17 +1247,13 @@ def heatmap(
         cg.ax_cbar.yaxis.set_ticks_position("right")
 
 
-    if show_col_dendrogram:
-        cg.ax_heatmap.xaxis.tick_bottom()
-        cg.ax_col_dendrogram.set_visible(True)
-    else:
-        cg.ax_heatmap.xaxis.tick_top()
-        cg.ax_col_dendrogram.set_visible(False)
+    cg.ax_heatmap.xaxis.tick_bottom()
+    cg.ax_col_dendrogram.set_visible(show_col_dendrogram)
 
     cg.ax_cbar.tick_params(labelsize=cbar_labelsize)
     cg.fig.dpi = dpi
 
-    if not on_average:
+    if (groupby is not None) and (not on_average):
         if groupby_cluster:
             from matplotlib.patches import Patch
             legend_elements = [Patch(color = color, label = label) for color, label in zip(palette, cluster_ids.categories)]
@@ -1228,7 +1277,7 @@ def heatmap(
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg.fig if return_fig else None
+    return cg.fig if return_fig else cg
 
 
 def dotplot(
@@ -1498,7 +1547,7 @@ def dendrogram(
     linkage: ``str``, optional, default: ``complete``
         Which linkage criterion to use, used by hierarchical clustering. Below are available options:
             - ``ward`` minimizes the variance of the clusters being merged.
-            - ``avarage`` uses the average of the distances of each observation of the two sets.
+            - ``average`` uses the average of the distances of each observation of the two sets.
             - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
             - ``single`` uses the minimum of the distances between all observations of the two sets.
 
