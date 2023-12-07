@@ -81,6 +81,7 @@ def nmf(
     alpha_H: float = 0.0,
     l1_ratio_H: float = 0.0,
     fp_precision: str = "float",
+    online_chunk_size: int = 5000,
     n_jobs: int = -1,
     random_state: int = 0,
 ) -> None:
@@ -137,6 +138,9 @@ def nmf(
     fp_precision: ``str``, optional, default: ``float``
         The numeric precision on the results. Choose from ``float`` and ``double``.
 
+    online_chunk_size: ``int``, optional, default: ``int``
+        The chunk / mini-batch size for online learning. Only works when ``mode='online'``.
+
     n_jobs : `int`, optional (default: -1)
         Number of threads to use. -1 refers to using all physical CPU cores.
 
@@ -189,6 +193,7 @@ def nmf(
         alpha_H=alpha_H,
         l1_ratio_H=l1_ratio_H,
         fp_precision=fp_precision,
+        online_chunk_size=online_chunk_size,
     )
 
     data.uns["nmf_features"] = features # record which feature to use
@@ -285,6 +290,7 @@ def integrative_nmf(
     use_gpu: bool = False,
     lam: float = 5.0,
     fp_precision: str = "float",
+    online_chunk_size: int = 5000,
     n_jobs: int = -1,
     random_state: int = 0,
     quantile_norm: bool = True,
@@ -333,6 +339,9 @@ def integrative_nmf(
 
     fp_precision: ``str``, optional, default: ``float``
         The numeric precision on the results. Choose from ``float`` and ``double``.
+
+    online_chunk_size: ``int``, optional, default: ``5000``
+        The chunk / mini-batch size for online learning. Only works when ``mode='online'``.
 
     n_jobs : `int`, optional (default: -1)
         Number of threads to use. -1 refers to using all physical CPU cores.
@@ -394,6 +403,7 @@ def integrative_nmf(
         use_gpu=use_gpu,
         lam=lam,
         fp_precision=fp_precision,
+        online_chunk_size=online_chunk_size,
     )
 
     # Implementation of algo 3, quantile normalization

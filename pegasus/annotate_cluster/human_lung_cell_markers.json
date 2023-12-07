@@ -117,14 +117,9 @@
 			"name" : "Vascular endothelial cell",
 			"markers" : [
 				{
-					"genes" : ["PECAM1+", "CLDN5+", "CDH5+", "ERG+"],
-					"weight" : 0.2,
-					"comment" : "Markers for endothelial cells, from Schupp et al. Circulation 2021"
-				},
-				{
-					"genes" : [ "ENG+", "PCDH17+", "CLEC14A+", "ESAM+", "ITM2A+", "BMPR2+", "FLT1+", "ADGRL4+", "SLCO2A1+", "AQP1+", "EPAS1+", "ADGRL2+", "IFI27+"],
-					"weight" : 0.8,
-					"comment" : "Common vascular EC markers from Schupp et al. Circulation 2021 and ADGRL2"
+					"genes" : ["PECAM1+", "CLDN5+", "CDH5+", "ERG+", "ICAM2+", "CLEC14A+", "ITM2A+", "ADGRL4+", "SLCO2A1+", "IFI27+"],
+					"weight" : 1.0,
+					"comment" : "Markers for vascular endothelial cells, validated using Travaglini et al. Nature 2020 and Schupp et al. Circulation 2021 data"
 				}
 			],
 			"subtypes" : {
@@ -179,22 +174,26 @@
 								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
 							}
 						]
-					},
-					{
-						"name" : "EC lymphatic",
-						"markers" : [
-							{
-								"genes" : ["CCL21+", "TFF3+", "PDPN+", "PROX1+", "GPM6A+", "SEMA3D+", "TBX1+", "RELN+"],
-								"weight" : 1.0,
-								"comment" : "Markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
-							}
-						]
 					}
 				]
 			}
 		},
 
-
+		{
+			"name" : "Lymphatic endothelial cell",
+			"markers" : [
+				{
+					"genes" : ["PECAM1+", "CLDN5+", "ERG+", "CDH5+"],
+					"weight" : 0.2,
+					"comment" : "Pan endothelial cell markers, validated using Travaglini et al. Nature 2020 and Schupp et al. Circulation 2021 data"
+				},
+				{
+					"genes" : ["CCL21+", "TFF3+", "PDPN+", "PROX1+", "LYVE1+", "FLT4+", "GPM6A+", "SEMA3D+", "TBX1+", "RELN+"],
+					"weight" : 0.8,
+					"comment" : "LEC markers inferred from Travaglini et al. Nature 2020 and confirmed by Schupp et al. Circulation 2021"
+				}
+			]
+		},
 
 		{
 			"name" : "Smooth muscle cell",

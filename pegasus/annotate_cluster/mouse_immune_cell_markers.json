@@ -82,9 +82,65 @@
 			"name" : "B cell",
 			"markers" : [
 				{
-					"genes" : ["Cd19+", "Ms4a1+", "Cd79a+", "Cd79b+", "Ebf1+", "Pax5+", "Fcmr+", "Bank1+"],
-					"weight" : 1.0,
-					"comment" : "B cell markers from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021"
+					"genes" : ["Cd79a+", "Cd79b+", "Ms4a1+", "Cd19+", "H2-Ob+", "Tnfrsf13c+", "Bank1+", "Blk+", "Fcrla+", "Cd22+"],
+					"weight" : 0.91,
+					"comment" : "Human and mouse shared B cell markers; validated using Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020), Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021 data; Ebf1, Pax5 and Fcmr are good markers for mouse lung and liver but not marrow, tissue-specific marker?"
+				},
+				{
+					"genes" : ["Cxcr5+"],
+					"weight" : 0.09,
+					"comment" : "CXCR5 is constantly expressed by mature B cells and helps to guide B cells to follicle; fDC expresses CXCL13, the ligand for CXCR5; this marker expresses lowly in human but higher in mouse "
+				}
+			],
+			"subtypes" : {
+				"title" : "B cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Naive B cell",
+						"markers" : [
+							{
+								"genes" : ["Ighd+", "Fcer2a+", "Vpreb3+", "Fcrl1+", "Chchd10+"],
+								"weight" : 1.0,
+								"comments" : "Markers for naive B cell derived from Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020) & Kaptein et al. Cell 2022; Ighd & Fcer2a are shared with human"
+							}
+						]
+					},
+					{
+						"name" : "Memory B cell",
+						"markers" : [
+							{
+								"genes" : ["Zbtb32+", "C130026I21Rik+", "Pdlim1+", "Hepacam2+", "Igha+"],
+								"weight" : 0.8,
+								"comments" : "Markers for memory B cell derived from Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020) data; need to check and add Ighg related genes"
+							},
+							{
+								"genes" : ["Nt5e+", "Cd80+", "Fas+", "Pdcd1lg2+"],
+								"weight" : 0.2,
+								"comments" : "Traditional mouse memory B cell validated by Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020) data; all lowly expressed; Nt5e (5' Nucleotidase/CD73), Fas (CD95), Pdcd1lg2 (PD-L2/CD273)"
+							}
+						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "Plasma cell",
+			"markers" : [
+				{
+					"genes" : ["Sdc1+", "Slamf7+", "Tnfrsf17+", "Irf4+", "Prdm1+"],
+					"weight" : 0.5,
+					"comment" : "Plasma cell markers shared with human and validated using Tabula Muris marrow data (Tabula Muris Consortium et al. Nature 2020)"
+				},
+				{
+					"genes" : ["Derl3+", "Chst1+", "Eaf2+", "Oosp1+", "Cacna1s+"],
+					"weight" : 0.4,
+					"comment" : "Mouse-specific plasma cell markers validated using Tabula Muris marrow data (Tabula Muris Consortium et al. Nature 2020)"
+				},
+				{
+					"genes" : ["Xbp1+", "Slc3a2+", "Ly6k+"],
+					"weight" : 0.1,
+					"comment" : "Traditional mouse plasma markers (not ideal) validated using Tabula Muris marrow data (Tabula Muris Consortium et al. Nature 2020); Xbp1 & Slc3a2 (CD98) expressed highest in plasma but also expressed in other cell types"
 				}
 			]
 		},
@@ -127,6 +183,17 @@
 			]
 		},
 
+		{
+			"name" : "Macrophage",
+			"markers" : [
+				{
+					"genes" : ["Cd14+", "Ms4a7+", "Cx3cr1+", "Trem2+", "Hpgds+"],
+					"weight" : 1.0,
+					"comment" : "Machrophage markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+		
 		{
 			"name" : "Conventional type 1 dendritic cell",
 			"markers" : [

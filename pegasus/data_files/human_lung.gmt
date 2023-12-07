@@ -1,12 +1,13 @@
 Epithelial	Epithelial markers from HTAPP paper	KRT8	KRT18	EPCAM	CD24
-Endothelial	Endothelial shared markers from Xing et al. Science Advances 2021, Tony et al. Nature 2021 and Schupp et al. Circulation 2021	PECAM1	CLDN5	CDH5	ERG
+VEC	Vascular endothelial cell markers from Travaglini et al. Nature 2020 and and Schupp et al. Circulation 2021	PECAM1	CLDN5	CDH5	ERG	ICAM2	CLEC14A	ITM2A	ADGRL4	SLCO2A1	IFI27
+LEC	Lymphatic endothelial cell markers from Travaglini et al. Nature 2020 and and Schupp et al. Circulation 2021	PECAM1	CLDN5	ERG	CDH5	CCL21	TFF3	PDPN	PROX1	LYVE1	FLT4	GPM6A	SEMA3D	TBX1	RELN	
 Fibroblast	Fibroblast/Myofibroblast shared markers from Travaglini et al.	COL1A1	COL1A2	PDGFRA	ELN	BGN
 Macrophage	Macro	CD68	CD163	C1QA	MRC1	MS4A6A	MSR1	MERTK
 SMC	SMC from Muus et al., Braga et al. and Schupp et al.	MYH11	TAGLN	ACTG2	CNN1	PLN
 Pericyte	Pericyte from Schupp et al. and Travaglini et al.	TRPC6	CSPG4	FAM162B	GJA4	GJC1	HIGD1B	CDH6	LAMC3	FHL5
 T cell	T cell markers	CD3D	CD3E	CD3G	TRAC
 B cell	B cell markers	CD19	MS4A1	CD79A	CD79B
-Plasma cell	Plasma cell markers	CD38	XBP1	CD27	SLAMF7	TNFRSF17	TNFRSF13B
+Plasma cell	Plasma cell markers from ICA	TNFRSF17	PRDM1	SLAMF7	IRF4	SDC1	IGHA1	IGHG1	TNFRSF13B	CD38	ABCB9	CHPF	PLAAT2
 Mast cell	Mast cell markers	KIT	CPA3	TPSB2	TPSAB1	AREG	RGS1	RGS2
 ProNeu	Pro-Neutrophil markers validated using 10x public whole blood dataset	DEFA3	DEFA4	AZU1	MS4A3	ELANE	SLPI	CEACAM6	RNASE3	PRTN3	MPO	AC104232.1	CTSG
 PreNeu	Pre-Neutrophil markers validated using 10x public whole blood dataset	LTF	LCN2	MMP8	CRISP3	CAMP	PGLYRP1	CD177	HP
