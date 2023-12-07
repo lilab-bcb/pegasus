@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from pandas.api.types import is_categorical_dtype
+from pandas import CategoricalDtype
 from scipy.sparse import csr_matrix
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from joblib import Parallel, delayed, parallel_backend
@@ -549,7 +549,7 @@ def de_analysis(
     if cluster not in data.obs:
         raise ValueError("Cannot find cluster label!")
     cluster_labels = data.obs[cluster].values
-    if not is_categorical_dtype(cluster_labels):
+    if not isinstance(cluster_labels.dtype, CategoricalDtype):
         from natsort import natsorted
         cluster_labels = pd.Categorical(cluster_labels, natsorted(np.unique(cluster_labels)))
 
@@ -558,7 +558,7 @@ def de_analysis(
         if condition not in data.obs:
             raise ValueError("Cannot find condition!")
         cond_labels = data.obs[condition].values
-        if not is_categorical_dtype(cond_labels):
+        if not isinstance(cond_labels.dtype, CategoricalDtype):
             from natsort import natsorted
             cond_labels = pd.Categorical(cond_labels, natsorted(np.unique(cond_labels)))
         if cond_labels.categories.size < 2:

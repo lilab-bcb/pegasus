@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_categorical_dtype
+from pandas import CategoricalDtype
 from scipy.sparse import issparse, csr_matrix
 from typing import Union, List, Tuple, Dict
 from anndata import AnnData
@@ -101,8 +101,7 @@ def calc_expm1(X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
 
 
 def calc_stat_per_batch(X: Union[csr_matrix, np.ndarray], batch: Union[pd.Categorical, np.ndarray, list]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    from pandas.api.types import is_categorical_dtype
-    if is_categorical_dtype(batch):
+    if isinstance(batch.dtype, CategoricalDtype):
         nbatch = batch.categories.size
         codes = batch.codes.astype(np.int32)
     else:
@@ -165,7 +164,7 @@ def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: str, warni
         logger.warning(f"Batch key {batch} does not exist. {warning_msg}")
         return False
     else:
-        if not is_categorical_dtype(data.obs[batch]):
+        if not isinstance(data.obs[batch].dtype, CategoricalDtype):
             data.obs[batch] = pd.Categorical(data.obs[batch].values)
         if data.obs[batch].cat.categories.size == 1:
             logger.warning(f"Batch key {batch} only contains one batch. {warning_msg}")

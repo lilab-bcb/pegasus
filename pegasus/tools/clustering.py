@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_categorical_dtype
+from pandas import CategoricalDtype
 from pegasusio import MultimodalData
 from natsort import natsorted
 
@@ -691,7 +691,7 @@ def split_one_cluster(
     >>> pg.split_one_cluster(data, 'leiden_labels', '15', 2, 'leiden_labels_split')
     """
     cats = None
-    if is_categorical_dtype(data.obs[clust_label]):
+    if isinstance(data.obs[clust_label].dtype, CategoricalDtype):
         cats = data.obs[clust_label].cat.categories.values
     else:
         cats = pd.Categorical(data.obs[clust_label]).categories.values

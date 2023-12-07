@@ -4,7 +4,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasusio import MultimodalData, UnimodalData, timer
-from pandas.api.types import is_categorical_dtype, is_numeric_dtype
+from pandas import CategoricalDtype
+from pandas.api.types import is_numeric_dtype
 from typing import Union, Optional, List, Tuple
 
 
@@ -82,7 +83,7 @@ def pseudobulk(
 
     sample_vec = (
         data.obs[sample]
-        if is_categorical_dtype(data.obs[sample])
+        if isinstance(data.obs[sample].dtype, CategoricalDtype)
         else data.obs[sample].astype("category")
     )
     bulk_list = sample_vec.cat.categories
@@ -164,7 +165,7 @@ def deseq2(
 
     contrast: ``Tuple[str, str, str]``
         A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as numeritor of fold change, and a level as denominator of fold change.
-    
+
     de_key: ``str``, optional, default: ``"deseq2"``
         Key name of DE analysis results stored. For cluster.X, stored key will be cluster.de_key
 
@@ -202,17 +203,17 @@ def deseq2(
                 if (!require("BiocManager", quietly = TRUE))
                     install.packages("BiocManager")
                 BiocManager::install("DESeq2")"""
-                
+
         logger.error(text)
         sys.exit(-1)
 
-    import math    
+    import math
     to_dataframe = ro.r('function(x) data.frame(x)')
 
     for mat_key in pseudobulk.list_keys():
         with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
             dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
-        
+
         if replaceOutliers:
             dds = deseq2.DESeq(dds)
             res= deseq2.results(dds, contrast=ro.StrVector(contrast))
