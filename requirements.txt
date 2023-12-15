@@ -26,4 +26,4 @@ statsmodels
 umap-learn>=0.5.2
 wordcloud
 xlsxwriter
-igraph<=0.9.10
+igraph
