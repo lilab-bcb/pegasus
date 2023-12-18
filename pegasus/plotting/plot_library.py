@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib
 import matplotlib.pyplot as plt
 
 from scipy.sparse import issparse
@@ -1443,7 +1444,7 @@ def dotplot(
     size_legend.grid(False)
 
     # Reset global settings.
-    sns.reset_orig()
+    matplotlib.rc_file_defaults()
 
     return fig if return_fig else None
 
