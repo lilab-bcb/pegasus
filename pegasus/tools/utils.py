@@ -109,6 +109,9 @@ def calc_stat_per_batch(X: Union[csr_matrix, np.ndarray], batch: Union[pd.Catego
         codes = np.array(batch, dtype = np.int32)
         nbatch = codes.max() + 1 # assume cluster label starts from 0
 
+    # Try to fix frequent dtype errors in this function by ensuring that the matrix is float32
+    X = X.astype(np.float32)
+
     if issparse(X):
         from pegasus.cylib.fast_utils import calc_stat_per_batch_sparse
         return calc_stat_per_batch_sparse(X.shape[0], X.shape[1], X.data, X.indices, X.indptr, nbatch, codes)

@@ -590,8 +590,8 @@ def select_features(
         psum = np.multiply(X, X).sum(axis=0)
         std = ((psum - X.shape[0] * (m1 ** 2)) / (X.shape[0] - 1.0)) ** 0.5
         std[std == 0] = 1
-        X -= m1
-        X /= std
+        X = X - m1
+        X = X / std
         data.uns["stdzn_mean"] = m1
         data.uns["stdzn_std"] = std
         data.uns.pop(batch_ls_key, None)
@@ -723,8 +723,8 @@ def pc_transform(
     # standardization
     if "stdzn_mean" in data.uns:
         assert "stdzn_std" in data.uns
-        X -= data.uns["stdzn_mean"]
-        X /= data.uns["stdzn_std"]
+        X = X - data.uns["stdzn_mean"]
+        X = X - data.uns["stdzn_std"]
     if "stdzn_max_value" in data.uns:
         max_value = data.uns["stdzn_max_value"]
         X[X > max_value] = max_value
