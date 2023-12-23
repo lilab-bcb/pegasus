@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib
 import matplotlib.pyplot as plt
 
 from scipy.sparse import issparse
@@ -31,6 +32,7 @@ from .plot_utils import (
     _generate_categories,
     _plot_corners,
     _plot_spots,
+    _get_valid_attrs,
 )
 
 
@@ -152,6 +154,9 @@ def scatter(
     elif not is_list_like(attrs):
         attrs = [attrs]
 
+    # Select only valid attributes
+    attrs = _get_valid_attrs(data, attrs)
+
     if isinstance(basis, str):
         basis = [basis]
     if isinstance(components, tuple):
@@ -236,8 +241,6 @@ def scatter(
                     values = slicing(data.X, col = loc)
                 else:
                     obsm_key, sep, component = attr.partition("@")
-                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
-                        raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
                     values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
@@ -1441,7 +1444,7 @@ def dotplot(
     size_legend.grid(False)
 
     # Reset global settings.
-    sns.reset_orig()
+    matplotlib.rc_file_defaults()
 
     return fig if return_fig else None
 
