@@ -1024,6 +1024,7 @@ def heatmap(
     groupby_precomputed_linkage: Optional[np.array] = None,
     groupby_labelsize: Optional[float] = 10.0,
     groupby_labelrotation: Optional[float] = 0.0,
+    show_sample_name: Optional[bool] = None,
     cbar_labelsize: Optional[float] = 10.0,
     panel_size: Tuple[float, float] = (10, 10),
     return_fig: Optional[bool] = False,
@@ -1081,6 +1082,8 @@ def heatmap(
         Fontsize for labels of data.obs['groupby'].
     groupby_labelrotation: ``float``, optional, default: 0.0
         Rotation of labels for groupby.
+    show_sample_name: ``bool``, optional, default: ``None``
+        If show sample names as tick labels. If ``None``, show_sample_name == ``True`` if groupby == ``None`` and otherwise show_sample_name == ``False``.
     cbar_labelsize: ``float``, optional, default: 10.0
         Fontsize of the color bar.
     panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
@@ -1138,7 +1141,11 @@ def heatmap(
     df.index = data.obs_names
     attr_names = df.columns.values
 
-    cluster_ids = df.index
+    if show_sample_name is None:
+        show_sample_name = True if groupby is None else False
+    sample_tick_labels = df.index if show_sample_name else []
+
+    cluster_ids = None
     cell_colors = None
     if groupby is not None:
         cluster_ids = data.obs[groupby].values
@@ -1165,9 +1172,6 @@ def heatmap(
             for k, cat in enumerate(cluster_ids.categories):
                 cell_colors[cluster_ids == cat] = palette[k]
 
-            cluster_ids = []
-
-
     from scipy.cluster.hierarchy import linkage
 
     groupby_linkage = None
@@ -1178,7 +1182,7 @@ def heatmap(
             groupby_linkage = linkage(df, groupby_method, optimal_ordering = groupby_optimal_ordering)
     attrs_linkage = None
     if attrs_cluster:
-        attrs_linage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
+        attrs_linkage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
 
 
     if not switch_axes:
@@ -1191,7 +1195,7 @@ def heatmap(
             row_linkage=groupby_linkage,
             col_linkage=attrs_linkage,
             linewidths=0,
-            yticklabels=cluster_ids,
+            yticklabels=sample_tick_labels,
             xticklabels=attr_names,
             figsize=panel_size,
             **kwargs,
@@ -1211,7 +1215,7 @@ def heatmap(
             col_linkage=groupby_linkage,
             linewidths=0,
             yticklabels=attr_names,
-            xticklabels=cluster_ids,
+            xticklabels=sample_tick_labels,
             figsize=panel_size,
             **kwargs,
         )
