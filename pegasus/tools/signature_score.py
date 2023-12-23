@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 import pandas as pd
 
 from typing import Dict, List, Union
@@ -89,7 +90,11 @@ def calculate_z_score(
     if not _check_and_calc_sig_background(data, n_bins):
         return None
 
-    z_score_mat = (data.X.toarray().astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)
+    mat = data.X
+    if sp.issparse(mat):
+        mat = mat.toarray()
+
+    z_score_mat = (mat.astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)
 
     return z_score_mat
 
