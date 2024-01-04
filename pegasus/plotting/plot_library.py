@@ -987,10 +987,6 @@ def violin(
         if stripplot:
             sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=stripsize, color="k", jitter=True)
         sns.violinplot(x="label", y=attrs[i], data=df, inner=inner, linewidth=1, ax=ax, cut=0, density_norm=scale, palette=palette, **kwargs)
-        #if hue is None:
-        #    sns.violinplot(x="label", y=attrs[i], hue = 'label', legend=False, data=df, inner=inner, linewidth=1, ax=ax, cut=0, density_norm=scale, split=False, palette=palette, **kwargs)
-        #else:
-        #    sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=inner, linewidth=1, ax=ax, cut=0, density_norm=scale, split=True, palette=palette, **kwargs)
         ax.grid(False)
 
         if hue is not None:
