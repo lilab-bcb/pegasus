@@ -346,7 +346,7 @@ def _set_target_mat(data, X, target_matrix, select, base_matrix, suffix):
     if target_matrix in data.matrices:
        logger.warning(f"{target_matrix} is in data's matrices. It will be rewritten.")
 
-    data.add_matrix(target_matrix, X)
+    data.update_matrix(target_matrix, X)
 
     if select:
         data.select_matrix(target_matrix)

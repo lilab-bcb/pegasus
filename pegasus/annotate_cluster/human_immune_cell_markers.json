@@ -97,9 +97,9 @@
 						"name" : "CD8 TCM",
 						"markers" : [
 							{
-								"genes" : ["CD8A+", "CD8B+", "GZMK+", "DUSP2+", "RGS1+", "CXCR3+", "CMC1+", "TIGIT+", "CST7+", "NKG7+"],
+								"genes" : ["CD8A+", "CD8B+", "GZMK+", "DUSP2+", "LTB+", "CD27+", "IL7R+", "GPR183+", "RGS1+", "CXCR3+"],
 								"weight" : 1.0,
-								"comment" : "Markers derived from Immune Cell Atlas PBMC data; CD8A & CD8B are CD8 markers; GZMK, DUSP2, RGS1 & CXCR3 are specific to TCM; CMC1 & TIGIT are biased towards TCM; CST7 & NKG7 are shared by TCM & TEM"
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data; CD8A & CD8B are CD8 markers; All others are CD8 TCM specific markers"
 							}
 						]
 					},
@@ -107,9 +107,9 @@
 						"name" : "CD8 TEM",
 						"markers" : [
 							{
-								"genes" : ["CD8A+", "CD8B+", "FGFBP2+", "GZMB+", "FCGR3A+", "SPON2+", "ADGRG1+", "CX3CR1+", "ASCL2+", "PRSS23+"],
+								"genes" : ["CD8A+", "CD8B+", "FGFBP2+", "GZMB+", "GZMH+", "GNLY+", "PRF1+", "KLRD1+", "FCGR3A+", "TBX21+", "CX3CR1+", "ASCL2+", "SPON2+", "ADGRG1+", "PRSS23+"],
 								"weight" : 1.0,
-								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data; FGFBP2, GZMB, GZMH, GNLY, PRF1, KLRD1, FCGR3A are pan TEM markers; TBX21, CX3CR1 and ASCL2 are Temra markers; the last three are purely data driven markers"
 							}
 						]
 					},
@@ -403,7 +403,7 @@
 		},
 
 		{
-			"name" : "Erythroid cells",
+			"name" : "Erythroid cell",
 			"markers" : [
 				{
 					"genes" : ["GYPA+"], 
@@ -429,7 +429,7 @@
 		},
 
 		{
-			"name" : "Megakaryocyte",
+			"name" : "Platelet",
 			"markers" : [
 				{
 					"genes" : ["PF4+", "PPBP+", "GP5+"],
