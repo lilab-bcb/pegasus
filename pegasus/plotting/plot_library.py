@@ -947,6 +947,9 @@ def violin(
         assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
+    # Filter out attributes not existing in the data
+    attrs = _get_valid_attrs(data, attrs)
+
     nrows = len(attrs)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=1, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
@@ -958,9 +961,6 @@ def violin(
             assert is_numeric_dtype(data.obs[key])
             obs_keys.append(key)
         else:
-            if key not in data.var_names:
-                logger.warning(f"Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
-                return None
             genes.append(key)
 
     df_list = [pd.DataFrame({"label": data.obs[groupby].values})]
@@ -1128,6 +1128,9 @@ def heatmap(
     if isinstance(attrs, str):
         attrs = [attrs]
 
+    # Filter out attributes not existing in the data
+    attrs = _get_valid_attrs(data, attrs)
+
     obs_keys = []
     genes = []
     for key in attrs:
@@ -1170,7 +1173,7 @@ def heatmap(
             if not 'cmap' in kwargs.keys():
                 kwargs['cmap'] = 'Reds'
             df['cluster_name'] = cluster_ids
-            df = df.groupby('cluster_name').mean()
+            df = df.groupby(by='cluster_name', observed=True).mean()
             cluster_ids = df.index
         else:
             if not groupby_cluster:
@@ -1300,7 +1303,7 @@ def dotplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     genes: Union[str, List[str]],
     groupby: str,
-    reduce_function: Callable[[np.ndarray], float] = np.mean,
+    reduce_function: Union[str, Callable[[np.ndarray], float]] = "mean",
     fraction_min: float = 0,
     fraction_max: float = None,
     dot_min: int = 0,
@@ -1325,7 +1328,7 @@ def dotplot(
         Features to plot.
     groupby: ``str``
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
-    reduce_function: ``Callable[[np.ndarray], float]``, optional, default: ``np.mean``
+    reduce_function: ``Union[str, Callable[[np.ndarray], float]]``, optional, default: ``"mean"``
         Function to calculate statistic on expression data. Default is mean.
     fraction_min: ``float``, optional, default: ``0``.
         Minimum fraction of expressing cells to consider.
@@ -1364,12 +1367,14 @@ def dotplot(
     sns.set(font_scale=0.7, style='whitegrid')
 
     if not is_list_like(genes):
-        geness = [genes]
+        genes = [genes]
+
+    # Select only genes existing in the data
+    genes = _get_valid_attrs(data, genes)
 
     keywords = dict(cmap=cmap)
     keywords.update(kwds)
 
-    from scipy.sparse import issparse
     X = slicing(data[:, genes].X)
     df = pd.DataFrame(data=X, columns=genes)
     df[groupby] = data.obs[groupby].values
@@ -1387,7 +1392,8 @@ def dotplot(
     def non_zero(g):
         return np.count_nonzero(g) / g.shape[0]
 
-    summarized_df = df.groupby(groupby).aggregate([reduce_function, non_zero])
+    # Set observed=True to suppress warnings.
+    summarized_df = df.groupby(by=groupby, observed=True).aggregate([reduce_function, non_zero])
 
     row_indices = summarized_df.index.tolist()
     if sort_function == "natsorted":
