@@ -1028,14 +1028,13 @@ def heatmap(
     attrs_method: Optional[bool] = 'ward',
     attrs_optimal_ordering: Optional[bool] = True,
     attrs_labelsize: Optional[float] = 10.0,
-    attrs_labelrotation: Optional[float] = 0.0,
+    xticklabel_rotation: Optional[float] = 90.0,
     groupby_cluster: Optional[bool] = True,
     groupby_dendrogram: Optional[bool] = True,
     groupby_method: Optional[bool] = 'ward',
     groupby_optimal_ordering: Optional[bool] = True,
     groupby_precomputed_linkage: Optional[np.array] = None,
     groupby_labelsize: Optional[float] = 10.0,
-    groupby_labelrotation: Optional[float] = 0.0,
     show_sample_name: Optional[bool] = None,
     cbar_labelsize: Optional[float] = 10.0,
     panel_size: Tuple[float, float] = (10, 10),
@@ -1078,8 +1077,8 @@ def heatmap(
         Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the attrs linkage matrix will be reordered so that the distance between successive leaves is minima.
     attrs_labelsize: ``float``, optional, default: 10.0
         Fontsize for labels of attrs.
-    attrs_labelrotation: ``float``, optional, default: 0.0
-        Rotation of labels for attrs.
+    xticklabel_rotation: ``float``, optional, default: 90.0
+        Rotation of x-axis tick labels.
     groupby_cluster: ``bool``, optional, default: ``True``
         Cluster data.obs['groupby'] and generate a cluster-wise dendrogram.
     groupby_dendrogram: ``bool``, optional, default: ``True``
@@ -1092,8 +1091,6 @@ def heatmap(
         Pass a precomputed linkage.
     groupby_labelsize: ``float``, optional, default: 10.0
         Fontsize for labels of data.obs['groupby'].
-    groupby_labelrotation: ``float``, optional, default: 0.0
-        Rotation of labels for groupby.
     show_sample_name: ``bool``, optional, default: ``None``
         If show sample names as tick labels. If ``None``, show_sample_name == ``True`` if groupby == ``None`` and otherwise show_sample_name == ``False``.
     cbar_labelsize: ``float``, optional, default: 10.0
@@ -1199,6 +1196,7 @@ def heatmap(
     if attrs_cluster:
         attrs_linkage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
 
+    print(df)
 
     if not switch_axes:
         cg = sns.clustermap(
@@ -1210,15 +1208,15 @@ def heatmap(
             row_linkage=groupby_linkage,
             col_linkage=attrs_linkage,
             linewidths=0,
-            yticklabels=sample_tick_labels,
+            yticklabels=cluster_ids if not show_sample_name else sample_tick_labels,
             xticklabels=attr_names,
             figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_ylabel("")
-        cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=attrs_labelrotation)
+        cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=xticklabel_rotation)
         if groupby is None:
-            cg.ax_heatmap.tick_params(axis='y', labelsize=groupby_labelsize, labelrotation=groupby_labelrotation)
+            cg.ax_heatmap.tick_params(axis='y', labelsize=groupby_labelsize)
     else:
         cg = sns.clustermap(
             data=df.T,
@@ -1230,14 +1228,14 @@ def heatmap(
             col_linkage=groupby_linkage,
             linewidths=0,
             yticklabels=attr_names,
-            xticklabels=sample_tick_labels,
+            xticklabels=cluster_ids if not show_sample_name else sample_tick_labels,
             figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_xlabel("")
-        cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize, labelrotation=attrs_labelrotation)
+        cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize)
         if groupby is None:
-            cg.ax_heatmap.tick_params(axis='x', labelsize=groupby_labelsize, labelrotation=groupby_labelrotation)
+            cg.ax_heatmap.tick_params(axis='x', labelsize=groupby_labelsize, labelrotation=xticklabel_rotation)
 
     show_row_dendrogram = (attrs_cluster and attrs_dendrogram) if switch_axes else (groupby_cluster and groupby_dendrogram)
     show_col_dendrogram = (groupby_cluster and groupby_dendrogram) if switch_axes else (attrs_cluster and attrs_dendrogram)
@@ -1387,7 +1385,6 @@ def dotplot(
     idx = series == 0
     if idx.sum() > 0:
         logger.warning(f"The following categories contain no cells and are removed: {','.join(list(series.index[idx]))}.")
-        df[groupby] = df[groupby].cat.remove_unused_categories()
 
     def non_zero(g):
         return np.count_nonzero(g) / g.shape[0]
