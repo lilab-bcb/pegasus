@@ -1196,8 +1196,6 @@ def heatmap(
     if attrs_cluster:
         attrs_linkage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
 
-    print(df)
-
     if not switch_axes:
         cg = sns.clustermap(
             data=df,
