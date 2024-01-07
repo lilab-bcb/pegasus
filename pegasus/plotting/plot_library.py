@@ -964,9 +964,17 @@ def violin(
             genes.append(key)
 
     df_list = [pd.DataFrame({"label": data.obs[groupby].values})]
+
     if hue is not None:
         df_list.append(pd.DataFrame({hue: data.obs[hue].values}))
         stripplot = False
+        kwargs['hue'] = hue
+        kwargs['split'] = True
+    else:
+        kwargs['hue'] = "label"
+        kwargs['legend'] = False
+        kwargs['split'] = False
+
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
@@ -978,7 +986,7 @@ def violin(
         ax = axes[i, 0]
         if stripplot:
             sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=stripsize, color="k", jitter=True)
-        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=inner, linewidth=1, ax=ax, cut=0, scale=scale, split=True, palette=palette, **kwargs)
+        sns.violinplot(x="label", y=attrs[i], data=df, inner=inner, linewidth=1, ax=ax, cut=0, density_norm=scale, palette=palette, **kwargs)
         ax.grid(False)
 
         if hue is not None:
@@ -991,6 +999,7 @@ def violin(
             ax.set_xlabel("")
         else:
             ax.set_xlabel(groupby)
+            ax.set_xticks(ax.get_xticks())  # Get rid of the UserWarning: set_ticklabels() should only be used with a fixed number of ticks
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
         ax.set_ylabel(attrs[i], labelpad=8, rotation=0, horizontalalignment='right', fontsize='medium')
         ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
