@@ -1128,6 +1128,9 @@ def heatmap(
     if isinstance(attrs, str):
         attrs = [attrs]
 
+    # Filter out attributes not existing in the data
+    attrs = _get_valid_attrs(data, attrs)
+
     obs_keys = []
     genes = []
     for key in attrs:
