@@ -1196,6 +1196,12 @@ def heatmap(
     if attrs_cluster:
         attrs_linkage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
 
+    groupby_tick_labels = []
+    if show_sample_name:
+        groupby_tick_labels = sample_tick_labels
+    elif on_average:
+        groupby_tick_labels = cluster_ids
+
     if not switch_axes:
         cg = sns.clustermap(
             data=df,
@@ -1206,7 +1212,7 @@ def heatmap(
             row_linkage=groupby_linkage,
             col_linkage=attrs_linkage,
             linewidths=0,
-            yticklabels=cluster_ids if not show_sample_name else sample_tick_labels,
+            yticklabels=groupby_tick_labels,
             xticklabels=attr_names,
             figsize=panel_size,
             **kwargs,
@@ -1226,7 +1232,7 @@ def heatmap(
             col_linkage=groupby_linkage,
             linewidths=0,
             yticklabels=attr_names,
-            xticklabels=cluster_ids if not show_sample_name else sample_tick_labels,
+            xticklabels=groupby_tick_labels,
             figsize=panel_size,
             **kwargs,
         )
