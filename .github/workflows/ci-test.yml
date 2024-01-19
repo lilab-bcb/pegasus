@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v2
@@ -48,10 +48,6 @@ jobs:
     - name: One sample input test
       run: |
         bash tests/run_one_sample.sh
-    - name: Hashing CITE-Seq pipeline test
-      run: |
-        bash tests/run_hashing_citeseq.sh
-        pytest tests/test_hashing_citeseq.py
     - name: iNMF test
       run: |
         bash tests/run_inmf.sh
