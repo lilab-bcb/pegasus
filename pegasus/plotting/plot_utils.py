@@ -9,6 +9,9 @@ from matplotlib.axes import Axes
 from matplotlib.patches import Circle
 from matplotlib.collections import PatchCollection
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def _transform_basis(basis: str) -> str:
     if basis == "tsne":
@@ -453,6 +456,6 @@ def _get_valid_attrs(data:Union[MultimodalData, UnimodalData], attrs: List[str])
         else:
             attrs_drop.append(attr)
     if len(attrs_drop) > 0:
-        print(f"Warning: Attributes {attrs_drop} are not in data.obs, data.var_names or data.obsm!")
+        logger.warning(f"Attributes {attrs_drop} are not in data.obs, data.var_names or data.obsm!")
 
     return attrs_filt

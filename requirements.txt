@@ -20,7 +20,7 @@ pybind11
 scikit-learn>=0.23.2
 scikit-misc
 scipy
-seaborn
+seaborn>=0.13.0
 setuptools
 statsmodels
 umap-learn>=0.5.2
