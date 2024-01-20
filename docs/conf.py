@@ -23,15 +23,15 @@ import pegasus
 # -- Project information -----------------------------------------------------
 
 project = "Pegasus"
-copyright = "2023 Genentech, Inc. All rights reserved."
+copyright = "2024 Genentech, Inc. All rights reserved."
 author = (
     "Yiming Yang, Joshua Gould and Bo Li"
 )
 
 # The short X.Y version
-version = "1.8"
+version = "1.9"
 # The full version, including alpha/beta/rc tags
-release = "1.8.1"
+release = "1.9.0"
 
 
 # -- General configuration ---------------------------------------------------
