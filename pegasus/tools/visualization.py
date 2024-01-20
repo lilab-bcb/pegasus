@@ -276,6 +276,7 @@ def umap(
     dens_var_shift: float = 0.1,
     n_jobs: int = -1,
     full_speed: bool = False,
+    use_cache: bool = True,
     random_state: int = 0,
     out_basis: str = "umap",
 ) -> None:
@@ -334,6 +335,9 @@ def umap(
         * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
+    use_cache: ``bool``, optional, default: ``True``
+        If use_cache and found cached knn results, will not recompute.
+
     random_state: ``int``, optional, default: ``0``
         Random seed set for reproducing results.
 
@@ -354,11 +358,7 @@ def umap(
     rep = update_rep(rep)
     X = X_from_rep(data, rep, rep_ncomps)
 
-    if data.shape[0] < n_neighbors:
-        logger.warning(f"Warning: Number of samples = {data.shape[0]} < K = {n_neighbors}!\n Set K to {data.shape[0]}.")
-        n_neighbors = data.shape[0]
-
-    knn_indices, knn_dists = get_neighbors(data, K = n_neighbors, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    knn_indices, knn_dists, n_neighbors = get_neighbors(data, K = n_neighbors, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed, use_cache = use_cache)
     knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
     knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
 
@@ -539,6 +539,7 @@ def net_umap(
     select_K: int = 25,
     select_alpha: float = 1.0,
     full_speed: bool = False,
+    use_cache: bool = True,
     net_alpha: float = 0.1,
     polish_learning_rate: float = 10.0,
     polish_n_epochs: int = 30,
@@ -612,6 +613,9 @@ def net_umap(
         * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
 
+    use_cache: ``bool``, optional, default: ``True``
+        If use_cache and found cached knn results, will not recompute.
+
     net_alpha: ``float``, optional, default: ``0.1``
         L2 penalty (regularization term) parameter of the deep regressor.
 
@@ -641,7 +645,7 @@ def net_umap(
 
     rep = update_rep(rep)
     n_jobs = eff_n_jobs(n_jobs)
-    knn_indices, knn_dists = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    knn_indices, knn_dists, select_K = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed, use_cache = use_cache)
 
     selected = select_cells(
         knn_dists,
@@ -659,7 +663,7 @@ def net_umap(
 
     ds_indices_key = "ds_" + rep + "_knn_indices"  # ds refers to down-sampling
     ds_distances_key = "ds_" + rep + "_knn_distances"
-    indices, distances = calculate_nearest_neighbors(
+    indices, distances, n_neighbors = calculate_nearest_neighbors(
         X,
         K=n_neighbors,
         n_jobs=n_jobs,
@@ -702,7 +706,7 @@ def net_umap(
 
     data.obsm["X_" + out_basis + "_pred"] = Y_init
 
-    knn_indices, knn_dists = get_neighbors(data, K = n_neighbors, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    knn_indices, knn_dists, n_neighbors = get_neighbors(data, K = n_neighbors, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed, use_cache = use_cache)
     knn_indices = np.insert(knn_indices[:, 0 : n_neighbors - 1], 0, range(data.shape[0]), axis=1)
     knn_dists = np.insert(knn_dists[:, 0 : n_neighbors - 1], 0, 0.0, axis=1)
 
@@ -735,6 +739,7 @@ def net_fle(
     rep: str = "diffmap",
     K: int = 50,
     full_speed: bool = False,
+    use_cache: bool = True,
     target_change_per_node: float = 2.0,
     target_steps: int = 5000,
     is3d: bool = False,
@@ -777,6 +782,9 @@ def net_fle(
     full_speed: ``bool``, optional, default: ``False``
         * If ``True``, use multiple threads in constructing ``hnsw`` index. However, the kNN results are not reproducible.
         * Otherwise, use only one thread to make sure results are reproducible.
+
+    use_cache: ``bool``, optional, default: ``True``
+        If use_cache and found cached knn results, will not recompute.
 
     target_change_per_node: ``float``, optional, default: ``2.0``
         Target change per node to stop ForceAtlas2.
@@ -845,7 +853,7 @@ def net_fle(
             full_speed=full_speed,
         )
 
-    knn_indices, knn_dists = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed)
+    knn_indices, knn_dists, select_K = get_neighbors(data, K = select_K, rep = rep, n_jobs = n_jobs, random_state = random_state, full_speed = full_speed, use_cache = use_cache)
 
     selected = select_cells(
         knn_dists,
@@ -860,7 +868,7 @@ def net_fle(
 
     ds_indices_key = "ds_" + rep + "_knn_indices"
     ds_distances_key = "ds_" + rep + "_knn_distances"
-    indices, distances = calculate_nearest_neighbors(
+    indices, distances, K = calculate_nearest_neighbors(
         X, K=K, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed
     )
     data.uns[ds_indices_key] = indices

@@ -192,6 +192,11 @@ predefined_signatures = dict(
     ribosomal_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_mouse.gmt"),
     apoptosis_human=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_human.gmt"),
     apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),
+    human_lung=pkg_resources.resource_filename("pegasus", "data_files/human_lung.gmt"),
+    mouse_lung=pkg_resources.resource_filename("pegasus", "data_files/mouse_lung.gmt"),
+    mouse_brain=pkg_resources.resource_filename("pegasus", "data_files/mouse_brain.gmt"),
+    mouse_liver=pkg_resources.resource_filename("pegasus", "data_files/mouse_liver.gmt"),
+    emt_human=pkg_resources.resource_filename("pegasus", "data_files/emt_human.gmt"),
 )
 
 predefined_pathways = dict(

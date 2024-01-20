@@ -1,0 +1,313 @@
+{
+	"title" : "Mouse lung cell type markers",
+	"cell_types" : [
+		{
+			"name" : "Alveolar type I cell",
+			"markers" : [
+				{
+					"genes" : ["Akap5+", "Rtkn2+", "Ndnf+", "Col4a3+", "Spock2+"],
+					"weight" : 1.0,
+					"comment" : "AT1 markers from Hurskainen et al. Nat. Commun. 2021 and Negretti et al. Development 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Alveolar type II cell",
+			"markers" : [
+				{
+					"genes" : ["Sftpc+", "Sftpa1+", "Lamp3+", "Hc+", "Slc34a2+"],
+					"weight" : 1.0,
+					"comment" : "AT2 markers from Hurskainen et al. Nat. Commun. 2021 and Negretti et al. Development 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Ciliated cell",
+			"markers" : [
+				{
+					"genes" : ["Dynlrb2+", "Tmem212+", "Foxj1+", "Ccdc153+", "Nme5+"],
+					"weight" : 1.0,
+					"comment" : "Ciliated cell markers from Hurskainen et al. Nat. Commun. 2021 and Negretti et al. Development 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Club cell",
+			"markers" : [
+				{
+					"genes" : ["Scgb1a1+", "Scgb3a2+", "Cckar+", "Gabrp+", "Slc16a11+"],
+					"weight" : 1.0,
+					"comment" : "Club cell markers from Hurskainen et al. Nat. Commun. 2021 and Negretti et al. Development 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Basal cell",
+			"markers" : [
+				{
+					"genes" : ["Aqp3+", "Krt5+", "Dapl1+", "Hspa1a+", "Trp63+"],
+					"weight" : 1.0,
+					"comment" : "Basal cell markers from Montoro et al. Nature 2018 Extended Data Fig. 1d"
+				}
+			]
+		},
+
+		{
+			"name" : "Goblet cell",
+			"markers" : [
+				{
+					"genes" : ["Scgb3a1+", "Muc5b+", "Serpinb11+", "Gp2+", "Dmbt1+"],
+					"weight" : 1.0,
+					"comment" : "Goblet cell markers from Montoro et al. Nature 2018 Supp Table 1"
+				}
+			]
+		},
+
+		{
+			"name" : "Tuft cell",
+			"markers" : [
+				{
+					"genes" : ["Pou2f3+", "Ascl2+", "Dclk1+", "Lrmp+", "Ltc4s+", "Trpm5+", "Gnb3+", "Rgs13+"],
+					"weight" : 1.0,
+					"comment" : "Tuft cell markers from Sun et al. Dev. Cell 2022 and Montoro et al. Nature 2018 Extended Data Fig. 3b; first 3 markers are mainly suggested by Sun et al. the CellCards."
+				}
+			]
+		},
+
+		{
+			"name" : "Plumonary neuroendocrine cell",
+			"markers" : [
+				{
+					"genes" : ["Ascl1+", "Chga+", "Calca+", "Scg2+", "Scg5+"],
+					"weight" : 1.0,
+					"comment" : "Plumonary neuroendocrine cell markers from Montoro et al. Nature 2018 Extended Data Fig. 3b & 3c"
+				}
+			]
+		},
+
+		{
+			"name" : "Ionocyte",
+			"markers" : [
+				{
+					"genes" : ["Foxi1+", "Ascl3+", "Smbd1+", "Moxd1+", "Atp6v0d2+"],
+					"weight" : 1.0,
+					"comment" : "Ionocyte markers from Montoro et al. Nature 2018 Fig. 5a"
+				}
+			]
+		},
+
+
+
+		{
+			"name" : "Endothelial cell",
+			"markers" : [
+				{
+					"genes" : ["Egfl7+", "Cldn5+", "Cdh5+", "Pecam1+", "Calcrl+", "Ecscr+", "Icam2+"],
+					"weight" : 1.0,
+					"comment" : "Endothelial cell markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			],
+			"subtypes" : {
+				"title" : "Endothelial cell subtype markers (Main and Capillary, see https://lungmap.net/cell-cards/)",
+				"cell_types" : [
+					{
+						"name" : "Aerocyte",
+						"markers" : [
+							{
+								"genes" : ["Emp2+", "Car4+", "Tbx2+", "Apln+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					},
+					{
+						"name" : "EC general capillary",
+						"markers" : [
+							{
+								"genes" : ["Gpihbp1+", "Kit+", "Nckap5+", "Aplnr+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					},
+					{
+						"name" : "EC lymphatic",
+						"markers" : [
+							{
+								"genes" : ["Mmrn1+", "Ccl21a+", "Prox1+", "Nts+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					},
+					{
+						"name" : "EC venous",
+						"markers" : [
+							{
+								"genes" : ["Slc6a2+", "Vegfc+", "Ackr3+", "Fabp4+"],
+								"weight" : 1.0,
+								"comments" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					},
+					{
+						"name" : "EC arterial",
+						"markers" : [
+							{
+								"genes" : ["Gja5+", "Cxcl12+", "Pcsk5+", "Thsd7a+"],
+								"weight" : 1.0,
+								"comments" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					}
+				]
+			}
+		},
+
+
+
+		{
+			"name" : "Mesothelial cell",
+			"markers" : [
+				{
+					"genes" : ["Wt1+", "Upk3b+", "Rspo1+", "C2+", "Sbsn+", "Aldh1a2+", "Lrrn4+", "Cldn15+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+				}
+			]
+		},
+
+		{
+			"name" : "Pericyte",
+			"markers" : [
+				{
+					"genes" : ["Notch3+", "Heyl+", "Parm1+", "Ndufa4l2+", "Cox4i2+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+				}
+			],
+			"subtypes" : {
+				"title" : "Pericyte subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Pericyte 1",
+						"markers" : [
+							{
+								"genes" : ["Gpc6+", "Cxcl12+", "Wisp2+", "Map3k7cl+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					},
+					{
+						"name" : "Pericyte 2",
+						"markers" : [
+							{
+								"genes" : ["Higd1b+", "Pcdh18+", "Trpc6+", "Fam162b+", "Clstn2+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "Fibroblast",
+			"markers" : [
+				{
+					"genes" : ["Dpt+", "Clec3b+", "Pcolce2+", "Vegfd+", "Vcam1+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+				}
+			],
+			"subtypes" : {
+				"title" : "Fibro subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Adventitial fibroblast",
+						"markers" : [
+							{
+								"genes" : ["Mfap5+", "Serpinf1+", "Abca8a+", "Twist2+"],
+								"weight" : 1.0,
+								"comment" : "Markers from Schupp et al. and Travaglini et al."
+							}
+						]
+					},
+					{
+						"name" : "Alveolar fibroblast",
+						"markers" : [
+							{
+								"genes" : ["Slit2+", "Col13a1+", "Wnt2+", "Slc38a5+", "Slc27a6+", "Frem1+"],
+								"weight" : 1.0,
+								"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Negretti et al. Development 2021 data"
+							}
+						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "Myofibroblast",
+			"markers" : [
+				{
+					"genes" : ["Egfem1+", "Agt+", "Prag1+", "Etv1+", "Trim67+"],
+					"weight" : 1.0,
+					"comment" : "Markers from Schupp et al. and Travaglini et al."
+				}
+			]
+		},
+
+		{
+			"name" : "Smooth muscle cell",
+			"markers" : [
+				{
+					"genes" : ["Tnnt2+", "Sgcg+", "Sntg2+", "Nrtn+", "Mrvi1+", "Sbspon+"],
+					"weight" : 1.0,
+					"comment" : "Markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		},
+
+
+
+		{
+			"name" : "ILC2",
+			"markers" : [
+				{
+					"genes" : ["Gata3+", "Il1rl1+", "Arg1+", "Areg+", "Il2ra+", "Csf2+", "Ccl1+", "Ccdc184+", "Calca+", "Il5+"],
+					"weight" : 1.0,
+					"comment" : "Innate lymphoid cell type 2 markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		},
+
+		{
+			"name" : "Alveolar macrophage",
+			"markers" : [
+				{
+					"genes" : ["Ear1+", "Marco+", "Atp6v0d2+", "Olr1+", "F7+", "Tfec+", "Gpnmb+", "Lrp12+", "Pparg+", "Car4+", "Krt19+", "Plet1+"],
+					"weight" : 1.0,
+					"comment" : "First 8 markers are Alveolar macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021 data; Ear1 and Marco also show in Casanova-Acebes et al. Nature 2021; Last 4 are markers from Casanova-Acebes et al. Nature 2021 that are validated using Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		},
+
+		{
+			"name" : "Interstitial macrophage",
+			"markers" : [
+				{
+					"genes" : ["C1qa+", "C1qb+", "C1qc+", "Pf4+", "Ms4a7+", "Fcrls+"],
+					"weight" : 1.0,
+					"comment" : "Interstitial macrophage markers inferred from Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		}
+	]
+}

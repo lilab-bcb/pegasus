@@ -5,8 +5,9 @@
 			"name" : "T cell",
 			"markers" : [
 				{
-					"genes" : ["Cd28+", "Cd3d+", "Cd3e+", "Cd4+", "Cd8a+"],
-					"weight" : 1.0
+					"genes" : ["Cd3d+", "Cd3e+", "Lat+", "Thy1+", "Lef1+", "Trac+", "Cd28+"],
+					"weight" : 1.0,
+					"comment" : "T cell markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021"
 				}
 			],
 			"subtypes" : {
@@ -51,47 +52,245 @@
 				]
 			}
 		},
+
 		{
-			"name" : "Monocyte",
+			"name" : "Immature B cell",
 			"markers" : [
 				{
-					"genes" : ["Lyz2+", "Lyz1+", "S100a4+", "Itgam+"],
-					"weight" : 0.8
-				},
-				{
-					"genes" : ["C1qb+", "C1qc+", "Mrc1+", "Cd52+"],
-					"weight" : 0.2
+					"genes" : ["Tifa+", "Cecr2+", "Rag1+", "Atp1b1+", "Myb+", "Irf4+", "Fam129c+"],
+					"weight" : 1.0,
+					"comment" : "Immature B cell markers from Hurskainen et al. Nat. Commun. 2021"
 				}
 			]
 		},
+
 		{
 			"name" : "B cell",
 			"markers" : [
 				{
-					"genes" : ["Cd19+", "Cd79b+", "Cd74+", "Igkc+", "Ighm+", "Iglc2+", "Ms4a1+"],
-					"weight" : 1.0
+					"genes" : ["Cd79a+", "Cd79b+", "Ms4a1+", "Cd19+", "H2-Ob+", "Tnfrsf13c+", "Bank1+", "Blk+", "Fcrla+", "Cd22+"],
+					"weight" : 0.91,
+					"comment" : "Human and mouse shared B cell markers; validated using Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020), Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021 data; Ebf1, Pax5 and Fcmr are good markers for mouse lung and liver but not marrow, tissue-specific marker?"
+				},
+				{
+					"genes" : ["Cxcr5+"],
+					"weight" : 0.09,
+					"comment" : "CXCR5 is constantly expressed by mature B cells and helps to guide B cells to follicle; fDC expresses CXCL13, the ligand for CXCR5; this marker expresses lowly in human but higher in mouse "
+				}
+			],
+			"subtypes" : {
+				"title" : "B cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Naive B cell",
+						"markers" : [
+							{
+								"genes" : ["Ighd+", "Fcer2a+", "Vpreb3+", "Fcrl1+", "Chchd10+"],
+								"weight" : 1.0,
+								"comments" : "Markers for naive B cell derived from Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020) & Kaptein et al. Cell 2022; Ighd & Fcer2a are shared with human"
+							}
+						]
+					},
+					{
+						"name" : "Memory B cell",
+						"markers" : [
+							{
+								"genes" : ["Zbtb32+", "C130026I21Rik+", "Pdlim1+", "Hepacam2+", "Igha+"],
+								"weight" : 0.8,
+								"comments" : "Markers for memory B cell derived from Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020) data; need to check and add Ighg related genes"
+							},
+							{
+								"genes" : ["Nt5e+", "Cd80+", "Fas+", "Pdcd1lg2+"],
+								"weight" : 0.2,
+								"comments" : "Traditional mouse memory B cell validated by Tabula Muris marrow (Tabula Muris Consortium et al. Nature 2020) data; all lowly expressed; Nt5e (5' Nucleotidase/CD73), Fas (CD95), Pdcd1lg2 (PD-L2/CD273)"
+							}
+						]
+					}
+				]
+			}
+		},
+
+		{
+			"name" : "Plasma cell",
+			"markers" : [
+				{
+					"genes" : ["Sdc1+", "Slamf7+", "Tnfrsf17+", "Irf4+", "Prdm1+"],
+					"weight" : 0.5,
+					"comment" : "Plasma cell markers shared with human and validated using Tabula Muris marrow data (Tabula Muris Consortium et al. Nature 2020)"
+				},
+				{
+					"genes" : ["Derl3+", "Chst1+", "Eaf2+", "Oosp1+", "Cacna1s+"],
+					"weight" : 0.4,
+					"comment" : "Mouse-specific plasma cell markers validated using Tabula Muris marrow data (Tabula Muris Consortium et al. Nature 2020)"
+				},
+				{
+					"genes" : ["Xbp1+", "Slc3a2+", "Ly6k+"],
+					"weight" : 0.1,
+					"comment" : "Traditional mouse plasma markers (not ideal) validated using Tabula Muris marrow data (Tabula Muris Consortium et al. Nature 2020); Xbp1 & Slc3a2 (CD98) expressed highest in plasma but also expressed in other cell types"
 				}
 			]
 		},
+
+		{
+			"name" : "Natural killer cell",
+			"markers" : [
+				{
+					"genes" : ["Gzma+", "Klrb1c+", "Ncr1+", "Klre1+", "Klrc2+"],
+					"weight" : 0.6,
+					"comment" : "NK & ILC1 shared markers from Hurskainen et al. Nat. Commun. 2021 data and confirmed on Kaptein et al. Cell 2022 data"
+				},
+				{
+					"genes" : ["Eomes+", "Cma1+", "Klra4+", "Klra7+", "Klra8+"],
+					"weight" : 0.4,
+					"comment" : "NK cell specific markers (compared to ILC1) from Kaptein et al. Cell 2022; these markers do not have high expressions in Hurskainen et al. Nat. Commun. 2021 data"
+				}
+			]
+		},
+
+		{
+			"name" : "Classical monocyte",
+			"markers" : [
+				{
+					"genes" : ["Ly6c2+", "F13a1+", "Ccr2+", "Ms4a4c+", "Gm9733+", "Mcub+", "S100a4+"],
+					"weight" : 1.0,
+					"comment" : "Classical monocyte markers (except S100a4) inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021; Ly6c2, F13a1, Ccr2 and Ms4a4c (in Fig. 1b) are Group III markers from Casanova-Acebes et al. Nature 2021. S100a4 is less specific to classical monocyte."
+				}
+			]
+		},
+
+		{
+			"name" : "Patrolling monocyte",
+			"markers" : [
+				{
+					"genes" : ["Eno3+", "Cd300e+", "Ace+", "Treml4+", "Spn+", "Adgre4+", "Lair1+", "Fcgr4+", "Ear2+", "Cd300ld+"],
+					"weight" : 1.0,
+					"comment" : "Patrolling monocyte markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021; First 6 markers are Group IV markers in Fig. 1b of Casanova-Acebes et al. Nature paper; Eno3, Cd300e, Ace and Lair1 are very specific; Related papers: Domingo-Gonzalez et al. Elife 2020, Thomas et al. Arterioscler Thromb Vasc Biol. 2015, and Schyns et al. Nat. Commun. 2019."
+				}
+			]
+		},
+
+		{
+			"name" : "Macrophage",
+			"markers" : [
+				{
+					"genes" : ["Cd14+", "Ms4a7+", "Cx3cr1+", "Trem2+", "Hpgds+"],
+					"weight" : 1.0,
+					"comment" : "Machrophage markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+		
+		{
+			"name" : "Conventional type 1 dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["Xcr1+", "Ifi205+", "Rab7b+", "Tlr3+", "Sept3+", "Hepacam2+"],
+					"weight" : 0.7,
+					"comment" : "cDC1 markers shared between Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021"
+				},
+				{
+					"genes" : ["Gcsam+", "Snx22+", "Itgae+", "Xlr+"],
+					"weight" : 0.3,
+					"comment" : "cDC1 markers expressed highly in one of Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021, but not both"
+				}
+			]
+		},
+
+		{
+			"name" : "Conventional type 2 dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["Cd209a+","Ltb4r1+", "Mgl2+", "Tnip3+", "Bex6+"],
+					"weight" : 1.0,
+					"comment" : "cDC2 markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Migratory dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["Cacnb3+", "Nudt17+", "Ccl22+", "Apol7c+", "Slco5a1+", "Ccr7+", "Fscn1+", "Il4i1+", "Mreg+", "Bcl2l14+"],
+					"weight" : 1.0,
+					"comment" : "Migratory DC markers shared between Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Plasmacytoid dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["Siglech+", "Ccr9+", "Cox6a2+", "Cd300c+", "Klk1+"],
+					"weight" : 1.0,
+					"comment" : "pDC markers from Kaptein et al. Cell 2022"
+				}
+			]
+		},
+
 		{
 			"name" : "Neutrophil",
 			"markers" : [
 				{
-					"genes" : ["Mmp9+", "S100a8+", "S100a9+", "Il1b+", "Retnlg+", "Lcn2+"],
-					"weight" : 1.0
+					"genes" : ["S100a8+", "S100a9+", "Retnlg+", "Mmp9+", "Csf3r+", "Wfdc21+", "Il1r2+", "Cxcr2+"],
+					"weight" : 1.0,
+					"comment" : "Neutrophil markers inferred from Kaptein et al. Cell 2022 and Hurskainen et al. Nat. Commun. 2021; related paper: Grieshaber-Bouyer et al. Nat. Commun. 2021"
 				}
 			]
 		},
+
 		{
-			"name" : "NK cell",
+			"name" : "Immature neutrophil",
 			"markers" : [
 				{
-					"genes" : ["Nkg7+"],
-					"weight" : 0.55
-				},
+					"genes" : ["Ngp+", "Camp+", "Ltf+", "Ly6g+", "Cebpe+"],
+					"weight" : 1.0,
+					"comment" : "Immature Neutrophil markers inferred from Hurskainen et al. Nat. Commun. 2021 and checked using Evrard et al. Immunity 2018 Fig. 5"
+				}
+			]
+		},
+
+		{
+			"name" : "Basophil",
+			"markers" : [
 				{
-					"genes" : ["Cd3d-", "Cd3e-"],
-					"weight" : 0.45
+					"genes" : ["Cd200r3+", "Aqp9+", "Il6+", "Hgf+", "Adora2b+", "Il4+", "L1cam+", "Grm6+"],
+					"weight" : 1.0,
+					"comment" : "Basophil markers inferred from Matsumara et al. Nat. Commun. 2022 and confirmed using data from Kaptein et al. Cell 2022  and Hurskainen et al. Nat. Commun. 2021"
+				}
+			]
+		},
+
+		{
+			"name" : "Eosinophil",
+			"markers" : [
+				{
+					"genes" : ["Epx+", "Prg3+", "Eml5+", "Il5ra+", "Qsox2+", "L2hgdh+"],
+					"weight" : 1.0,
+					"comment" : "Eosinophil markers inferred from Matsumara et al. Nat. Commun. 2022"
+				}
+			]
+		},
+
+		{
+			"name" : "Mast cell",
+			"markers" : [
+				{
+					"genes" : ["Tph1+", "Clnk+", "Hs6st2+", "Plcg1+"],
+					"weight" : 1.0,
+					"comment" : "Mast cell markers inferred from Matsumara et al. Nat. Commun. 2022"
+				}
+			]
+		}, 
+
+		{
+			"name" : "Red blood cell",
+			"markers" : [
+				{
+					"genes" : ["Hba-a1+", "Hba-a2+", "Hbb-bs+", "Hbb-bt+"],
+					"weight" : 1.0,
+					"comment" : "Hemoglobin genes"
 				}
 			]
 		}

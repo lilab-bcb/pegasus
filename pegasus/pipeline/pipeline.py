@@ -92,6 +92,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
         tools.neighbors(
             unidata,
             K=kwargs["K"],
+            exact_k=kwargs["exact_K"],
             rep=dim_key,
             n_jobs=kwargs["n_jobs"],
             random_state=kwargs["random_state"],

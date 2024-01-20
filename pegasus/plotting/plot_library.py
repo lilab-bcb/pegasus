@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib
 import matplotlib.pyplot as plt
 
 from scipy.sparse import issparse
@@ -31,6 +32,7 @@ from .plot_utils import (
     _generate_categories,
     _plot_corners,
     _plot_spots,
+    _get_valid_attrs,
 )
 
 
@@ -45,7 +47,7 @@ def scatter(
     fix_corners: Optional[bool] = True,
     alpha: Optional[Union[float, List[float]]] = 1.0,
     legend_loc: Optional[Union[str, List[str]]] = "right margin",
-    legend_fontsize: Optional[Union[int, List[int]]] = 10, 
+    legend_fontsize: Optional[Union[int, List[int]]] = 10,
     legend_ncol: Optional[str] = None,
     palettes: Optional[Union[str, List[str]]] = None,
     cmaps: Optional[Union[str, List[str]]] = "YlOrRd",
@@ -152,6 +154,9 @@ def scatter(
     elif not is_list_like(attrs):
         attrs = [attrs]
 
+    # Select only valid attributes
+    attrs = _get_valid_attrs(data, attrs)
+
     if isinstance(basis, str):
         basis = [basis]
     if isinstance(components, tuple):
@@ -214,7 +219,7 @@ def scatter(
 
             if global_marker_size == None:
                 global_marker_size = _get_marker_size(x.size) if marker_size is None else marker_size
-            
+
             x_label = f"{basis_}{comp_key[0]}"
             y_label = f"{basis_}{comp_key[1]}"
 
@@ -236,8 +241,6 @@ def scatter(
                     values = slicing(data.X, col = loc)
                 else:
                     obsm_key, sep, component = attr.partition("@")
-                    if (sep != "@") or (obsm_key not in data.obsm) or (not component.isdigit()):
-                        raise KeyError(f"{attr} is not in data.obs, data.var_names or data.obsm!")
                     values = data.obsm[obsm_key][:, int(component)]
 
                 selected = restr_obj.get_satisfied(data, attr)
@@ -864,6 +867,7 @@ def violin(
     hue: Optional[str] = None,
     matkey: Optional[str] = None,
     stripplot: Optional[bool] = False,
+    stripsize: int = 1,
     inner: Optional[str] = None,
     scale: Optional[str] = 'width',
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
@@ -943,6 +947,9 @@ def violin(
         assert not isinstance(data, anndata.AnnData)
         data.select_matrix(matkey)
 
+    # Filter out attributes not existing in the data
+    attrs = _get_valid_attrs(data, attrs)
+
     nrows = len(attrs)
     fig, axes = _get_subplot_layouts(nrows=nrows, ncols=1, panel_size=panel_size, dpi=dpi, left=left, bottom=bottom, wspace=wspace, hspace=0, squeeze=False, sharey=False)
 
@@ -954,15 +961,20 @@ def violin(
             assert is_numeric_dtype(data.obs[key])
             obs_keys.append(key)
         else:
-            if key not in data.var_names:
-                logger.warning(f"Cannot find gene {key}. Please make sure all genes are included in data.var_names before running this function!")
-                return None
             genes.append(key)
 
     df_list = [pd.DataFrame({"label": data.obs[groupby].values})]
+
     if hue is not None:
         df_list.append(pd.DataFrame({hue: data.obs[hue].values}))
         stripplot = False
+        kwargs['hue'] = hue
+        kwargs['split'] = True
+    else:
+        kwargs['hue'] = "label"
+        kwargs['legend'] = False
+        kwargs['split'] = False
+
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
@@ -973,8 +985,8 @@ def violin(
     for i in range(nrows):
         ax = axes[i, 0]
         if stripplot:
-            sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=1, color="k", jitter=True)
-        sns.violinplot(x="label", y=attrs[i], hue = hue, data=df, inner=inner, linewidth=1, ax=ax, cut=0, scale=scale, split=True, palette=palette, **kwargs)
+            sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=stripsize, color="k", jitter=True)
+        sns.violinplot(x="label", y=attrs[i], data=df, inner=inner, linewidth=1, ax=ax, cut=0, density_norm=scale, palette=palette, **kwargs)
         ax.grid(False)
 
         if hue is not None:
@@ -987,6 +999,7 @@ def violin(
             ax.set_xlabel("")
         else:
             ax.set_xlabel(groupby)
+            ax.set_xticks(ax.get_xticks())  # Get rid of the UserWarning: set_ticklabels() should only be used with a fixed number of ticks
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
         ax.set_ylabel(attrs[i], labelpad=8, rotation=0, horizontalalignment='right', fontsize='medium')
         ax.tick_params(axis='y', right=True, left=False, labelright=True, labelleft=False, labelsize='small')
@@ -1005,16 +1018,26 @@ def violin(
 def heatmap(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     attrs: Union[str, List[str]],
-    groupby: str,
+    groupby: Optional[str] = None,
     matkey: Optional[str] = None,
-    on_average: bool = True,
-    switch_axes: bool = False,
+    gene_zscore: Optional[bool] = True,
+    on_average: Optional[bool] = True,
+    switch_axes: Optional[bool] = False,
     attrs_cluster: Optional[bool] = False,
     attrs_dendrogram: Optional[bool] = True,
+    attrs_method: Optional[bool] = 'ward',
+    attrs_optimal_ordering: Optional[bool] = True,
+    xlabel_size: Optional[float] = 10.0,
+    ylabel_size: Optional[float] = 10.0,
+    legend_fontsize: Optional[float] = 10.0,
+    xlabel_rotation: Optional[float] = 90.0,
+    ylabel_rotation: Optional[float] = 0.0,
     groupby_cluster: Optional[bool] = True,
     groupby_dendrogram: Optional[bool] = True,
-    attrs_labelsize: Optional[float] = 10.0,
-    groupby_labelsize: Optional[float] = 10.0,
+    groupby_method: Optional[bool] = 'ward',
+    groupby_optimal_ordering: Optional[bool] = True,
+    groupby_precomputed_linkage: Optional[np.array] = None,
+    show_sample_name: Optional[bool] = None,
     cbar_labelsize: Optional[float] = 10.0,
     panel_size: Tuple[float, float] = (10, 10),
     return_fig: Optional[bool] = False,
@@ -1026,7 +1049,6 @@ def heatmap(
 
     Parameters
     -----------
-
     data: ``AnnData`` or ``MultimodalData`` or ``UnimodalData`` object
         Single-cell expression data.
     attrs: ``str`` or ``List[str]``
@@ -1034,13 +1056,16 @@ def heatmap(
         Cell attributes must exist in ``data.obs`` and must be numeric.
         Features must exist in ``data.var``.
         By default, attrs are plotted as columns.
-    groupby: ``str``
+    groupby: ``str``, optional, default: ``None``
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
         By default, data.obs['groupby'] is plotted as rows.
+        If ``None``, use data.obs_names instead.
     matkey: ``str``, optional, default: ``None``
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
+    gene_zscore: ``bool``, optional, default: ``True``
+        If ``True``, compute and then plot z scores for gene expression.
     on_average: ``bool``, optional, default: ``True``
-        If ``True``, plot cluster average gene expression (i.e. show a Matrixplot); otherwise, plot a general heatmap.
+        If ``True``, plot cluster average gene expression or z score (i.e. show a Matrixplot); otherwise, plot a general heatmap.
     switch_axes: ``bool``, optional, default: ``False``
         By default, X axis is for attributes, and Y axis for clusters. If this parameter is ``True``, switch the axes.
         Moreover, with ``on_average`` being ``False``, if ``switch_axes`` is ``False``, ``row_cluster`` is enforced to be ``False``; if ``switch_axes`` is ``True``, ``col_cluster`` is enforced to be ``False``.
@@ -1048,14 +1073,32 @@ def heatmap(
         Cluster attributes and generate a attribute-wise dendrogram.
     attrs_dendrogram: ``bool``, optional, default: ``True``
         Only matters if attrs_cluster is True. Show the dendrogram if this option is True.
+    attrs_method: ``str``, optional, default: ``ward``
+        Linkage method for attrs, choosing from ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median`` and ``ward``.
+    attrs_optimal_ordering: ``bool``, optional, default: ``True``
+        Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the attrs linkage matrix will be reordered so that the distance between successive leaves is minima.
+    xlabel_size: ``float``, optional, default: 10.0
+        Fontsize for x-axis labels.
+    ylabel_size: ``float``, optional, default: 10.0
+        Fontsize for y-axis labels.
+    legend_fontsize: ``float``, optional, default: 10.0
+        Fontsize for legend labels.
+    xlabel_rotation: ``float``, optional, default: 90.0
+        Rotation of x-axis labels.
+    ylabel_rotation: ``float``, optional, default: 0.0
+        Rotation of y-axis labels.
     groupby_cluster: ``bool``, optional, default: ``True``
         Cluster data.obs['groupby'] and generate a cluster-wise dendrogram.
     groupby_dendrogram: ``bool``, optional, default: ``True``
         Only matters if groupby_cluster is True. Show the dendrogram if this option is True.
-    attrs_labelsize: ``float``, optional, default: 10.0
-        Fontsize for labels of attrs.
-    groupby_labelsize: ``float``, optional, default: 10.0
-        Fontsize for labels of data.obs['groupby'].
+    groupby_method: ``str``, optional, default: ``ward``
+        Linkage method for groupby, choosing from ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median`` and ``ward``.
+    groupby_optimal_ordering: ``bool``, optional, default: ``True``
+        Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the groupby linkage matrix will be reordered so that the distance between successive leaves is minima.
+    groupby_precomputed_linkage: ``np.array``, optional, default: ``None``
+        Pass a precomputed linkage.
+    show_sample_name: ``bool``, optional, default: ``None``
+        If show sample names as tick labels. If ``None``, show_sample_name == ``True`` if groupby == ``None`` and otherwise show_sample_name == ``False``.
     cbar_labelsize: ``float``, optional, default: 10.0
         Fontsize of the color bar.
     panel_size: ``Tuple[float, float]``, optional, default: ``(10, 10)``
@@ -1072,11 +1115,11 @@ def heatmap(
     -------
 
     ``Figure`` object
-        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+        A ``matplotlib.figure.Figure`` object containing the heatmap if ``return_fig == True``; Otherwise, A ``seaborn.matrix.ClusterGrid`` object is returned.
 
     Examples
     --------
-    >>> pg.heatmap(data, genes=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
+    >>> pg.heatmap(data, attrs=['CD14', 'TRAC', 'CD34'], groupby='leiden_labels')
 
     """
     if not isinstance(data, anndata.AnnData):
@@ -1087,6 +1130,9 @@ def heatmap(
 
     if isinstance(attrs, str):
         attrs = [attrs]
+
+    # Filter out attributes not existing in the data
+    attrs = _get_valid_attrs(data, attrs)
 
     obs_keys = []
     genes = []
@@ -1100,71 +1146,99 @@ def heatmap(
                 return None
             genes.append(key)
 
-    clusters = data.obs[groupby].values
-    if not is_categorical_dtype(clusters):
-        clusters = pd.Categorical(clusters)
-    else:
-        clusters = clusters.remove_unused_categories()
-    df_list = [pd.DataFrame({'cluster_name': clusters})]
-
+    df_list = []
     if len(obs_keys) > 0:
         df_list.append(data.obs[obs_keys].reset_index(drop=True))
     if len(genes) > 0:
         expr_mat = slicing(data[:, genes].X)
+        if gene_zscore:
+            from scipy.stats import zscore
+            expr_mat = zscore(expr_mat, ddof=1)
         df_list.append(pd.DataFrame(data=expr_mat, columns=genes))
     df = pd.concat(df_list, axis = 1)
-    attr_names = df.columns[1:].values
+    df.index = data.obs_names
+    attr_names = df.columns.values
 
-    if on_average:
-        if not 'cmap' in kwargs.keys():
-            kwargs['cmap'] = 'Reds'
-        df = df.groupby('cluster_name').mean()
-        cluster_ids = df.index
-    else:
-        cluster_ids = df.pop('cluster_name').values
-        if not groupby_cluster:
-            idx = cluster_ids.argsort(kind = 'mergesort')
-            df = df.iloc[idx, :]  # organize df by category order
-            cluster_ids = cluster_ids[idx]
+    if show_sample_name is None:
+        show_sample_name = True if groupby is None else False
+    groupby_tick_labels = df.index if show_sample_name else []
 
-        cell_colors = np.zeros(df.shape[0], dtype=object)
-        palette = _get_palette(cluster_ids.categories.size)
+    cluster_ids = None
+    cell_colors = None
+    if groupby is not None:
+        cluster_ids = data.obs[groupby].values
+        if not is_categorical_dtype(cluster_ids):
+            cluster_ids = pd.Categorical(cluster_ids)
+        else:
+            cluster_ids = cluster_ids.remove_unused_categories()
 
-        for k, cat in enumerate(cluster_ids.categories):
-            cell_colors[cluster_ids == cat] = palette[k]
+        if on_average:
+            if not 'cmap' in kwargs.keys():
+                kwargs['cmap'] = 'Reds'
+            df['cluster_name'] = cluster_ids
+            df = df.groupby(by='cluster_name', observed=True).mean()
+            cluster_ids = df.index
+            groupby_tick_labels = cluster_ids
+        else:
+            if not groupby_cluster:
+                idx = cluster_ids.argsort(kind = 'mergesort')
+                df = df.iloc[idx, :]  # organize df by category order
+                cluster_ids = cluster_ids[idx]
+
+            cell_colors = np.zeros(df.shape[0], dtype=object)
+            palette = _get_palette(cluster_ids.categories.size)
+
+            for k, cat in enumerate(cluster_ids.categories):
+                cell_colors[cluster_ids == cat] = palette[k]
+
+    from scipy.cluster.hierarchy import linkage
+
+    groupby_linkage = None
+    if groupby_cluster:
+        if groupby_precomputed_linkage is not None:
+            groupby_linkage = groupby_precomputed_linkage
+        else:
+            groupby_linkage = linkage(df, groupby_method, optimal_ordering = groupby_optimal_ordering)
+    attrs_linkage = None
+    if attrs_cluster:
+        attrs_linkage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
 
     if not switch_axes:
         cg = sns.clustermap(
             data=df,
-            row_colors=cell_colors if not on_average else None,
+            row_colors=cell_colors,
             col_colors=None,
             row_cluster=groupby_cluster,
             col_cluster=attrs_cluster,
+            row_linkage=groupby_linkage,
+            col_linkage=attrs_linkage,
             linewidths=0,
-            yticklabels=cluster_ids if on_average else [],
+            yticklabels=groupby_tick_labels,
             xticklabels=attr_names,
             figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_ylabel("")
-        if attrs_labelsize is not None:
-            cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=75)
+        cg.ax_heatmap.tick_params(axis='x', labelsize=xlabel_size, labelrotation=xlabel_rotation)
+        cg.ax_heatmap.tick_params(axis='y', labelsize=ylabel_size, labelrotation=ylabel_rotation)
     else:
         cg = sns.clustermap(
             data=df.T,
             row_colors=None,
-            col_colors=cell_colors if not on_average else None,
+            col_colors=cell_colors,
             row_cluster=attrs_cluster,
             col_cluster=groupby_cluster,
+            row_linkage=attrs_linkage,
+            col_linkage=groupby_linkage,
             linewidths=0,
             yticklabels=attr_names,
-            xticklabels=cluster_ids if on_average else [],
+            xticklabels=groupby_tick_labels,
             figsize=panel_size,
             **kwargs,
         )
         cg.ax_heatmap.set_xlabel("")
-        if attrs_labelsize is not None:
-            cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize)
+        cg.ax_heatmap.tick_params(axis='y', labelsize=ylabel_size, labelrotation=ylabel_rotation)
+        cg.ax_heatmap.tick_params(axis='x', labelsize=xlabel_size, labelrotation=xlabel_rotation)
 
     show_row_dendrogram = (attrs_cluster and attrs_dendrogram) if switch_axes else (groupby_cluster and groupby_dendrogram)
     show_col_dendrogram = (groupby_cluster and groupby_dendrogram) if switch_axes else (attrs_cluster and attrs_dendrogram)
@@ -1193,21 +1267,17 @@ def heatmap(
         cg.ax_cbar.yaxis.set_ticks_position("right")
 
 
-    if show_col_dendrogram:
-        cg.ax_heatmap.xaxis.tick_bottom()
-        cg.ax_col_dendrogram.set_visible(True)
-    else:
-        cg.ax_heatmap.xaxis.tick_top()
-        cg.ax_col_dendrogram.set_visible(False)
+    cg.ax_heatmap.xaxis.tick_bottom()
+    cg.ax_col_dendrogram.set_visible(show_col_dendrogram)
 
     cg.ax_cbar.tick_params(labelsize=cbar_labelsize)
     cg.fig.dpi = dpi
 
-    if not on_average:
+    if (groupby is not None) and (not on_average):
         if groupby_cluster:
             from matplotlib.patches import Patch
             legend_elements = [Patch(color = color, label = label) for color, label in zip(palette, cluster_ids.categories)]
-            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)
+            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = legend_fontsize)
         else:
             values = cluster_ids.value_counts().values
             ticks = np.cumsum(values) - values / 2
@@ -1221,20 +1291,20 @@ def heatmap(
                 cg.ax_col_colors.xaxis.tick_top()
                 cg.ax_col_colors.set_xticks(ticks)
                 cg.ax_col_colors.set_xticklabels(labels, rotation=45)
-                cg.ax_col_colors.tick_params(axis='x', top = False, labelsize = groupby_labelsize, length=10)
+                cg.ax_col_colors.tick_params(axis='x', top = False, labelsize = xlabel_size, length=10)
 
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
             data.select_matrix(cur_matkey)
 
-    return cg.fig if return_fig else None
+    return cg.fig if return_fig else cg
 
 
 def dotplot(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     genes: Union[str, List[str]],
     groupby: str,
-    reduce_function: Callable[[np.ndarray], float] = np.mean,
+    reduce_function: Union[str, Callable[[np.ndarray], float]] = "mean",
     fraction_min: float = 0,
     fraction_max: float = None,
     dot_min: int = 0,
@@ -1259,7 +1329,7 @@ def dotplot(
         Features to plot.
     groupby: ``str``
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
-    reduce_function: ``Callable[[np.ndarray], float]``, optional, default: ``np.mean``
+    reduce_function: ``Union[str, Callable[[np.ndarray], float]]``, optional, default: ``"mean"``
         Function to calculate statistic on expression data. Default is mean.
     fraction_min: ``float``, optional, default: ``0``.
         Minimum fraction of expressing cells to consider.
@@ -1298,12 +1368,14 @@ def dotplot(
     sns.set(font_scale=0.7, style='whitegrid')
 
     if not is_list_like(genes):
-        geness = [genes]
+        genes = [genes]
+
+    # Select only genes existing in the data
+    genes = _get_valid_attrs(data, genes)
 
     keywords = dict(cmap=cmap)
     keywords.update(kwds)
 
-    from scipy.sparse import issparse
     X = slicing(data[:, genes].X)
     df = pd.DataFrame(data=X, columns=genes)
     df[groupby] = data.obs[groupby].values
@@ -1316,12 +1388,12 @@ def dotplot(
     idx = series == 0
     if idx.sum() > 0:
         logger.warning(f"The following categories contain no cells and are removed: {','.join(list(series.index[idx]))}.")
-        df[groupby] = df[groupby].cat.remove_unused_categories()
 
     def non_zero(g):
         return np.count_nonzero(g) / g.shape[0]
 
-    summarized_df = df.groupby(groupby).aggregate([reduce_function, non_zero])
+    # Set observed=True to suppress warnings.
+    summarized_df = df.groupby(by=groupby, observed=True).aggregate([reduce_function, non_zero])
 
     row_indices = summarized_df.index.tolist()
     if sort_function == "natsorted":
@@ -1359,9 +1431,9 @@ def dotplot(
     yticks = summarized_df.index.map(str).values
 
     if switch_axes:
-        x, y = y, x
-        xlabel, ylabel = ylabel, xlabel
-        xticks, yticks = yticks, xticks
+        x, y = y[::-1], x[::-1]
+        xlabel, ylabel = ylabel[::-1], xlabel[::-1]
+        xticks, yticks = yticks[::-1], xticks[::-1]
 
     dotplot_df = pd.DataFrame(data=dict(x=x, y=y, value=summary_values, pixels=pixels, fraction=fraction,
                     xlabel=np.array(xlabel)[x], ylabel=np.array(ylabel)[y]))
@@ -1440,7 +1512,7 @@ def dotplot(
     size_legend.grid(False)
 
     # Reset global settings.
-    sns.reset_orig()
+    matplotlib.rc_file_defaults()
 
     return fig if return_fig else None
 
@@ -1497,7 +1569,7 @@ def dendrogram(
     linkage: ``str``, optional, default: ``complete``
         Which linkage criterion to use, used by hierarchical clustering. Below are available options:
             - ``ward`` minimizes the variance of the clusters being merged.
-            - ``avarage`` uses the average of the distances of each observation of the two sets.
+            - ``average`` uses the average of the distances of each observation of the two sets.
             - ``complete`` uses the maximum distances between all observations of the two sets. (Default)
             - ``single`` uses the minimum of the distances between all observations of the two sets.
 

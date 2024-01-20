@@ -65,6 +65,7 @@ from .tools import (
     de_analysis,
     markers,
     write_results_to_excel,
+    cluster_specific_markers,
     find_markers,
     infer_path,
     calc_signature_score,

@@ -19,52 +19,117 @@
 				"title" : "T cell subtype markers",
 				"cell_types" : [
 					{
-						"name" : "T helper cell",
+						"name" : "CD4 Naive T cell",
 						"markers" : [
 							{
-								"genes" : ["CD4+"],
+								"genes" : ["CD4+", "CCR7+", "SELL+", "LEF1+", "FHIT+", "ACTN1+", "LDLRAP1+", "TMIGD2+", "TRABD2A+", "LRRN3+"],
 								"weight" : 1.0,
-								"comment" : "CD4+ T cell"
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
 							}
-						]
+ 						]
 					},
 					{
-						"name" : "Cytotoxic T cell",
+						"name" : "CD4 TCM",
 						"markers" : [
 							{
-								"genes" : ["CD8A+", "CD8B+"],
+								"genes" : ["CD4+", "GPR183+", "CD69+", "PASK+", "LIMS1+", "LPAR6+", "SLC2A3+", "SOCS3+"],
 								"weight" : 1.0,
-								"comment" : "CD8+ T cell"
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
 							}
-						]
+						] 
+					},
+					{
+						"name" : "CD4 TEM",
+						"markers" : [
+							{
+								"genes" : ["CD4+", "KLRB1+", "ANXA2+", "LGALS1+", "TIMP1+", "PTGER2+", "AHNAK+", "TNFRSF4+", "YWHAH+", "CD63+"],
+								"weight" : 1.0,
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
+							}
+						] 
 					},
 					{
 						"name" : "T regulatory cell",
 						"markers" : [
 							{
-								"genes" : ["FOXP3+", "IL2RA+"],
-								"weight" : 0.7,
-								"comments" : "key T reg markers"
-							},
-							{
-								"genes" : ["CD4+"],
-								"weight" : 0.3,
-								"comment" : "key markers that do not express heavily in droplet-based RNA-Seq"
+								"genes" : ["RTKN2+", "FOXP3+", "IL2RA+", "HACD1+", "AC133644.2+", "FANK1+", "DUSP4+", "STAM+", "CCR10+", "CTLA4+"],
+								"weight" : 1.0,
+								"comments" : "Markers derived from Immune Cell Atlas PBMC data"
 							}
 						]
 					},
 					{
-						"name" : "Naive T cell",
+						"name" : "CD4 CTL",
 						"markers" : [
 							{
-								"genes" : ["CCR7+", "SELL+", "IL7R+", "TCF7+", "CD27+"],
-								"weight" : 0.7,
-								"comment" : "positive markers"
+								"genes" : ["CD4+", "CD8A-", "CD8B-"],
+								"weight" : 0.3,
+								"comments" : "Must be CD4 T"
 							},
 							{
-								"genes" : ["IL2RA-", "CD44-", "CD69-"],
-								"weight" : 0.3,
-								"comment" : "negative markers"
+								"genes" : ["GNLY+", "AGAP1+", "ZNF683+", "RGS9+", "IL5RA+", "LAIR2+", "MTERF2+", "SH3RF2+", "RGS17+"],
+								"weight" : 0.7,
+								"comments" : "CD4 CTL markers that might also be expressed by CD8 TEM"
+							}
+						]
+					},
+					{
+						"name" : "T follicular helper cell",
+						"markers" : [
+							{
+								"genes" : ["CD4+", "ST8SIA1+", "PDCD1+", "TIGIT+", "TOX2+", "ICOS+", "SH2D1A+", "IL21+"],
+								"weight" : 1.0,
+								"comments" : "Tfh markers"
+							}
+						]
+					},										
+					{
+						"name" : "CD8 Naive T cell",
+						"markers" : [
+							{
+								"genes" : ["CD8A+", "CD8B+", "CCR7+", "SELL+", "LEF1+", "ACTN1+", "TRABD2A+", "LRRN3+", "LINC02446+", "S100B+", "CLEC11A+", "NELL2+", "PASK+", "APBA2+"],
+								"weight" : 1.0,
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
+							}
+						]
+					},
+					{
+						"name" : "CD8 TCM",
+						"markers" : [
+							{
+								"genes" : ["CD8A+", "CD8B+", "GZMK+", "DUSP2+", "LTB+", "CD27+", "IL7R+", "GPR183+", "RGS1+", "CXCR3+"],
+								"weight" : 1.0,
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data; CD8A & CD8B are CD8 markers; All others are CD8 TCM specific markers"
+							}
+						]
+					},
+					{
+						"name" : "CD8 TEM",
+						"markers" : [
+							{
+								"genes" : ["CD8A+", "CD8B+", "FGFBP2+", "GZMB+", "GZMH+", "GNLY+", "PRF1+", "KLRD1+", "FCGR3A+", "TBX21+", "CX3CR1+", "ASCL2+", "SPON2+", "ADGRG1+", "PRSS23+"],
+								"weight" : 1.0,
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data; FGFBP2, GZMB, GZMH, GNLY, PRF1, KLRD1, FCGR3A are pan TEM markers; TBX21, CX3CR1 and ASCL2 are Temra markers; the last three are purely data driven markers"
+							}
+						]
+					},
+					{
+						"name" : "MAIT",
+						"markers" : [
+							{
+								"genes" : ["SLC4A10+", "KLRB1+", "NCR3+", "CEBPD+", "GPR65+", "LST1+", "CXCR6+", "TRAV1-2+"],
+								"weight" : 1.0,
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
+							}
+ 						]
+					},
+					{
+						"name" : "Gamma-delta T cell",
+						"markers" : [
+							{
+								"genes" : ["TRDC+", "TRGC1+", "TRGC2+", "KLRC1+", "KLRD1+", "GNLY+"],
+								"weight" : 1.0,
+								"comment" : "Markers derived from Immune Cell Atlas PBMC data"
 							}
  						]
 					}
@@ -73,23 +138,65 @@
 		},
 
 		{
+			"name" : "Natural killer cell",
+			"markers" : [
+				{
+					"genes" : ["GNLY+", "KLRF1+", "KLRD1+", "TRDC+", "IL2RB+", "KLRC1+", "NCR1+"],
+					"weight" : 0.6,
+					"comment" : "General NK cell markers also cover some T cells; derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; Added NCR1, a pan NK cell marker"
+				},
+				{
+					"genes" : ["NCAM1+", "FCGR3A+"],
+					"weight" : 0.2,
+					"comment" : "NK subtype markers"
+				},
+				{
+					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
+					"weight" : 0.2,
+					"comment" : "No T cell markers"
+				}
+			],
+			"subtypes" : {
+				"title" : "NK cell subtype markers",
+				"cell_types" : [
+					{
+						"name" : "CD56-dim NK cell",
+						"markers" : [
+							{
+								"genes" : ["FCGR3A+", "FGFBP2+", "SPON2+", "MYOM2+", "S1PR5+", "CX3CR1+", "AKR1C3+", "FCRL6+", "LAIR2+", "PRSS23+"],
+								"weight" : 1.0,
+								"comment" : "Cytotoxic NK cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
+							}
+						]
+					},
+					{
+						"name" : "CD56-bright NK cell",
+						"markers" : [
+							{
+								"genes" : ["NCAM1+", "GZMK+", "XCL1+", "SPTSSB+", "CAPG+", "IL7R+", "GPR183+", "IGFBP4+", "SPINK2+", "FUT7+"],
+								"weight" : 1.0,
+								"comment" : "Regulatory NK cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; CD56bright develops into CD56dim"
+							}
+						]
+					}
+				],
+				"comment": "There is also a CD56_dim CD16_dim population in between of the CD56-dim and CD56-bright subtypes."
+			}
+		},
+
+		{
 			"name" : "B cell",
 			"markers" : [
 				{
-					"genes" : ["CD19+", "MS4A1+", "CD79A+", "CD79B+"],
-					"weight" : 0.7,
-					"comment" : "CD19, CD20 and CD79"
+					"genes" : ["MS4A1+", "CD79A+", "CD79B+", "CD19+", "BANK1+", "TNFRSF13C+", "CD22+", "BLK+", "FCRLA+", "HLA-DOB+"],
+					"weight" : 0.9,
+					"comment" : "Human and mouse shared B cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; TNFRSF13C (BAFF receptor); CD79A, CD79B, CD19, BLK, FCRLA and HLA-DOB are also expressed in Plasma cells; CD79B in addition is expressed in CD16+ monocytes & HSCs; BANK1 & BLK are expressed higher in memory B"
 				},
 				{
-					"genes" : ["BANK1+", "BLK+"],
-					"weight" : 0.2,
-					"comment" : "Extra B cell markers"
-				},
-				{
-					"genes" : ["CD74+", "HLA-DRA+", "HLA-DRB1+", "HLA-DPA1+", "HLA-DPB1+", "HLA-DQA1+", "HLA-DQB1+"],
+					"genes" : ["LINC00926+", "VPREB3+"],
 					"weight" : 0.1,
-					"comment" : "MHC II"
-				}
+					"comment" : "B cell markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
+				}			
 			],
 			"subtypes" : {
 				"title" : "B cell subtype markers",
@@ -123,9 +230,9 @@
 						"name" : "Naive B cell",
 						"markers" : [
 							{
-								"genes" : ["IGHD+", "TCL1A+", "FCER2+"],
+								"genes" : ["IGHD+", "TCL1A+", "FCER2+", "IL4R+", "PLPP5+"],
 								"weight" : 1.0,
-								"comments" : "markers for naive B cell, collected from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper. Validated using ICA pbmc data"
+								"comments" : "Markers for naive B cell derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; IGHD & FCER2 are shared with mouse"
 							}
 						]
 					},
@@ -133,9 +240,9 @@
 						"name" : "Memory B cell",
 						"markers" : [
 							{
-								"genes" : ["CD27+", "TNFRSF13B+"],
+								"genes" : ["IGHA1+", "IGHG1+", "CD27+", "TNFRSF13B+", "CLECL1P+", "AIM2+", "LGALS1+", "CRIP1+"],
 								"weight" : 1.0,
-								"comments" : "markers for memory B cell, collected from Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper. Validated using ICA pbmc data"
+								"comments" : "Markers for memory B cell derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data"
 							}
 						]
 					}
@@ -147,19 +254,9 @@
 			"name" : "Germinal Center B cell",
 			"markers" : [
 				{
-					"genes" : ["CD19+", "MS4A1+", "CD79A+", "CD79B+"],
-					"weight" : 0.3,
-					"comment" : "CD19, CD20 and CD79"
-				},
-				{
-					"genes" : ["CD38+", "BCL6+", "BCL2-", "RGS13+"],
-					"weight" : 0.6,
-					"comment" : "First 3 markers are from Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 1 & 2). The last marker is from XXX"
-				},
-				{
-					"genes" : ["PCNA+", "MKI67+"],
-					"weight" : 0.1,
-					"comment" : "From Klein et al. PNAS 2003 https://doi.org/10.1073/pnas.0437996100 (Fig. 2)"
+					"genes" : ["MEF2B+", "NEIL1+", "RGS13+", "ELL3+", "BCL7A+", "BCL6+", "NUGGC+", "MYBL1+", "EML6+", "FANCA+"],
+					"weight" : 1.0,
+					"comment" : "GC B cell markers"
 				}
 			],
 			"subtypes" : {
@@ -169,9 +266,9 @@
 						"name" : "Dark zone B cell",
 						"markers" : [
 							{
-								"genes" : ["CXCR4+", "AICDA+", "FOXP1+", "MME+"],
+								"genes" : ["NUSAP1+", "NCAPG+", "AURKB+", "HMGB2+", "HJURP+", "TOP2A+"],
 								"weight" : 1.0,
-								"comment" : "Fig. 4B of Massoni-Badosa et al. Tonsil Atlas paper"
+								"comment" : "DZ B cell markers"
 							}
 						]
 					},
@@ -190,38 +287,28 @@
 		},
 
 		{
-			"name" : "Natural killer cell",
+			"name" : "Plasma cell",
 			"markers" : [
 				{
-					"genes" : ["NCAM1+"],
+					"genes" : ["TNFRSF17+", "PRDM1+", "SLAMF7+", "IRF4+", "SDC1+"],
+					"weight" : 0.5,
+					"comment" : "Human and mouse shared markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; TNFRSF17 (BCMA), PRDM1 (BLIMP1); SDC1 is highly expressed in BMMC but not PBMC"
+				},
+				{
+					"genes" : ["IGHA1+", "IGHG1+", "TNFRSF13B+"],
 					"weight" : 0.2,
-					"comment" : "CD56"
+					"comment" : "Markers expressed by both plasma and memory B cells, derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; IGHA1 & IGHG1 indicate class switch"
 				},
 				{
-					"genes" : ["NKG7+"],
+					"genes" : ["CD38+", "ABCB9+", "CHPF+", "PLAAT2+"],
 					"weight" : 0.2,
-					"comment" : "natural killer cell granule protein 7"
+					"comment" : "Human-specific plasma markers derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; PLAAT2 is highly expressed in PBMC but not BMMC"
 				},
 				{
-					"genes" : ["KLRB1+", "KLRD1+", "KLRF1+", "KLRC1+", "KLRC2+", "KLRC3+", "KLRC4+"],
-					"weight" : 0.25,
-					"comment" : "killer cell lectin like receptors"
-				},
-				{
-					"genes" : ["CD3D-", "CD3E-", "CD3G-"],
-					"weight" : 0.15,
-					"comment" : "not T cell"
-				},
-				{
-					"genes" : ["FCGR3A+"],
+					"genes" : ["MS4A1-"],
 					"weight" : 0.1,
-					"comment" : "CD16a"
-				},
-				{
-					"genes" : ["ITGAL+", "ITGAM+"],
-					"weight" : 0.1,
-					"comment" : "CD11a,CD11b"
-				}
+					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
+				}				
 			]
 		},
 
@@ -270,41 +357,39 @@
 		},
 
 		{
-			"name" : "Plasmacytoid dendritic cell",
+			"name" : "Migratory dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["JCHAIN+", "LILRA4+", "GZMB+", "MZB1+", "IL3RA+", "SERPINF1+", "ITM2C+", "IRF7+"],
+					"genes" : ["FSCN1+", "CCR7+", "LAMP3+", "CCL19+", "CCL22+", "CD40+", "BIRC3+"],
 					"weight" : 1.0,
-					"comment" : "important pDC markers"
+					"comment" : "Xing et al. Science Advances 2021 Table S2 (DCs-C3)"
 				}
 			]
 		},
 
 		{
-			"name" : "Plasma cell",
+			"name" : "Plasmacytoid dendritic cell",
 			"markers" : [
 				{
-					"genes" : ["CD38+", "XBP1+", "CD27+", "SLAMF7+"],
-					"weight" : 0.4,
-					"comment" : "important markers"
-				},
-				{
-					"genes" : ["TNFRSF17+", "TNFRSF13B+"],
-					"weight" : 0.2,
-					"comment" : "TNF-receptor superfamily"
-				},
-				{
-					"genes" : ["IGHA1+", "IGHG1+"],
-					"weight" : 0.2,
-					"comment" : "class switching happened"
-				},
-				{
-					"genes" : ["MS4A1-"],
-					"weight" : 0.2,
-					"comment" : "not B cell, doi: https://doi.org/10.1182/bloodadvances.2017004481, long-live plasma can still express CD19"
-				}				
+					"genes" : ["LILRA4+", "SERPINF1+", "IL3RA+", "TPM2+", "SCT+", "UGCG+", "CLEC4C+", "LRRC26+", "SMPD3+", "AC119428.2+"],
+					"weight" : 1.0,
+					"comment" : "Markers derived from Immune Cell Atlas PBMC, BM and CB data"
+				}
 			]
 		},
+
+
+		{
+			"name" : "Follicular dendritic cell",
+			"markers" : [
+				{
+					"genes" : ["CXCL13+", "FCAMR+", "FDCSP+", "SERPINE2+", "PAPPA+", "NPHS1+", "PKDCC+", "SYNM+", "NRG2+", "CDC42EP4+", "MUC3A+", "PRUNE2+", "B4GALNT4+", "NPPC+", "SLC1A2+", "TMEM150C+"],
+					"weight" : 1.0,
+					"comment" : "fDC markers"
+				}
+			]
+		},
+
 
 		{
 			"name" : "Hematopoietic stem cell",
@@ -318,7 +403,7 @@
 		},
 
 		{
-			"name" : "Erythroid cells",
+			"name" : "Erythroid cell",
 			"markers" : [
 				{
 					"genes" : ["GYPA+"], 
@@ -344,7 +429,7 @@
 		},
 
 		{
-			"name" : "Megakaryocyte",
+			"name" : "Platelet",
 			"markers" : [
 				{
 					"genes" : ["PF4+", "PPBP+", "GP5+"],
@@ -360,12 +445,45 @@
 		},
 
 		{
+			"name" : "Pro-Neutrophil",
+			"markers" : [
+				{
+					"genes" : ["DEFA3+", "DEFA4+", "AZU1+", "MS4A3+", "ELANE+", "SLPI+", "CEACAM6+", "RNASE3+", "PRTN3+", "MPO+", "AC104232.1+", "CTSG+"],
+					"weight" : 1.0,
+					"comment" : "Pro-Neutrophil markers validated using 10x public whole blood dataset"
+				}
+			]
+		},
+
+		{
+			"name" : "Pre-Neutrophil",
+			"markers" : [
+				{
+					"genes" : ["LTF+", "LCN2+", "MMP8+", "CRISP3+", "CAMP+", "PGLYRP1+", "CD177+", "HP+"],
+					"weight" : 1.0,
+					"comment" : "Pre-Neutrophil markers validated using 10x public whole blood dataset"
+				}
+			]
+		},
+
+		{
 			"name" : "Neutrophil",
 			"markers" : [
 				{
-					"genes" : ["FUT4+", "MPO+", "CEACAM8+", "ELANE+", "CXCR1+", "CXCR2+", "LY6G6D+"],
+					"genes" : ["CSF3R+", "G0S2+", "LUCAT1+", "EPHB1+", "TNFRSF10C+", "IL1R2+", "KCNJ15+", "FCGR3B+", "AC007032.1+", "HSD11B1-AS1+"],
 					"weight" : 1.0,
-					"comment" : "key markers"
+					"comment" : "Neutrophil markers validated using 10x public whole blood dataset"
+				}
+			]
+		},
+
+		{
+			"name" : "Basophil",
+			"markers" : [
+				{
+					"genes" : ["AKAP12+", "HDC+", "GATA2+", "ENPP3+", "CA8+", "ITGB8+", "GCSAML+", "CRPPA+", "AC111000.4+", "LINC02223+"],
+					"weight" : 1.0,
+					"comment" : "Basophil markers validated using 10x public whole blood dataset"
 				}
 			]
 		},
