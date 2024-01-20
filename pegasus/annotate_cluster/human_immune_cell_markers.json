@@ -232,7 +232,7 @@
 							{
 								"genes" : ["IGHD+", "TCL1A+", "FCER2+", "IL4R+", "PLPP5+"],
 								"weight" : 1.0,
-								"comments" : "Markers for naive B cell derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; IGHD & FCER2 are shared with mouse"
+								"comments" : "Markers for naive B cell derived from Immune Cell Atlas PBMC, BMMC and CB-MNC data; IGHD d& FCER2 are shared with mouse; PLPP5 expressed more in naive B and Plasma cells"
 							}
 						]
 					},
