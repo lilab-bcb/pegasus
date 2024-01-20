@@ -1027,14 +1027,16 @@ def heatmap(
     attrs_dendrogram: Optional[bool] = True,
     attrs_method: Optional[bool] = 'ward',
     attrs_optimal_ordering: Optional[bool] = True,
-    attrs_labelsize: Optional[float] = 10.0,
-    xticklabel_rotation: Optional[float] = 90.0,
+    xlabel_size: Optional[float] = 10.0,
+    ylabel_size: Optional[float] = 10.0,
+    legend_fontsize: Optional[float] = 10.0,
+    xlabel_rotation: Optional[float] = 90.0,
+    ylabel_rotation: Optional[float] = 0.0,
     groupby_cluster: Optional[bool] = True,
     groupby_dendrogram: Optional[bool] = True,
     groupby_method: Optional[bool] = 'ward',
     groupby_optimal_ordering: Optional[bool] = True,
     groupby_precomputed_linkage: Optional[np.array] = None,
-    groupby_labelsize: Optional[float] = 10.0,
     show_sample_name: Optional[bool] = None,
     cbar_labelsize: Optional[float] = 10.0,
     panel_size: Tuple[float, float] = (10, 10),
@@ -1075,10 +1077,16 @@ def heatmap(
         Linkage method for attrs, choosing from ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median`` and ``ward``.
     attrs_optimal_ordering: ``bool``, optional, default: ``True``
         Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the attrs linkage matrix will be reordered so that the distance between successive leaves is minima.
-    attrs_labelsize: ``float``, optional, default: 10.0
-        Fontsize for labels of attrs.
-    xticklabel_rotation: ``float``, optional, default: 90.0
-        Rotation of x-axis tick labels.
+    xlabel_size: ``float``, optional, default: 10.0
+        Fontsize for x-axis labels.
+    ylabel_size: ``float``, optional, default: 10.0
+        Fontsize for y-axis labels.
+    legend_fontsize: ``float``, optional, default: 10.0
+        Fontsize for legend labels.
+    xlabel_rotation: ``float``, optional, default: 90.0
+        Rotation of x-axis labels.
+    ylabel_rotation: ``float``, optional, default: 0.0
+        Rotation of y-axis labels.
     groupby_cluster: ``bool``, optional, default: ``True``
         Cluster data.obs['groupby'] and generate a cluster-wise dendrogram.
     groupby_dendrogram: ``bool``, optional, default: ``True``
@@ -1089,8 +1097,6 @@ def heatmap(
         Parameter for scipy.cluster.hierarchy.linkage. If ``True``, the groupby linkage matrix will be reordered so that the distance between successive leaves is minima.
     groupby_precomputed_linkage: ``np.array``, optional, default: ``None``
         Pass a precomputed linkage.
-    groupby_labelsize: ``float``, optional, default: 10.0
-        Fontsize for labels of data.obs['groupby'].
     show_sample_name: ``bool``, optional, default: ``None``
         If show sample names as tick labels. If ``None``, show_sample_name == ``True`` if groupby == ``None`` and otherwise show_sample_name == ``False``.
     cbar_labelsize: ``float``, optional, default: 10.0
@@ -1113,7 +1119,7 @@ def heatmap(
 
     Examples
     --------
-    >>> pg.heatmap(data, attrs=['CD14', 'TRAC', 'CD34'], groupby='louvain_labels')
+    >>> pg.heatmap(data, attrs=['CD14', 'TRAC', 'CD34'], groupby='leiden_labels')
 
     """
     if not isinstance(data, anndata.AnnData):
@@ -1155,7 +1161,7 @@ def heatmap(
 
     if show_sample_name is None:
         show_sample_name = True if groupby is None else False
-    sample_tick_labels = df.index if show_sample_name else []
+    groupby_tick_labels = df.index if show_sample_name else []
 
     cluster_ids = None
     cell_colors = None
@@ -1172,6 +1178,7 @@ def heatmap(
             df['cluster_name'] = cluster_ids
             df = df.groupby(by='cluster_name', observed=True).mean()
             cluster_ids = df.index
+            groupby_tick_labels = cluster_ids
         else:
             if not groupby_cluster:
                 idx = cluster_ids.argsort(kind = 'mergesort')
@@ -1196,12 +1203,6 @@ def heatmap(
     if attrs_cluster:
         attrs_linkage = linkage(df.T, attrs_method, optimal_ordering = attrs_optimal_ordering)
 
-    groupby_tick_labels = []
-    if show_sample_name:
-        groupby_tick_labels = sample_tick_labels
-    elif on_average:
-        groupby_tick_labels = cluster_ids
-
     if not switch_axes:
         cg = sns.clustermap(
             data=df,
@@ -1218,9 +1219,8 @@ def heatmap(
             **kwargs,
         )
         cg.ax_heatmap.set_ylabel("")
-        cg.ax_heatmap.tick_params(axis='x', labelsize=attrs_labelsize, labelrotation=xticklabel_rotation)
-        if groupby is None:
-            cg.ax_heatmap.tick_params(axis='y', labelsize=groupby_labelsize)
+        cg.ax_heatmap.tick_params(axis='x', labelsize=xlabel_size, labelrotation=xlabel_rotation)
+        cg.ax_heatmap.tick_params(axis='y', labelsize=ylabel_size, labelrotation=ylabel_rotation)
     else:
         cg = sns.clustermap(
             data=df.T,
@@ -1237,9 +1237,8 @@ def heatmap(
             **kwargs,
         )
         cg.ax_heatmap.set_xlabel("")
-        cg.ax_heatmap.tick_params(axis='y', labelsize=attrs_labelsize)
-        if groupby is None:
-            cg.ax_heatmap.tick_params(axis='x', labelsize=groupby_labelsize, labelrotation=xticklabel_rotation)
+        cg.ax_heatmap.tick_params(axis='y', labelsize=ylabel_size, labelrotation=ylabel_rotation)
+        cg.ax_heatmap.tick_params(axis='x', labelsize=xlabel_size, labelrotation=xlabel_rotation)
 
     show_row_dendrogram = (attrs_cluster and attrs_dendrogram) if switch_axes else (groupby_cluster and groupby_dendrogram)
     show_col_dendrogram = (groupby_cluster and groupby_dendrogram) if switch_axes else (attrs_cluster and attrs_dendrogram)
@@ -1278,7 +1277,7 @@ def heatmap(
         if groupby_cluster:
             from matplotlib.patches import Patch
             legend_elements = [Patch(color = color, label = label) for color, label in zip(palette, cluster_ids.categories)]
-            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = groupby_labelsize)
+            cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor = (1.02, 1.02), fontsize = legend_fontsize)
         else:
             values = cluster_ids.value_counts().values
             ticks = np.cumsum(values) - values / 2
@@ -1292,7 +1291,7 @@ def heatmap(
                 cg.ax_col_colors.xaxis.tick_top()
                 cg.ax_col_colors.set_xticks(ticks)
                 cg.ax_col_colors.set_xticklabels(labels, rotation=45)
-                cg.ax_col_colors.tick_params(axis='x', top = False, labelsize = groupby_labelsize, length=10)
+                cg.ax_col_colors.tick_params(axis='x', top = False, labelsize = xlabel_size, length=10)
 
     if not isinstance(data, anndata.AnnData):
         if cur_matkey != data.current_matrix():
