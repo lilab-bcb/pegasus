@@ -11,4 +11,5 @@
   * Use Scipy's linkage (``scipy.cluster.hierarchy.linkage``) for dendrograms to use its optimal ordering feature for better results (see ``groupby_optimal_ordering`` parameter).
 
 * Update human lung and mouse immune markers used by ``infer_cell_types`` function.
+* ``run_harmony`` can accept multiple attributes to be the batch key, by providing a list of attribute names to its ``batch`` parameter.
 * Expose ``online_batch_size`` parameter in ``nmf`` and ``integrative_nmf`` functions.
