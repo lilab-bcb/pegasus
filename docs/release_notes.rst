@@ -6,6 +6,11 @@ Release Notes
 .. note::
     Also see the release notes of `PegasusIO <https://pegasusio.readthedocs.io/en/stable/release_notes.html>`__.
 
+Version 1.9
+~~~~~~~~~~~~~
+
+.. include:: release_notes/version_1_9.rst
+
 Version 1.8
 ~~~~~~~~~~~~~
 
