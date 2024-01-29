@@ -15,12 +15,12 @@ natsort
 numba
 numpy
 pandas>=1.2.0
-pegasusio>=0.5.1
+pegasusio>=0.9.0
 pybind11
 scikit-learn>=0.23.2
 scikit-misc
 scipy
-seaborn
+seaborn>=0.13.0
 setuptools
 statsmodels
 umap-learn>=0.5.2

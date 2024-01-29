@@ -156,19 +156,24 @@ def simulate_doublets(X: Union[csr_matrix, np.ndarray], sim_doublet_ratio: float
     return results, doublet_indices
 
 
-def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: str, warning_msg: str) -> bool:
+def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: Union[str, List[str]], warning_msg: str) -> bool:
     if batch is None:
         return False
 
-    if batch not in data.obs:
-        logger.warning(f"Batch key {batch} does not exist. {warning_msg}")
-        return False
-    else:
-        if not isinstance(data.obs[batch].dtype, CategoricalDtype):
-            data.obs[batch] = pd.Categorical(data.obs[batch].values)
-        if data.obs[batch].cat.categories.size == 1:
-            logger.warning(f"Batch key {batch} only contains one batch. {warning_msg}")
+    if isinstance(batch, str):
+        batch = [batch]
+
+    for bat in batch:
+        if bat not in data.obs:
+            logger.warning(f"Batch key {bat} does not exist. {warning_msg}")
             return False
+        else:
+            if not isinstance(data.obs[bat].dtype, CategoricalDtype):
+                data.obs[bat] = pd.Categorical(data.obs[bat].values)
+            if data.obs[bat].cat.categories.size == 1:
+                logger.warning(f"Batch key {bat} only contains one batch. {warning_msg}")
+                return False
+
     return True
 
 

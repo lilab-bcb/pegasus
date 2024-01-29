@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
-from typing import Union
+from typing import Union, List
 from pegasusio import UnimodalData, MultimodalData
 
 from pegasus.tools import select_features, X_from_rep, check_batch_key
@@ -16,7 +16,7 @@ from pegasusio import timer
 @timer(logger=logger)
 def run_harmony(
     data: Union[MultimodalData, UnimodalData],
-    batch: str = "Channel",
+    batch: Union[str, List[str]] = "Channel",
     rep: str = "pca",
     n_comps: int = None,
     n_jobs: int = -1,
@@ -34,8 +34,8 @@ def run_harmony(
     data: ``MultimodalData``.
         Annotated data matrix with rows for cells and columns for genes.
 
-    batch: ``str``, optional, default: ``"Channel"``.
-        Which attribute in data.obs field represents batches, default is "Channel".
+    batch: ``str`` or ``List[str]``, optional, default: ``"Channel"``.
+        Which attribute in data.obs field represents batches, default is "Channel". If using multiple attributes, specify their names in a list.
 
     rep: ``str``, optional, default: ``"pca"``.
         Which representation to use as input of Harmony, default is PCA.
@@ -54,7 +54,7 @@ def run_harmony(
 
     use_gpu: ``bool``, optional, default: ``False``.
         If ``True``, use GPU if available. Otherwise, use CPU only.
-        
+
     max_iter_harmony: ``int``, optional, default: ``10``.
         Maximum iterations on running Harmony if not converged.
 
