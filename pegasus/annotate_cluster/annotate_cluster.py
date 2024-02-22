@@ -233,13 +233,6 @@ def infer_cluster_names(
                     cell_name = "CD4+ Naive T cell" if subname == "T helper cell" else "CD8+ Naive T cell"
                 else:
                     cell_name = subname
-            elif is_human_immune and ct.name == "B cell":
-                subname = None
-                for subt in ct.subtypes:
-                    if subt.score >= threshold:
-                        subname = subt.name
-                        break
-                cell_name = subname if subname is not None else "Naive B cell"
             elif is_human_immune and ct.name == "CD1C+ dendritic cell":
                 cell_name = ct.name
                 for ctype in ct_list[1:]:
@@ -285,7 +278,9 @@ def infer_cell_types(
             * ``'mouse_immune'`` for mouse immune cells;
             * ``'human_brain'`` for human brain cells;
             * ``'mouse_brain'`` for mouse brain cells;
-            * ``'human_lung'`` for human lung cells.
+            * ``'human_lung'`` for human lung cells;
+            * ``'mouse_lung'`` for mouse lung cells;
+            * ``'mouse_liver'`` for mouse liver cells.
         * If ``Dict``, it refers to a Python dictionary describing the markers.
 
     de_test: ``str``, optional, default: ``"mwu"``
@@ -327,6 +322,8 @@ def infer_cell_types(
         human_brain="human_brain_cell_markers.json",
         mouse_brain="mouse_brain_cell_markers.json",
         human_lung="human_lung_cell_markers.json",
+        mouse_lung="mouse_lung_cell_markers.json",
+        mouse_liver="mouse_liver_cell_markers.json",
     )
 
     if isinstance(markers, str):

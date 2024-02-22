@@ -276,10 +276,9 @@ def _run_filter_data(
 
         if output_filt is not None:
             group_key = unidata.get_uid()
-            writer = pd.ExcelWriter(f"{output_filt}.{group_key}.filt.xlsx", engine="xlsxwriter")
-            df_cells = get_filter_stats(unidata, min_genes_before_filt = min_genes_before_filt)
-            df_cells.to_excel(writer, sheet_name="Cell filtration stats")
-            writer.save()
+            with pd.ExcelWriter(f"{output_filt}.{group_key}.filt.xlsx", engine="xlsxwriter") as writer:
+                df_cells = get_filter_stats(unidata, min_genes_before_filt = min_genes_before_filt)
+                df_cells.to_excel(writer, sheet_name="Cell filtration stats")
             logger.info(f"Filtration results for {group_key} are written.")
 
         if plot_filt is not None:
@@ -347,7 +346,7 @@ def _set_target_mat(data, X, target_matrix, select, base_matrix, suffix):
     if target_matrix in data.matrices:
        logger.warning(f"{target_matrix} is in data's matrices. It will be rewritten.")
 
-    data.add_matrix(target_matrix, X)
+    data.update_matrix(target_matrix, X)
 
     if select:
         data.select_matrix(target_matrix)

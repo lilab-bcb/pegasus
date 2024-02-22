@@ -267,7 +267,7 @@ def _run_scrublet(
         If True, plot diagnostic histograms. Each sample would have a figure consisting of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets.
 
     manual_correction: ``str``, optional, default: ``None``
-        If present, use human guide provided in manual_correction to select threshold. Currently only support manual_correction='peak', which means cut at the center of the peak.
+        If present, use human guide provided in manual_correction to select threshold. Currently support 'peak', 'expected' and threshold. 'peak' means cutting at the center of the peak and 'expected' means cutting at the expected doublet rate. If not both, convert guide to float and use as user-specified threshold.
 
     Returns
     --------
@@ -349,7 +349,7 @@ def _run_scrublet(
     if k is None:
         k = int(round(0.5 * np.sqrt(obsX.shape[0])))
     k_adj = int(round(k * (1.0 + r)))
-    indices, _ = calculate_nearest_neighbors(pc_coords, K = k_adj + 1, n_jobs = n_jobs)
+    indices, _, _ = calculate_nearest_neighbors(pc_coords, K=k_adj + 1, n_jobs=n_jobs, exact_k=True)
 
     # Calculate scrublet-like doublet score
     k_d = is_doublet[indices].sum(axis = 1)
@@ -414,9 +414,14 @@ def _run_scrublet(
 
     threshold_auto = None
     if manual_correction is not None:
-        assert case_num == 2
         threshold_auto = threshold
-        threshold = np.exp(x[maxima_by_x[-1]])
+        if manual_correction == "peak":
+            assert case_num == 2
+            threshold = np.exp(x[maxima_by_x[-1]])
+        elif manual_correction == "expected":
+            threshold = threshold_theory
+        else:
+            threshold = float(manual_correction)
 
     data.obs["doublet_score"] = obs_scores.astype(np.float32)
     data.obs["pred_dbl"] = obs_scores > threshold
@@ -471,7 +476,7 @@ def infer_doublets(
     data: MultimodalData,
     channel_attr: Optional[str] = None,
     clust_attr: Optional[str] = None,
-    raw_mat_key: Optional[str] = 'counts',
+    raw_mat_key: Optional[str] = None,
     min_cell: Optional[int] = 100,
     expected_doublet_rate: Optional[float] = None,
     sim_doublet_ratio: Optional[float] = 2.0,
@@ -497,6 +502,9 @@ def infer_doublets(
 
     clust_attr: ``str``, optional, default: None
         Attribute indicating cluster labels. If set, estimate proportion of doublets in each cluster and statistical significance.
+
+    raw_mat_key: ``str``, optional, default: None
+        The key for raw count matrix. By default, Pegasus will first try "counts" and then try "raw.X"
 
     min_cell: ``int``, optional, default: 100
         Minimum number of cells per sample to calculate doublet scores. For samples having less than 'min_cell' cells, doublet score calculation will be skipped.
@@ -526,7 +534,7 @@ def infer_doublets(
         If not None, plot diagnostic histograms using ``plot_hist`` as the prefix. If `channel_attr` is None, ``plot_hist.dbl.png`` is generated; Otherwise, ``plot_hist.channel_name.dbl.png`` files are generated. Each figure consists of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets. Each plot contains two dashed lines. The red dashed line represents the theoretical cutoff (calucalted based on number of cells and 10x doublet table) and the black dashed line represents the cutof inferred from the data.
     
     manual_correction: ``str``, optional, default: ``None``
-        Use human guide to correct doublet threshold for certain channels. This is string representing a comma-separately list. Each item in the list represent one sample and the sample name and correction guide are separated using ':'. The only correction guide supported is 'peak', which means cut at the center of the peak. If only one sample available, use '' as the sample name.
+        Use human guide to correct doublet threshold for certain channels. This is string representing a comma-separately list. Each item in the list represent one sample and the sample name and correction guide are separated using ':'. The correction guides supported are 'peak', 'expected' and threshold. 'peak' means cutting at the center of the peak; 'expected' means cutting at the expected doublet rate; threshold is the user-specified doublet threshold; if the guide is neither 'peak' nor 'expected', pegasus will try to convert the string into float and use it as doublet threshold. If only one sample available, no need to specify sample name.
 
     Returns
     -------
@@ -542,6 +550,11 @@ def infer_doublets(
     >>> pg.infer_doublets(data, channel_attr = 'Channel', clust_attr = 'Annotation')
     """
     assert data.get_modality() == "rna"
+
+    if raw_mat_key is None:
+        raw_mat_key = 'counts'
+        if raw_mat_key not in data.list_keys():
+            raw_mat_key = 'raw.X'
     try:
         rawX = data.get_matrix(raw_mat_key)
     except ValueError:
@@ -551,10 +564,13 @@ def infer_doublets(
 
     mancor = {}
     if manual_correction is not None:
-        for item in manual_correction.split(','):
-            name, action = item.split(':')
-            mancor[name] = action
-
+        if channel_attr is None:
+            mancor[''] = manual_correction
+        else:
+            for item in manual_correction.split(','):
+                name, action = item.split(':')
+                mancor[name] = action
+            
     if channel_attr is None:
         if data.shape[0] >= min_cell:
             fig = _run_scrublet(data, raw_mat_key, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
@@ -583,9 +599,9 @@ def infer_doublets(
             if idx.size >= min_cell:
                 unidata = UnimodalData({"barcodekey": data.obs_names[idx]}, 
                                        {"featurekey": data.var_names},
-                                       {"counts": rawX[idx]},
+                                       {raw_mat_key: rawX[idx]},
                                        {"genome": genome, "modality": modality},
-                                       cur_matrix = "counts")
+                                       cur_matrix = raw_mat_key)
                 # Identify robust genes, count and log normalized and select top 2,000 highly variable features
                 identify_robust_genes(unidata)
                 log_norm(unidata)

@@ -1,5 +1,6 @@
 {
 	"title" : "Mouse brain cell markers",
+	"comments": "Yao et al. Nature 2021 Allen Mouse Brain Map is a great resource for markers; Map: https://celltypes.brain-map.org/rnaseq/mouse_ctx-hpf_10x?selectedVisualization=Heatmap&colorByFeature=Cell+Type&colorByFeatureValue=Gad1; Cell type metadata: https://brainpalmseq.med.ubc.ca/brain-regions/neocortex-allen-brain-atlas-rnaseq/search-allen-brain-map-by-all-cell-types/; Extended Data Fig 2 & Supp Table 1 of Zhang et al. Nature 2021 is also used in marker selection",
 	"cell_types" : [
 		{
 			"name" : "Glutamatergic neuron",
@@ -168,28 +169,60 @@
 			"name" : "Oligodendrocyte",
 			"markers" : [
 				{
-					"genes" : ["Mbp+", "Plp1+"],
-					"weight" : 0.6,
-					"comment" : "Oligo specific markers (Allen Brain Map)"
-				},
-				{
-					"genes" : ["Mog+"],
-					"weight" : 0.15,
-					"comment" : "Oligo specific markers, but not expressed in all Oligo cells (Allen Brain Map)"
+					"genes" : ["Plp1+", "Cnp+", "Fa2h+", "St18+", "Mbp+"],
+					"weight" : 0.8,
+					"comment" : "Oligo specific markers from Yao et al. Nature 2021 (Allen Brain Map)"
 				},
 				{
 					"genes" : ["Olig1+", "Olig2+", "Sox10+"],
-					"weight" : 0.25,
+					"weight" : 0.2,
 					"comment" : "Expressed in both Oligo and OPC (Allen Brain Map)"
 				}
-			]
+			],
+			"subtypes" : {
+				"title" : "Oligodendrocyte subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Opalin+ Oligodendrocyte",
+						"markers" : [
+							{
+								"genes" : ["Opalin+", "Mog+", "Plekhh1+", "Ermn+"],
+								"weight" : 1.0,
+								"comment": "Opalin+ markers from Yao et al. Nature 2021"
+							}
+						]
+					},
+					{
+						"name" : "Enpp6+ Oligodendrocyte",
+						"markers" : [
+							{
+								"genes" : ["Enpp6+", "Pik3r3+", "Cnksr3+", "Parvb+", "Dusp15+"],
+								"weight" : 1.0,
+								"comment": "Enpp6+ markers from Yao et al. Nature 2021"	
+							}
+						]
+					},
+					{
+						"name" : "Neu4+ Oligodendrocyte",
+						"markers" : [
+							{
+								"genes" : ["Neu4+"],
+								"weight" : 1.0,
+								"comment": "Neu4+ markers from Yao et al. Nature 2021"	
+							}
+						]
+					}
+
+				]
+			}
 		},
 		{
 			"name" : "OPC",
 			"markers" : [
 				{
-					"genes" : ["Pdgfra+", "Cspg4+"],
-					"weight" : 1.0
+					"genes" : ["Pdgfra+", "Cspg4+", "Emid1+", "Fabp7+"],
+					"weight" : 1.0,
+					"comment": "Oligodendrocyte progenitor cell markers from Yao et al. Nature 2021"
 				}
 			]
 		},
@@ -197,71 +230,94 @@
 			"name" : "Astrocyte",
 			"markers" : [
 				{
-					"genes" : ["Aqp4+", "Gja1+", "F3+", "Prex2+"],
-					"weight" : 1.0
+					"genes" : ["Mt2+", "Gja1+", "Prdx6+", "Htra1+", "Ntsr2+", "Aldoc+", "Apoe+", "Prex2+", "Aqp4+", "Gpr37l1+"],
+					"weight" : 1.0,
+					"comment": "Astrocyte markers from Yao et al. Nature 2021"
 				}
-			]
+			],
+			"subtypes" : {
+				"title" : "Astrocyte subtype markers",
+				"cell_types" : [
+					{
+						"name" : "Gfap+ Astrocyte",
+						"markers" : [
+							{
+								"genes" : ["Gfap+", "Aqp4+", "Tmem47+", "Id4+", "Mlc1+", "Sdc4+", "Gstm1+"],
+								"weight" : 1.0,
+								"comment": "Gfap+ markers from Yao et al. Nature 2021"
+							}
+						]
+					},
+					{
+						"name" : "Slc7a10+ Astrocyte",
+						"markers" : [
+							{
+								"genes" : ["Slc7a10+", "Grm3+", "Trpm3+", "Phkg1+", "Cdh10+", "Luzp2+", "Gria2+", "Slc6a1+"],
+								"weight" : 1.0,
+								"comment": "Slc7a10+ markers from Yao et al. Nature 2021"	
+							}
+						]
+					}
+				]
+			}
 		},
 		{
 			"name" : "Microglia",
 			"markers" : [
 				{
-					"genes" : ["C1qb+", "P2ry12+", "Ctss+", "Csf1r+", "Hmha1+"],
-					"weight" : 1.0
+					"genes" : ["Hexb+", "Siglech+", "Selplg+", "Tmem119+", "Ctss+", "P2ry12+", "Cx3cr1+", "Trem2+", "Fcrls+", "Csf1r+"],
+					"weight" : 1.0,
+					"comment": "Microglia specific markers from Yao et al. Nature 2021"
 				}
 			]			
 		},
 		{
-			"name" : "Endothelial",
+			"name" : "Perivascular macrophage",
 			"markers" : [
 				{
-					"genes" : ["Flt1+", "Dcn+", "Xdh+", "Id1+"],
-					"weight" : 1.0
+					"genes" : ["Mrc1+", "Stab1+", "Lyz2+", "Ms4a6c+", "F13a1+", "Pf4+"],
+					"weight" : 1.0,
+					"comment": "PVM specific markers from Yao et al. Nature 2021"
+				}
+			]			
+		},
+		{
+			"name" : "Endothelial cell",
+			"markers" : [
+				{
+					"genes" : ["Flt1+", "Pecam1+", "Ly6a+", "Slco1a4+", "Mecom+", "Ptprb+", "Id1+"],
+					"weight" : 1.0,
+					"comment" : "Endo specific markers from Yao et al. Nature 2021; Slco1a4 is specific to mouse brain: see https://journals.plos.org/plosone/article/figures?id=10.1371/journal.pone.0013741"
 				}
 			]
 		},
 		{
-			"name" : "Fibroblast",
+			"name" : "Vascular leptomeningeal cell",
 			"markers" : [
 				{
-					"genes" : ["Igfbp1+", "Dcn+"],
-					"weight" : 1.0
+					"genes" : ["Slc7a11+", "Slc6a13+", "Bmp6+", "Igfbp2+", "Fmod+", "Ranbp3l+"],
+					"weight" : 1.0,
+					"comment" : "VLMC specific markers from Yao et al. Nature 2021"
 				}
-			]			
-		},
-		{
-			"name" : "Mural",
-			"markers" : [
-				{
-					"genes" : ["Rgs5+", "Acta2+"],
-					"weight" : 1.0
-				}
-			]			
-		},
-		{
-			"name" : "Choroid Coch",
-			"markers" : [
-				{
-					"genes" : ["Tgfbi+"],
-					"weight" : 1.0
-				}
-			]			
-		},
-		{
-			"name" : "Ependyma",
-			"markers" : [
-				{
-					"genes" : ["Ccdc153+"],
-					"weight" : 1.0
-				}
-			]			
+			]
 		},
 		{
 			"name" : "Smooth muscle cell",
 			"markers" : [
 				{
-					"genes" : ["Vtn+", "Colec12+"],
-					"weight" : 1.0
+					"genes" : ["Atca2+", "Myh11+", "Tagln+", "Pln+", "Mylk+"],
+					"weight" : 1.0,
+					"comment" : "SMC specific markers from Yao et al. Nature 2021"
+				}
+			]			
+		},
+		{
+			"name" : "Pericyte",
+			"markers" : [
+				{
+					"genes" : ["Vtn+", "Atp13a5+", "Abcc9+", "Kcnj8+", "Art3+"],
+					"weight" : 1.0,
+					"comment" : "Pericyte specific markers from Yao et al. Nature 2021"
 				}
 			]			
 		}

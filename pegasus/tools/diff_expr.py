@@ -419,7 +419,7 @@ def de_analysis(
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all available threads.
 
-    t: ``bool``, optional, default: ``True``
+    t: ``bool``, optional, default: ``False``
         If ``True``, calculate Welch's t test.
 
     fisher: ``bool``, optional, default: ``False``
@@ -754,6 +754,62 @@ def write_results_to_excel(
 
     workbook.close()
     logger.info("Excel spreadsheet is written.")
+
+
+def cluster_specific_markers(
+    markers: Dict[str, Dict[str, pd.DataFrame]],
+    clust_id: str,
+    min_auroc: float = 0.7,
+    expected_pfc: float = 10.0,
+    n_lo: int = 25,
+    n_up: int = 50,
+) -> pd.DataFrame:
+    """ Extract cluster-specific markers from DE results ``markers``.
+
+    This function extracts cluster-specific markers (e.g. with auroc >= min_auroc and high in percentage fold change). The extracted markers can be screened for signatures representing the cluster.
+
+    The selection procedure is as follows: First, pick genes with AUROC >= min_auroc and pfc (percentage fold change) >= expected_pfc. If the number is between [n_lo, n_up], return the subset of markers containing only these genes. Otherwise, if the number < n_lo, extend the gene set to include up to n_lo genes in descending order of their pfc. If the number > n_up, truncate the set by keeping only n_up genes with highest pfc.
+
+    Parameters
+    ----------
+    markers: ``Dict[str, Dict[str, pd.DataFrame]]``
+        Markers from `de_analysis`.
+
+    clust_id: ``str``
+        Cluster ID to tell which cluster to focus on.
+
+    min_auroc: ``float``, default, ``0.7``
+        Minimum AUROC for a gene.
+
+    expected_pfc: ``float``, optional, default: ``10.0``
+        Expected percentage fold change for a gene.
+
+    n_lo: ``int``, optional, default: ``25``
+        Lower bound (inclusive) on the number of genes to return.
+
+    n_up: ``int``, optional, default: ``50``
+        Upper bound (inclusive) on the number of genes to return.
+
+    Returns
+    -------
+    results: ``pd.DataFrame``
+        A Python dataframe containing selected markers, ranking in descending order with respect to AUROC.
+
+    Examples
+    --------
+    >>> candidates = pg.cluster_specific_markers(markers, 'Mono')
+    """
+    df = markers[clust_id]['up']
+    idx_auc = df['auroc'] >= min_auroc
+    idx_epf = df['percentage_fold_change'] >= expected_pfc
+    idx = idx_auc & idx_epf
+    n = idx.sum()
+    if n >= n_lo and n <= n_up:
+        return df[idx]
+    else:
+        res = df[idx_auc].sort_values('percentage_fold_change', ascending=False)
+        res = res.iloc[0:(n_lo if n < n_lo else n_up)].sort_values('auroc', ascending=False)
+        return res
 
 
 @timer(logger=logger)

@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 import pandas as pd
 
 from typing import Dict, List, Union
@@ -30,7 +31,7 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
             bins = pd.qcut(mean_vec, n_bins, duplicates = "drop")
         if bins.value_counts().min() == 1:
             logger.warning("Detected bins with only 1 gene!")
-        bins.categories = bins.categories.astype(str)
+        bins = bins.rename_categories(dict(zip(bins.categories, bins.categories.astype(str))))
         data.var["bins"] = bins
 
         # calculate background expectations
@@ -89,7 +90,11 @@ def calculate_z_score(
     if not _check_and_calc_sig_background(data, n_bins):
         return None
 
-    z_score_mat = (data.X.toarray().astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)
+    mat = data.X
+    if sp.issparse(mat):
+        mat = mat.toarray()
+
+    z_score_mat = (mat.astype(np.float32) - data.var["mean"].values.astype(np.float32) - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes].astype(np.float32)) / data.obsm["sig_bkg_std"][:, data.var["bins"].cat.codes].astype(np.float32)
 
     return z_score_mat
 
@@ -100,6 +105,7 @@ def calc_signature_score(
     signatures: Union[Dict[str, List[str]], str],
     n_bins: int = 50,
     show_omitted_genes: bool = False,
+    skip_threshold: int = 1,
     random_state: int = 0
 ) -> None:
     """Calculate signature / gene module score. [Li20-1]_
@@ -124,11 +130,20 @@ def calc_signature_score(
             * ``apoptosis_human`` contains one signature, ``apoptosis``, which includes apoptosis-related genes from the KEGG pathway.
             * ``cell_cycle_mouse``, ``gender_mouse``, ``mitochondrial_genes_mouse``, ``ribosomal_genes_mouse`` and ``apoptosis_mouse`` are the corresponding signatures for mouse. Gene symbols are directly translated from human genes.
 
+        In addition, Pegasus provides the following 4 curated signature panels:
+            * ``emt_human``, the Epithelial-Mesenchymal Transition signature from Gibbons and Creighton Dev. Dyn. 2018.
+            * ``human_lung``, human lung cell type markers.
+            * ``mouse_brain``, mouse brain cell type markers.
+            * ``mouse_liver``, mouse liver cell type markers.
+
     n_bins: ``int``, optional, default: 50
         Number of bins on expression levels for grouping genes.
 
     show_omitted_genes: ``bool``, optional, default False
         Signature genes that are not expressed in the data will be omitted. By default, pegasus does not report which genes are omitted. If this option is turned on, report omitted genes.
+
+    skip_threshold: ``int``, optional, default 1
+        Skip signature calculation of number of kept genes is less than skip_threshold.
 
     random_state: ``int``, optional, default: 0
         Random state used by KMeans if signature == ``gender_human`` or ``gender_mouse``.
@@ -170,16 +185,22 @@ def calc_signature_score(
         sig_string = signatures
         if sig_string in predefined_signatures:
             signatures = load_signatures_from_file(predefined_signatures[sig_string])
-            from threadpoolctl import threadpool_limits
+
+            if sig_string.startswith("mitochondrial_genes"):
+                del signatures["mito_noncoding"]
+            elif sig_string.startswith("ribosomal_genes"):
+                del signatures["ribo_like"]
+            
+            _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)
 
             if sig_string.startswith("cell_cycle"):
-                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
                 data.obs["cycle_diff"] = data.obs["G2/M"] - data.obs["G1/S"]
 
                 values = data.obs[["G1/S", "G2/M"]].values
                 maxvalues = values.max(axis = 1)
                 data.obs["cycling"] = maxvalues
 
+                from threadpoolctl import threadpool_limits
                 kmeans = KMeans(n_clusters=2, random_state=random_state)
                 with threadpool_limits(limits = 1):
                     kmeans.fit(maxvalues.reshape(-1, 1))
@@ -191,9 +212,9 @@ def calc_signature_score(
 
                 data.obs["predicted_phase"] = pd.Categorical.from_codes(codes, categories = ["G0", "G1/S", "G2/M"])
             elif sig_string.startswith("gender"):
-                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
                 data.obs["gender_score"] = data.obs["male_score"] - data.obs["female_score"]
 
+                from threadpoolctl import threadpool_limits
                 kmeans = KMeans(n_clusters=3, random_state=random_state)
                 with threadpool_limits(limits = 1):
                     kmeans.fit(data.obs["gender_score"].values.reshape(-1, 1))
@@ -201,18 +222,10 @@ def calc_signature_score(
                 codes = list(map(lambda x: reorg_dict[x], kmeans.labels_))
 
                 data.obs["predicted_gender"] = pd.Categorical.from_codes(codes, categories = ["female", "uncertain", "male"])
-            elif sig_string.startswith("mitochondrial_genes"):
-                del signatures["mito_noncoding"]
-                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
-            elif sig_string.startswith("ribosomal_genes"):
-                del signatures["ribo_like"]
-                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
-            elif sig_string.startswith("apoptosis"):
-                _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes, skip_threshold = 1)
-            else:
-                assert False
+            elif sig_string == "emt_human":
+                data.obs["EMT_score"] = data.obs["Mesenchymal-like"] - data.obs["Epithelial-like"]
         else:
             signatures = load_signatures_from_file(sig_string)
-            _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
+            _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)
     else:
-        _calc_sig_scores(data, signatures, show_omitted_genes = show_omitted_genes)
+        _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)

@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_categorical_dtype
 from pegasusio import MultimodalData
 from natsort import natsorted
 
@@ -643,10 +644,11 @@ def split_one_cluster(
     n_clust: int,
     res_label: str,
     rep: str = "pca",
+    n_comps: int = None,
     random_state: int = 0,
 ) -> None:
     """
-    Use Leiden algorithm to split 'clust_id' in 'clust_label' into 'n_components' clusters and write the new clusting results to 'res_label'. Assume 'clust_label' named clusters as numbers (in str format).
+    Use Leiden algorithm to split 'clust_id' in 'clust_label' into 'n_components' sub-clusters and write the new clusting results to 'res_label'. The sub-cluster names are the concatenation of original cluster name and the subcluster id (e.g. 'T' -> 'T-1', 'T-2').
 
     Parameters
     ----------
@@ -663,10 +665,13 @@ def split_one_cluster(
         Split 'clust_id' into `n_clust' subclusters.
 
     res_label: `str`,
-        Write new clustering in data.obs['res_label']. The largest subcluster will use 'clust_id' as its cluster ID, while other subclusters will be numbered after existing clusters.
+        Write new clustering in data.obs['res_label']. The sub-cluster names are the concatenation of original cluster name and the subcluster id (e.g. 'T' -> 'T-1', 'T-2').
 
     rep: ``str``, optional, default: ``"pca"``
         The embedding representation used for Kmeans clustering. Keyword ``'X_' + rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+
+    n_comps: `int`, optional (default: None)
+        Number of components to be used in the `rep`. If n_comps == None, use all components; otherwise, use the minimum of n_comps and rep's dimensions.
 
     n_jobs : `int`, optional (default: -1)
         Number of threads to use for the KMeans step in 'spectral_louvain' and 'spectral_leiden'. -1 refers to using all physical CPU cores.
@@ -685,16 +690,35 @@ def split_one_cluster(
     --------
     >>> pg.split_one_cluster(data, 'leiden_labels', '15', 2, 'leiden_labels_split')
     """
-    idx = np.where(data.obs[clust_label] == clust_id)[0]
+    cats = None
+    if is_categorical_dtype(data.obs[clust_label]):
+        cats = data.obs[clust_label].cat.categories.values
+    else:
+        cats = pd.Categorical(data.obs[clust_label]).categories.values
+        if cats.dtype.kind not in {'S', 'U'}:
+            cats = cats.astype(str)
+    idx_cat = np.nonzero(cats==clust_id)[0]
+
+    if idx_cat.size == 0:
+        raise ValueError(f"{clust_id} is not in {clust_label}!")
+    elif idx_cat.size > 1:
+        raise ValueError(f"Detected more than one categories in {clust_label} with name {clust_id}!")
+    else:
+        idx_cat = idx_cat[0]
+
+    idx = np.nonzero((data.obs[clust_label] == clust_id).values)[0]
     tmpdat = data[idx].copy()
     from pegasus.tools import neighbors
-    neighbors(tmpdat, rep=rep, use_cache=False)
+    neighbors(tmpdat, rep=rep, n_comps=n_comps, use_cache=False)
     leiden(tmpdat, rep=rep, resolution=None, n_clust=n_clust, random_state=random_state)
-    new_clust = data.obs[clust_label].values.astype(int)
-    new_label = new_clust.max() + 1
-    for label in tmpdat.obs['leiden_labels'].value_counts().index[1:]:
-        new_clust[idx[(tmpdat.obs['leiden_labels'] == label).values]] = new_label
-        new_label += 1
-    data.obs[res_label] = pd.Categorical(values = new_clust.astype(str), categories = np.array(range(1, new_label)).astype(str))
+
+    new_clust = data.obs[clust_label].values.astype(object)
+    cats_sub = []
+    for i, label in enumerate(tmpdat.obs['leiden_labels'].value_counts().index):
+        sub_id = f"{clust_id}-{i+1}"
+        new_clust[idx[(tmpdat.obs['leiden_labels'] == label).values]] = sub_id
+        cats_sub.append(sub_id)
+
+    data.obs[res_label] = pd.Categorical(values = new_clust, categories = np.concatenate((cats[0:idx_cat], np.array(cats_sub), cats[idx_cat+1:])))
     data.register_attr(res_label, "cluster")
     del tmpdat

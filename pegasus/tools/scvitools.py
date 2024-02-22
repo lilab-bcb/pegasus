@@ -190,8 +190,13 @@ def run_scvi(
     scvi.settings.num_threads = eff_n_jobs(n_jobs) # set n_jobs
     scvi.settings.seed = random_state # set random_state, see [here](https://docs.scvi-tools.org/en/stable/_modules/scvi/_settings.html) for more details.
 
+    print(max_epochs)
+    
     if max_epochs is None:
         max_epochs = np.min([round((20000 / len(adata.obs)) * 400), 400])
+
+    print(type(max_epochs))
+    print(max_epochs)
 
     scvi.model.SCVI.setup_anndata(adata,
         batch_key=batch,
