@@ -637,6 +637,8 @@ def spatial(
     vmax: Optional[Union[float, List[float]]] = None,
     alpha: Union[float, List[float]] = 1.0,
     alpha_img: float = 1.0,
+    nrows: Optional[int] = None,
+    ncols: Optional[int] = None,
     dpi: float = 300.0,
     return_fig: bool = False,
     **kwargs,
@@ -666,6 +668,10 @@ def spatial(
         Alpha value for blending the attribute layers, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     alpha_img: ``float``, optional, default: ``1.0``
         Alpha value for blending the background spatial image, from 0.0 (transparent) to 1.0 (opaque).
+    nrows: ``int``, optional, default: ``None``
+        Number of rows in the figure. If not set, pegasus will figure it out automatically.
+    ncols: ``int``, optional, default: ``None``
+        Number of columns in the figure. If not set, pegasus will figure it out automatically.
     dpi: ``float``, optional, default: ``300.0``
         The resolution of the figure in dots-per-inch.
     return_fig: ``bool``, optional, default: ``False``
@@ -704,6 +710,8 @@ def spatial(
         cmaps=cmaps,
         vmin=vmin,
         vmax=vmax,
+        nrows=nrows,
+        ncols=ncols,
         dpi=dpi,
         alpha=alpha,
         return_fig=True,
