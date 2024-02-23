@@ -691,10 +691,13 @@ def spatial(
     assert hasattr(data, 'img'), "The spatial image data are missing!"
     assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
 
-    if (attrs is None) or (not is_list_like(attrs)):
-        nattrs = 1
-    else:
-        nattrs = len(attrs)
+    if attrs is not None:
+        if not is_list_like(attrs):
+            attrs = [attrs]
+        # Select only valid attributes
+        attrs = _get_valid_attrs(data, attrs)
+
+    nattrs = len(attrs) if attrs is not None else 1
 
     image_item = data.img.loc[data.img['image_id']==resolution]
     image_obj = image_item['data'].iat[0]
