@@ -7,7 +7,7 @@ from sklearn.cluster import KMeans
 
 import anndata
 from pegasusio import UnimodalData, MultimodalData, timer
-from pegasus.tools import calc_mean, calc_sig_background, predefined_signatures, load_signatures_from_file
+from pegasus.tools import to_csr_or_dense, calc_mean, calc_sig_background, predefined_signatures, load_signatures_from_file
 
 import logging
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
     if "mean" not in data.var:
-        data.var["mean"] = calc_mean(data.X, axis = 0)
+        data.var["mean"] = calc_mean(to_csr_or_dense(data.X),axis = 0)
 
     if data.uns.get("sig_n_bins", 0) != n_bins:
         mean_vec = data.var["mean"].values
@@ -35,7 +35,7 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         data.var["bins"] = bins
 
         # calculate background expectations
-        data.obsm["sig_bkg_mean"], data.obsm["sig_bkg_std"] = calc_sig_background(data.X, bins, mean_vec)
+        data.obsm["sig_bkg_mean"], data.obsm["sig_bkg_std"] = calc_sig_background(to_csr_or_dense(data.X), bins, mean_vec)
 
     return True
 
@@ -190,7 +190,7 @@ def calc_signature_score(
                 del signatures["mito_noncoding"]
             elif sig_string.startswith("ribosomal_genes"):
                 del signatures["ribo_like"]
-            
+
             _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)
 
             if sig_string.startswith("cell_cycle"):
