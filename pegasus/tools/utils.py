@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_categorical_dtype
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import issparse, csr_matrix, csc_matrix
 from typing import Union, List, Tuple, Dict
 from anndata import AnnData
 from pegasusio import UnimodalData, MultimodalData
@@ -59,6 +59,10 @@ def W_from_rep(
     if rep_key not in data.obsp:
         raise ValueError("Affinity matrix does not exist. Please run neighbors first!")
     return data.obsp[rep_key]
+
+
+def to_csr_or_dense(X: Union[csr_matrix, csc_matrix, np.ndarray]) -> Union[csr_matrix, np.ndarray]:
+    return X if not issparse(X) or isinstance(X, csr_matrix) else X.tocsr()
 
 
 # slicing is not designed to work at extracting one element, convert to dense matrix

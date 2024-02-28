@@ -3,6 +3,7 @@ from .utils import (
     update_rep,
     X_from_rep,
     W_from_rep,
+    to_csr_or_dense,
     slicing,
     calc_mean,
     calc_mean_and_var,
