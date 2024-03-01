@@ -76,6 +76,7 @@ from .tools import (
     pseudobulk,
     deseq2,
     fgsea,
+    write_fgsea_results_to_excel,
     run_scvi,
     train_scarches_scanvi,
     predict_scarches_scanvi,

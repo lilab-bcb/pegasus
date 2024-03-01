@@ -51,8 +51,8 @@ def scatter(
     legend_ncol: Optional[str] = None,
     palettes: Optional[Union[str, List[str]]] = None,
     cmaps: Optional[Union[str, List[str]]] = "YlOrRd",
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
+    vmin: Optional[Union[float, List[float]]] = None,
+    vmax: Optional[Union[float, List[float]]] = None,
     nrows: Optional[int] = None,
     ncols: Optional[int] = None,
     panel_size: Optional[Tuple[float, float]] = (4, 4),
@@ -267,8 +267,8 @@ def scatter(
                             alpha=alpha[attr_id],
                             edgecolors="none",
                             cmap=cmap,
-                            vmin=vmin,
-                            vmax=vmax,
+                            vmin=vmin if not isinstance(vmin, list) else vmin[attr_id],
+                            vmax=vmax if not isinstance(vmax, list) else vmax[attr_id],
                             rasterized=True,
                         )
                     else:
@@ -280,8 +280,8 @@ def scatter(
                             alpha=alpha[attr_id],
                             edgecolors="none",
                             cmap=cmap,
-                            vmin=vmin,
-                            vmax=vmax,
+                            vmin=vmin if not isinstance(vmin, list) else vmin[attr_id],
+                            vmax=vmax if not isinstance(vmax, list) else vmax[attr_id],
                             rasterized=True,
                             ax=ax,
                         )
@@ -633,10 +633,12 @@ def spatial(
     basis: str = 'spatial',
     resolution: str = 'hires',
     cmaps: Optional[Union[str, List[str]]] = 'viridis',
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
+    vmin: Optional[Union[float, List[float]]] = None,
+    vmax: Optional[Union[float, List[float]]] = None,
     alpha: Union[float, List[float]] = 1.0,
     alpha_img: float = 1.0,
+    nrows: Optional[int] = None,
+    ncols: Optional[int] = None,
     dpi: float = 300.0,
     return_fig: bool = False,
     **kwargs,
@@ -666,6 +668,10 @@ def spatial(
         Alpha value for blending the attribute layers, from 0.0 (transparent) to 1.0 (opaque). If this is a list, the length must match attrs, which means we set a separate alpha value for each attribute.
     alpha_img: ``float``, optional, default: ``1.0``
         Alpha value for blending the background spatial image, from 0.0 (transparent) to 1.0 (opaque).
+    nrows: ``int``, optional, default: ``None``
+        Number of rows in the figure. If not set, pegasus will figure it out automatically.
+    ncols: ``int``, optional, default: ``None``
+        Number of columns in the figure. If not set, pegasus will figure it out automatically.
     dpi: ``float``, optional, default: ``300.0``
         The resolution of the figure in dots-per-inch.
     return_fig: ``bool``, optional, default: ``False``
@@ -685,10 +691,13 @@ def spatial(
     assert hasattr(data, 'img'), "The spatial image data are missing!"
     assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
 
-    if (attrs is None) or (not is_list_like(attrs)):
-        nattrs = 1
-    else:
-        nattrs = len(attrs)
+    if attrs is not None:
+        if not is_list_like(attrs):
+            attrs = [attrs]
+        # Select only valid attributes
+        attrs = _get_valid_attrs(data, attrs)
+
+    nattrs = len(attrs) if attrs is not None else 1
 
     image_item = data.img.loc[data.img['image_id']==resolution]
     image_obj = image_item['data'].iat[0]
@@ -704,6 +713,8 @@ def spatial(
         cmaps=cmaps,
         vmin=vmin,
         vmax=vmax,
+        nrows=nrows,
+        ncols=ncols,
         dpi=dpi,
         alpha=alpha,
         return_fig=True,
@@ -2247,7 +2258,7 @@ def _make_one_gsea_plot(df, ax, color, size=10):
 
 def plot_gsea(
     data: Union[MultimodalData, UnimodalData],
-    gsea_keyword: str,
+    gsea_keyword: Optional[str] = "fgsea_out",
     alpha: Optional[float] = 0.1,
     top_n: Optional[int] = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
@@ -2262,7 +2273,7 @@ def plot_gsea(
 
     data : ``UnimodalData`` or ``MultimodalData`` object
         The main data object.
-    gsea_keyword: ``str``
+    gsea_keyword: ``str``, optional, default: ``"fgsea_out"``
         Keyword in data.uns that stores the fGSEA results in pandas data frame.
     alpha: ``float``, optional, default: ``0.1``
         False discovery rate threshold.
@@ -2293,9 +2304,9 @@ def plot_gsea(
     df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
 
     fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
-    df_up = df.loc[df['NES']>0]
+    df_up = df.loc[df['NES']>0][0:top_n]
     _make_one_gsea_plot(df_up, axes[0], color='red')
-    df_dn = df.loc[df['NES']<0]
+    df_dn = df.loc[df['NES']<0][0:top_n]
     _make_one_gsea_plot(df_dn, axes[1], color='green')
     axes[1].set_xlabel('-log10(q-value)')
 

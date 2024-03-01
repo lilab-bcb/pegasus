@@ -2,6 +2,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import pandas as pd
+
 from pegasus.tools import predefined_pathways, load_signatures_from_file
 from pegasusio import MultimodalData, UnimodalData, timer
 from typing import Union, Optional
@@ -104,3 +106,69 @@ def fgsea(
         res_df = ro.conversion.rpy2py(unlist(res))
     res_df.sort_values("padj", inplace=True)
     data.uns[fgsea_key] = res_df
+
+
+@timer(logger=logger)
+def write_fgsea_results_to_excel(
+    data: Union[MultimodalData, UnimodalData],
+    output_file: str,
+    fgsea_key: Optional[str] = "fgsea_out",
+    ndigits: Optional[int] = 3,
+) -> None:
+    """
+    """
+    assert fgsea_key in data.uns.keys(), f"Key '{fgsea_key}' does not exist in data.uns!"
+
+    import xlsxwriter
+
+    def format_short_output_cols(
+        df_orig: pd.DataFrame, ndigits: int
+    ) -> pd.DataFrame:
+        """ Round related float columns to ndigits decimal points.
+        """
+        df = pd.DataFrame(df_orig, copy = True) # copy must be true, otherwise the passed df_orig will be modified.
+
+        cols = []
+        for name in df.columns:
+            if (not name.endswith("pval")) and (not name.endswith("qval")):
+                cols.append(name)
+
+        df.loc[:, cols] = df.loc[:, cols].round(ndigits)
+        return df
+
+    def add_worksheet(
+        workbook: "workbook", df_orig: pd.DataFrame, sheet_name: str
+    ) -> None:
+        """ Add one worksheet with content as df
+        """
+        df = format_short_output_cols(df_orig, ndigits)
+        df.reset_index(inplace=True)
+        worksheet = workbook.add_worksheet(name=sheet_name)
+
+        if df.shape[0] > 0:
+            worksheet.add_table(
+                0,
+                0,
+                df.index.size,
+                df.columns.size - 1,
+                {
+                    "data": df.to_numpy(),
+                    "style": "Table Style Light 1",
+                    "first_column": True,
+                    "header_row": True,
+                    "columns": [{"header": x} for x in df.columns.values],
+                },
+            )
+        else:
+            worksheet.write_row(0, 0, df.columns.values)
+
+    try:
+        workbook = xlsxwriter.Workbook(output_file, {"nan_inf_to_errors": True})
+        workbook.formats[0].set_font_size(9)
+
+        df_fgsea = pd.DataFrame(data.uns[fgsea_key])
+        add_worksheet(workbook, df_fgsea.loc[df_fgsea['NES']>0].set_index("pathway"), "UP")
+        add_worksheet(workbook, df_fgsea.loc[df_fgsea['NES']<0].set_index("pathway"), "DOWN")
+        logger.info("Excel spreadsheet is written.")
+    finally:
+        workbook.close()
