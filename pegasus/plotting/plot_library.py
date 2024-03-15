@@ -1316,6 +1316,7 @@ def dotplot(
     genes: Union[str, List[str]],
     groupby: str,
     reduce_function: Union[str, Callable[[np.ndarray], float]] = "mean",
+    show_only_expressed: bool = True,
     fraction_min: float = 0,
     fraction_max: float = None,
     dot_min: int = 0,
@@ -1342,6 +1343,8 @@ def dotplot(
         A categorical variable in data.obs that is used to categorize the cells, e.g. Clusters.
     reduce_function: ``Union[str, Callable[[np.ndarray], float]]``, optional, default: ``"mean"``
         Function to calculate statistic on expression data. Default is mean.
+    show_only_expressed: ``bool``, optional, default: `True`
+        If ``True``, the statistic is calculated over only cells expressing the selected genes; otherwise, it's calculated over all cells.
     fraction_min: ``float``, optional, default: ``0``.
         Minimum fraction of expressing cells to consider.
     fraction_max: ``float``, optional, default: ``None``.
@@ -1401,10 +1404,14 @@ def dotplot(
         logger.warning(f"The following categories contain no cells and are removed: {','.join(list(series.index[idx]))}.")
 
     def non_zero(g):
-        return np.count_nonzero(g) / g.shape[0]
+        return np.count_nonzero(g.fillna(0.0)) / g.shape[0]
 
-    # Set observed=True to suppress warnings.
-    summarized_df = df.groupby(by=groupby, observed=True).aggregate([reduce_function, non_zero])
+    if show_only_expressed:
+        df.set_index(groupby, inplace=True)
+        is_expressed = df > 0.0
+        summarized_df = df.mask(~is_expressed).groupby(level=0, observed=True).aggregate([reduce_function, non_zero])
+    else:
+        summarized_df = df.groupby(by=groupby, observed=True).aggregate([reduce_function, non_zero])
 
     row_indices = summarized_df.index.tolist()
     if sort_function == "natsorted":
