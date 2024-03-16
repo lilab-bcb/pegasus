@@ -1,3 +1,18 @@
+1.9.1 :small:`March 15, 2024`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**New Feature**
+
+* Add ``write_fgsea_results_to_excel`` function (see `documentation <api/pegasus.write_fgsea_results_to_excel.html>`_)
+
+**Improvement**
+
+* For ``dotplot`` function, add ``show_only_expressed`` parameter to decide whether the color intensity of dots are based on cells expressing the genes to show or all cells. By default, ``show_only_expressed=True``. (PR `292 <https://github.com/lilab-bcb/pegasus/pull/292>`_)
+* Allow ``scatter`` and ``spatial`` functions to have a list of ``vmin`` and ``vmax`` values when plotting multiple features.
+* For ``scatter``, ``spatial``, ``dotplot``, ``violin`` functions, when some features are not in the data, emit a warning message and continue with features existing in the data.
+* In ``spatial`` function, add ``nrows`` and ``ncols`` to organize subplots.
+* In ``calculate_z_score`` function, enforce the input count matrix to be dense or ``scipy.csr_matrix``.
+
 1.9.0 :small:`January 19, 2024`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
