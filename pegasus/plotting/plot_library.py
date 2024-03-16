@@ -2252,7 +2252,7 @@ def wordcloud(
     return fig if return_fig else None
 
 
-def _make_one_gsea_plot(df, ax, color, size=10):
+def _make_one_gsea_plot(df, ax, color, size=10, fontsize=5):
     if df.shape[0] == 0:
         ax.axis('off')
         return None
@@ -2261,7 +2261,7 @@ def _make_one_gsea_plot(df, ax, color, size=10):
     ax = sns.barplot(x='Log Q', y='pathway', data=df_plot, color=color, ax=ax)
     ax.set_xlabel('')
     ax.set_ylabel('')
-    ax.tick_params(axis='y', labelsize=5)
+    ax.tick_params(axis='y', labelsize=fontsize)
 
 def plot_gsea(
     data: Union[MultimodalData, UnimodalData],
@@ -2269,6 +2269,7 @@ def plot_gsea(
     alpha: Optional[float] = 0.1,
     top_n: Optional[int] = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
+    label_fontsize: Optional[int] = 5,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
@@ -2288,6 +2289,8 @@ def plot_gsea(
         Only show top_n up/down regulated pathways.
     panel_size: `tuple`, optional (default: `(6, 4)`)
         The plot size (width, height) in inches.
+    label_fontsize: ``int``, optional, default: ``5``
+        The font size of labels.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
@@ -2312,9 +2315,9 @@ def plot_gsea(
 
     fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
     df_up = df.loc[df['NES']>0][0:top_n]
-    _make_one_gsea_plot(df_up, axes[0], color='red')
+    _make_one_gsea_plot(df_up, axes[0], color='red', fontsize=label_fontsize)
     df_dn = df.loc[df['NES']<0][0:top_n]
-    _make_one_gsea_plot(df_dn, axes[1], color='green')
+    _make_one_gsea_plot(df_dn, axes[1], color='green', fontsize=label_fontsize)
     axes[1].set_xlabel('-log10(q-value)')
 
     return fig if return_fig else None
