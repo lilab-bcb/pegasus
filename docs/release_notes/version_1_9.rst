@@ -1,4 +1,4 @@
-1.9.1 :small:`March 15, 2024`
+1.9.1 :small:`March 16, 2024`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **New Feature**
@@ -12,6 +12,7 @@
 * For ``scatter``, ``spatial``, ``dotplot``, ``violin`` functions, when some features are not in the data, emit a warning message and continue with features existing in the data.
 * In ``spatial`` function, add ``nrows`` and ``ncols`` to organize subplots.
 * In ``calculate_z_score`` function, enforce the input count matrix to be dense or ``scipy.csr_matrix``.
+* In ``plot_gsea`` function, add ``label_fontsize`` parametere to allow change font label size in GSEA plots.
 
 1.9.0 :small:`January 19, 2024`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
