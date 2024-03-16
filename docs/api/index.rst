@@ -137,6 +137,7 @@ Differential Expression and Gene Set Enrichment Analysis
     markers
     write_results_to_excel
     fgsea
+    write_fgsea_results_to_excel
 
 Annotate clusters
 -------------------
