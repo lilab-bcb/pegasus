@@ -5,7 +5,7 @@ from scipy.sparse import issparse, csr_matrix
 from threadpoolctl import threadpool_limits
 from sklearn.decomposition import PCA, TruncatedSVD
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
 from pegasus.tools import eff_n_jobs
 
