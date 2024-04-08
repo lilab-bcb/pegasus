@@ -740,6 +740,7 @@ def regress_out(
     data: Union[MultimodalData, UnimodalData],
     attrs: List[str],
     rep: str = 'pca',
+    n_comps: Optional[int] = None,
 ) -> str:
     """Regress out effects due to specific observational attributes.
 
@@ -755,6 +756,9 @@ def regress_out(
         This is to specify which embedding to be used for regressing out.
         The key ``'X_'+rep`` must exist in ``data.obsm`` field. By default, use PCA embedding.
 
+    n_comps: ``int``, optional, default: ``None``
+        Number of components of the embedding to be used. By default, use all components.
+
     Returns
     -------
     res_key: ``str``
@@ -767,7 +771,10 @@ def regress_out(
     --------
     >>> pg.regress_out(data, attrs=['G1/S', 'G2/M'])
     """
-    n_components = data.obsm[f'X_{rep}'].shape[1]
+    if (n_comps is None) or (n_comps > data.obsm[f"X_{rep}"].shape[1]):
+        if n_comps:
+            logger.info(f"{n_comps} exceeds embedding dimension. Reset to {data.obsm[f'X_{rep}'].shape[1]}!")
+        n_comps = data.obsm[f'X_{rep}'].shape[1]
 
     from pandas.api.types import is_numeric_dtype
     for attr in attrs:
@@ -779,7 +786,7 @@ def regress_out(
     from sklearn.linear_model import LinearRegression
 
     response_list = []
-    for i in range(n_components):
+    for i in range(n_comps):
         pc = data.obsm[f'X_{rep}'][:, i]
         model = LinearRegression().fit(X, pc)
         y_pred = model.predict(X)
