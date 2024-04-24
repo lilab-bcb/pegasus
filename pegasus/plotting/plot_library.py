@@ -62,6 +62,7 @@ def scatter(
     hspace: Optional[float] = 0.15,
     marker_size: Optional[float] = None,
     scale_factor: Optional[float] = None,
+    aspect: Optional[str] = "auto",
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     show_neg_for_sig: Optional[bool] = False,
@@ -121,6 +122,9 @@ def scatter(
         Manually set the marker size in the plot. If ``None``, automatically adjust the marker size to the plot size.
     scale_factor: ``float``, optional (default: ``None``)
         Manually set the scale factor in the plot if it's not ``None``. This is used by generating the spatial plots for 10x Visium data.
+    aspect: ``str``, optional (default: ``auto``)
+        Set the aspect of the axis scaling, i.e. the ratio of y-unit to x-unit. Set ``auto`` to fill the position rectangle with data; ``equal`` for the same scaling for x and y.
+        It applies to all subplots.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: 300.0
@@ -203,6 +207,7 @@ def scatter(
             ax.grid(False)
             ax.set_xticks([])
             ax.set_yticks([])
+            ax.set_aspect(aspect)
             if i * ncols + j >= nfigs:
                 ax.set_frame_on(False)
 
@@ -639,6 +644,8 @@ def spatial(
     alpha_img: float = 1.0,
     nrows: Optional[int] = None,
     ncols: Optional[int] = None,
+    y_flip: bool = False,
+    aspect: Optional[str] = "equal",
     dpi: float = 300.0,
     return_fig: bool = False,
     **kwargs,
@@ -658,6 +665,7 @@ def spatial(
     resolution: ``str``, optional, default: ``hires``
         Use the spatial image whose value is specified in ``data.img['image_id']`` to show in background.
         For 10X Visium data, user can either specify ``hires`` or ``lowres`` to use High or Low resolution spatial images, respectively.
+        Alternatively, if ``data.img`` does not exist, then no spatial image will be shown.
     cmaps: ``str`` or ``List[str]``, optional, default: ``viridis``
         The colormap(s) for plotting numeric attributes. The default ``viridis`` colormap theme follows the spatial plot function in SCANPY (``scanpy.pl.spatial``).
     vmin: ``float``, optional, default: ``None``
@@ -672,6 +680,12 @@ def spatial(
         Number of rows in the figure. If not set, pegasus will figure it out automatically.
     ncols: ``int``, optional, default: ``None``
         Number of columns in the figure. If not set, pegasus will figure it out automatically.
+    y_flip: ``bool``, optional, default: ``False``
+        Set to ``True`` if flipping the y axis is needed. This is for the case when y-coordinate origin starts from the top.
+        For 10x Visium data, if ``resolution`` is specified, this parameter is then ignored.
+    aspect:``str``, optional (default: ``equal``)
+        Set the aspect of the axis scaling, i.e. the ratio of y-unit to x-unit. Set ``auto`` to fill the position rectangle with data; ``equal`` for the same scaling for x and y.
+        It applies to all subplots.
     dpi: ``float``, optional, default: ``300.0``
         The resolution of the figure in dots-per-inch.
     return_fig: ``bool``, optional, default: ``False``
@@ -688,8 +702,12 @@ def spatial(
     >>> pg.spatial(data, attrs=['CD14', 'TRAC'], resolution='lowres')
     """
     assert f"X_{basis}" in data.obsm.keys(), f"'X_{basis}' coordinates do not exist!"
-    assert hasattr(data, 'img'), "The spatial image data are missing!"
-    assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
+
+    if data.img is None:
+        resolution = None
+    #assert data.img, "The spatial image data are missing!"
+    elif resolution:
+        assert resolution in data.img['image_id'].values, f"'{resolution}' image does not exist!"
 
     if attrs is not None:
         if not is_list_like(attrs):
@@ -699,10 +717,14 @@ def spatial(
 
     nattrs = len(attrs) if attrs is not None else 1
 
-    image_item = data.img.loc[data.img['image_id']==resolution]
-    image_obj = image_item['data'].iat[0]
-    scale_factor = image_item['scale_factor'].iat[0]
-    spot_radius = image_item['spot_diameter'].iat[0] * 0.5
+    if resolution:
+        image_item = data.img.loc[data.img['image_id']==resolution]
+        image_obj = image_item['data'].iat[0]
+        scale_factor = image_item['scale_factor'].iat[0]
+        spot_radius = image_item['spot_diameter'].iat[0] * 0.5
+    else:
+        scale_factor = None
+        spot_radius = None
 
     fig = scatter(
         data=data,
@@ -717,8 +739,12 @@ def spatial(
         ncols=ncols,
         dpi=dpi,
         alpha=alpha,
+        aspect=aspect,
         return_fig=True,
     )
+
+    if scale_factor is None:
+        scale_factor = 1.0
 
     coord_x = (data.obsm[f"X_{basis}"][:, 0].min() * scale_factor,
                data.obsm[f"X_{basis}"][:, 0].max() * scale_factor)
@@ -729,9 +755,11 @@ def spatial(
 
     for i in range(nattrs):
         ax = fig.axes[i]
-        ax.imshow(image_obj, alpha=alpha_img)
+        if resolution:
+            ax.imshow(image_obj, alpha=alpha_img)
         ax.set_xlim(coord_x[0]-margin_offset, coord_x[1]+margin_offset)
-        ax.set_ylim(coord_y[1]+margin_offset, coord_y[0]-margin_offset)
+        if resolution or y_flip:
+            ax.set_ylim(coord_y[1]+margin_offset, coord_y[0]-margin_offset)
 
     return fig if return_fig else None
 
