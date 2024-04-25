@@ -638,13 +638,17 @@ def spatial(
     basis: str = 'spatial',
     resolution: str = 'hires',
     cmaps: Optional[Union[str, List[str]]] = 'viridis',
+    restrictions: Optional[Union[str, List[str]]] = None,
+    show_background: Optional[bool] = False,
+    palettes: Optional[Union[str, List[str]]] = None,
     vmin: Optional[Union[float, List[float]]] = None,
     vmax: Optional[Union[float, List[float]]] = None,
     alpha: Union[float, List[float]] = 1.0,
     alpha_img: float = 1.0,
     nrows: Optional[int] = None,
     ncols: Optional[int] = None,
-    y_flip: bool = False,
+    y_flip: bool = True,
+    margin_percent: float = 0.05,
     aspect: Optional[str] = "equal",
     dpi: float = 300.0,
     return_fig: bool = False,
@@ -668,6 +672,12 @@ def spatial(
         Alternatively, if ``data.img`` does not exist, then no spatial image will be shown.
     cmaps: ``str`` or ``List[str]``, optional, default: ``viridis``
         The colormap(s) for plotting numeric attributes. The default ``viridis`` colormap theme follows the spatial plot function in SCANPY (``scanpy.pl.spatial``).
+    restrictions: ``str`` or ``List[str]``, optional, default: None
+        A list of restrictions to subset data for plotting. There are two types of restrictions: global restriction and attribute-specific restriction. Global restriction appiles to all attributes in ``attrs`` and takes the format of 'key:value,value...', or 'key:~value,value...'. This restriction selects cells with the ``data.obs[key]`` values belong to 'value,value...' (or not belong to if '~' shows). Attribute-specific restriction takes the format of 'attr:key:value,value...', or 'attr:key:~value,value...'. It only applies to one attribute 'attr'. If 'attr' and 'key' are the same, one can use '.' to replace 'key' (e.g. ``cluster_labels:.:value1,value2``).
+    show_background: ``bool``, optional, default: False
+        Only applicable if `restrictions` is set. By default, only data points selected are shown. If show_background is True, data points that are not selected will also be shown.
+    palettes: ``str`` or ``List[str]``, optional, default: None
+        Used for setting colors for every categories in categorical attributes. Each string in ``palettes`` takes the format of 'attr:color1,color2,...,colorn'. 'attr' is the categorical attribute and 'color1' - 'colorn' are the colors for each category in 'attr' (e.g. 'cluster_labels:black,blue,red,...,yellow'). If there is only one categorical attribute in 'attrs', ``palletes`` can be set as a single string and the 'attr' keyword can be omitted (e.g. "blue,yellow,red").
     vmin: ``float``, optional, default: ``None``
         Minimum value to show on a numeric scatter plot (feature plot).
     vmax: ``float``, optional, default: ``None``
@@ -683,6 +693,8 @@ def spatial(
     y_flip: ``bool``, optional, default: ``False``
         Set to ``True`` if flipping the y axis is needed. This is for the case when y-coordinate origin starts from the top.
         For 10x Visium data, if ``resolution`` is specified, this parameter is then ignored.
+    margin_percent: ``float``, optional, default: ``0.05``
+        The margin is set to ``margin_percent``*100% of the smaller edge of the image size in each of the 4 sides.
     aspect:``str``, optional (default: ``equal``)
         Set the aspect of the axis scaling, i.e. the ratio of y-unit to x-unit. Set ``auto`` to fill the position rectangle with data; ``equal`` for the same scaling for x and y.
         It applies to all subplots.
@@ -733,6 +745,9 @@ def spatial(
         marker_size=spot_radius,
         scale_factor=scale_factor,
         cmaps=cmaps,
+        restrictions=restrictions,
+        show_background=show_background,
+        palettes=palettes,
         vmin=vmin,
         vmax=vmax,
         nrows=nrows,
@@ -751,7 +766,7 @@ def spatial(
     coord_y = (data.obsm[f"X_{basis}"][:, 1].min() * scale_factor,
                data.obsm[f"X_{basis}"][:, 1].max() * scale_factor)
 
-    margin_offset = 50
+    margin_offset = min(np.abs(coord_x[1] - coord_x[0]), np.abs(coord_y[1] - coord_y[0])) * margin_percent
 
     for i in range(nattrs):
         ax = fig.axes[i]
@@ -760,6 +775,8 @@ def spatial(
         ax.set_xlim(coord_x[0]-margin_offset, coord_x[1]+margin_offset)
         if resolution or y_flip:
             ax.set_ylim(coord_y[1]+margin_offset, coord_y[0]-margin_offset)
+        else:
+            ax.set_ylim(coord_y[0]-margin_offset, coord_y[1]+margin_offset)
 
     return fig if return_fig else None
 
