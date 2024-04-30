@@ -9,6 +9,7 @@ from pandas.api.types import is_numeric_dtype, is_categorical_dtype, is_list_lik
 from scipy.stats import zscore
 from sklearn.metrics import adjusted_mutual_info_score
 from natsort import natsorted
+from numba import njit
 
 import anndata
 from pegasusio import UnimodalData, MultimodalData
@@ -1582,6 +1583,108 @@ def dotplot(
 
 def dendrogram(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    groupby: Optional[str] = None,
+    rep: str = "pca",
+    genes: Optional[List[str]] = None,
+    on_average: bool = True,
+    linkage_method: str = "ward",
+    panel_size: Tuple[float, float] = (10, 6),
+    label_rotation: float = 45,
+    orientation: str = 'top',
+    color_threshold: Optional[float] = None,
+    return_fig: bool = False,
+    dpi: float = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """
+    Generate a dendrogram on hierarchical clustering result
+
+    The metric in use is a Connection Specific Index (CSI) matrix ([Suo18]_, [Bass13]_) built from the correlations between ``groupby`` attribute levels regarding the ``rep`` embedding.
+
+    Parameters
+    ----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``AnnData`` object
+        Single cell expression data.
+    groupby: ``str``, optional, default: ``None``
+        If ``None``, use cell names (i.e. ``data.obs_names``) as the clustering labels. Otherwise, specify a categorical cell attribute to use, which must exist in ``data.obs``.
+    rep: ``str``, optional, default: ``pca``
+        Cell embedding to use. It only works when ``genes``is ``None``, and its key ``"X_"+rep`` must exist in ``data.obsm``. By default, use PCA coordinates.
+    genes: ``List[str]``, optional, default: ``None``
+        List of genes to use. Gene names must exist in ``data.var``. If set, use the counts in ``data.X`` for plotting; if ``None``, use the embedding specified in ``rep``.
+    on_average: ``bool``, optional, default: ``True``
+        If ``True``, clustering ``groupby`` levels based on their mean values. Only works when ``groupby`` is not ``None``.
+    linkage_method: ``str``, optional, default: ``ward``
+        Which linkage criterion to use, used by hierarchical clustering. Available options: ``ward`` (default), ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median``.
+        See `scipy linkage documentation`_ for details.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 6)``
+        The size (width, height) in inches of figure.
+    label_rotation: ``float``, optional, default: ``45``
+        Rotation angle of xtick labels.
+    orientation: ``str``, optional, default: ``top``
+        The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
+    color_threshold``float``, optional, default: ``None``
+        Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> pg.dendrogram(data, rep='pca', groupby='leiden_labels')
+    >>> pg.dendrogram(data, genes=data.var_names, on_average=False)
+
+    .. _scipy linkage documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html
+    .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
+    """
+    if genes is None:
+        embed_df = pd.DataFrame(X_from_rep(data, rep))
+    else:
+        embed_df = pd.DataFrame(slicing(data[:, genes].X))
+    embed_df.set_index(
+        data.obs_names if groupby is None else data.obs[groupby], inplace=True
+    )
+
+    if on_average:
+        embed_df = embed_df.groupby(level=0, observed=True).mean()
+    if not isinstance(embed_df.index.dtype, pd.CategoricalDtype):
+        embed_df.index = embed_df.index.astype("category")
+    corr_df = pd.DataFrame(np.corrcoef(embed_df, rowvar=True), columns=embed_df.index, index=embed_df.index)  # Faster than pandas corr, but only Pearson metric
+    corr_mat = corr_df.values
+
+    from pegasus.tools.utils import calc_csi_matrix
+
+    csi_mat = calc_csi_matrix(corr_mat)
+    csi_df = pd.DataFrame(csi_mat, columns=corr_df.index, index=corr_df.index)
+
+    from scipy.cluster.hierarchy import linkage, dendrogram
+    from scipy.spatial.distance import squareform
+
+    dissim_df = 1 - csi_df
+    Z = linkage(squareform(dissim_df), method=linkage_method, optimal_ordering=True)
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
+    dendrogram(
+        Z,
+        ax=ax,
+        labels=dissim_df.index,
+        color_threshold=color_threshold,
+        orientation=orientation,
+    )
+    fig.tight_layout()
+    plt.xticks(rotation=label_rotation)
+
+    return fig if return_fig else None
+
+
+def _dendrogram_obsolete(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     groupby: str,
     rep: str = 'pca',
     genes: Optional[List[str]] = None,
@@ -1684,7 +1787,7 @@ def dendrogram(
 
     clusterer = AgglomerativeClustering(
                     n_clusters=n_clusters,
-                    affinity=affinity,
+                    metric=affinity,
                     linkage=linkage,
                     compute_full_tree=compute_full_tree,
                     distance_threshold=distance_threshold
