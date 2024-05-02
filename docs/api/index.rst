@@ -85,6 +85,7 @@ Cluster Algorithms
     cluster
     louvain
     leiden
+    calc_dendrogram
     split_one_cluster
     spectral_louvain
     spectral_leiden
@@ -161,7 +162,7 @@ Plotting
     violin
     heatmap
     dotplot
-    dendrogram
+    plot_dendrogram
     hvfplot
     qcviolin
     volcano
