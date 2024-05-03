@@ -1627,8 +1627,8 @@ def plot_dendrogram(
 
     Examples
     --------
-    >>> pg.dendrogram(data, rep='pca', groupby='leiden_labels')
-    >>> pg.dendrogram(data, genes=data.var_names, on_average=False)
+    >>> pg.plot_dendrogram(data)
+    >>> pg.plot_dendrogram(data, graph_key="custom_dendrogram", label_rotation=90)
 
     .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
     """
