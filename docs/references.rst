@@ -1,6 +1,10 @@
 References
 ----------
 
+.. [Bass13] J. I. F. Bass, A. Diallo, J. Nelson, J. M. Soto, C. L. Myers, and A. J. Walhout,
+   "Using networks to measure similarity between genes: association index selection",
+   In `Nature methods <https://www.nature.com/articles/nmeth.2728>`_, 2013.
+
 .. [Belkina19] A. C. Belkina, C. O. Ciccolella, R. Anno, R. Halpert, J. Spidlen, and J. E. Snyder-Cappione,
    "Automated optimized parameters for T-distributed stochastic neighbor embedding improve visualization and analysis of large datasets",
    In `Nature Communications <https://www.nature.com/articles/s41467-019-13055-y>`__, 2019.
@@ -60,6 +64,10 @@ References
 .. [McInnes18] L. McInnes, J. Healy, and J. Melville,
    "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction",
    Preprint at `arXiv <https://arxiv.org/abs/1802.03426>`__, 2018.
+
+.. [Suo18] S. Suo, Q. Zhu, A. Saadatpour, L. Fei, G. Guo, and G. Yuan,
+   "Revealing the critical regulators of cell identity in the mouse cell atlas",
+   In `Cell reports <https://www.sciencedirect.com/science/article/pii/S2211124718316346>`_, 2018.
 
 .. [Traag19] V. A. Traag, L. Waltman, and N. J. van Eck,
    "From Louvain to Leiden: guaranteeing well-connected communities",

@@ -1,4 +1,5 @@
 import numpy as np
+from numba import njit
 import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse, csr_matrix, csc_matrix
@@ -253,3 +254,18 @@ def largest_variance_from_random_matrix(
     res = (quantiles[pval] * sigma + mu) / (ncells - 1)
 
     return res
+
+
+@njit(fastmath=True, cache=True)
+def calc_csi_matrix(corr_mat):
+    n = corr_mat.shape[0]
+    csi_mat = np.eye(n, n) * n
+    for i in range(n - 1):
+        for j in range(i + 1, n):
+            pcc = corr_mat[i, j]
+            csi_mat[i, j] = np.sum(
+                (corr_mat[i, :] < pcc - 0.05) & (corr_mat[j, :] < pcc - 0.05)
+            )
+            csi_mat[j, i] = csi_mat[i, j]
+    csi_mat /= n
+    return csi_mat

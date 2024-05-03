@@ -48,7 +48,16 @@ from .nearest_neighbors import (
 from .graph_operations import construct_graph
 from .diffusion_map import diffmap
 from .pseudotime import calc_pseudotime, infer_path
-from .clustering import jump_method, louvain, leiden, spectral_louvain, spectral_leiden, cluster, split_one_cluster
+from .clustering import (
+    jump_method,
+    louvain,
+    leiden,
+    spectral_louvain,
+    spectral_leiden,
+    cluster,
+    split_one_cluster,
+    calc_dendrogram,
+)
 from .net_regressor import net_train_and_predict
 from .visualization import (
     tsne,
@@ -57,7 +66,13 @@ from .visualization import (
     net_umap,
     net_fle,
 )
-from .diff_expr import de_analysis, markers, write_results_to_excel, cluster_specific_markers, run_de_analysis
+from .diff_expr import (
+    de_analysis,
+    markers,
+    write_results_to_excel,
+    cluster_specific_markers,
+    run_de_analysis,
+)
 from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import clone_subset
 from .signature_score import calc_signature_score, calculate_z_score

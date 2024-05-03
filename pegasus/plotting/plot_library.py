@@ -1580,7 +1580,78 @@ def dotplot(
     return fig if return_fig else None
 
 
-def dendrogram(
+def plot_dendrogram(
+    data: Union[MultimodalData, UnimodalData, anndata.AnnData],
+    graph_key: str = "dendrogram",
+    panel_size: Tuple[float, float] = (10, 6),
+    label_rotation: float = 45,
+    label_fontsize: int = 10,
+    orientation: str = 'top',
+    color_threshold: Optional[float] = None,
+    return_fig: bool = False,
+    dpi: float = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    """
+    Generate a dendrogram on hierarchical clustering result
+
+    The metric in use is a Connection Specific Index (CSI) matrix ([Suo18]_, [Bass13]_) built from the correlations between ``groupby`` attribute levels regarding the ``rep`` embedding.
+
+    Parameters
+    ----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``AnnData`` object
+        Single cell expression data.
+    graph_key: ``str``, optional, ``"dendrogram"``
+        Keyword in ``data.uns`` that stores the dendrogram configurations calculated by ``pegasus.calc_dendrogram`` function.
+    panel_size: ``Tuple[float, float]``, optional, default: ``(10, 6)``
+        The size (width, height) in inches of figure.
+    label_rotation: ``float``, optional, default: ``45``
+        The rotation angle of labels.
+    label_fontsize: ``int``, optional, default: ``10``
+        The font size of labels.
+    orientation: ``str``, optional, default: ``top``
+        The direction to plot the dendrogram. Available options are: ``top``, ``bottom``, ``left``, ``right``. See `scipy dendrogram documentation`_ for explanation.
+    color_threshold``float``, optional, default: ``None``
+        Threshold for coloring clusters. See `scipy dendrogram documentation`_ for explanation.
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+    dpi``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    Returns
+    -------
+
+    ``Figure`` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``
+
+    Examples
+    --------
+    >>> pg.plot_dendrogram(data)
+    >>> pg.plot_dendrogram(data, graph_key="custom_dendrogram", label_rotation=90)
+
+    .. _scipy dendrogram documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
+    """
+    assert graph_key in data.uns, f"Key {graph_key} not in data.uns! Either a wrong key name, or you haven't run calc_dendrogram function first."
+
+    from scipy.cluster.hierarchy import dendrogram
+
+    Z, labels = data.uns[graph_key]
+    fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
+    dendrogram(
+        Z,
+        ax=ax,
+        labels=labels,
+        color_threshold=color_threshold,
+        orientation=orientation,
+    )
+    fig.tight_layout()
+    plt.xticks(rotation=label_rotation, fontsize=label_fontsize)
+
+    return fig if return_fig else None
+
+
+def _dendrogram_obsolete(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     groupby: str,
     rep: str = 'pca',
@@ -1684,7 +1755,7 @@ def dendrogram(
 
     clusterer = AgglomerativeClustering(
                     n_clusters=n_clusters,
-                    affinity=affinity,
+                    metric=affinity,
                     linkage=linkage,
                     compute_full_tree=compute_full_tree,
                     distance_threshold=distance_threshold
