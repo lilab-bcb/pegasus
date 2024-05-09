@@ -760,6 +760,8 @@ def calc_dendrogram(
     linkage_method: ``str``, optional, default: ``ward``
         Which linkage criterion to use, used by hierarchical clustering. Available options: ``ward`` (default), ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median``.
         See `scipy linkage documentation`_ for details.
+    res_key: ``str``, optional, default: ``dendrogram``
+        Key name in ``data.uns`` field to store the calculated dendrogram information, which will be used by ``plot_dendrogram`` function for plotting.
 
     Returns
     -------
@@ -820,6 +822,7 @@ def calc_dendrogram(
     from scipy.spatial.distance import squareform
 
     dissim_df = 1 - csi_df
+    np.fill_diagonal(dissim_df.to_numpy(), 0)    # Enforce main diagonal to be 0 to pass squareform requirement
     Z = linkage(squareform(dissim_df), method=linkage_method, optimal_ordering=True)
 
     data.uns[res_key] = (Z, dissim_df.index.values.astype(str))
