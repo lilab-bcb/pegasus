@@ -2234,6 +2234,7 @@ def wordcloud(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     factor: int,
     max_words: Optional[int] = 20,
+    features: Optional[str] = "highly_variable_features",
     random_state: Optional[int] = 0,
     colormap: Optional[str] = "hsv",
     width: Optional[int] = 800,
@@ -2254,6 +2255,8 @@ def wordcloud(
         Which factor to plot. factor starts from 0.
     max_words: ``int``, optional, default: 20
         Maximum number of genes to show in the image.
+    features: ``str``, optional, default: ``highly_variable_features``
+        Features selected for NMF computation.
     random_state: ``int``, optional, default: 0
         Random seed passing to WordCloud function.
     colormap: ``str``, optional, default: ``hsv``
@@ -2280,9 +2283,9 @@ def wordcloud(
     >>> fig = pg.wordcloud(data, factor=0)
     """
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
-
+    
     assert 'W' in data.uns
-    hvg = data.var_names[data.var['highly_variable_features']]
+    hvg = data.var_names[data.var[features]]
     word_dict = {}
     for i in range(hvg.size):
         word_dict[hvg[i]] = data.uns['W'][i, factor]

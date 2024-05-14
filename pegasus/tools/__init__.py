@@ -62,7 +62,7 @@ from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import clone_subset
 from .signature_score import calc_signature_score, calculate_z_score
 from .doublet_detection import infer_doublets, mark_doublets
-from .nmf import nmf, integrative_nmf
+from .nmf import nmf, integrative_nmf, find_nmf_programs
 from .pseudobulk import pseudobulk, deseq2
 from .fgsea import fgsea, write_fgsea_results_to_excel
 from .scvitools import (
