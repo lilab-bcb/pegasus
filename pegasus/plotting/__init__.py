@@ -6,7 +6,7 @@ from .plot_library import (
     violin,
     heatmap,
     dotplot,
-    dendrogram,
+    plot_dendrogram,
     hvfplot,
     qcviolin,
     volcano,

@@ -1,15 +1,17 @@
 import time
 import numpy as np
 import pandas as pd
+from anndata import AnnData
 from pandas.api.types import is_categorical_dtype
-from pegasusio import MultimodalData
+from pegasusio import MultimodalData, UnimodalData
 from natsort import natsorted
 
 from threadpoolctl import threadpool_limits
+from scipy.sparse import issparse
 from sklearn.cluster import KMeans
 from typing import List, Optional, Union
 
-from pegasus.tools import eff_n_jobs, construct_graph, calc_stat_per_batch
+from pegasus.tools import eff_n_jobs, construct_graph, calc_stat_per_batch, X_from_rep, slicing
 
 import logging
 logger = logging.getLogger(__name__)
@@ -722,3 +724,105 @@ def split_one_cluster(
     data.obs[res_label] = pd.Categorical(values = new_clust, categories = np.concatenate((cats[0:idx_cat], np.array(cats_sub), cats[idx_cat+1:])))
     data.register_attr(res_label, "cluster")
     del tmpdat
+
+
+@timer(logger=logger)
+def calc_dendrogram(
+    data: Union[MultimodalData, UnimodalData, AnnData],
+    groupby: str = "obs",
+    rep: Optional[str] = "pca",
+    genes: Optional[List[str]] = None,
+    on_average: bool = True,
+    linkage_method: str = "ward",
+    res_key: str = "dendrogram",
+) -> None:
+    """
+    Cluster data using hierarchical clustering algorithm.
+
+    The metric in use is a Connection Specific Index (CSI) matrix ([Suo18]_, [Bass13]_) built from the correlations between ``groupby`` attribute levels regarding the ``rep`` embedding.
+
+    Parameters
+    ----------
+
+    data: ``MultimodalData``, ``UnimodalData``, or ``AnnData`` object
+        Single cell expression data.
+    groupby: ``str``, optional, default: ``None``
+        Set cluster labels in use.
+        If ``"obs"``, use cell names (i.e. ``data.obs_names``); if ``"var"``, use feature names (i.e. ``data.var_names``).
+        Otherwise, specify a categorical cell or feature attribute to use, which must exist in ``data.obs`` or ``data.var``.
+    rep: ``str``, optional, default: ``pca``
+        Cell embedding to use. If specified, it only works when ``genes`` is ``None``, and its key ``"X_"+rep`` must exist in ``data.obsm``. By default, use PCA embedding.
+        If ``None``, use the current count matrix ``data.X``.
+    genes: ``List[str]``, optional, default: ``None``
+        List of genes to use. Gene names must exist in ``data.var``. If set, use the counts in ``data.X`` for plotting; if ``None``, use the embedding specified in ``rep``.
+    on_average: ``bool``, optional, default: ``True``
+        If ``True``, clustering ``groupby`` levels based on their mean values. Only works when ``groupby`` is not ``None``.
+    linkage_method: ``str``, optional, default: ``ward``
+        Which linkage criterion to use, used by hierarchical clustering. Available options: ``ward`` (default), ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median``.
+        See `scipy linkage documentation`_ for details.
+    res_key: ``str``, optional, default: ``dendrogram``
+        Key name in ``data.uns`` field to store the calculated dendrogram information, which will be used by ``plot_dendrogram`` function for plotting.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.uns``:
+        * ``data.uns[res_key]``: A tuple of the calculated linkage matrix and its corresponding labels.
+
+    Examples
+    --------
+    >>> pg.calc_dendrogram(data, groupby='leiden_labels')
+    >>> pg.calc_dendrogram(data, genes=['CD4', 'CD8A', 'CD8B'], on_average=False)
+    >>> pg.calc_dendrogram(data, groupby="var", rep=None, on_average=False)
+
+    .. _scipy linkage documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html
+    """
+    # Set up embedding or count matrix to use
+    if genes is None:
+        if rep:
+            embed_df = pd.DataFrame(X_from_rep(data, rep))
+        else:
+            embed_df = pd.DataFrame(data.X.toarray() if issparse(data.X) else data.X)
+    else:
+        embed_df = pd.DataFrame(slicing(data[:, genes].X))
+
+    # Set up index
+    if groupby == "obs":
+        indices = data.obs_names
+    elif groupby == "var":
+        embed_df = embed_df.T
+        indices = data.var_names
+    elif groupby in data.obs:
+        indices = data.obs[groupby]
+    elif groupby in data.var:
+        embed_df = embed_df.T
+        indices = data.var[groupby]
+    else:
+        raise Exception(f"The groupby key {groupby} doesn't exist in data.obs or data.var!")
+    embed_df.set_index(indices, inplace=True)
+
+    # Use group mean if on_average is True
+    if on_average:
+        embed_df = embed_df.groupby(level=0, observed=True).mean()
+    if not isinstance(embed_df.index.dtype, pd.CategoricalDtype):
+        embed_df.index = embed_df.index.astype("category")
+
+    # Calculate Pearson's correlation between cluster labels
+    corr_df = pd.DataFrame(np.corrcoef(embed_df, rowvar=True), columns=embed_df.index, index=embed_df.index)  # Faster than pandas corr
+    corr_mat = corr_df.values
+
+    from pegasus.tools.utils import calc_csi_matrix
+
+    # Calculate CSI matrix
+    csi_mat = calc_csi_matrix(corr_mat)
+    csi_df = pd.DataFrame(csi_mat, columns=corr_df.index, index=corr_df.index)
+
+    from scipy.cluster.hierarchy import linkage
+    from scipy.spatial.distance import squareform
+
+    dissim_df = 1 - csi_df
+    np.fill_diagonal(dissim_df.to_numpy(), 0)    # Enforce main diagonal to be 0 to pass squareform requirement
+    Z = linkage(squareform(dissim_df), method=linkage_method, optimal_ordering=True)
+
+    data.uns[res_key] = (Z, dissim_df.index.values.astype(str))
