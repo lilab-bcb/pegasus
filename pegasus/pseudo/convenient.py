@@ -49,7 +49,7 @@ def markers(
     if de_key not in pseudobulk.varm.keys():
         raise ValueError("Please run DE analysis first")
 
-    res_dict = {}    
+    res_dict = {}
     df = pd.DataFrame(data=pseudobulk.varm[de_key], index=pseudobulk.var_names)
     idx = df["padj"] <= alpha
 
@@ -239,7 +239,7 @@ def volcano(
         fontsize=8,
         ncol=4,
     )
-    for handle in legend.legendHandles: # adjust legend size
+    for handle in legend.legend_handles: # adjust legend size
         handle.set_sizes([50.0])
 
     ax.axhline(y = yconst, c = 'k', lw = 0.5, ls = '--')

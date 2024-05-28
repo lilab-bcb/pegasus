@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasusio import MultimodalData, UnimodalData, timer
+from pegasus.tools import eff_n_jobs
 from pandas.api.types import is_numeric_dtype
 from typing import Union, Optional, List, Tuple
 
@@ -158,11 +159,14 @@ def pseudobulk(
 
 @timer(logger=logger)
 def deseq2(
-    pseudobulk: UnimodalData,
-    design: str,
+    pseudobulk: Union[MultimodalData, UnimodalData],
+    design: Union[str, List[str]],
     contrast: Tuple[str, str, str],
+    backend: str = "pydeseq2",
     de_key: str = "deseq2",
     replaceOutliers: bool = True,
+    compute_all: bool = False,
+    n_jobs: int = -1,
 ) -> None:
     """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data. This function calls R package DESeq2, requiring DESeq2 in R installed.
 
@@ -172,18 +176,26 @@ def deseq2(
     ----------
     pseudobulk: ``UnimodalData``
         Pseudobulk data with rows for samples and columns for genes. If pseudobulk contains multiple matrices, DESeq2 will apply to all matrices.
-
-    design: ``str``
-        Design formula that will be passed to DESeq2
-
+    design: ``str`` or ``List[str]``
+        For ``pydeseq2`` backend, specify either a factor or a list of factors to be used as design variables.They must be all in ``pseudobulk.obs``.
+        For ``deseq2`` backend, specify the design formula that will be passed to DESeq2. E.g. ``~group+condition`` or ``~genotype+treatment+genotype:treatment``.
     contrast: ``Tuple[str, str, str]``
-        A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as numeritor of fold change, and a level as denominator of fold change.
+        A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as the test level (numeritor of fold change), and a level as the reference level (denominator of fold change).
+
+    backend: ``str``, optional, default: ``pydeseq2``
+        Specify which package to use as the backend for pseudobulk DE analysis.
+        By default, use ``PyDESeq2`` which is a purely Python implementation of DESeq2 method.
+        Alternatively, if specifying ``deseq2``, then use R package DESeq2, which requires ``rpy2`` package and R installation.
 
     de_key: ``str``, optional, default: ``"deseq2"``
-        Key name of DE analysis results stored. For cluster.X, stored key will be cluster.de_key
+        Key name of DE analysis results stored. For count matrix with name ``condition.X``, stored key will be ``condition.de_key``.
 
     replaceOutliers: ``bool``, optional, default: ``True``
-        If execute DESeq2's replaceOutliers step. If set to ``False``, we will set minReplicatesForReplace=Inf in ``DESeq`` function and set cooksCutoff=False in ``results`` function.
+        If execute DESeq2's replaceOutliers step.
+        For ``deseq2`` backend, if set to ``False``, we will set ``minReplicatesForReplace=Inf`` in ``DESeq`` function and set ``cooksCutoff=False`` in ``results`` function.
+
+    compute_all: ``bool``, optional, default: ``False``
+        If performing DE analysis on all count matrices. By default (``compute_all=False``), only apply DE analysis to the default count matrix ``counts``.
 
     Returns
     -------
@@ -191,12 +203,83 @@ def deseq2(
 
     Update ``pseudobulk.varm``:
         ``pseudobulk.varm[de_key]``: DE analysis result for pseudo-bulk count matrix.
-        ``pseudobulk.varm[cluster.de_key]``: DE results for cluster-specific pseudo-bulk count matrices.
+        (Optional) ``pseudobulk.varm[condition.de_key]``: DE results for each condition-specific pseudo-bulk count matrices.
 
     Examples
     --------
-    >>> pg.deseq2(pseudobulk, '~gender', ('gender', 'female', 'male'))
+    >>> pg.deseq2(pseudobulk, 'gender', ('gender', 'female', 'male'))
+    >>> pg.deseq2(pseudobulk, '~gender', ('gender', 'female', 'male'), backend='deseq2')
     """
+    mat_keys = ['counts'] if not compute_all else pseudobulk.list_keys()
+    for mat_key in mat_keys:
+        if backend == "pydeseq2":
+            if isinstance(design, str) and design.startswith("~"):
+                design = design[1:]
+            run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, refit_cooks=replaceOutliers, n_jobs=n_jobs)
+        else:
+            if isinstance(design, str) and not design.startswith("~"):
+                design = "~" + design
+            run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, replaceOutliers=replaceOutliers)
+
+
+def run_pydeseq2(
+    pseudobulk,
+    mat_key,
+    design_factors,
+    contrast,
+    de_key,
+    refit_cooks,
+    n_jobs,
+) -> None:
+    try:
+        from pydeseq2.dds import DeseqDataSet
+        from pydeseq2.default_inference import DefaultInference
+        from pydeseq2.ds import DeseqStats
+    except ModuleNotFoundError as e:
+        import sys
+        logger.error(f"{e}\nNeed pydeseq2! Try 'pip install deseq2'.")
+        sys.exit(-1)
+
+    if isinstance(design_factors, str) and design_factors.startswith("~"):
+        design_factors = design_factors[1:]
+
+    counts_df = pd.DataFrame(pseudobulk.get_matrix(mat_key), index=pseudobulk.obs_names, columns=pseudobulk.var_names)
+    metadata = pseudobulk.obs
+
+    n_cpus = eff_n_jobs(n_jobs)
+    inference = DefaultInference(n_cpus=n_cpus)
+    dds = DeseqDataSet(
+        counts=counts_df,
+        metadata=metadata,
+        design_factors=design_factors,
+        refit_cooks=refit_cooks,
+        inference=inference,
+        quiet=True,
+    )
+    dds.deseq2()
+
+    stat_res = DeseqStats(
+        dds,
+        contrast=contrast,
+        cooks_filter=refit_cooks,  # TODO: figure out if it's related to cooksCutoff parameter of results function in DESeq2
+        inference=inference,
+        quiet=True,
+    )
+    stat_res.summary()
+    res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
+    res_df = stat_res.results_df
+    res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
+    pseudobulk.varm[res_key] = res_df.to_records(index=False)
+
+
+def run_rdeseq2(
+    pseudobulk: UnimodalData,
+    mat_key: str,
+    design: str,
+    contrast: Tuple[str, str, str],
+    de_key: str = "deseq2",
+    replaceOutliers: bool = True,
+) -> None:
     try:
         import rpy2.robjects as ro
         from rpy2.robjects import pandas2ri, numpy2ri, Formula
@@ -223,19 +306,18 @@ def deseq2(
     import math
     to_dataframe = ro.r('function(x) data.frame(x)')
 
-    for mat_key in pseudobulk.list_keys():
-        with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
-            dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
+    with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
+        dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
 
-        if replaceOutliers:
-            dds = deseq2.DESeq(dds)
-            res= deseq2.results(dds, contrast=ro.StrVector(contrast))
-        else:
-            dds = deseq2.DESeq(dds, minReplicatesForReplace=math.inf)
-            res= deseq2.results(dds, contrast=ro.StrVector(contrast), cooksCutoff=False)
-        with localconverter(ro.default_converter + pandas2ri.converter):
-          res_df = ro.conversion.rpy2py(to_dataframe(res))
-          res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
+    if replaceOutliers:
+        dds = deseq2.DESeq(dds)
+        res= deseq2.results(dds, contrast=ro.StrVector(contrast))
+    else:
+        dds = deseq2.DESeq(dds, minReplicatesForReplace=math.inf)
+        res= deseq2.results(dds, contrast=ro.StrVector(contrast), cooksCutoff=False)
+    with localconverter(ro.default_converter + pandas2ri.converter):
+      res_df = ro.conversion.rpy2py(to_dataframe(res))
+      res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
 
-        de_res_key = de_key if mat_key.find('.') < 0 else f"{mat_key.partition('.')[0]}.{de_key}"
-        pseudobulk.varm[de_res_key] = res_df.to_records(index=False)
+    res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
+    pseudobulk.varm[res_key] = res_df.to_records(index=False)
