@@ -588,7 +588,7 @@ def scatter_groups(
                             fontsize=legend_fontsize,
                             ncol=legend_ncol,
                         )
-                        for handle in legend.legendHandles:
+                        for handle in legend.legend_handles:
                             handle.set_sizes([300.0])
                     elif legend_loc == "on data":
                         texts = []
@@ -2091,7 +2091,7 @@ def volcano(
         fontsize=8,
         ncol=4,
     )
-    for handle in legend.legendHandles: # adjust legend size
+    for handle in legend.legend_handles: # adjust legend size
         handle.set_sizes([50.0])
 
     ax.axhline(y = yconst, c = 'k', lw = 0.5, ls = '--')
