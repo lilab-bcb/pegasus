@@ -353,7 +353,7 @@ def scatter(
                                 fontsize=legend_fontsize[attr_id],
                                 ncol=_get_legend_ncol(label_size, legend_ncol),
                             )
-                            for handle in legend.legendHandles:
+                            for handle in legend.legend_handles:
                                 handle.set_sizes([300.0 if scale_factor is None else 100.0])
                         elif legend_loc[attr_id] == "on data":
                             texts = []
