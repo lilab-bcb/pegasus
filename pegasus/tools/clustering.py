@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 from sklearn.cluster import KMeans
 from typing import List, Optional, Union
 
-from pegasus.tools import eff_n_jobs, construct_graph, calc_stat_per_batch, X_from_rep, slicing
+from pegasus.tools import eff_n_jobs, construct_graph, calc_stat_per_batch, update_rep, X_from_rep, slicing
 
 import logging
 logger = logging.getLogger(__name__)
@@ -780,10 +780,8 @@ def calc_dendrogram(
     """
     # Set up embedding or count matrix to use
     if genes is None:
-        if rep:
-            embed_df = pd.DataFrame(X_from_rep(data, rep))
-        else:
-            embed_df = pd.DataFrame(data.X.toarray() if issparse(data.X) else data.X)
+        rep = update_rep(rep)
+        embed_df = pd.DataFrame(X_from_rep(data, rep))
     else:
         embed_df = pd.DataFrame(slicing(data[:, genes].X))
 
