@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pegasusio import MultimodalData, UnimodalData, timer
-from pandas.api.types import is_categorical_dtype, is_numeric_dtype
+from pandas.api.types import is_numeric_dtype
 from typing import Union, Optional, List, Tuple
 
 
@@ -30,10 +30,10 @@ def get_pseudobulk_count(X, df, attr, bulk_list):
 @timer(logger=logger)
 def pseudobulk(
     data: MultimodalData,
-    sample: str,
+    groupby: str,
     attrs: Optional[Union[List[str], str]] = None,
     mat_key: Optional[str] = "counts",
-    cluster: Optional[str] = None,
+    condition: Optional[str] = None,
 ) -> UnimodalData:
     """Generate Pseudo-bulk count matrices.
 
@@ -42,7 +42,7 @@ def pseudobulk(
     data: ``MultimodalData`` or ``UnimodalData`` object
         Annotated data matrix with rows for cells and columns for genes.
 
-    sample: ``str``
+    groupby: ``str``
         Specify the cell attribute used for aggregating pseudo-bulk data.
         Key must exist in ``data.obs``.
 
@@ -56,40 +56,37 @@ def pseudobulk(
         Specify the single-cell count matrix used for aggregating pseudo-bulk counts:
         If specified, use the count matrix with key ``mat_key`` from matrices of ``data``; otherwise, default is ``counts``.
 
-    cluster: ``str``, optional, default: ``None``
-        If set, additionally generate pseudo-bulk matrices per cluster specified in ``data.obs[cluster]``.
+    condition: ``str``, optional, default: ``None``
+        If set, additionally generate pseudo-bulk matrices per condition specified in ``data.obs[condition]``.
 
     Returns
     -------
-    A UnimodalData object ``udata`` containing pseudo-bulk information:
+    A MultimodalData object ``mdata`` containing pseudo-bulk information:
         * It has the following count matrices:
 
           * ``X``: The pseudo-bulk count matrix over all cells.
-          * If ``cluster`` is set, a number of pseudo-bulk count matrices of cells belonging to the clusters, respectively.
-        * ``udata.obs``: It contains pseudo-bulk attributes aggregated from the corresponding single-cell attributes.
-        * ``udata.var``: Gene names and Ensembl IDs are maintained.
-
-    Update ``data``:
-        * Add the returned UnimodalData object above to ``data`` with key ``<sample>-pseudobulk``, where ``<sample>`` is replaced by the actual value of ``sample`` argument.
+          * If ``condition`` is set, add additional pseudo-bulk count matrices of cells restricted to each condition, respectively.
+        * ``mdata.obs``: It contains pseudo-bulk attributes aggregated from the corresponding single-cell attributes.
+        * ``mdata.var``: Gene names and Ensembl IDs are maintained.
 
     Examples
     --------
-    >>> pg.pseudobulk(data, sample="Channel")
+    >>> pg.pseudobulk(data, groupby="Channel")
     """
     X = data.get_matrix(mat_key)
 
-    assert sample in data.obs.columns, f"Sample key '{sample}' must exist in data.obs!"
+    assert groupby in data.obs.columns, f"Sample key '{groupby}' must exist in data.obs!"
 
     sample_vec = (
-        data.obs[sample]
-        if is_categorical_dtype(data.obs[sample])
-        else data.obs[sample].astype("category")
+        data.obs[groupby]
+        if isinstance(data.obs[groupby].dtype, pd.CategoricalDtype)
+        else data.obs[groupby].astype("category")
     )
     bulk_list = sample_vec.cat.categories
 
     df_barcode = data.obs.reset_index()
 
-    mat_dict = {"counts": get_pseudobulk_count(X, df_barcode, sample, bulk_list)}
+    mat_dict = {"counts": get_pseudobulk_count(X, df_barcode, groupby, bulk_list)}
 
     # Generate pseudo-bulk attributes if specified
     bulk_attr_list = []
@@ -103,7 +100,7 @@ def pseudobulk(
             ), f"Cell attribute key '{attr}' must exist in data.obs!"
 
     for bulk in bulk_list:
-        df_bulk = df_barcode.loc[df_barcode[sample] == bulk]
+        df_bulk = df_barcode.loc[df_barcode[groupby] == bulk]
         if attrs is not None:
             bulk_attr = df_bulk[attrs].apply(set_bulk_value, axis=0)
             bulk_attr["barcodekey"] = bulk
@@ -112,34 +109,37 @@ def pseudobulk(
         bulk_attr_list.append(bulk_attr)
 
     df_pseudobulk = pd.DataFrame(bulk_attr_list)
+    for col in df_pseudobulk.columns:
+        if col == 'barcodekey':
+            continue
+        if not is_numeric_dtype(df_pseudobulk[col]):
+            df_pseudobulk[col] = pd.Categorical(df_pseudobulk[col])
 
     df_feature = pd.DataFrame(index=data.var_names)
     if "featureid" in data.var.columns:
         df_feature["featureid"] = data.var["featureid"]
 
-    if cluster is not None:
+    if condition is not None:
         assert (
-            cluster in data.obs.columns
-        ), f"Cluster key '{attr}' must exist in data.obs!"
+            condition in data.obs.columns
+        ), f"Condition key '{attr}' must exist in data.obs!"
 
-        cluster_list = data.obs[cluster].astype("category").cat.categories
+        cluster_list = data.obs[condition].astype("category").cat.categories
         for cls in cluster_list:
-            mat_dict[f"{cluster}_{cls}.X"] = get_pseudobulk_count(
-                X, df_barcode.loc[df_barcode[cluster] == cls], sample, bulk_list
+            mat_dict[f"{condition}_{cls}.X"] = get_pseudobulk_count(
+                X, df_barcode.loc[df_barcode[condition] == cls], groupby, bulk_list
             )
 
     udata = UnimodalData(
         barcode_metadata=df_pseudobulk,
         feature_metadata=df_feature,
         matrices=mat_dict,
-        genome=sample,
+        genome=groupby,
         modality="pseudobulk",
         cur_matrix="counts",
     )
 
-    data.add_data(udata)
-
-    return udata
+    return MultimodalData(udata)
 
 
 @timer(logger=logger)
@@ -164,7 +164,7 @@ def deseq2(
 
     contrast: ``Tuple[str, str, str]``
         A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as numeritor of fold change, and a level as denominator of fold change.
-    
+
     de_key: ``str``, optional, default: ``"deseq2"``
         Key name of DE analysis results stored. For cluster.X, stored key will be cluster.de_key
 
@@ -202,17 +202,17 @@ def deseq2(
                 if (!require("BiocManager", quietly = TRUE))
                     install.packages("BiocManager")
                 BiocManager::install("DESeq2")"""
-                
+
         logger.error(text)
         sys.exit(-1)
 
-    import math    
+    import math
     to_dataframe = ro.r('function(x) data.frame(x)')
 
     for mat_key in pseudobulk.list_keys():
         with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
             dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
-        
+
         if replaceOutliers:
             dds = deseq2.DESeq(dds)
             res= deseq2.results(dds, contrast=ro.StrVector(contrast))
