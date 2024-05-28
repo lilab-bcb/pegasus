@@ -34,6 +34,7 @@ def pseudobulk(
     attrs: Optional[Union[List[str], str]] = None,
     mat_key: Optional[str] = "counts",
     condition: Optional[str] = None,
+    observed: bool = True,
 ) -> UnimodalData:
     """Generate Pseudo-bulk count matrices.
 
@@ -59,6 +60,10 @@ def pseudobulk(
     condition: ``str``, optional, default: ``None``
         If set, additionally generate pseudo-bulk matrices per condition specified in ``data.obs[condition]``.
 
+    observed: ``bool``, optional, default: ``True``
+        If True, only consider pseudo-bulks with non-zero cell counts in the input count matrix.
+        If False, also consider pseudo-bulks with no cell in the input count matrix, if exists.
+
     Returns
     -------
     A MultimodalData object ``mdata`` containing pseudo-bulk information:
@@ -82,7 +87,12 @@ def pseudobulk(
         if isinstance(data.obs[groupby].dtype, pd.CategoricalDtype)
         else data.obs[groupby].astype("category")
     )
-    bulk_list = sample_vec.cat.categories
+    if observed:
+        c = sample_vec.cat
+        c_uniq = c.codes.unique()
+        bulk_list = c.categories.take(np.sort(c_uniq[c_uniq != -1]))
+    else:
+        bulk_list = sample_vec.cat.categories
 
     df_barcode = data.obs.reset_index()
 
@@ -112,8 +122,12 @@ def pseudobulk(
     for col in df_pseudobulk.columns:
         if col == 'barcodekey':
             continue
-        if not is_numeric_dtype(df_pseudobulk[col]):
-            df_pseudobulk[col] = pd.Categorical(df_pseudobulk[col])
+        if isinstance(df_barcode[col].dtype, pd.CategoricalDtype):
+            c = df_barcode[col].cat
+            c_uniq = c.codes.unique()
+            ordering = c.categories.take(np.sort(c_uniq[c_uniq!=-1]))
+            cat_dtype = pd.CategoricalDtype(categories=ordering, ordered=c.ordered)
+            df_pseudobulk[col] = pd.Series(df_pseudobulk[col], dtype=cat_dtype)
 
     df_feature = pd.DataFrame(index=data.var_names)
     if "featureid" in data.var.columns:
