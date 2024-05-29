@@ -2355,7 +2355,7 @@ def wordcloud(
     >>> fig = pg.wordcloud(data, factor=0)
     """
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
-    
+
     assert 'W' in data.uns
     hvg = data.var_names[data.var[features]]
     word_dict = {}
@@ -2378,7 +2378,7 @@ def _make_one_gsea_plot(df, ax, color, size=10, fontsize=5):
         return None
     df_plot = df.sort_values(['Log Q', 'NES Abs'], ascending=False)
     df_plot = df_plot.iloc[0:size]
-    ax = sns.barplot(x='Log Q', y='pathway', data=df_plot, color=color, ax=ax)
+    ax = sns.barplot(x='Log Q', y='Term', data=df_plot, color=color, ax=ax)
     ax.set_xlabel('')
     ax.set_ylabel('')
     ax.tick_params(axis='y', labelsize=fontsize)
@@ -2428,15 +2428,16 @@ def plot_gsea(
     >>> fig = pg.plot_gsea(data, 'gsea_out', dpi = 500)
     """
     df = data.uns[gsea_keyword]
-    df = df[df['padj'] <= alpha].copy()
-    df['Log Q'] = -np.log10(df['padj'])
-    df['NES Abs'] = np.abs(df['NES'])
-    df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
+    df = df.reset_index()
+    df = df[df['fdr'] <= alpha].copy()
+    df['Log Q'] = -np.log10(df['fdr'])
+    df['NES Abs'] = np.abs(df['nes'])
+    df['Term'] = df['Term'].map(lambda x: ' '.join(x.split('_')))
 
     fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
-    df_up = df.loc[df['NES']>0][0:top_n]
+    df_up = df.loc[df['nes']>0][0:top_n]
     _make_one_gsea_plot(df_up, axes[0], color='red', fontsize=label_fontsize)
-    df_dn = df.loc[df['NES']<0][0:top_n]
+    df_dn = df.loc[df['nes']<0][0:top_n]
     _make_one_gsea_plot(df_dn, axes[1], color='green', fontsize=label_fontsize)
     axes[1].set_xlabel('-log10(q-value)')
 

@@ -144,7 +144,7 @@ def _run_blitzgsea(
 
     n_jobs = eff_n_jobs(n_jobs)
 
-    result = blitz.gsea(
+    result_df = blitz.gsea(
         signature=rank_df,
         library=library,
         min_size=min_size,
@@ -154,17 +154,8 @@ def _run_blitzgsea(
         center=center,
         **kwargs,
     )
-    # Rename column fdr to padj
-    result = result.reset_index()
-    result.rename(columns={
-        "Term": "pathway",
-        "fdr": "padj",
-        "nes": "NES",
-        "es": "ES",
-        }, inplace=True)
-    result.sort_values('padj', inplace=True)
-
-    data.uns[gsea_key] = result
+    result_df.sort_values('fdr', inplace=True)
+    data.uns[gsea_key] = result_df
 
 
 def _run_fgsea(
@@ -227,7 +218,17 @@ def _run_fgsea(
     )
     with localconverter(ro.default_converter + pandas2ri.converter):
         res_df = ro.conversion.rpy2py(unlist(res))
-    res_df.sort_values("padj", inplace=True)
+    # Make result data frame column names consistent with BlitzGSEA
+    res_df.rename(columns={
+        "pathway": "Term",
+        "padj": "fdr",
+        "ES": "es",
+        "NES": "nes",
+        "size": "geneset_size",
+        "leadingEdge": "leading_edge",
+    }, inplace=True)
+    res_df.sort_values("fdr", inplace=True)
+    res_df = res_df.set_index('Term')
     data.uns[gsea_key] = res_df
 
 
