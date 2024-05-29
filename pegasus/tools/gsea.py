@@ -4,52 +4,61 @@ logger = logging.getLogger(__name__)
 
 import pandas as pd
 
-from pegasus.tools import predefined_pathways, load_signatures_from_file
+from pegasus.tools import predefined_pathways, load_signatures_from_file, eff_n_jobs
 from pegasusio import MultimodalData, UnimodalData, timer
 from typing import Union, Optional
 
 
 @timer(logger=logger)
-def fgsea(
+def gsea(
     data: Union[MultimodalData, UnimodalData],
-    log2fc_key: str,
     pathways: str,
-    de_key: Optional[str] = "de_res",
-    minSize: Optional[int] = 15,
-    maxSize: Optional[int] = 500,
-    nproc: Optional[int] = 0,
-    seed: Optional[int] = 0,
-    fgsea_key: Optional[str] = "fgsea_out",
+    de_key: str = "de_res:stat",
+    method: str = "blitzgsea",
+    gsea_key: str = "gsea_out",
+    min_size: int = 5,
+    max_size: int = 4000,
+    n_jobs: int = 1,
+    seed: int = 0,
+    **kwargs,
 ) -> None:
-    """Perform Gene Set Enrichment Analysis using fGSEA. This function calls R package fGSEA, requiring fGSEA in R installed.
+    """Perform Gene Set Enrichment Analysis (GSEA).
 
     Parameters
     ----------
     data: Union[``MultimodalData``, ``UnimodalData``]
         Single-cell or pseudo-bulk data.
 
-    log2fc_key: ``str``
-        Key in pre-computed DE results representing log2 fold change.
+    rank_key: ``str``, optional, default: ``stat``
+        Key in pre-computed DE results representing gene ranks.
+        By default, use the test statistics in the pre-computed DE results.
 
     pathways: ``str``
         Either a string or a path to the gene set file in GMT format. If string, choosing from "hallmark" and "canonical_pathways" (MSigDB H and C2/CP).
 
-    de_key: ``str``, optional, default: ``"de_res"``
-        Key name of DE analysis results stored. data.varm[de_key] should contain a record array of DE results.
+    backend: ``str``, optional, default: ``blitzgsea``
+        Specify which package to use as the backend for GSEA.
+        By default, use ``blitzgsea`` which is a pure Python fast implementation of the pre-rank GSEA algorithm.
+        Alternatively, if specify ``fgsea``, then use R package ``fgsea``, which requires ``rpy2`` and R installation.
 
-    minSize: ``int``, optional, default: ``15``
+    de_key: ``str``, optional, default: ``de_res:stat``
+        Key name in the DE results to be used for gene signatures.
+        Specify in format ``df_key:attr``, where ``df_key`` must exist in ``data.varm``, and ``attr`` must exist in columns of ``data.varm[df_key]``.
+
+    minSize: ``int``, optional, default: ``5``
         Minimal size of a gene set to consider.
 
-    maxSize: ``int``, optional, default: ``500``
+    maxSize: ``int``, optional, default: ``4000``
         Maximal size of a gene set to consider.
 
-    nproc: ``int``, optional, default: ``0``
-        Numbr of processes for parallel computation. If nproc > 0, set BPPARAM.
+    n_jobs: ``int``, optional, default: ``1``
+        Number of threads for parallel computation.
+        If ``method='fgsea'``, set ``n_jobs=0`` by default to use one thread. If ``n_jobs>0``, set BPPARAM.
 
     seed: ``int``, optional, default: ``0``
         Random seed to make sure fGSEA results are reproducible.
 
-    fgsea_key: ``str``, optional, default: ``"fgsea_out"``
+    gsea_key: ``str``, optional, default: ``"gsea_out"``
         Key to use to store fGSEA results as a data frame.
 
     Returns
@@ -57,12 +66,117 @@ def fgsea(
     ``None``
 
     Update ``data.uns``:
-        ``data.uns[fgsea_key]``: fGSEA outputs sorted by padj.
+        ``data.uns[gsea_key]``: GSEA outputs sorted by ``padj``.
 
     Examples
     --------
-    >>> pg.fgsea(data, '3:log2FC', hallmark', fgsea_key='fgsea_res')
+    >>> pg.gsea(data, "de_res:stat", "hallmark", gsea_key='gsea_res')
     """
+    if method == "blitzgsea":
+        # center default is False, unless explicitly specified by users
+        center = False
+        if 'center' in kwargs:
+            center = kwargs['center']
+            del kwargs['center']
+
+        _run_blitzgsea(
+            data=data,
+            de_key=de_key,
+            pathways=pathways,
+            gsea_key=gsea_key,
+            min_size=min_size,
+            max_size=max_size,
+            n_jobs=n_jobs,
+            seed=seed,
+            center=center,
+            **kwargs,
+        )
+    else:
+        _run_fgsea(
+            data=data,
+            de_key=de_key,
+            pathways=pathways,
+            gsea_key=gsea_key,
+            minSize=min_size,
+            maxSize=max_size,
+            nproc=n_jobs,
+            seed=seed,
+        )
+
+
+def _split_de_key(de_key):
+    assert ":" in de_key, f"Key '{de_key}' does not satisfy format 'df_key:attr'!"
+    keys = de_key.split(":")
+    df_key = keys[0]
+    rank_key = ":".join(keys[1:])
+
+    return df_key, rank_key
+
+
+def _run_blitzgsea(
+    data,
+    de_key,
+    pathways,
+    gsea_key,
+    min_size,
+    max_size,
+    n_jobs,
+    seed,
+    center,
+    **kwargs,
+) -> None:
+    try:
+        import blitzgsea as blitz
+    except ModuleNotFoundError as e:
+        import sys
+        logger.error(f"{e}\nNeed blitzgsea! Try 'pip install blitzgsea'.")
+        sys.exit(-1)
+
+    df_key, rank_key = _split_de_key(de_key)
+    assert df_key in data.varm, f"Key '{df_key}' not in data.varm! Wrong key name or run DE analysis beforehand!"
+    assert rank_key in data.varm[df_key].dtype.names, f"Key '{rank_key}' not in DE result! Wrong key name specified!"
+
+    rank_df = pd.DataFrame(data.varm[df_key], index=data.var_names)[[rank_key]].reset_index()
+    rank_df.columns = [0, 1]
+    rank_df = rank_df.sort_values(by=1, ascending=False)
+
+    library = load_signatures_from_file(predefined_pathways.get(pathways, pathways))
+
+    n_jobs = eff_n_jobs(n_jobs)
+
+    result = blitz.gsea(
+        signature=rank_df,
+        library=library,
+        min_size=min_size,
+        max_size=max_size,
+        seed=seed,
+        processes=n_jobs,
+        center=center,
+        **kwargs,
+    )
+    # Rename column fdr to padj
+    result = result.reset_index()
+    result.rename(columns={
+        "Term": "pathway",
+        "fdr": "padj",
+        "nes": "NES",
+        "es": "ES",
+        }, inplace=True)
+    result.sort_values('padj', inplace=True)
+
+    data.uns[gsea_key] = result
+
+
+def _run_fgsea(
+    data: Union[MultimodalData, UnimodalData],
+    de_key: str,
+    pathways: str,
+    gsea_key: str,
+    minSize: int,
+    maxSize: int,
+    nproc: int,
+    seed: int,
+) -> None:
     try:
         import rpy2.robjects as ro
         from rpy2.robjects import pandas2ri
@@ -88,12 +202,21 @@ def fgsea(
         logger.error(text)
         sys.exit(-1)
 
+    nproc = eff_n_jobs(nproc)
+    if nproc == 1:
+        nproc = 0  # Avoid BPPARAM to just use 1 core
+
     ro.r(f"set.seed({seed})")
     pwdict = load_signatures_from_file(predefined_pathways.get(pathways, pathways))
     pathways_r = ro.ListVector(pwdict)
-    log2fc = ro.FloatVector(data.varm[de_key][log2fc_key])
-    log2fc.names = ro.StrVector(data.var_names)
-    res = fgsea.fgsea(pathways_r, log2fc, minSize=minSize, maxSize=maxSize, nproc=nproc)
+
+    df_key, rank_key = _split_de_key(de_key)
+    assert df_key in data.varm, f"Key '{df_key}' not in data.varm! Wrong key name or run DE analysis beforehand!"
+    assert rank_key in data.varm[df_key].dtype.names, f"Key '{rank_key}' not in DE result! Wrong key name specified!"
+
+    rank_vec = ro.FloatVector(data.varm[df_key][rank_key])
+    rank_vec.names = ro.StrVector(data.var_names)
+    res = fgsea.fgsea(pathways_r, rank_vec, minSize=minSize, maxSize=maxSize, nproc=nproc)
     unlist = ro.r(
         """
         function(df) {
@@ -105,11 +228,11 @@ def fgsea(
     with localconverter(ro.default_converter + pandas2ri.converter):
         res_df = ro.conversion.rpy2py(unlist(res))
     res_df.sort_values("padj", inplace=True)
-    data.uns[fgsea_key] = res_df
+    data.uns[gsea_key] = res_df
 
 
 @timer(logger=logger)
-def write_fgsea_results_to_excel(
+def write_gsea_results_to_excel(
     data: Union[MultimodalData, UnimodalData],
     output_file: str,
     fgsea_key: Optional[str] = "fgsea_out",

@@ -56,9 +56,9 @@ setup(
         torch=["torch", "harmony-pytorch", "nmf-torch"],
         forceatlas=["forceatlas2-python"],
         mkl=["mkl"],
-        rpy2=["rpy2"],
         scvi=["scvi-tools"],
-        all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "rpy2", "forceatlas2-python", "scvi-tools"]
+        pseudo=["pydeseq2", "blitzgsea"],
+        all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "forceatlas2-python", "scvi-tools", "pydeseq2", "blitzgsea"],
     ),
     python_requires="~=3.8",
     package_data={
