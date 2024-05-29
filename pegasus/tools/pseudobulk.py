@@ -153,7 +153,6 @@ def deseq2(
     contrast: Tuple[str, str, str],
     backend: str = "pydeseq2",
     de_key: str = "deseq2",
-    replace_outliers: bool = True,
     compute_all: bool = False,
     n_jobs: int = -1,
 ) -> None:
@@ -181,12 +180,11 @@ def deseq2(
     de_key: ``str``, optional, default: ``"deseq2"``
         Key name of DE analysis results stored. For count matrix with name ``condition.X``, stored key will be ``condition.de_key``.
 
-    replace_outliers: ``bool``, optional, default: ``True``
-        If execute DESeq2's replaceOutliers step.
-        For ``deseq2`` backend, if set to ``False``, we will set ``minReplicatesForReplace=Inf`` in ``DESeq`` function and set ``cooksCutoff=False`` in ``results`` function.
-
     compute_all: ``bool``, optional, default: ``False``
         If performing DE analysis on all count matrices. By default (``compute_all=False``), only apply DE analysis to the default count matrix ``counts``.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Number of threads to use. If ``-1``, use all physical CPU cores. This only works when ``backend="pydeseq2"`.
 
     Returns
     -------
@@ -204,22 +202,17 @@ def deseq2(
     mat_keys = ['counts'] if not compute_all else pseudobulk.list_keys()
     for mat_key in mat_keys:
         if backend == "pydeseq2":
-            if isinstance(design, str) and design.startswith("~"):
-                design = design[1:]
-            run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, refit_cooks=replace_outliers, n_jobs=n_jobs)
+            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, n_jobs=n_jobs)
         else:
-            if isinstance(design, str) and not design.startswith("~"):
-                design = "~" + design
-            run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, replaceOutliers=replace_outliers)
+            _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key)
 
 
-def run_pydeseq2(
+def _run_pydeseq2(
     pseudobulk,
     mat_key,
     design_factors,
     contrast,
     de_key,
-    refit_cooks,
     n_jobs,
 ) -> None:
     try:
@@ -243,7 +236,7 @@ def run_pydeseq2(
         counts=counts_df,
         metadata=metadata,
         design_factors=design_factors,
-        refit_cooks=refit_cooks,
+        refit_cooks=True,
         inference=inference,
         quiet=True,
     )
@@ -252,7 +245,7 @@ def run_pydeseq2(
     stat_res = DeseqStats(
         dds,
         contrast=contrast,
-        cooks_filter=refit_cooks,
+        cooks_filter=True,
         inference=inference,
         quiet=True,
     )
@@ -263,13 +256,12 @@ def run_pydeseq2(
     pseudobulk.varm[res_key] = res_df.to_records(index=False)
 
 
-def run_rdeseq2(
+def _run_rdeseq2(
     pseudobulk: UnimodalData,
     mat_key: str,
     design: str,
     contrast: Tuple[str, str, str],
     de_key: str = "deseq2",
-    replaceOutliers: bool = True,
 ) -> None:
     try:
         import rpy2.robjects as ro
@@ -300,12 +292,8 @@ def run_rdeseq2(
     with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
         dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
 
-    if replaceOutliers:
-        dds = deseq2.DESeq(dds)
-        res= deseq2.results(dds, contrast=ro.StrVector(contrast))
-    else:
-        dds = deseq2.DESeq(dds, minReplicatesForReplace=math.inf)
-        res= deseq2.results(dds, contrast=ro.StrVector(contrast), cooksCutoff=False)
+    dds = deseq2.DESeq(dds)
+    res= deseq2.results(dds, contrast=ro.StrVector(contrast))
     with localconverter(ro.default_converter + pandas2ri.converter):
       res_df = ro.conversion.rpy2py(to_dataframe(res))
       res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
