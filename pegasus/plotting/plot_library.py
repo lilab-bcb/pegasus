@@ -1636,7 +1636,8 @@ def plot_dendrogram(
 
     from scipy.cluster.hierarchy import dendrogram
 
-    Z, labels = data.uns[graph_key]
+    Z = data.uns[graph_key][0]
+    labels = data.uns[graph_key][1].index
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
     dendrogram(
         Z,

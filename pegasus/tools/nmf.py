@@ -300,7 +300,7 @@ def find_nmf_programs(
 
     Examples
     --------
-    >>> pg.find_nmf_programs(data)
+    >>> Hs, Ws, errs, coph_corrs = pg.find_nmf_programs(data)
     """
     X = _select_and_scale_features(data, features=features, space=space)
 

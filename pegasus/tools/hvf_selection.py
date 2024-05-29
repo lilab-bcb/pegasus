@@ -49,7 +49,8 @@ def select_hvf_pegasus(
     """ Select highly variable features using the pegasus method
     """
     if "robust" not in data.var:
-        raise ValueError("Please run `identify_robust_genes` to identify robust genes")
+        logger.warning("Robust genes are not identified. Mark all genes as robust.")
+        data.var["robust"] = True
 
     estimate_feature_statistics(data, batch)
 
