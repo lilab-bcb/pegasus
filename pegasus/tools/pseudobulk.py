@@ -35,7 +35,6 @@ def pseudobulk(
     attrs: Optional[Union[List[str], str]] = None,
     mat_key: Optional[str] = "counts",
     condition: Optional[str] = None,
-    observed: bool = True,
 ) -> UnimodalData:
     """Generate Pseudo-bulk count matrices.
 
@@ -61,10 +60,6 @@ def pseudobulk(
     condition: ``str``, optional, default: ``None``
         If set, additionally generate pseudo-bulk matrices per condition specified in ``data.obs[condition]``.
 
-    observed: ``bool``, optional, default: ``True``
-        If True, only consider pseudo-bulks with non-zero cell counts in the input count matrix.
-        If False, also consider pseudo-bulks with no cell in the input count matrix, if exists.
-
     Returns
     -------
     A MultimodalData object ``mdata`` containing pseudo-bulk information:
@@ -88,12 +83,7 @@ def pseudobulk(
         if isinstance(data.obs[groupby].dtype, pd.CategoricalDtype)
         else data.obs[groupby].astype("category")
     )
-    if observed:
-        c = sample_vec.cat
-        c_uniq = c.codes.unique()
-        bulk_list = c.categories.take(np.sort(c_uniq[c_uniq != -1]))
-    else:
-        bulk_list = sample_vec.cat.categories
+    bulk_list = sample_vec.cat.categories
 
     df_barcode = data.obs.reset_index()
 
@@ -124,11 +114,10 @@ def pseudobulk(
         if col == 'barcodekey':
             continue
         if isinstance(df_barcode[col].dtype, pd.CategoricalDtype):
-            c = df_barcode[col].cat
-            c_uniq = c.codes.unique()
-            ordering = c.categories.take(np.sort(c_uniq[c_uniq!=-1]))
-            cat_dtype = pd.CategoricalDtype(categories=ordering, ordered=c.ordered)
-            df_pseudobulk[col] = pd.Series(df_pseudobulk[col], dtype=cat_dtype)
+            c_old = df_barcode[col].cat
+            cat_dtype = pd.CategoricalDtype(categories=c_old.categories, ordered=c_old.ordered)
+            c_new = pd.Series(df_pseudobulk[col], dtype=cat_dtype).cat
+            df_pseudobulk[col] = c_new.remove_unused_categories()
 
     df_feature = pd.DataFrame(index=data.var_names)
     if "featureid" in data.var.columns:
@@ -164,11 +153,11 @@ def deseq2(
     contrast: Tuple[str, str, str],
     backend: str = "pydeseq2",
     de_key: str = "deseq2",
-    replaceOutliers: bool = True,
+    replace_outliers: bool = True,
     compute_all: bool = False,
     n_jobs: int = -1,
 ) -> None:
-    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data. This function calls R package DESeq2, requiring DESeq2 in R installed.
+    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data.
 
     DE analysis will be performed on all pseudo-bulk matrices in pseudobulk.
 
@@ -176,21 +165,23 @@ def deseq2(
     ----------
     pseudobulk: ``UnimodalData``
         Pseudobulk data with rows for samples and columns for genes. If pseudobulk contains multiple matrices, DESeq2 will apply to all matrices.
+
     design: ``str`` or ``List[str]``
         For ``pydeseq2`` backend, specify either a factor or a list of factors to be used as design variables.They must be all in ``pseudobulk.obs``.
         For ``deseq2`` backend, specify the design formula that will be passed to DESeq2. E.g. ``~group+condition`` or ``~genotype+treatment+genotype:treatment``.
+
     contrast: ``Tuple[str, str, str]``
         A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as the test level (numeritor of fold change), and a level as the reference level (denominator of fold change).
 
     backend: ``str``, optional, default: ``pydeseq2``
         Specify which package to use as the backend for pseudobulk DE analysis.
-        By default, use ``PyDESeq2`` which is a purely Python implementation of DESeq2 method.
+        By default, use ``PyDESeq2`` which is a pure Python implementation of DESeq2 method.
         Alternatively, if specifying ``deseq2``, then use R package DESeq2, which requires ``rpy2`` package and R installation.
 
     de_key: ``str``, optional, default: ``"deseq2"``
         Key name of DE analysis results stored. For count matrix with name ``condition.X``, stored key will be ``condition.de_key``.
 
-    replaceOutliers: ``bool``, optional, default: ``True``
+    replace_outliers: ``bool``, optional, default: ``True``
         If execute DESeq2's replaceOutliers step.
         For ``deseq2`` backend, if set to ``False``, we will set ``minReplicatesForReplace=Inf`` in ``DESeq`` function and set ``cooksCutoff=False`` in ``results`` function.
 
@@ -215,11 +206,11 @@ def deseq2(
         if backend == "pydeseq2":
             if isinstance(design, str) and design.startswith("~"):
                 design = design[1:]
-            run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, refit_cooks=replaceOutliers, n_jobs=n_jobs)
+            run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, refit_cooks=replace_outliers, n_jobs=n_jobs)
         else:
             if isinstance(design, str) and not design.startswith("~"):
                 design = "~" + design
-            run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, replaceOutliers=replaceOutliers)
+            run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, replaceOutliers=replace_outliers)
 
 
 def run_pydeseq2(
@@ -261,7 +252,7 @@ def run_pydeseq2(
     stat_res = DeseqStats(
         dds,
         contrast=contrast,
-        cooks_filter=refit_cooks,  # TODO: figure out if it's related to cooksCutoff parameter of results function in DESeq2
+        cooks_filter=refit_cooks,
         inference=inference,
         quiet=True,
     )
