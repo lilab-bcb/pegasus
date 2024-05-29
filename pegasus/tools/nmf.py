@@ -5,7 +5,7 @@ import numba
 from numba import njit
 from numba.typed import List as numbaList
 
-from typing import List, Union
+from typing import List, Union, Tuple
 from pegasusio import UnimodalData, MultimodalData
 from pegasus.tools import slicing, eff_n_jobs, calculate_nearest_neighbors, check_batch_key
 
@@ -204,6 +204,168 @@ def nmf(
     H = data.obsm["H"]
     data.obsm["X_nmf"] = H / np.linalg.norm(H, axis=0)
 
+
+@timer(logger=logger)
+def find_nmf_programs(
+    data: Union[MultimodalData, UnimodalData],
+    n_range: Tuple[int, int] = (4, 9),
+    n_rep: int = 10,
+    features: str = "highly_variable_features",
+    space: str = "log",
+    init: str = "random",
+    algo: str = "halsvar",
+    mode: str = "batch",
+    tol: float = 1e-4,
+    use_gpu: bool = False,
+    alpha_W: float = 0.0,
+    l1_ratio_W: float = 0.0,
+    alpha_H: float = 0.01,
+    l1_ratio_H: float = 1.0,
+    fp_precision: str = "float",
+    online_chunk_size: int = 5000,
+    n_jobs: int = -1,
+    random_state: int = 0,
+) -> Tuple[list, list, list, list]:
+    """Perform Nonnegative Matrix Factorization (NMF) to the data using Frobenius norm. Steps include select features and L2 normalization and NMF and L2 normalization of resulting coordinates.
+
+    The calculation uses `nmf-torch <https://github.com/lilab-bcb/nmf-torch>`_ package.
+
+    Parameters
+    ----------
+    data: ``pegasusio.MultimodalData``
+        Annotated data matrix with rows for cells and columns for genes.
+
+    n_range: ``Tuple[int, int]``, optional, default: ``(4, 9)``.
+        Number of ranks to iterate over.
+
+    n_rep: ``int``, optional, default: 10
+        Number of reruns for each value in n_range.
+
+    features: ``str``, optional, default: ``"highly_variable_features"``.
+        Keyword in ``data.var`` to specify features used for nmf.
+
+    max_value: ``float``, optional, default: ``None``.
+        The threshold to truncate data symmetrically after scaling. If ``None``, do not truncate.
+
+    space: ``str``, optional, default: ``log``.
+        Choose from ``log`` and ``expression``. ``log`` works on log-transformed expression space; ``expression`` works on the original expression space (normalized by total UMIs).
+
+    init: ``str``, optional, default: ``random``.
+        Method to initialize NMF. Options are 'random', 'nndsvd', 'nndsvda' and 'nndsvdar'.
+
+    algo: ``str``, optional, default: ``halsvar``
+        Choose from ``mu`` (Multiplicative Update), ``hals`` (Hierarchical Alternative Least Square), ``halsvar`` (HALS variant, use HALS to mimic ``bpp`` and can get better convergence for sometimes) and ``bpp`` (alternative non-negative least squares with Block Principal Pivoting method).
+
+    mode: ``str``, optional, default: ``batch``
+        Learning mode. Choose from ``batch`` and ``online``. Notice that ``online`` only works when ``beta=2.0``. For other beta loss, it switches back to ``batch`` method.
+
+    tol: ``float``, optional, default: ``1e-4``
+        The toleration used for convergence check.
+
+    use_gpu: ``bool``, optional, default: ``False``
+        If ``True``, use GPU if available. Otherwise, use CPU only.
+
+    alpha_W: ``float``, optional, default: ``0.0``
+        A numeric scale factor which multiplies the regularization terms related to W.
+        If zero or negative, no regularization regarding W is considered.
+
+    l1_ratio_W: ``float``, optional, default: ``0.0``
+        The ratio of L1 penalty on W, must be between 0 and 1. And thus the ratio of L2 penalty on W is (1 - l1_ratio_W).
+
+    alpha_H: ``float``, optional, default: ``0.01``
+        A numeric scale factor which multiplies the regularization terms related to H.
+        If zero or negative, no regularization regarding H is considered.
+
+    l1_ratio_H: ``float``, optional, default: ``1.0``
+        The ratio of L1 penalty on W, must be between 0 and 1. And thus the ratio of L2 penalty on H is (1 - l1_ratio_H).
+
+    fp_precision: ``str``, optional, default: ``float``
+        The numeric precision on the results. Choose from ``float`` and ``double``.
+
+    online_chunk_size: ``int``, optional, default: ``int``
+        The chunk / mini-batch size for online learning. Only works when ``mode='online'``.
+
+    n_jobs : `int`, optional (default: -1)
+        Number of threads to use. -1 refers to using all physical CPU cores.
+
+    random_state: ``int``, optional, default: ``0``.
+        Random seed to be set for reproducing result.
+
+    Returns
+    -------
+    Hs: best H for each k in n_range
+    Ws: best W for each k in n_range
+    errs: best err for each k in n_range
+    coph_corrs: cophenetic correlation coefficients for each k in n_range
+
+    Examples
+    --------
+    >>> Hs, Ws, errs, coph_corrs = pg.find_nmf_programs(data)
+    """
+    X = _select_and_scale_features(data, features=features, space=space)
+
+    try:
+        from nmf import run_nmf
+        from scipy.cluster.hierarchy import linkage, cophenet
+        from scipy.spatial.distance import squareform
+    except ImportError as e:
+        import sys
+        logger.error(f"{e}\nNeed NMF-Torch! Try 'pip install nmf-torch'.")
+        sys.exit(-1)
+
+    Hs = []
+    Ws = []
+    errs = []
+    coph_corrs = []
+
+    rng = np.random.default_rng(random_state)
+    BIG_NUM = 1000000000
+    mats_conn = np.zeros((n_rep, X.shape[0], X.shape[0])) # connectivity matrices
+
+    for k in range(n_range[0], n_range[1] + 1):
+        print(f"Begin k={k}:")
+
+        H_best = W_best = None
+        err_best = 1e100
+
+        for i in range(n_rep):
+            H, W, err = run_nmf(
+                X,
+                n_components=k,
+                init=init,
+                algo=algo,
+                mode=mode,
+                tol=tol,
+                n_jobs=eff_n_jobs(n_jobs),
+                random_state=rng.integers(BIG_NUM),
+                use_gpu=use_gpu,
+                alpha_W=alpha_W,
+                l1_ratio_W=l1_ratio_W,
+                alpha_H=alpha_H,
+                l1_ratio_H=l1_ratio_H,
+                fp_precision=fp_precision,
+                online_chunk_size=online_chunk_size,
+            )
+            
+            if err_best > err:
+                err_best = err
+                H_best = H
+                W_best = W
+
+            clusters = H.argmax(axis=1)
+            mats_conn[i] = clusters.reshape((-1, 1)) == clusters.reshape((1, -1))
+
+        consensus = mats_conn.mean(axis=0)
+        Y = squareform(1.0 - consensus)
+        Z = linkage(Y, method='average')
+        coph_corr = cophenet(Z, Y)[0]
+
+        Hs.append(H_best)
+        Ws.append(W_best)
+        errs.append(err_best)
+        coph_corrs.append(coph_corr)
+
+    return Hs, Ws, errs, coph_corrs
 
 
 @njit(fastmath=True, cache=True)

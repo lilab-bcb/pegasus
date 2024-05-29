@@ -285,9 +285,11 @@ def _get_palette(n_labels: int, with_background: bool = False, show_background: 
         palette = pegasus_20
     elif n_labels <= 26:
         palette = zeileis_26
-    else:
-        assert n_labels <= 64
+    elif n_labels <= 64:
         palette = godsnot_64
+    else:
+        n_rep = (n_labels - 1) // 20 + 1 # a cyclic color panel
+        palette = pegasus_20 * n_rep
 
     if with_background:
         palette = np.array(

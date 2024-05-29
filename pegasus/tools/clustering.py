@@ -823,4 +823,4 @@ def calc_dendrogram(
     np.fill_diagonal(dissim_df.to_numpy(), 0)    # Enforce main diagonal to be 0 to pass squareform requirement
     Z = linkage(squareform(dissim_df), method=linkage_method, optimal_ordering=True)
 
-    data.uns[res_key] = (Z, dissim_df.index.values.astype(str))
+    data.uns[res_key] = (Z, csi_df)    

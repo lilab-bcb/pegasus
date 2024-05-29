@@ -40,6 +40,7 @@ from .tools import (
     tsvd_transform,
     regress_out,
     nmf,
+    find_nmf_programs,
     integrative_nmf,
     highly_variable_features,
     run_harmony,
