@@ -2433,6 +2433,7 @@ def plot_gsea(
     df['Log Q'] = -np.log10(df['fdr'])
     df['NES Abs'] = np.abs(df['nes'])
     df['Term'] = df['Term'].map(lambda x: ' '.join(x.split('_')))
+    df = df.loc[~np.isinf(df['NES Abs'])].copy()
 
     fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
     df_up = df.loc[df['nes']>0][0:top_n]

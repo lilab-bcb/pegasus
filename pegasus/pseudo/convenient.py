@@ -206,11 +206,20 @@ def volcano(
         logger.warning("Please conduct DE test first!")
         return None
 
-    log2fc = de_res[fcstr]
-    pvals = de_res[pstr]
+    qvals = de_res[qstr]
+    # Ignore genes with q-value NaN
+    idx_select = np.where(~np.isnan(qvals))[0]
+    if idx_select.size == 0:
+        logger.warning("All genes have NaN adjusted p-values!")
+        return None
+    qvals = qvals[idx_select]
+    log2fc = de_res[fcstr][idx_select]
+    pvals = de_res[pstr][idx_select]
+    gene_names = pseudobulk.var_names[idx_select]
+
     pvals[pvals == 0.0] = 1e-45 # very small pvalue to avoid log10 0
     neglog10p = -np.log10(pvals)
-    yconst = min(neglog10p[de_res[qstr] <= qval_threshold])
+    yconst = min(neglog10p[qvals <= qval_threshold])
 
     from pegasus.plotting.plot_utils import _get_subplot_layouts
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi)
@@ -252,13 +261,13 @@ def volcano(
     posvec = np.argsort(log2fc[idx])[::-1][0:top_n]
     for pos in posvec:
         gid = idx[pos]
-        texts.append(ax.text(log2fc[gid], neglog10p[gid], pseudobulk.var_names[gid], fontsize=5))
+        texts.append(ax.text(log2fc[gid], neglog10p[gid], gene_names[gid], fontsize=5))
 
     idx = np.where(idxsig & (log2fc <= -log2fc_threshold))[0]
     posvec = np.argsort(log2fc[idx])[0:top_n]
     for pos in posvec:
         gid = idx[pos]
-        texts.append(ax.text(log2fc[gid], neglog10p[gid], pseudobulk.var_names[gid], fontsize=5))
+        texts.append(ax.text(log2fc[gid], neglog10p[gid], gene_names[gid], fontsize=5))
 
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))

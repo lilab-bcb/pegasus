@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import numpy as np
 import pandas as pd
 
 from pegasus.tools import predefined_pathways, load_signatures_from_file, eff_n_jobs
@@ -136,7 +137,9 @@ def _run_blitzgsea(
     assert df_key in data.varm, f"Key '{df_key}' not in data.varm! Wrong key name or run DE analysis beforehand!"
     assert rank_key in data.varm[df_key].dtype.names, f"Key '{rank_key}' not in DE result! Wrong key name specified!"
 
-    rank_df = pd.DataFrame(data.varm[df_key], index=data.var_names)[[rank_key]].reset_index()
+    rank_df = pd.DataFrame(data.varm[df_key], index=data.var_names)
+    rank_df = rank_df.loc[~np.isnan(rank_df['padj'])].copy()
+    rank_df = rank_df[[rank_key]].reset_index()
     rank_df.columns = [0, 1]
     rank_df = rank_df.sort_values(by=1, ascending=False)
 
@@ -205,8 +208,11 @@ def _run_fgsea(
     assert df_key in data.varm, f"Key '{df_key}' not in data.varm! Wrong key name or run DE analysis beforehand!"
     assert rank_key in data.varm[df_key].dtype.names, f"Key '{rank_key}' not in DE result! Wrong key name specified!"
 
-    rank_vec = ro.FloatVector(data.varm[df_key][rank_key])
-    rank_vec.names = ro.StrVector(data.var_names)
+    assert 'padj' in data.varm[df_key].dtype.names, f"No adjusted p-value exists in DE result!"
+    qvals = data.varm[df_key]['padj']
+    idx_select = np.where(~np.isnan(qvals))[0]  # Ignore genes with NaN adjusted p-values
+    rank_vec = ro.FloatVector(data.varm[df_key][rank_key][idx_select])
+    rank_vec.names = ro.StrVector(data.var_names[idx_select])
     res = fgsea.fgsea(pathways_r, rank_vec, minSize=minSize, maxSize=maxSize, nproc=nproc)
     unlist = ro.r(
         """

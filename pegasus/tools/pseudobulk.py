@@ -252,7 +252,6 @@ def _run_pydeseq2(
     stat_res.summary()
     res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
     res_df = stat_res.results_df
-    res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
     pseudobulk.varm[res_key] = res_df.to_records(index=False)
 
 
@@ -296,7 +295,6 @@ def _run_rdeseq2(
     res= deseq2.results(dds, contrast=ro.StrVector(contrast))
     with localconverter(ro.default_converter + pandas2ri.converter):
       res_df = ro.conversion.rpy2py(to_dataframe(res))
-      res_df.fillna({'log2FoldChange': 0.0, 'lfcSE': 0.0, 'stat': 0.0, 'pvalue': 1.0, 'padj': 1.0}, inplace=True)
 
     res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
     pseudobulk.varm[res_key] = res_df.to_records(index=False)
