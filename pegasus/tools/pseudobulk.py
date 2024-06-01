@@ -265,7 +265,7 @@ def _run_pydeseq2(
 
 
 def _run_rdeseq2(
-    pseudobulk: UnimodalData,
+    pseudobulk: Union[MultimodalData, UnimodalData],
     mat_key: str,
     design: str,
     contrast: Tuple[str, str, str],

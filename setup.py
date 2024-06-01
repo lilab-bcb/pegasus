@@ -58,7 +58,7 @@ setup(
         mkl=["mkl"],
         rpy2=["rpy2"],
         scvi=["scvi-tools"],
-        pseudobulk=["pydeseq2"]
+        pseudobulk=["pydeseq2"],
         all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "rpy2", "forceatlas2-python", "scvi-tools", "pydeseq2"]
     ),
     python_requires="~=3.8",
