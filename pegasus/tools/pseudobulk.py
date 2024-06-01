@@ -153,6 +153,7 @@ def deseq2(
     contrast: Tuple[str, str, str],
     backend: str = "pydeseq2",
     de_key: str = "deseq2",
+    alpha: float = 0.05,
     compute_all: bool = False,
     n_jobs: int = -1,
 ) -> None:
@@ -180,6 +181,9 @@ def deseq2(
     de_key: ``str``, optional, default: ``"deseq2"``
         Key name of DE analysis results stored. For count matrix with name ``condition.X``, stored key will be ``condition.de_key``.
 
+    alpha: ``float``, optional, default: ``0.05``
+        The significance cutoff (between 0 and 1) used for optimizing the independent filtering to calculate the adjusted p-values (FDR).
+
     compute_all: ``bool``, optional, default: ``False``
         If performing DE analysis on all count matrices. By default (``compute_all=False``), only apply DE analysis to the default count matrix ``counts``.
 
@@ -202,9 +206,9 @@ def deseq2(
     mat_keys = ['counts'] if not compute_all else pseudobulk.list_keys()
     for mat_key in mat_keys:
         if backend == "pydeseq2":
-            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, n_jobs=n_jobs)
+            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, alpha=alpha, n_jobs=n_jobs)
         else:
-            _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key)
+            _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, alpha=alpha)
 
 
 def _run_pydeseq2(
@@ -213,6 +217,7 @@ def _run_pydeseq2(
     design_factors,
     contrast,
     de_key,
+    alpha,
     n_jobs,
 ) -> None:
     try:
@@ -246,6 +251,7 @@ def _run_pydeseq2(
         dds,
         contrast=contrast,
         cooks_filter=True,
+        alpha=alpha,
         inference=inference,
         quiet=True,
     )
@@ -260,7 +266,8 @@ def _run_rdeseq2(
     mat_key: str,
     design: str,
     contrast: Tuple[str, str, str],
-    de_key: str = "deseq2",
+    de_key: str,
+    alpha,
 ) -> None:
     try:
         import rpy2.robjects as ro
@@ -292,7 +299,7 @@ def _run_rdeseq2(
         dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
 
     dds = deseq2.DESeq(dds)
-    res= deseq2.results(dds, contrast=ro.StrVector(contrast))
+    res= deseq2.results(dds, contrast=ro.StrVector(contrast), alpha=alpha)
     with localconverter(ro.default_converter + pandas2ri.converter):
       res_df = ro.conversion.rpy2py(to_dataframe(res))
 
