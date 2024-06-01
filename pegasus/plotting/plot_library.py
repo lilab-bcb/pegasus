@@ -353,7 +353,7 @@ def scatter(
                                 fontsize=legend_fontsize[attr_id],
                                 ncol=_get_legend_ncol(label_size, legend_ncol),
                             )
-                            for handle in legend.legendHandles:
+                            for handle in legend.legend_handles:
                                 handle.set_sizes([300.0 if scale_factor is None else 100.0])
                         elif legend_loc[attr_id] == "on data":
                             texts = []
@@ -588,7 +588,7 @@ def scatter_groups(
                             fontsize=legend_fontsize,
                             ncol=legend_ncol,
                         )
-                        for handle in legend.legendHandles:
+                        for handle in legend.legend_handles:
                             handle.set_sizes([300.0])
                     elif legend_loc == "on data":
                         texts = []
@@ -2092,7 +2092,7 @@ def volcano(
         fontsize=8,
         ncol=4,
     )
-    for handle in legend.legendHandles: # adjust legend size
+    for handle in legend.legend_handles: # adjust legend size
         handle.set_sizes([50.0])
 
     ax.axhline(y = yconst, c = 'k', lw = 0.5, ls = '--')
@@ -2355,7 +2355,7 @@ def wordcloud(
     >>> fig = pg.wordcloud(data, factor=0)
     """
     fig, ax = _get_subplot_layouts(panel_size=panel_size, dpi=dpi) # default nrows = 1 & ncols = 1
-    
+
     assert 'W' in data.uns
     hvg = data.var_names[data.var[features]]
     word_dict = {}
