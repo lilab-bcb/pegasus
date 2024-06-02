@@ -39,7 +39,7 @@ def gsea(
 
     method: ``str``, optional, default: ``blitzgsea``
         Specify which package to use as the backend for GSEA.
-        By default, use ``blitzgsea`` which is a pure Python fast implementation of the pre-rank GSEA algorithm.
+        By default, use ``blitzgsea`` which is a pure Python fast implementation of the pre-rank GSEA algorithm. Notice that ``permutations=2000``, ``symmetric=False`` and ``center=False`` are set by default. If you want to change these parameters, please reset in ``kwargs``. Details about BlitzGSEA optional parameters are `here <https://github.com/MaayanLab/blitzgsea/blob/main/README.md#optional-parameters>`_.
         Alternatively, if specify ``fgsea``, then use R package ``fgsea``, which requires ``rpy2`` and R installation.
 
     gsea_key: ``str``, optional, default: ``"gsea_out"``
@@ -72,10 +72,14 @@ def gsea(
     if method == "blitzgsea":
         # center default is False, unless explicitly specified by users
         permutations = 2000
+        symmetric = False
         center = False
         if 'permutations' in kwargs:
             permutations = kwargs['permutations']
             del kwargs['permutations']
+        if 'symmetric' in kwargs:
+            symmetric = kwargs['symmetric']
+            del kwargs['symmetric']
         if 'center' in kwargs:
             center = kwargs['center']
             del kwargs['center']
@@ -90,6 +94,7 @@ def gsea(
             n_jobs=n_jobs,
             seed=seed,
             permutations=permutations,
+            symmetric=symmetric,
             center=center,
             **kwargs,
         )
@@ -126,6 +131,7 @@ def _run_blitzgsea(
     n_jobs: int,
     seed: int,
     permutations: int,
+    symmetric: bool,
     center: bool,
     **kwargs,
 ) -> None:
@@ -166,6 +172,7 @@ def _run_blitzgsea(
         seed=seed,
         processes=n_jobs,
         permutations=permutations,
+        symmetric=symmetric,
         center=center,
         **kwargs,
     )
