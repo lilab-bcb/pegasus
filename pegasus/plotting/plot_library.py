@@ -797,6 +797,8 @@ def compo_plot(
     bottom: Optional[float] = 0.15,
     wspace: Optional[float] = 0.3,
     hspace: Optional[float] = 0.15,
+    xticklabels_rotation: Optional[float] = 90.0,
+    yticklabels_rotation: Optional[float] = 0.0,
     return_fig: Optional[bool] = False,
     dpi: Optional[float] = 300.0,
     **kwargs,
@@ -836,6 +838,10 @@ def compo_plot(
         This parameter sets the width between panels and also the figure's right margin as a fraction of panel's width (wspace * panel_size[0]).
     hspace: ``float``, optional (defualt: ``0.15``)
         This parameter sets the height between panels and also the figure's top margin as a fraction of panel's height (hspace * panel_size[1]).
+    xticklabels_rotation: Optional[float] = 90.0,
+        Rotation of x-axis tick labels.
+    yticklabels_rotation: Optional[float] = 0.0,
+        Rotation of y-axis tick labels.
     return_fig: ``bool``, optional, default: ``False``
         Return a ``Figure`` object if ``True``; return ``None`` otherwise.
     dpi: ``float``, optional, default: ``300.0``
@@ -904,14 +910,13 @@ def compo_plot(
     ax.grid(False)
     if not switch_axes:
         ax.set_xlabel(groupby_label)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=xticklabels_rotation, ha='center')
         ax.set_ylabel("Percentage")
     else:
         ax.set_xlabel("Percentage")
         ax.set_ylabel(groupby_label)
-    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
-
-    if len(max(df.index.astype(str), key=len)) >= 5:
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha='left')
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=yticklabels_rotation, ha='center')
+    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))        
 
     return fig if return_fig else None
 
