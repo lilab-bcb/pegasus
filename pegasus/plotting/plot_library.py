@@ -2378,14 +2378,14 @@ def _make_one_gsea_plot(df, ax, color, size=10, fontsize=5):
         return None
     df_plot = df.sort_values(['Log Q', 'NES Abs'], ascending=False)
     df_plot = df_plot.iloc[0:size]
-    ax = sns.barplot(x='Log Q', y='pathway', data=df_plot, color=color, ax=ax)
+    ax = sns.barplot(x='Log Q', y='Term', data=df_plot, color=color, ax=ax)
     ax.set_xlabel('')
     ax.set_ylabel('')
     ax.tick_params(axis='y', labelsize=fontsize)
 
 def plot_gsea(
     data: Union[MultimodalData, UnimodalData],
-    gsea_keyword: Optional[str] = "fgsea_out",
+    gsea_keyword: Optional[str] = "gsea_out",
     alpha: Optional[float] = 0.1,
     top_n: Optional[int] = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
@@ -2401,8 +2401,8 @@ def plot_gsea(
 
     data : ``UnimodalData`` or ``MultimodalData`` object
         The main data object.
-    gsea_keyword: ``str``, optional, default: ``"fgsea_out"``
-        Keyword in data.uns that stores the fGSEA results in pandas data frame.
+    gsea_keyword: ``str``, optional, default: ``"gsea_out"``
+        Keyword in data.uns that stores the GSEA results in pandas data frame.
     alpha: ``float``, optional, default: ``0.1``
         False discovery rate threshold.
     top_n: ``int``, optional, default: ``20``
@@ -2425,18 +2425,19 @@ def plot_gsea(
 
     Examples
     --------
-    >>> fig = pg.plot_gsea(data, 'fgsea_out', dpi = 500)
+    >>> fig = pg.plot_gsea(data, 'gsea_out', dpi = 500)
     """
-    df = data.uns[gsea_keyword]
-    df = df[df['padj'] <= alpha].copy()
-    df['Log Q'] = -np.log10(df['padj'])
-    df['NES Abs'] = np.abs(df['NES'])
-    df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
+    df = data.uns[gsea_keyword].reset_index()
+    df = df[df['fdr'] <= alpha].copy()
+    df['Log Q'] = -np.log10(df['fdr'])
+    df['NES Abs'] = np.abs(df['nes'])
+    df['Term'] = df['Term'].map(lambda x: ' '.join(x.split('_')))
+    df = df.loc[~np.isinf(df['NES Abs'])].copy()    # Ignore terms with -Inf or Inf NES scores.
 
     fig, axes = _get_subplot_layouts(panel_size=panel_size, nrows=2, dpi=dpi, left=0.6, hspace=0.2, sharey=False)
-    df_up = df.loc[df['NES']>0][0:top_n]
+    df_up = df.loc[df['nes']>0][0:top_n]
     _make_one_gsea_plot(df_up, axes[0], color='red', fontsize=label_fontsize)
-    df_dn = df.loc[df['NES']<0][0:top_n]
+    df_dn = df.loc[df['nes']<0][0:top_n]
     _make_one_gsea_plot(df_dn, axes[1], color='green', fontsize=label_fontsize)
     axes[1].set_xlabel('-log10(q-value)')
 
