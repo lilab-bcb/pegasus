@@ -176,7 +176,7 @@ def _run_blitzgsea(
         center=center,
         **kwargs,
     )
-    result_df.sort_values('fdr', inplace=True)
+    result_df.sort_values(['fdr', 'Term'], ascending=[True, True], inplace=True)
     data.uns[gsea_key] = result_df
 
 
