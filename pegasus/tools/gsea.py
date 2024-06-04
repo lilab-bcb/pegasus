@@ -259,7 +259,7 @@ def _run_fgsea(
         "size": "geneset_size",
         "leadingEdge": "leading_edge",
     }, inplace=True)
-    res_df.sort_values("fdr", inplace=True)
+    res_df.sort_values(["fdr", "Term"], ascending=[True, True], inplace=True)
     res_df = res_df.set_index("Term")
     data.uns[gsea_key] = res_df
 
