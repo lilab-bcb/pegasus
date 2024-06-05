@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import logging
 logger = logging.getLogger(__name__)
 
-from pegasusio import UnimodalData, timer
+from pegasusio import MultimodalData, timer
 from typing import Union, Dict, Optional, Tuple
 
 
 
 def markers(
-    pseudobulk: UnimodalData,
+    pseudobulk: MultimodalData,
     head: int = None,
     de_key: str = "deseq2",
     alpha: float = 0.05,
@@ -23,11 +23,11 @@ def markers(
 
     Parameters
     ----------
-    pseudobulk: ``UnimodalData``
+    pseudobulk: ``MultimodalData``
         Pseudobulk data matrix with rows for cells and columns for genes.
 
     head: ``int``, optional, default: ``None``
-        List only top ``head`` genes. If ``None``, show any DE genes.
+        List only top ``head`` genes. If ``None``, show all DE genes.
 
     de_key: ``str``, optional, default, ``deseq2``
         Keyword of DE result stored in ``data.varm``.
@@ -39,8 +39,8 @@ def markers(
     -------
     results: ``Dict[str, pd.DataFrame]``
         A Python dictionary containing DE results. This dictionary contains two keywords: 'up' and 'down'.
-        'up' refers to up-regulated genes, which should have 'log2FoldChange' > 0.5.
-        'down' refers to down-regulated genes, which should have 'log2FoldChange' < 0.5.
+        'up' refers to up-regulated genes, which should have 'log2FoldChange' > 0.5. The genes are ranked by Wald test statistics.
+        'down' refers to down-regulated genes, which should have 'log2FoldChange' < 0.5. The genes are ranked by Wald test statistics.
 
     Examples
     --------
@@ -53,11 +53,11 @@ def markers(
     df = pd.DataFrame(data=pseudobulk.varm[de_key], index=pseudobulk.var_names)
     idx = df["padj"] <= alpha
 
-    idx_up = idx & (df["log2FoldChange"].values > 0.0)
-    df_up = df.loc[idx_up].sort_values(by="log2FoldChange", ascending=False, inplace=False)
+    idx_up = idx & (df["stat"].values > 0.0)
+    df_up = df.loc[idx_up].sort_values(by="stat", ascending=False, inplace=False)
     res_dict["up"] = pd.DataFrame(df_up if head is None else df_up.iloc[0:head])
-    idx_down = idx & (df["log2FoldChange"].values < 0.0)
-    df_down = df.loc[idx_down].sort_values(by="log2FoldChange", ascending=True, inplace=False)
+    idx_down = idx & (df["stat"].values < 0.0)
+    df_down = df.loc[idx_down].sort_values(by="stat", ascending=True, inplace=False)
     res_dict["down"] = pd.DataFrame(df_down if head is None else df_down.iloc[0:head])
 
     return res_dict
@@ -149,10 +149,11 @@ def write_results_to_excel(
 
 
 def volcano(
-    pseudobulk: UnimodalData,
+    pseudobulk: MultimodalData,
     de_key: str = "deseq2",
     qval_threshold: float = 0.05,
     log2fc_threshold: float = 1.0,
+    rank_by: str = "log2fc",
     top_n: int = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
     return_fig: Optional[bool] = False,
@@ -164,7 +165,7 @@ def volcano(
     Parameters
     -----------
 
-    pseudobulk: ``UnimodalData`` object.
+    pseudobulk: ``MultimodalData`` object.
         Pseudobulk data matrix.
     de_key: ``str``, optional, default: ``deseq2``
         The varm keyword for DE results. data.varm[de_key] should store the full DE result table.
@@ -172,6 +173,8 @@ def volcano(
         Selected FDR rate. A horizontal line indicating this rate will be shown in the figure.
     log2fc_threshold: ``float``, optional, default: 1.0
         Log2 fold change threshold to highlight biologically interesting genes. Two vertical lines representing negative and positive log2 fold change will be shown.
+    rank_by: ``str``, optional, default: ``log2fc``
+        Rank genes by ``rank_by`` metric in the DE results. By default, rank by log2 Fold Change (``"log2fc"``); change to ``"neglog10p"`` if you want to rank genes by p-values.
     top_n: ``int``, optional, default: ``20``
         Number of top DE genes to show names. Genes are ranked by Log2 fold change.
     panel_size: ``Tuple[float, float]``, optional, default: ``(6, 4)``
@@ -258,13 +261,27 @@ def volcano(
     texts = []
 
     idx = np.where(idxsig & (log2fc >= log2fc_threshold))[0]
-    posvec = np.argsort(log2fc[idx])[::-1][0:top_n]
+    if rank_by == "log2fc":
+        posvec = np.argsort(log2fc[idx])[::-1][0:top_n]
+    elif rank_by == "neglog10p":
+        posvec = np.argsort(neglog10p[idx])[::-1][0:top_n]
+    else:
+        import sys
+        logger.error(f"Invalid rank_by key! Must choose from ['log2fc', 'neglog10p']!")
+        sys.exit(-1)
     for pos in posvec:
         gid = idx[pos]
         texts.append(ax.text(log2fc[gid], neglog10p[gid], gene_names[gid], fontsize=5))
 
     idx = np.where(idxsig & (log2fc <= -log2fc_threshold))[0]
-    posvec = np.argsort(log2fc[idx])[0:top_n]
+    if rank_by == "log2fc":
+        posvec = np.argsort(log2fc[idx])[0:top_n]
+    elif rank_by == "neglog10p":
+        posvec = np.argsort(neglog10p[idx])[::-1][0:top_n]
+    else:
+        import sys
+        logger.error(f"Invalid rank_by key! Must choose from ['log2fc', 'neglog10p']!")
+        sys.exit(-1)
     for pos in posvec:
         gid = idx[pos]
         texts.append(ax.text(log2fc[gid], neglog10p[gid], gene_names[gid], fontsize=5))
@@ -273,3 +290,10 @@ def volcano(
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
 
     return fig if return_fig else None
+
+
+def get_original_DE_result(
+    data: MultimodalData,
+    de_key: str = "deseq2",
+) -> pd.DataFrame:
+    return pd.DataFrame(data.varm[de_key], index=data.var_names)
