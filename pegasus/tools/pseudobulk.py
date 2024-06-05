@@ -30,12 +30,12 @@ def get_pseudobulk_count(X, df, attr, bulk_list):
 
 @timer(logger=logger)
 def pseudobulk(
-    data: MultimodalData,
+    data: Union[MultimodalData, UnimodalData],
     groupby: str,
     attrs: Optional[Union[List[str], str]] = None,
     mat_key: Optional[str] = None,
     condition: Optional[str] = None,
-) -> UnimodalData:
+) -> MultimodalData:
     """Generate Pseudo-bulk count matrices.
 
     Parameters
@@ -172,9 +172,7 @@ def deseq2(
     verbose: bool = True,
     n_jobs: int = -1,
 ) -> None:
-    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data. This function calls R package DESeq2, requiring DESeq2 in R installed.
-
-    DE analysis will be performed on all pseudo-bulk matrices in pseudobulk.
+    """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data.
 
     Parameters
     ----------
