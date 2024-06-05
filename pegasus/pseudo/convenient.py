@@ -293,7 +293,28 @@ def volcano(
 
 
 def get_original_DE_result(
-    data: MultimodalData,
+    pseudobulk: MultimodalData,
     de_key: str = "deseq2",
 ) -> pd.DataFrame:
-    return pd.DataFrame(data.varm[de_key], index=data.var_names)
+    """
+    Get the original DESeq2 result as a data frame.
+
+    Parameters
+    -----------
+
+    pseudobulk: ``MultimodalData`` object.
+        Pseudobulk data matrix.
+    de_key: ``str``, optional, default: ``deseq2``
+        The varm keyword for DE results. data.varm[de_key] should store the full DE result table.
+
+    Returns
+    --------
+
+    ``pandas.DataFrame`` object
+        A Pandas data frame containing the original DESeq2 analysis result.
+
+    Examples
+    ---------
+    >>> pg.pseudo.get_original_DE_result(pseudobulk)
+    """
+    return pd.DataFrame(pseudobulk.varm[de_key], index=pseudobulk.var_names)

@@ -183,6 +183,7 @@ Pseudo-bulk analysis
     pseudo.markers
     pseudo.write_results_to_excel
     pseudo.volcano
+    pseudo.get_original_DE_result
 
 Demultiplexing
 ---------------
