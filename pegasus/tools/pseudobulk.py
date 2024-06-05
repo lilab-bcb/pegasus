@@ -33,7 +33,7 @@ def pseudobulk(
     data: MultimodalData,
     groupby: str,
     attrs: Optional[Union[List[str], str]] = None,
-    mat_key: str = "counts",
+    mat_key: Optional[str] = None,
     condition: Optional[str] = None,
 ) -> UnimodalData:
     """Generate Pseudo-bulk count matrices.
@@ -53,9 +53,9 @@ def pseudobulk(
         Notice that for a categorical attribute, each pseudo-bulk's value is the one of highest frequency among its cells,
         and for a numeric attribute, each pseudo-bulk's value is the mean among its cells.
 
-    mat_key: ``str``, optional, default: ``counts``
+    mat_key: ``str``, optional, default: ``None``
         Specify the single-cell count matrix used for aggregating pseudo-bulk counts:
-        If specified, use the count matrix with key ``mat_key`` from matrices of ``data``; otherwise, default is ``counts``.
+        If specified, use the count matrix with key ``mat_key`` from matrices of ``data``; otherwise, first look for key ``counts``, then for ``raw.X`` if not existing.
 
     condition: ``str``, optional, default: ``None``
         If set, additionally generate pseudo-bulk matrices per condition specified in ``data.obs[condition]``.
@@ -74,9 +74,21 @@ def pseudobulk(
     --------
     >>> pg.pseudobulk(data, groupby="Channel")
     """
+    if mat_key is None:
+        if "counts" in data._unidata.matrices:
+            mat_key = "counts"
+        elif "raw.X" in data._unidata.matrices:
+            mat_key = "raw.X"
+        else:
+            import sys
+            logger.error("No matrix with default key found in data! Please specify an explicit matrix key!")
+            sys.exit(-1)
     X = data.get_matrix(mat_key)
 
-    assert groupby in data.obs.columns, f"Sample key '{groupby}' must exist in data.obs!"
+    if groupby not in data.obs.columns:
+        import sys
+        logger.error(f"Sample key '{groupby}' must exist in data.obs!")
+        sys.exit(-1)
 
     sample_vec = (
         data.obs[groupby]
@@ -96,9 +108,10 @@ def pseudobulk(
         if isinstance(attrs, str):
             attrs = [attrs]
         for attr in attrs:
-            assert (
-                attr in data.obs.columns
-            ), f"Cell attribute key '{attr}' must exist in data.obs!"
+            if attr not in data.obs.columns:
+                import sys
+                logger.error(f"Cell attribute key '{attr}' must exist in data.obs!")
+                sys.exit(-1)
 
     for bulk in bulk_list:
         df_bulk = df_barcode.loc[df_barcode[groupby] == bulk]
@@ -124,9 +137,10 @@ def pseudobulk(
         df_feature["featureid"] = data.var["featureid"]
 
     if condition is not None:
-        assert (
-            condition in data.obs.columns
-        ), f"Condition key '{attr}' must exist in data.obs!"
+        if condition not in data.obs.columns:
+            import sys
+            logger.error(f"Condition key '{attr}' must exist in data.obs!")
+            sys.exit(-1)
 
         cluster_list = data.obs[condition].astype("category").cat.categories
         for cls in cluster_list:
@@ -138,7 +152,7 @@ def pseudobulk(
         barcode_metadata=df_pseudobulk,
         feature_metadata=df_feature,
         matrices=mat_dict,
-        genome=groupby,
+        genome=data.get_genome(),
         modality="pseudobulk",
         cur_matrix="counts",
     )
@@ -148,13 +162,14 @@ def pseudobulk(
 
 @timer(logger=logger)
 def deseq2(
-    pseudobulk: Union[MultimodalData, UnimodalData],
+    pseudobulk: MultimodalData,
     design: str,
     contrast: Tuple[str, str, str],
     backend: str = "pydeseq2",
     de_key: str = "deseq2",
     alpha: float = 0.05,
     compute_all: bool = False,
+    verbose: bool = True,
     n_jobs: int = -1,
 ) -> None:
     """Perform Differential Expression (DE) Analysis using DESeq2 on pseduobulk data. This function calls R package DESeq2, requiring DESeq2 in R installed.
@@ -187,6 +202,9 @@ def deseq2(
     compute_all: ``bool``, optional, default: ``False``
         If performing DE analysis on all count matrices. By default (``compute_all=False``), only apply DE analysis to the default count matrix ``counts``.
 
+    verbose: ``bool``, optional, default: ``True``
+        If showing DESeq2 status updates during fit. Only works when ``backend="pydeseq2"``.
+
     n_jobs: ``int``, optional, default: ``-1``
         Number of threads to use. If ``-1``, use all physical CPU cores. This only works when ``backend="pydeseq2"`.
 
@@ -206,19 +224,20 @@ def deseq2(
     mat_keys = ['counts'] if not compute_all else pseudobulk.list_keys()
     for mat_key in mat_keys:
         if backend == "pydeseq2":
-            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, alpha=alpha, n_jobs=n_jobs)
+            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, alpha=alpha, n_jobs=n_jobs, verbose=verbose)
         else:
             _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, alpha=alpha)
 
 
 def _run_pydeseq2(
-    pseudobulk: Union[MultimodalData, UnimodalData],
+    pseudobulk: MultimodalData,
     mat_key: str,
     design_factors: Union[str, List[str]],
     contrast: Tuple[str, str, str],
     de_key: str,
     alpha: float,
     n_jobs: int,
+    verbose: bool,
 ) -> None:
     try:
         from pydeseq2.dds import DeseqDataSet
@@ -230,10 +249,16 @@ def _run_pydeseq2(
         sys.exit(-1)
 
     if isinstance(design_factors, str):
-        assert design_factors in pseudobulk.obs.columns, f"The design factor {design_factors} does not exist in data.obs!"
+        if design_factors not in pseudobulk.obs.columns:
+            import sys
+            logger.error(f"The design factor {design_factors} does not exist in data.obs!")
+            sys.exit(-1)
     else:
         for factor in design_factors:
-            assert factor in pseudobulk.obs.columns, f"The design factor {factor} does not exist in data.obs!"
+            if factor not in pseudobulk.obs.columns:
+                import sys
+                logger.error(f"The design factor {factor} does not exist in data.obs!")
+                sys.exit(-1)
 
     counts_df = pd.DataFrame(pseudobulk.get_matrix(mat_key), index=pseudobulk.obs_names, columns=pseudobulk.var_names)
     metadata = pseudobulk.obs
@@ -244,19 +269,17 @@ def _run_pydeseq2(
         counts=counts_df,
         metadata=metadata,
         design_factors=design_factors,
-        refit_cooks=True,
         inference=inference,
-        quiet=True,
+        quiet=not verbose,
     )
     dds.deseq2()
 
     stat_res = DeseqStats(
         dds,
         contrast=contrast,
-        cooks_filter=True,
         alpha=alpha,
         inference=inference,
-        quiet=True,
+        quiet=not verbose,
     )
     stat_res.summary()
     res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
@@ -265,7 +288,7 @@ def _run_pydeseq2(
 
 
 def _run_rdeseq2(
-    pseudobulk: Union[MultimodalData, UnimodalData],
+    pseudobulk: MultimodalData,
     mat_key: str,
     design: str,
     contrast: Tuple[str, str, str],
@@ -295,7 +318,10 @@ def _run_rdeseq2(
         logger.error(text)
         sys.exit(-1)
 
-    assert design.strip().startswith("~"), f"Design '{design}' is not a valid R formula! Valid examples: '~var', '~var1+var2', '~var1+var2+var1:var2'."
+    if not design.strip().startswith("~"):
+        import sys
+        logger.error(f"Design '{design}' is not a valid R formula! Valid examples: '~var', '~var1+var2', '~var1+var2+var1:var2'.")
+        sys.exit(-1)
 
     import math
     to_dataframe = ro.r('function(x) data.frame(x)')
