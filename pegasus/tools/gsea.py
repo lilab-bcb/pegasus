@@ -10,34 +10,32 @@ from typing import Union, Optional
 
 
 @timer(logger=logger)
-def fgsea(
+def gsea(
     data: Union[MultimodalData, UnimodalData],
-    log2fc_key: str,
+    rank_key: str,
     pathways: str,
-    de_key: Optional[str] = "de_res",
-    minSize: Optional[int] = 15,
-    maxSize: Optional[int] = 500,
-    nproc: Optional[int] = 0,
-    seed: Optional[int] = 0,
-    fgsea_key: Optional[str] = "fgsea_out",
+    method: str = "gseapy"
+    gsea_key: str = "gsea_out",
+    min_size: int = 5,
+    max_size: int = 4000,
+    n_jobs: int = 4,
+    seed: int = 0,
 ) -> None:
-    """Perform Gene Set Enrichment Analysis using fGSEA. This function calls R package fGSEA, requiring fGSEA in R installed.
+    """Perform Gene Set Enrichment Analysis (GSEA).
 
     Parameters
     ----------
     data: Union[``MultimodalData``, ``UnimodalData``]
         Single-cell or pseudo-bulk data.
 
-    log2fc_key: ``str``
-        Key in pre-computed DE results representing log2 fold change.
+    rank_key: ``str``
+        Key in pre-computed DE results representing gene ranks.
+        The string format is ``de_key:attr``, where ``de_key`` is the key of DE results in ``data.varm``, and ``attr`` is the column name in ``data.varm['de_key']`` used as the gene signatures for GSEA analysis.
 
     pathways: ``str``
-        Either a string or a path to the gene set file in GMT format. If string, choosing from "hallmark" and "canonical_pathways" (MSigDB H and C2/CP).
+        Either a keyword or a path to the gene set file in GMT format. If keyword, choosing from "hallmark" and "canonical_pathways" (MSigDB H and C2/CP).
 
-    de_key: ``str``, optional, default: ``"de_res"``
-        Key name of DE analysis results stored. data.varm[de_key] should contain a record array of DE results.
-
-    minSize: ``int``, optional, default: ``15``
+    min_size: ``int``, optional, default: ``15``
         Minimal size of a gene set to consider.
 
     maxSize: ``int``, optional, default: ``500``
