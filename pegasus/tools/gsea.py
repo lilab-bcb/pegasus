@@ -3,8 +3,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 import pandas as pd
+import numpy as np
 
-from pegasus.tools import predefined_pathways, load_signatures_from_file
+from pegasus.tools import predefined_pathways, load_signatures_from_file, eff_n_jobs
 from pegasusio import MultimodalData, UnimodalData, timer
 from typing import Union, Optional
 
@@ -14,18 +15,21 @@ def gsea(
     data: Union[MultimodalData, UnimodalData],
     rank_key: str,
     pathways: str,
-    method: str = "gseapy"
+    de_key: str = "de_res",
+    method: str = "gseapy",
     gsea_key: str = "gsea_out",
-    min_size: int = 5,
-    max_size: int = 4000,
+    min_size: int = 15,
+    max_size: int = 500,
     n_jobs: int = 4,
     seed: int = 0,
+    verbose: bool = True,
+    **kwargs,
 ) -> None:
     """Perform Gene Set Enrichment Analysis (GSEA).
 
     Parameters
     ----------
-    data: Union[``MultimodalData``, ``UnimodalData``]
+    data: ``MultimodalData`` or ``UnimodalData``
         Single-cell or pseudo-bulk data.
 
     rank_key: ``str``
@@ -35,32 +39,158 @@ def gsea(
     pathways: ``str``
         Either a keyword or a path to the gene set file in GMT format. If keyword, choosing from "hallmark" and "canonical_pathways" (MSigDB H and C2/CP).
 
+    de_key: ``str``, optional, default: ``de_res``
+        Key name of DE analysis results stored.`data.varm[de_key]` should contain a record array of DE results.
+
+    method: ``str``, optional, default: ``gseapy``
+        Specify which package to use as the backend for GSEA.
+        By default ``gseapy``, use GSEAPY's prerank method. Notice that ``permutation_num=1000`` is set by default. If you want to change these parameters, please reset in ``kwargs``.
+        Alternatively, if specify ``fgsea``, then use R package ``fgsea``, which requires ``rpy2`` and R installation.
+
+    gsea_key: ``str``, optional, default: ``"gsea_out"``
+        Key to use to store GSEA results as a data frame.
+
     min_size: ``int``, optional, default: ``15``
-        Minimal size of a gene set to consider.
+        Minimum allowed number of genes from gene set also the data set.
 
-    maxSize: ``int``, optional, default: ``500``
-        Maximal size of a gene set to consider.
+    max_size: ``int``, optional, default: ``500``
+        Maximum allowed number of genes from gene set also the data set.
 
-    nproc: ``int``, optional, default: ``0``
-        Numbr of processes for parallel computation. If nproc > 0, set BPPARAM.
+    n_jobs: ``int``, optional, default: ``4``
+        Numbr of threads used for parallel computation.
 
     seed: ``int``, optional, default: ``0``
-        Random seed to make sure fGSEA results are reproducible.
+        Random seed to make sure GSEA results are reproducible.
 
-    fgsea_key: ``str``, optional, default: ``"fgsea_out"``
-        Key to use to store fGSEA results as a data frame.
+    verbose: ``bool``, optional, default: ``True``
+        If printing out progress of the job. Only works when ``method="gseapy"``.
+
+    kwargs
+        If ``method="gseapy"``, pass other keyword arguments to ``gseapy.prerank`` function. Details about GSEAPY prerank function's optional parameters are `here <https://gseapy.readthedocs.io/en/latest/run.html#gseapy.prerank>`_.
 
     Returns
     -------
     ``None``
 
     Update ``data.uns``:
-        ``data.uns[fgsea_key]``: fGSEA outputs sorted by padj.
+        ``data.uns[gsea_key]``: GSEA outputs sorted by adjusted p-values.
 
     Examples
     --------
-    >>> pg.fgsea(data, '3:log2FC', hallmark', fgsea_key='fgsea_res')
+    >>> pg.gsea(data, "deseq2:stat", "canonical_pathways")
+    >>> pg.gsea(data, "de_res:1:mwu_U", "canonical_pathways", method="fgsea")
     """
+    if method == "gseapy":
+        _run_gseapy(
+            data=data,
+            rank_key=rank_key,
+            pathways=pathways,
+            de_key=de_key,
+            gsea_key=gsea_key,
+            min_size=min_size,
+            max_size=max_size,
+            n_jobs=n_jobs,
+            seed=seed,
+            verbose=verbose,
+            **kwargs,
+        )
+    else:
+        _run_fgsea(
+            data=data,
+            rank_key=rank_key,
+            pathways=pathways,
+            de_key=de_key,
+            gsea_key=gsea_key,
+            min_size=min_size,
+            max_size=max_size,
+            n_jobs=n_jobs,
+            seed=seed,
+        )
+
+
+def _decide_qval_str(rank_key):
+    qstr = "padj"
+    if ":" in rank_key:
+        # pegasus.de_analysis result
+        prefix = rank_key.split("_")[0]
+        qstr = f"{prefix}_qval"
+    return qstr
+
+
+def _validate_keys(data, de_key, rank_key, padj_key):
+    if de_key not in data.varm:
+        import sys
+        logger.error(f"Key '{de_key}' not in data.varm! Wrong key name or need to run DE analysis first!")
+        sys.exit(-1)
+    if rank_key not in data.varm[de_key].dtype.names:
+        import sys
+        logger.error(f"Key '{rank_key}' not in DE result! Wrong key name specified!")
+        sys.exit(-1)
+    if padj_key not in data.varm[de_key].dtype.names:
+        import sys
+        logger.error(f"Q-value key '{padj_key}' not in DE result! Either q-values are missing, or need to rename the column to this name!")
+        sys.exit(-1)
+
+
+def _run_gseapy(
+    data: Union[MultimodalData, UnimodalData],
+    rank_key: str,
+    pathways: str,
+    de_key: str,
+    gsea_key: str,
+    min_size: int,
+    max_size: int,
+    n_jobs: int,
+    seed: int,
+    verbose: bool,
+    **kwargs,
+) -> None:
+    try:
+        import gseapy as gp
+    except ModuleNotFoundError as e:
+        import sys
+        logger.error(f"{e}\nNeed gseapy! Try 'pip install gseapy'.")
+        sys.exit(-1)
+
+    qstr = _decide_qval_str(rank_key)
+    _validate_keys(data, de_key, rank_key, qstr)
+
+    qvals = data.varm[de_key][qstr]
+    idx_select = np.where(~np.isnan(qvals))[0]    # Ignore genes with NaN q-values, which is the case for independent filtering in DESeq2 model.
+    rank_df = pd.DataFrame({'gene': data.var_names[idx_select], 'rank': data.varm[de_key][rank_key][idx_select]})
+
+    gene_sets = load_signatures_from_file(predefined_pathways.get(pathways, pathways))
+    n_jobs = eff_n_jobs(n_jobs)
+    res = gp.prerank(
+        rnk=rank_df,
+        gene_sets=gene_sets,
+        min_size=min_size,
+        max_size=max_size,
+        threads=n_jobs,
+        seed=seed,
+        verbose=verbose,
+        **kwargs,
+    )
+
+    res_df = res.res2d
+    res_df.rename(columns={"FDR q-val": "padj", "Term": "pathway"}, inplace=True)
+    res_df["NES"] = res_df["NES"].astype(np.float64)
+    res_df["padj"] = res_df["padj"].astype(np.float64)
+    res_df.sort_values(["padj", "pathway"], ascending=[True, True], inplace=True)
+    data.uns[gsea_key] = res_df
+
+
+def _run_fgsea(
+    data: MultimodalData,
+    rank_key: str,
+    pathways: str,
+    de_key: str,
+    gsea_key: str,
+    min_size: int,
+    max_size: int,
+    n_jobs: int,
+    seed: int,
+) -> None:
     try:
         import rpy2.robjects as ro
         from rpy2.robjects import pandas2ri
@@ -86,12 +216,22 @@ def gsea(
         logger.error(text)
         sys.exit(-1)
 
+    nproc = eff_n_jobs(n_jobs)
+    if nproc == 1:
+        nproc = 0    # Avoid setting BPPARAM when only using 1 thread
+
     ro.r(f"set.seed({seed})")
     pwdict = load_signatures_from_file(predefined_pathways.get(pathways, pathways))
     pathways_r = ro.ListVector(pwdict)
-    log2fc = ro.FloatVector(data.varm[de_key][log2fc_key])
-    log2fc.names = ro.StrVector(data.var_names)
-    res = fgsea.fgsea(pathways_r, log2fc, minSize=minSize, maxSize=maxSize, nproc=nproc)
+
+    qstr = _decide_qval_str(rank_key)
+    _validate_keys(data, de_key, rank_key, qstr)
+
+    qvals = data.varm[de_key][qstr]
+    idx_select = np.where(~np.isnan(qvals))[0]    # Ignore genes with NaN q-values, which is the case for independent filtering in DESeq2 model.
+    rank_vec = ro.FloatVector(data.varm[de_key][rank_key][idx_select])
+    rank_vec.names = ro.StrVector(data.var_names[idx_select])
+    res = fgsea.fgsea(pathways_r, rank_vec, minSize=min_size, maxSize=max_size, nproc=nproc)
     unlist = ro.r(
         """
         function(df) {
@@ -102,28 +242,28 @@ def gsea(
     )
     with localconverter(ro.default_converter + pandas2ri.converter):
         res_df = ro.conversion.rpy2py(unlist(res))
-    res_df.sort_values("padj", inplace=True)
-    data.uns[fgsea_key] = res_df
+    res_df.sort_values(["padj", "pathway"], ascending=[True, True], inplace=True)
+    data.uns[gsea_key] = res_df
 
 
 @timer(logger=logger)
-def write_fgsea_results_to_excel(
+def write_gsea_results_to_excel(
     data: Union[MultimodalData, UnimodalData],
     output_file: str,
-    fgsea_key: Optional[str] = "fgsea_out",
-    ndigits: Optional[int] = 3,
+    gsea_key: str = "gsea_out",
+    ndigits: int = 3,
 ) -> None:
-    """Write Gene Set Enrichment Analysis (GSEA) results generated by fgsea function into Excel workbook.
+    """Write Gene Set Enrichment Analysis (GSEA) results into Excel workbook.
 
     Parameters
     ----------
-    data: Union[``MultomodalData``, ``UnimodalData``]
+    data: ``MultomodalData`` or ``UnimodalData``
         Single-cell or pseudo-bulk data.
 
     output_file: ``str``
         File name for the output.
 
-    fgsea_key: ``str``, optinoal, default: ``"fgsea_out"``
+    gsea_key: ``str``, optinoal, default: ``gsea_out``
         Key name of GSEA results stored in ``data.uns`` field.
 
     ndigits: ``int``, optional, default: ``3``

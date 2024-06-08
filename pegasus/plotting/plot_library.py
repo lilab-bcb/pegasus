@@ -916,7 +916,7 @@ def compo_plot(
         ax.set_xlabel("Percentage")
         ax.set_ylabel(groupby_label)
         ax.set_yticklabels(ax.get_yticklabels(), rotation=yticklabels_rotation, ha='center')
-    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))        
+    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
 
     return fig if return_fig else None
 
@@ -2390,7 +2390,7 @@ def _make_one_gsea_plot(df, ax, color, size=10, fontsize=5):
 
 def plot_gsea(
     data: Union[MultimodalData, UnimodalData],
-    gsea_keyword: Optional[str] = "fgsea_out",
+    gsea_keyword: Optional[str] = "gsea_out",
     alpha: Optional[float] = 0.1,
     top_n: Optional[int] = 20,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
@@ -2406,8 +2406,8 @@ def plot_gsea(
 
     data : ``UnimodalData`` or ``MultimodalData`` object
         The main data object.
-    gsea_keyword: ``str``, optional, default: ``"fgsea_out"``
-        Keyword in data.uns that stores the fGSEA results in pandas data frame.
+    gsea_keyword: ``str``, optional, default: ``gsea_out``
+        Keyword in data.uns that stores the GSEA results in pandas data frame.
     alpha: ``float``, optional, default: ``0.1``
         False discovery rate threshold.
     top_n: ``int``, optional, default: ``20``
@@ -2430,11 +2430,11 @@ def plot_gsea(
 
     Examples
     --------
-    >>> fig = pg.plot_gsea(data, 'fgsea_out', dpi = 500)
+    >>> fig = pg.plot_gsea(data, 'gsea_out', dpi = 500)
     """
     df = data.uns[gsea_keyword]
     df = df[df['padj'] <= alpha].copy()
-    df['Log Q'] = -np.log10(df['padj'])
+    df['Log Q'] = -np.log10(df['padj'].apply(lambda n: 1e-45 if n == 0 else n))    # Add 1e-45 to padj=0 to avoid log issue
     df['NES Abs'] = np.abs(df['NES'])
     df['pathway'] = df['pathway'].map(lambda x: ' '.join(x.split('_')))
 
