@@ -268,8 +268,25 @@ def write_gsea_results_to_excel(
 
     ndigits: ``int``, optional, default: ``3``
         Round non p-values and q-values to ``ndigits`` after decimal point in the excel.
+
+    Returns
+    -------
+    ``None``
+
+    Pathway information is written to file with name ``output_file``.
+
+    In the generated Excel workbook, there are two tabs:
+        * ``UP``: Pathways with positive NES scores (``NES`` column), which are sorted by q-values (``padj`` column).
+        * ``DOWN``: Pathways with negative NES scores (``NES`` column), which are sorted by q-values (``padj`` column).
+
+    Examples
+    --------
+    >>> pg.write_gsea_results_to_excel(data, "gsea.xlsx")
     """
-    assert fgsea_key in data.uns.keys(), f"Key '{fgsea_key}' does not exist in data.uns!"
+    if gsea_key not in data.uns:
+        import sys
+        logger.error(f"Key '{gsea_key}' does not exist in data.uns!")
+        sys.exit(-1)
 
     import xlsxwriter
 
@@ -318,9 +335,9 @@ def write_gsea_results_to_excel(
         workbook = xlsxwriter.Workbook(output_file, {"nan_inf_to_errors": True})
         workbook.formats[0].set_font_size(9)
 
-        df_fgsea = pd.DataFrame(data.uns[fgsea_key])
-        add_worksheet(workbook, df_fgsea.loc[df_fgsea['NES']>0].set_index("pathway"), "UP")
-        add_worksheet(workbook, df_fgsea.loc[df_fgsea['NES']<0].set_index("pathway"), "DOWN")
+        df_gsea = pd.DataFrame(data.uns[gsea_key])
+        add_worksheet(workbook, df_gsea.loc[df_gsea['NES']>0].set_index("pathway"), "UP")
+        add_worksheet(workbook, df_gsea.loc[df_gsea['NES']<0].set_index("pathway"), "DOWN")
         logger.info("Excel spreadsheet is written.")
     finally:
         workbook.close()
