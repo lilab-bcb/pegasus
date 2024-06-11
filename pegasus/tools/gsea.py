@@ -175,11 +175,11 @@ def _run_gseapy(
 
     res_df = res.res2d
     res_df.rename(columns={"FDR q-val": "padj", "Term": "pathway"}, inplace=True)
-    res_df.drop(columns={"Name"}, inplace=True)  # Remove redundant columns
     res_df["NES"] = res_df["NES"].astype(np.float64)
+    res_df["NES abs"] = np.abs(res_df["NES"])
     res_df["padj"] = res_df["padj"].astype(np.float64)
-    res_df.sort_values(["padj", "NES", "pathway"], ascending=[True, False, True], inplace=True)
-    data.uns[gsea_key] = res_df
+    res_df.sort_values(["padj", "NES abs", "pathway"], ascending=[True, False, True], inplace=True)
+    data.uns[gsea_key] = res_df.drop(columns={"Name", "NES abs"})    # Remove redundant columns
 
 
 def _run_fgsea(
@@ -242,8 +242,9 @@ def _run_fgsea(
     )
     with localconverter(ro.default_converter + pandas2ri.converter):
         res_df = ro.conversion.rpy2py(unlist(res))
+    res_df["NES abs"] = np.abs(res_df["NES"])
     res_df.sort_values(["padj", "NES", "pathway"], ascending=[True, False, True], inplace=True)
-    data.uns[gsea_key] = res_df
+    data.uns[gsea_key] = res_df.drop(columns={"NES abs"})    # Remove redundant columns
 
 
 @timer(logger=logger)
