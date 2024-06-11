@@ -217,6 +217,16 @@ def _calc_expected_doublet_rate(ncells):
     return expected_rate
 
 
+def _calc_bc_sarle(scores):
+    """ Sarle's Biomodality Coefficient for finite samples: https://rdrr.io/github/microbiome/microbiome/man/bimodality_sarle.html
+    """
+    from scipy.stats import skew, kurtosis
+    g = skew(scores)
+    k = kurtosis(scores)
+    n = scores.size
+    return (g ** 2 + 1.0) / (k + 3 * (n - 1) ** 2 / (n - 2) / (n - 3))
+
+
 @timer(logger=logger)
 def _run_scrublet(
     data: Union[MultimodalData, UnimodalData],
@@ -429,7 +439,8 @@ def _run_scrublet(
 
     neo_dbl_rate = data.obs['pred_dbl'].sum() / data.shape[0]
     neo_sim_dbl_rate = (sim_scores > threshold).sum() / sim_scores.size
-    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate in simulation = {neo_sim_dbl_rate:.2%}; neotypic doublet rate = {neo_dbl_rate:.2%}.")
+
+    logger.info(f"Sample {name}: doublet threshold = {threshold:.4f}; total cells = {data.shape[0]}; neotypic doublet rate in simulation = {neo_sim_dbl_rate:.2%}; bimodality coefficient = {_calc_bc_sarle(sim_scores_log):.4f}; neotypic doublet rate = {neo_dbl_rate:.2%}.")
 
     fig = None
     if plot_hist:
