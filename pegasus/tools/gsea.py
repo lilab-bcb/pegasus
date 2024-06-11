@@ -7,7 +7,7 @@ import numpy as np
 
 from pegasus.tools import predefined_pathways, load_signatures_from_file, eff_n_jobs
 from pegasusio import MultimodalData, UnimodalData, timer
-from typing import Union, Optional
+from typing import Union, Tuple
 
 
 @timer(logger=logger)
@@ -15,7 +15,6 @@ def gsea(
     data: Union[MultimodalData, UnimodalData],
     rank_key: str,
     pathways: str,
-    de_key: str = "de_res",
     method: str = "gseapy",
     gsea_key: str = "gsea_out",
     min_size: int = 15,
@@ -38,9 +37,6 @@ def gsea(
 
     pathways: ``str``
         Either a keyword or a path to the gene set file in GMT format. If keyword, choosing from "hallmark" and "canonical_pathways" (MSigDB H and C2/CP).
-
-    de_key: ``str``, optional, default: ``de_res``
-        Key name of DE analysis results stored.`data.varm[de_key]` should contain a record array of DE results.
 
     method: ``str``, optional, default: ``gseapy``
         Specify which package to use as the backend for GSEA.
@@ -73,7 +69,7 @@ def gsea(
     ``None``
 
     Update ``data.uns``:
-        ``data.uns[gsea_key]``: GSEA outputs sorted by adjusted p-values.
+        ``data.uns[gsea_key]``: GSEA outputs sorted by q-values (adjusted p-values) in ascending order, and if q-values are equal, sort by NES scores in descending order.
 
     Examples
     --------
@@ -85,7 +81,6 @@ def gsea(
             data=data,
             rank_key=rank_key,
             pathways=pathways,
-            de_key=de_key,
             gsea_key=gsea_key,
             min_size=min_size,
             max_size=max_size,
@@ -99,7 +94,6 @@ def gsea(
             data=data,
             rank_key=rank_key,
             pathways=pathways,
-            de_key=de_key,
             gsea_key=gsea_key,
             min_size=min_size,
             max_size=max_size,
@@ -117,7 +111,7 @@ def _decide_qval_str(rank_key):
     return qstr
 
 
-def _validate_keys(data, de_key, rank_key, padj_key):
+def _validate_keys(data, de_key, rank_key):
     if de_key not in data.varm:
         import sys
         logger.error(f"Key '{de_key}' not in data.varm! Wrong key name or need to run DE analysis first!")
@@ -126,17 +120,25 @@ def _validate_keys(data, de_key, rank_key, padj_key):
         import sys
         logger.error(f"Key '{rank_key}' not in DE result! Wrong key name specified!")
         sys.exit(-1)
-    if padj_key not in data.varm[de_key].dtype.names:
+
+
+def _split_rank_key(rank_key: str) -> Tuple[str, str]:
+    if ":" not in rank_key:
         import sys
-        logger.error(f"Q-value key '{padj_key}' not in DE result! Either q-values are missing, or need to rename the column to this name!")
+        logger.error(f"Rank key '{rank_key}' does not satisfy format 'de_key:attr'!")
         sys.exit(-1)
+
+    keys = rank_key.split(":")
+    de_key = keys[0]
+    attr_key = ":".join(keys[1:])
+
+    return (de_key, attr_key)
 
 
 def _run_gseapy(
     data: Union[MultimodalData, UnimodalData],
     rank_key: str,
     pathways: str,
-    de_key: str,
     gsea_key: str,
     min_size: int,
     max_size: int,
@@ -152,12 +154,11 @@ def _run_gseapy(
         logger.error(f"{e}\nNeed gseapy! Try 'pip install gseapy'.")
         sys.exit(-1)
 
-    qstr = _decide_qval_str(rank_key)
-    _validate_keys(data, de_key, rank_key, qstr)
-
-    qvals = data.varm[de_key][qstr]
-    idx_select = np.where(~np.isnan(qvals))[0]    # Ignore genes with NaN q-values, which is the case for independent filtering in DESeq2 model.
-    rank_df = pd.DataFrame({'gene': data.var_names[idx_select], 'rank': data.varm[de_key][rank_key][idx_select]})
+    de_key, attr_key = _split_rank_key(rank_key)
+    _validate_keys(data, de_key, attr_key)
+    rank_df = pd.DataFrame(data.varm[de_key], index=data.var_names)
+    rank_df.dropna(axis=0, how='any', inplace=True)    # Remove genes with NaN values (especially NaN q-values)
+    rank_df = rank_df.reset_index().rename(columns={rank_df.index.name: "gene"})[["gene", attr_key]]
 
     gene_sets = load_signatures_from_file(predefined_pathways.get(pathways, pathways))
     n_jobs = eff_n_jobs(n_jobs)
@@ -176,7 +177,7 @@ def _run_gseapy(
     res_df.rename(columns={"FDR q-val": "padj", "Term": "pathway"}, inplace=True)
     res_df["NES"] = res_df["NES"].astype(np.float64)
     res_df["padj"] = res_df["padj"].astype(np.float64)
-    res_df.sort_values(["padj", "pathway"], ascending=[True, True], inplace=True)
+    res_df.sort_values(["padj", "NES", "pathway"], ascending=[True, False, True], inplace=True)
     data.uns[gsea_key] = res_df
 
 
@@ -184,7 +185,6 @@ def _run_fgsea(
     data: MultimodalData,
     rank_key: str,
     pathways: str,
-    de_key: str,
     gsea_key: str,
     min_size: int,
     max_size: int,
@@ -224,13 +224,12 @@ def _run_fgsea(
     pwdict = load_signatures_from_file(predefined_pathways.get(pathways, pathways))
     pathways_r = ro.ListVector(pwdict)
 
-    qstr = _decide_qval_str(rank_key)
-    _validate_keys(data, de_key, rank_key, qstr)
-
-    qvals = data.varm[de_key][qstr]
-    idx_select = np.where(~np.isnan(qvals))[0]    # Ignore genes with NaN q-values, which is the case for independent filtering in DESeq2 model.
-    rank_vec = ro.FloatVector(data.varm[de_key][rank_key][idx_select])
-    rank_vec.names = ro.StrVector(data.var_names[idx_select])
+    de_key, attr_key = _split_rank_key(rank_key)
+    _validate_keys(data, de_key, attr_key)
+    rank_df = pd.DataFrame(data.varm[de_key], index=data.var_names)
+    rank_df.dropna(axis=0, how='any', inplace=True)    # Remove genes with NaN values (especially NaN q-values)
+    rank_vec = ro.FloatVector(rank_df[attr_key].values)
+    rank_vec.names = ro.StrVector(rank_df.index.values)
     res = fgsea.fgsea(pathways_r, rank_vec, minSize=min_size, maxSize=max_size, nproc=nproc)
     unlist = ro.r(
         """
@@ -242,7 +241,7 @@ def _run_fgsea(
     )
     with localconverter(ro.default_converter + pandas2ri.converter):
         res_df = ro.conversion.rpy2py(unlist(res))
-    res_df.sort_values(["padj", "pathway"], ascending=[True, True], inplace=True)
+    res_df.sort_values(["padj", "NES", "pathway"], ascending=[True, False, True], inplace=True)
     data.uns[gsea_key] = res_df
 
 
