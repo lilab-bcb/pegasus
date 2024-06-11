@@ -175,6 +175,7 @@ def _run_gseapy(
 
     res_df = res.res2d
     res_df.rename(columns={"FDR q-val": "padj", "Term": "pathway"}, inplace=True)
+    res_df.drop(columns={"Name"}, inplace=True)  # Remove redundant columns
     res_df["NES"] = res_df["NES"].astype(np.float64)
     res_df["padj"] = res_df["padj"].astype(np.float64)
     res_df.sort_values(["padj", "NES", "pathway"], ascending=[True, False, True], inplace=True)
