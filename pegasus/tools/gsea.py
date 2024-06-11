@@ -175,6 +175,7 @@ def _run_gseapy(
 
     res_df = res.res2d
     res_df.rename(columns={"FDR q-val": "padj", "Term": "pathway"}, inplace=True)
+    res_df["ES"] = res_df["ES"].astype(np.float64)
     res_df["NES"] = res_df["NES"].astype(np.float64)
     res_df["NES abs"] = np.abs(res_df["NES"])
     res_df["padj"] = res_df["padj"].astype(np.float64)
@@ -298,11 +299,7 @@ def write_gsea_results_to_excel(
         """
         df = pd.DataFrame(df_orig, copy = True) # copy must be true, otherwise the passed df_orig will be modified.
 
-        cols = []
-        for name in df.columns:
-            if (not name.endswith("pval")) and (not name.endswith("qval")):
-                cols.append(name)
-
+        cols = ["ES", "NES"]
         df.loc[:, cols] = df.loc[:, cols].round(ndigits)
         return df
 
