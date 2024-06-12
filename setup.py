@@ -70,6 +70,7 @@ setup(
             "mouse_immune_cell_markers.json",
             "mouse_brain_cell_markers.json",
             "mouse_liver_cell_markers.json",
+            "mouse_lung_cell_markers.json",
         ],
         "pegasus.check_sample_indexes": ["chromium-shared-sample-indexes-plate.json", "Chromium-i7-Multiplex-Kit-N-Set-A-sample-indexes-plate.json"],
         "pegasus": ["data_files/*.gmt"],
