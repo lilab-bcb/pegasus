@@ -40,7 +40,7 @@ def pseudobulk(
 
     Parameters
     -----------
-    data: ``MultimodalData`` or ``UnimodalData`` object
+    data: ``MultimodalData`` object
         Annotated data matrix with rows for cells and columns for genes.
 
     groupby: ``str``
@@ -75,9 +75,10 @@ def pseudobulk(
     >>> pg.pseudobulk(data, groupby="Channel")
     """
     if mat_key is None:
-        if "counts" in data._unidata.matrices:
+        udata_check = data._unidata if isinstance(data, MultimodalData) else data
+        if "counts" in udata_check.matrices:
             mat_key = "counts"
-        elif "raw.X" in data._unidata.matrices:
+        elif "raw.X" in udata_check.matrices:
             mat_key = "raw.X"
         else:
             import sys

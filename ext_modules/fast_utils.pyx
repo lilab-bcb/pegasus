@@ -238,7 +238,7 @@ cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type
             if bin_count[j] > 1:
                 estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
             sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
-            
+
     return sig_bkg_mean, sig_bkg_std
 
 
@@ -305,7 +305,7 @@ cpdef tuple simulate_doublets_sparse(int n_sim, int N, const int[:] data, indice
 
         u = doublet_indices[i, 0]
         v = doublet_indices[i, 1]
-        
+
         j = indptr[u]
         u_up = indptr[u + 1]
         k = indptr[v]
@@ -362,3 +362,31 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
             out_array[i, j] = X[u, j] + X[v, j]
 
     return results
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef calc_running_mean(const double[:, :] x, int M, int N, int k):
+    cdef Py_ssize_t k2, i, j
+
+    cs = np.cumsum(x, axis=1)
+    cdef double[:, :] cs_view = cs
+    k2 = k // 2
+
+    res_buffer = np.empty((M, N))
+    cdef double[:, :] res = res_buffer
+
+    for i in range(M):
+        for j in range(N):
+            if j < k2:
+                res[i, j] = cs_view[i, j + k2] / (j + k2 + 1)
+            elif j >= N - k2:
+                res[i, j] = (cs_view[i, N - 1] - cs_view[i, j - k2 - 1]) / (N - j + k2)
+            else:
+                if j - k2 - 1 >= 0:
+                    res[i, j] = cs_view[i, j + k2] - cs_view[i, j - k2 - 1]
+                else:
+                    res[i, j] = cs_view[i, j + k2]
+                res[i, j] /= (2 * k2 + 1)
+
+    return res_buffer

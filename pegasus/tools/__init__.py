@@ -14,8 +14,10 @@ from .utils import (
     check_batch_key,
     predefined_signatures,
     predefined_pathways,
+    predefined_gene_orders,
     load_signatures_from_file,
     largest_variance_from_random_matrix,
+    process_mat_key,
 )
 
 from .preprocessing import (
@@ -85,3 +87,4 @@ from .scvitools import (
     train_scarches_scanvi,
     predict_scarches_scanvi,
 )
+from .infercnv import calc_infercnv

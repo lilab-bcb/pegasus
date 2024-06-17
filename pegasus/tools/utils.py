@@ -3,7 +3,7 @@ from numba import njit
 import pandas as pd
 from pandas.api.types import is_categorical_dtype
 from scipy.sparse import issparse, csr_matrix, csc_matrix
-from typing import Union, List, Tuple, Dict
+from typing import Union, List, Tuple, Dict, Optional
 from anndata import AnnData
 from pegasusio import UnimodalData, MultimodalData
 
@@ -209,6 +209,11 @@ predefined_pathways = dict(
     canonical_pathways=pkg_resources.resource_filename("pegasus", "data_files/c2.cp.v7.5.1.symbols.gmt"),
 )
 
+predefined_gene_orders = dict(
+    GRCh38_2020_A=pkg_resources.resource_filename("pegasus", "data_files/GRCh38-2020-A_gene_order.txt"),
+    mm10_2020_A=pkg_resources.resource_filename("pegasus", "data_files/mm10-2020-A_gene_order.txt"),
+)
+
 def load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:
     signatures = {}
     with open(input_file) as fin:
@@ -269,3 +274,20 @@ def calc_csi_matrix(corr_mat):
             csi_mat[j, i] = csi_mat[i, j]
     csi_mat /= n
     return csi_mat
+
+
+def process_mat_key(
+    data: Union[MultimodalData, UnimodalData],
+    mat_key: Optional[str],
+) -> str:
+    if mat_key is None:
+        udata_check = data._unidata if isinstance(data, MultimodalData) else data
+        if "counts" in udata_check.matrices:
+            mat_key = "counts"
+        elif "raw.X" in udata_check.matrices:
+            mat_key = "raw.X"
+        else:
+            import sys
+            logger.error("No matrix with default key found in data! Please specify an explicit matrix key!")
+            sys.exit(-1)
+    return mat_key
