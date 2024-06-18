@@ -2515,28 +2515,114 @@ def plot_infercnv(
     rep: str = "cnv",
     panel_size: Tuple[int, int] = (16, 10),
     cmap: str = "bwr",
+    legend_fontsize: float = 10.0,
     return_fig: bool = False,
     dpi: float = 300.0,
     **kwargs,
 ) -> Union[plt.Figure, None]:
-    X = X_from_rep(rep)
+    X = X_from_rep(data, rep)
     if issparse(X):
         X = X.toarray()
 
-    chr_pos_dict = dict(sorted(data.uns[rep]["chr_pos"].items(), key=lambda x: x[1]))
+    chr_pos_dict = dict(sorted(data.uns[rep].items(), key=lambda x: x[1]))
     chr_pos = list(chr_pos_dict.values())
 
     df = pd.DataFrame(X, index=data.obs_names)
 
+    cluster_ids = data.obs[groupby].values
+    if not isinstance(cluster_ids, pd.api.types.CategoricalDtype):
+        cluster_ids = pd.Categorical(cluster_ids)
+    else:
+        cluster_ids = cluster_ids.remove_unused_categories()
+    idx = cluster_ids.argsort(kind="mergesort")
+    df = df.iloc[idx, :]    # organize df by category order
+    cluster_ids = cluster_ids[idx]
+    cell_colors = np.zeros(df.shape[0], dtype=object)
+    palette = _get_palette(cluster_ids.categories.size)
+    for k, cat in enumerate(cluster_ids.categories):
+        cell_colors[cluster_ids == cat] = palette[k]
+
+    # center color map at 0
+    from matplotlib.colors import TwoSlopeNorm
+    vmin = kwargs.pop("vmin", None)
+    vmax = kwargs.pop("vmax", None)
+    if vmin is None:
+        vmin = np.nanmin(X)
+    if vmax is None:
+        vmax = np.nanmax(X)
+    kwargs["norm"] = TwoSlopeNorm(0, vmin=vmin, vmax=vmax)
+
     cg = sns.clustermap(
         data=df,
+        row_colors=cell_colors,
+        col_colors=None,
         cmap=cmap,
+        row_cluster=False,
+        col_cluster=False,
+        linewidths=0,
+        yticklabels=[],
+        xticklabels=list(chr_pos_dict.keys()),
         figsize=panel_size,
         **kwargs,
     )
+
+    from matplotlib.patches import Patch
+    legend_elements = [Patch(color=color, label=label) for color, label in zip(palette, cluster_ids.categories)]
+    cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor=(1.02, 1.02), fontsize=legend_fontsize)
 
     cg.ax_heatmap.vlines(chr_pos[1:], lw=0.6, ymin=0, ymax=X.shape[0])
     cg.dpi = dpi
 
     if return_fig:
         return cg
+
+
+def plot_infercnv_scanpy(
+    data,
+    groupby,
+    rep_key: str = "cnv",
+    cmap: str = "bwr",
+    figsize: Tuple[int, int] = (16, 10),
+    return_fig: bool = False,
+    **kwargs,
+):
+    import scanpy as sc
+    from matplotlib.colors import TwoSlopeNorm
+    from anndata import AnnData
+
+    tmp_adata = AnnData(X=data.obsm[f"X_{rep_key}"], obs=data.obs, uns=data.uns)
+
+    # re-sort, as saving & loading anndata destroys the order
+    chr_pos_dict = dict(sorted(tmp_adata.uns[rep_key].items(), key=lambda x: x[1]))
+    chr_pos = list(chr_pos_dict.values())
+
+    # center color map at 0
+    tmp_data = tmp_adata.X.data if issparse(tmp_adata.X) else tmp_adata.X
+    vmin = kwargs.pop("vmin", None)
+    vmax = kwargs.pop("vmax", None)
+    if vmin is None:
+        vmin = np.nanmin(tmp_data)
+    if vmax is None:
+        vmax = np.nanmax(tmp_data)
+    kwargs["norm"] = TwoSlopeNorm(0, vmin=vmin, vmax=vmax)
+
+    # add chromosome annotations
+    var_group_positions = list(zip(chr_pos, chr_pos[1:] + [tmp_adata.shape[1]]))
+
+    return_ax_dic = sc.pl.heatmap(
+        tmp_adata,
+        var_names=tmp_adata.var.index.values,
+        groupby=groupby,
+        figsize=figsize,
+        cmap=cmap,
+        show_gene_labels=False,
+        var_group_positions=var_group_positions,
+        var_group_labels=list(chr_pos_dict.keys()),
+        show=False,
+        **kwargs,
+    )
+
+    return_ax_dic["heatmap_ax"].vlines(chr_pos[1:], lw=0.6, ymin=0, ymax=tmp_adata.shape[0])
+
+    if return_fig:
+        return return_ax_dic

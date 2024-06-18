@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix, issparse
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 from pegasus.tools import predefined_gene_orders, process_mat_key, log_norm, eff_n_jobs
-from pegasusio import MultimodalData, UnimodalData
+from pegasusio import MultimodalData, UnimodalData, timer
 from typing import Union, List, Optional
 
 
@@ -34,29 +34,46 @@ def _inject_genomic_info_to_data(
     data.var = var_df.reset_index().set_index("featurekey")
 
 
+@timer(logger=logger)
 def calc_infercnv(
     data: Union[MultimodalData, UnimodalData],
     genome: str,
-    reference_key: str,
-    reference_cat: List[str],
+    reference_key: Optional[str] = None,
+    reference_cat: Optional[List[str]] = None,
     mat_key: Optional[str] = None,
+    lfc_clip: float = 3.0,
+    noise: float = 0.1,
     window_size: int = 100,
-    cnv_res: str = "cnv",
+    res_key: str = "cnv",
+    exclude_chromosomes: Optional[List[str]] = None,
     chunk_size: int = 5000,
     n_jobs: int = -1,
 ) -> None:
-    _inject_genomic_info_to_data(data, genome)
+    var_genomic_cols = [col for col in data.var.columns if col in ["chromosome", "start", "end"]]
+    if len(var_genomic_cols) < 3:
+        _inject_genomic_info_to_data(data, genome)
 
-    # 1. Initial CNV scores
-    # Step 1a. logTPM
+    # I. Initial CNV scores
+    # logTPM
     log_norm(data, norm_count=1e6, base_matrix=process_mat_key(data, mat_key), target_matrix="log_tpm")
-    X = data.get_matrix("log_tpm")
+
+    # Exclude genes with no chromosome position or on chromosomes not included
+    var_mask = data.var["chromosome"].isnull()
+    n_no_pos = np.sum(var_mask)
+    if n_no_pos > 0:
+        logger.warning(f"Skip {n_no_pos} genes which have no genomic position annotated!")
+    if exclude_chromosomes:
+        logger.warning(f"Exclude chromosomes: {exclude_chromosomes}.")
+        var_mask = var_mask | data.var["chromosome"].isin(exclude_chromosomes)
+    data_sub = data[:, ~var_mask].copy()
+
+    X = data_sub.get_matrix("log_tpm")
     if issparse(X) and (not isinstance(X, csr_matrix)):
         X = X.tocsr()
 
-    ## Step 1b. Center by gene means
+    gene_means = X.mean(axis=0)
 
-    genomic_df = data.var.loc[:, ["chromosome", "start", "end"]]
+    genomic_df = data_sub.var.loc[:, ["chromosome", "start", "end"]]
     chromosomes = natsorted([x for x in genomic_df["chromosome"].unique() if x.startswith("chr")])
     chr2gene_idx = {}
     for chr in chromosomes:
@@ -66,33 +83,79 @@ def calc_infercnv(
     chunks = process_map(
             _infercnv_chunk,
             [X[i:(i+chunk_size), :] for i in range(0, data.shape[0], chunk_size)],
+            itertools.repeat(gene_means),
+            itertools.repeat(lfc_clip),
             itertools.repeat(chr2gene_idx),
             itertools.repeat(window_size),
             tqdm_class=tqdm,
             max_workers=n_jobs,
         )
-    res = scipy.sparse.vstack(chunks)
+    cnv_init = np.vstack(chunks)
 
-    ## 2. Final CNV scores
+    ## II. Final CNV scores
+    if reference_cat and reference_key:
+        base_means = _get_reference_means(data_sub, cnv_init, reference_key, reference_cat)
+        base_min = np.min(base_means, axis=0)
+        base_max = np.max(base_means, axis=0)
+        cnv_final = np.apply_along_axis(lambda row: _correct_by_reference_per_cell(row, base_min, base_max, noise), axis=1, arr=cnv_init)
+    else:
+        cnv_final = cnv_init
 
-    data.obsm[f"X_{cnv_res}"] = res
-    data.uns[cnv_res] = dict(zip(chromosomes, np.cumsum([0] + [idx.size for idx in chr2gene_idx.values()])))
+    data.obsm[f"X_{res_key}"] = csr_matrix(cnv_final)
+    data.uns[res_key] = dict(zip(chromosomes, np.cumsum([0] + [idx.size for idx in chr2gene_idx.values()])))
 
 
-def _infercnv_chunk(x, chr2gene_idx, window_size):
+def _infercnv_chunk(x, gene_means, lfc_clip, chr2gene_idx, window_size):
     from pegasus.cylib.fast_utils import calc_running_mean
 
-    # Clip
+    # Step 1. Center by genes
+    x_centered = x - gene_means
 
-    # Window smoothing
+    # Step 2. Clip
+    x_clipped = np.clip(x_centered, -lfc_clip, lfc_clip)
+
+    # Step 3. Window smoothing
     running_means = []
     for chr in chr2gene_idx:
-        tmp_x = x[:, chr2gene_idx[chr]].toarray()
+        tmp_x = x_clipped[:, chr2gene_idx[chr]]
         m, n = tmp_x.shape
+        if n < window_size:
+            window_size = n
         running_means.append(calc_running_mean(tmp_x, m, n, window_size))
     x_smoothed = np.hstack(running_means)
 
-    # Center by cell medians
+    # Step 4. Center by cell medians
+    x_cell_centered = x_smoothed - np.median(x_smoothed, axis=1)[:, np.newaxis]
 
-    x_res = x_smoothed
-    return csr_matrix(x_res)
+    return x_cell_centered
+
+
+def _get_reference_means(data, cnv_init, reference_key, reference_cat):
+    if isinstance(reference_cat, str):
+        reference_cat = [reference_cat]
+    reference_cat = np.array(reference_cat)
+    is_observed = np.isin(reference_cat, data.obs[reference_key])
+    if not np.all(is_observed):
+        ref_missing = reference_cat[~is_observed]
+        logger.warning(f"Omit reference categories missing in data: {ref_missing}!")
+        reference_cat = reference_cat[is_observed]
+
+    base_mean_list = []
+    for cat in reference_cat:
+        idx_cat = data.obs.index.get_indexer(data.obs.loc[data.obs[reference_key]==cat].index.values)
+        base_mean_list.append(np.mean(cnv_init[idx_cat, :], axis=0))
+    return np.vstack(base_mean_list)
+
+
+def _correct_by_reference_per_cell(cnv_init_row, base_min, base_max, noise):
+    cnv_final_row = np.zeros(cnv_init_row.shape, dtype=cnv_init_row.dtype)
+    above_max = cnv_init_row > (base_max + noise)
+    cnv_final_row[above_max] = (cnv_init_row - base_max)[above_max]
+    below_min = cnv_init_row < (base_min - noise)
+    cnv_final_row[below_min] = (cnv_init_row - base_min)[below_min]
+    return cnv_final_row
+
+#def _correct_by_reference_chunk(cnv_init_chunk, base_min, base_max, noise):
+#    cnv_init_chunk = cnv_init_chunk.toarray()
+#    cnv_final_chunk = np.apply_along_axis(lambda row: _correct_by_reference_per_cell(row, base_min, base_max, noise), axis=1, arr=cnv_init_chunk)
+#    return cnv_final_chunk

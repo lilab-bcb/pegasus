@@ -104,6 +104,7 @@ from .plotting import (
     wordcloud,
     plot_gsea,
     elbowplot,
+    plot_infercnv,
 )
 from . import pseudo
 
