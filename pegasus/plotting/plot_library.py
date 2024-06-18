@@ -2507,3 +2507,36 @@ def elbowplot(
     ax.axvline(x = ncomps + 0.5, ls = "--", c = "r", linewidth=1)
 
     return fig if return_fig else None
+
+
+def plot_infercnv(
+    data: Union[MultimodalData, UnimodalData],
+    groupby: str,
+    rep: str = "cnv",
+    panel_size: Tuple[int, int] = (16, 10),
+    cmap: str = "bwr",
+    return_fig: bool = False,
+    dpi: float = 300.0,
+    **kwargs,
+) -> Union[plt.Figure, None]:
+    X = X_from_rep(rep)
+    if issparse(X):
+        X = X.toarray()
+
+    chr_pos_dict = dict(sorted(data.uns[rep]["chr_pos"].items(), key=lambda x: x[1]))
+    chr_pos = list(chr_pos_dict.values())
+
+    df = pd.DataFrame(X, index=data.obs_names)
+
+    cg = sns.clustermap(
+        data=df,
+        cmap=cmap,
+        figsize=panel_size,
+        **kwargs,
+    )
+
+    cg.ax_heatmap.vlines(chr_pos[1:], lw=0.6, ymin=0, ymax=X.shape[0])
+    cg.dpi = dpi
+
+    if return_fig:
+        return cg
