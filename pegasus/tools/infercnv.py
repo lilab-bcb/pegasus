@@ -154,8 +154,3 @@ def _correct_by_reference_per_cell(cnv_init_row, base_min, base_max, noise):
     below_min = cnv_init_row < (base_min - noise)
     cnv_final_row[below_min] = (cnv_init_row - base_min)[below_min]
     return cnv_final_row
-
-#def _correct_by_reference_chunk(cnv_init_chunk, base_min, base_max, noise):
-#    cnv_init_chunk = cnv_init_chunk.toarray()
-#    cnv_final_chunk = np.apply_along_axis(lambda row: _correct_by_reference_per_cell(row, base_min, base_max, noise), axis=1, arr=cnv_init_chunk)
-#    return cnv_final_chunk
