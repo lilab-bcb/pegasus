@@ -4,13 +4,13 @@ logger = logging.getLogger(__name__)
 
 import os
 import itertools
-import tqdm
 import scipy.sparse
 import numpy as np
 import pandas as pd
 
 from natsort import natsorted
 from scipy.sparse import csr_matrix, issparse
+from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 from pegasus.tools import predefined_gene_orders, process_mat_key, log_norm, eff_n_jobs
 from pegasusio import MultimodalData, UnimodalData
@@ -21,7 +21,7 @@ def _inject_genomic_info_to_data(
     data: Union[MultimodalData, UnimodalData],
     genome: str,
 ) -> None:
-    genomic_df = pd.read_csv(predefined_gene_orders(genome), sep="\t", header=None)
+    genomic_df = pd.read_csv(predefined_gene_orders[genome], sep="\t", header=None)
     genomic_df.columns = ["featureid", "chromosome", "start", "end"]
     genomic_df.set_index("featureid", inplace=True)
 
@@ -49,31 +49,28 @@ def calc_infercnv(
 
     # 1. Initial CNV scores
     # Step 1a. logTPM
-    log_norm(data, norm_count=1e6, base_matrix=process_mat_key(mat_key), target_matrix="log_tpm")
+    log_norm(data, norm_count=1e6, base_matrix=process_mat_key(data, mat_key), target_matrix="log_tpm")
     X = data.get_matrix("log_tpm")
     if issparse(X) and (not isinstance(X, csr_matrix)):
         X = X.tocsr()
 
     ## Step 1b. Center by gene means
 
-    genomic_df = genomic_df.loc[:, ["chromosome", "start", "end"]]
-    chromosomes = natsorted([x for x in genomic_df["chromosom"].unique() if x.startswith("chr")])
+    genomic_df = data.var.loc[:, ["chromosome", "start", "end"]]
+    chromosomes = natsorted([x for x in genomic_df["chromosome"].unique() if x.startswith("chr")])
     chr2gene_idx = {}
     for chr in chromosomes:
         genes = genomic_df.loc[genomic_df["chromosome"]==chr].sort_values("start").index.values
         chr2gene_idx[chr] = genomic_df.index.get_indexer(genes)
     n_jobs = eff_n_jobs(n_jobs)
-    chunks = zip(
-        *process_map(
+    chunks = process_map(
             _infercnv_chunk,
             [X[i:(i+chunk_size), :] for i in range(0, data.shape[0], chunk_size)],
             itertools.repeat(chr2gene_idx),
             itertools.repeat(window_size),
             tqdm_class=tqdm,
             max_workers=n_jobs,
-        ),
-        stirct=False,
-    )
+        )
     res = scipy.sparse.vstack(chunks)
 
     ## 2. Final CNV scores
@@ -90,13 +87,12 @@ def _infercnv_chunk(x, chr2gene_idx, window_size):
     # Window smoothing
     running_means = []
     for chr in chr2gene_idx:
-        tmp_x = x[:, chr2gene_idx[chr]]
+        tmp_x = x[:, chr2gene_idx[chr]].toarray()
         m, n = tmp_x.shape
-        #running_means.append(_calc_running_mean(tmp_x, window_size))
         running_means.append(calc_running_mean(tmp_x, m, n, window_size))
     x_smoothed = np.hstack(running_means)
 
     # Center by cell medians
 
     x_res = x_smoothed
-    return x_res
+    return csr_matrix(x_res)

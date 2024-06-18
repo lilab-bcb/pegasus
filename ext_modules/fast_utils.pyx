@@ -366,15 +366,15 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef calc_running_mean(const double[:, :] x, int M, int N, int k):
+cpdef calc_running_mean(const float[:, :] x, int M, int N, int k):
     cdef Py_ssize_t k2, i, j
 
     cs = np.cumsum(x, axis=1)
-    cdef double[:, :] cs_view = cs
+    cdef float[:, :] cs_view = cs
     k2 = k // 2
 
-    res_buffer = np.empty((M, N))
-    cdef double[:, :] res = res_buffer
+    res_buffer = np.empty((M, N), dtype=np.float32)
+    cdef float[:, :] res = res_buffer
 
     for i in range(M):
         for j in range(N):
