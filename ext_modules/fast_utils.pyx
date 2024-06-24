@@ -372,21 +372,34 @@ cpdef calc_running_mean(const float[:, :] x, int M, int N, int k):
     cs = np.cumsum(x, axis=1)
     cdef float[:, :] cs_view = cs
     k2 = k // 2
+    cdef bint is_odd = k % 2
 
     res_buffer = np.empty((M, N), dtype=np.float32)
     cdef float[:, :] res = res_buffer
 
     for i in range(M):
         for j in range(N):
-            if j < k2:
-                res[i, j] = cs_view[i, j + k2] / (j + k2 + 1)
-            elif j >= N - k2:
-                res[i, j] = (cs_view[i, N - 1] - cs_view[i, j - k2 - 1]) / (N - j + k2)
-            else:
-                if j - k2 - 1 >= 0:
-                    res[i, j] = cs_view[i, j + k2] - cs_view[i, j - k2 - 1]
+            if is_odd:
+                if j < k2:
+                    res[i, j] = cs_view[i, j + k2] / (j + k2 + 1)
+                elif j >= N - k2:
+                    res[i, j] = (cs_view[i, N - 1] - cs_view[i, j - k2 - 1]) / (N - j + k2)
                 else:
-                    res[i, j] = cs_view[i, j + k2]
-                res[i, j] /= (2 * k2 + 1)
+                    if j - k2 - 1 >= 0:
+                        res[i, j] = cs_view[i, j + k2] - cs_view[i, j - k2 - 1]
+                    else:
+                        res[i, j] = cs_view[i, j + k2]
+                    res[i, j] /= (2 * k2 + 1)
+            else:
+                if j < k2:
+                    res[i, j] = cs_view[i, j + k2] / (j + k2 + 1)
+                elif j >= N - k2:
+                    res[i, j] = (cs_view[i, N - 1] - cs_view[i, j - k2]) / (N - j + k2 - 1)
+                else:
+                    if j - k2 >= 0:
+                        res[i, j] = cs_view[i, j + k2] - cs_view[i, j - k2]
+                    else:
+                        res[i, j] = cs_view[i, j + k2]
+                    res[i, j] /= (2 * k2)
 
     return res_buffer
