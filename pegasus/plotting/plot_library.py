@@ -2512,22 +2512,49 @@ def elbowplot(
 def plot_infercnv(
     data: Union[MultimodalData, UnimodalData],
     groupby: str,
+    ref_cat: Optional[List[str]] = None,
+    tumor_cat: Optional[List[str]] = None,
     rep: str = "cnv",
-    panel_size: Tuple[int, int] = (16, 10),
+    panel_size: Tuple[int, int] = (16, 20),
     cmap: str = "bwr",
     legend_fontsize: float = 10.0,
     return_fig: bool = False,
     dpi: float = 300.0,
     **kwargs,
 ) -> Union[plt.Figure, None]:
-    X = X_from_rep(data, rep)
-    if issparse(X):
-        X = X.toarray()
-
     chr_pos_dict = dict(sorted(data.uns[rep].items(), key=lambda x: x[1]))
     chr_pos = list(chr_pos_dict.values())
 
+    all_cats = data.obs[groupby].cat.categories.tolist()
+    obs_cat = None
+    if ref_cat:
+        if tumor_cat:
+            obs_cat = [c for c in all_cats if c not in (ref_cat + tumor_cat)]
+            if len(obs_cat) == 0:
+                obs_cat = None
+        else:
+            tumor_cat = [c for c in all_cats if c not in ref_cat]
+    else:
+        tumor_cat = all_cats
+    valid_groupby_cats = [x for x in [ref_cat, obs_cat, tumor_cat] if x is not None]
+    if len(valid_groupby_cats) == 1:
+        subtitles = ["Cells"]
+    elif len(valid_groupby_cats) == 2:
+        subtitles = ["Reference cells", "Tumor cells"]
+    else:
+        subtitles = ["Reference cells", "Other cells", "Tumor cells"]
+
+    X = X_from_rep(data, rep)
+    if issparse(X):
+        X = X.toarray()
     df = pd.DataFrame(X, index=data.obs_names)
+
+    vmin = kwargs.pop("vmin", None)
+    vmax = kwargs.pop("vmax", None)
+    if vmin is None:
+        vmin = np.nanmin(X)
+    if vmax is None:
+        vmax = np.nanmax(X)
 
     cluster_ids = data.obs[groupby].values
     if not isinstance(cluster_ids, pd.api.types.CategoricalDtype):
@@ -2542,39 +2569,107 @@ def plot_infercnv(
     for k, cat in enumerate(cluster_ids.categories):
         cell_colors[cluster_ids == cat] = palette[k]
 
+    from matplotlib.patches import Patch
+    from matplotlib.gridspec import GridSpec
+
+    legend_elements = [Patch(color=color, label=label) for color, label in zip(palette, cluster_ids.categories)]
+
+    fig = plt.figure(figsize=panel_size)
+    height_ratios = []
+    for cat in valid_groupby_cats:
+        height_ratios.append(np.sum(cluster_ids.isin(cat)))
+    #height_ratios.append(50)
+    gs = GridSpec(len(valid_groupby_cats), 3, height_ratios=height_ratios, width_ratios=[1, 3, 2], figure=fig)
+
+    for i, elem in enumerate(zip(subtitles, valid_groupby_cats)):
+        groupby_cat = elem[1]
+        idx_included = np.where(cluster_ids.isin(groupby_cat))[0]
+        _infercnv_subplot(
+            df=df,
+            cell_colors=cell_colors,
+            idx_included=idx_included,
+            chr_pos_dict=chr_pos_dict,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
+            panel_size=panel_size,
+            legend_fontsize=legend_fontsize,
+            legend_patches = [patch for patch in legend_elements if patch.get_label() in groupby_cat],
+            subtitle = elem[0],
+            show_cbar = True if i == 0 else False,
+            show_xlabel = True if i == len(valid_groupby_cats) - 1 else False,
+            dpi=dpi,
+            fig=fig,
+            gs=gs,
+            gs_index=i,
+            **kwargs,
+        )
+
+    fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+
+    if return_fig:
+        return fig
+
+
+def _infercnv_subplot(df, cell_colors, idx_included, chr_pos_dict, vmin, vmax, cmap, panel_size, legend_fontsize, legend_patches, subtitle, show_cbar, show_xlabel, dpi, fig, gs, gs_index, **kwargs):
     # center color map at 0
     from matplotlib.colors import TwoSlopeNorm
-    vmin = kwargs.pop("vmin", None)
-    vmax = kwargs.pop("vmax", None)
-    if vmin is None:
-        vmin = np.nanmin(X)
-    if vmax is None:
-        vmax = np.nanmax(X)
-    kwargs["norm"] = TwoSlopeNorm(0, vmin=vmin, vmax=vmax)
+
+    height_ratio = idx_included.size / df.shape[0]
 
     cg = sns.clustermap(
-        data=df,
-        row_colors=cell_colors,
+        data=df.iloc[idx_included, :],
+        row_colors=cell_colors[idx_included],
         col_colors=None,
         cmap=cmap,
         row_cluster=False,
         col_cluster=False,
         linewidths=0,
         yticklabels=[],
-        xticklabels=list(chr_pos_dict.keys()),
-        figsize=panel_size,
+        xticklabels=[],
+        figsize=(panel_size[0], height_ratio * panel_size[1]),
+        norm = TwoSlopeNorm(0 if vmin < 0 else 1, vmin=vmin, vmax=vmax),
         **kwargs,
     )
+    cg.ax_heatmap.set_ylabel(subtitle)
+    #if not show_cbar:
+    cg.cax.set_visible(False)
 
-    from matplotlib.patches import Patch
-    legend_elements = [Patch(color=color, label=label) for color, label in zip(palette, cluster_ids.categories)]
-    cg.ax_heatmap.legend(handles=legend_elements, loc='lower left', bbox_to_anchor=(1.02, 1.02), fontsize=legend_fontsize)
+    #cg.ax_heatmap.legend(handles=legend_patches, loc='lower left', bbox_to_anchor=(1.02, 1.02), fontsize=legend_fontsize)
 
-    cg.ax_heatmap.vlines(chr_pos[1:], lw=0.6, ymin=0, ymax=X.shape[0])
+    cg.ax_heatmap.vlines(list(chr_pos_dict.values())[1:], colors='k', lw=1, ymin=0, ymax=idx_included.size)
+    #if show_xlabel:
+    #    chr_name_list = list(chr_pos_dict.keys())
+    #    for i, chr_name in enumerate(chr_name_list):
+    #        if i + 1 < len(chr_name_list):
+    #            x_pos = (chr_pos_dict[chr_name] + chr_pos_dict[chr_name_list[i + 1]]) / 2
+    #        else:
+    #            x_pos = (chr_pos_dict[chr_name] + cg.ax_heatmap.get_xlim()[1]) / 2
+    #        cg.ax_heatmap.text(x_pos, idx_included.size + 10, chr_name, ha='center', va='center', color='black', fontsize=10, rotation=90)
+
     cg.dpi = dpi
 
-    if return_fig:
-        return cg
+    # Row color
+    cg.ax_row_colors.set_position(gs[gs_index, 0].get_position(fig))
+    cg.ax_row_colors.set_subplotspec(gs[gs_index, 0])
+
+    cg.ax_heatmap.set_position(gs[gs_index, 1].get_position(fig))
+    cg.ax_heatmap.set_subplotspec(gs[gs_index, 1])
+
+    #legend_ax = fig.add_subplot(gs[gs_index, 2])
+    #legend_ax.legend(handles=legend_patches, loc='center', fontsize=legend_fontsize)
+    #legend_ax.axis('off')
+
+    # Adjust the positions of the colorbar and dendrograms if needed
+    if show_cbar:
+        cg.cax.set_position(gs[gs_index, 0].get_position(fig)) # Adjust the colorbar position
+    if cg.ax_row_dendrogram:
+        cg.ax_row_dendrogram.set_position(gs[gs_index, 0].get_position(fig)) # Adjust the row dendrogram position
+    cg.ax_col_dendrogram.set_visible(False)
+    cg.ax_row_dendrogram.set_visible(False)
+
+    #plt.close(cg.fig)
+
 
 
 def plot_infercnv_scanpy(

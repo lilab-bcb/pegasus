@@ -42,10 +42,10 @@ def calc_infercnv(
     reference_cat: Optional[List[str]] = None,
     mat_key: Optional[str] = None,
     lfc_clip: float = 3.0,
-    noise: float = 0.1,
+    noise: float = 0.2,
     window_size: int = 100,
     res_key: str = "cnv",
-    exclude_chromosomes: Optional[List[str]] = None,
+    exclude_chromosomes: Optional[List[str]] = ["chrM", "chrX", "chrY"],
     chunk_size: int = 5000,
     n_jobs: int = -1,
 ) -> None:
@@ -79,6 +79,7 @@ def calc_infercnv(
     for chr in chromosomes:
         genes = genomic_df.loc[genomic_df["chromosome"]==chr].sort_values("start").index.values
         chr2gene_idx[chr] = genomic_df.index.get_indexer(genes)
+
     n_jobs = eff_n_jobs(n_jobs)
     chunks = process_map(
             _infercnv_chunk,
@@ -109,15 +110,16 @@ def _infercnv_chunk(x, gene_means, lfc_clip, chr2gene_idx, window_size):
     from pegasus.cylib.fast_utils import calc_running_mean
 
     # Step 1. Center by genes
-    x_centered = x - gene_means
+    #x_centered = x - gene_means
 
     # Step 2. Clip
-    x_clipped = np.clip(x_centered, -lfc_clip, lfc_clip)
+    #x_clipped = np.clip(x_centered, -lfc_clip, lfc_clip)
 
     # Step 3. Window smoothing
     running_means = []
     for chr in chr2gene_idx:
-        tmp_x = x_clipped[:, chr2gene_idx[chr]]
+        #tmp_x = x_clipped[:, chr2gene_idx[chr]]
+        tmp_x = x[:, chr2gene_idx[chr]].toarray()
         m, n = tmp_x.shape
         if n < window_size:
             window_size = n
