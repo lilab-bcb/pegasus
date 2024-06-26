@@ -29,7 +29,7 @@ def _inject_genomic_info_to_data(
     var_df = var_df.join(genomic_df)
     n_miss = genomic_df.shape[0] - var_df.shape[0]
     if n_miss > 0:
-        logger.warning(f"InferCNV ignores {n_miss} genes which do not exist in data!")
+        logger.warning(f"InferCNV ignores {n_miss} genes which do not exist in data.")
 
     data.var = var_df.reset_index().set_index("featurekey")
 
@@ -41,7 +41,7 @@ def calc_infercnv(
     reference_key: Optional[str] = None,
     reference_cat: Optional[List[str]] = None,
     mat_key: Optional[str] = None,
-    lfc_clip: float = 3.0,
+    run_log_norm: bool = True,
     noise: float = 0.2,
     window_size: int = 100,
     res_key: str = "cnv",
@@ -54,24 +54,26 @@ def calc_infercnv(
         _inject_genomic_info_to_data(data, genome)
 
     # I. Initial CNV scores
-    # logTPM
-    log_norm(data, norm_count=1e6, base_matrix=process_mat_key(data, mat_key), target_matrix="log_tpm")
+    # log-norm TP100K
+    source_mat_key = mat_key
+    if run_log_norm:
+        mat_key = process_mat_key(data, mat_key)
+        source_mat_key = f"{mat_key}.log_norm"
+        log_norm(data, base_matrix=mat_key, target_matrix=source_mat_key)
 
     # Exclude genes with no chromosome position or on chromosomes not included
     var_mask = data.var["chromosome"].isnull()
     n_no_pos = np.sum(var_mask)
     if n_no_pos > 0:
-        logger.warning(f"Skip {n_no_pos} genes which have no genomic position annotated!")
+        logger.warning(f"Skip {n_no_pos} genes which have no genomic position annotated.")
     if exclude_chromosomes:
         logger.warning(f"Exclude chromosomes: {exclude_chromosomes}.")
         var_mask = var_mask | data.var["chromosome"].isin(exclude_chromosomes)
     data_sub = data[:, ~var_mask].copy()
 
-    X = data_sub.get_matrix("log_tpm")
+    X = data_sub.get_matrix(source_mat_key)
     if issparse(X) and (not isinstance(X, csr_matrix)):
         X = X.tocsr()
-
-    gene_means = X.mean(axis=0)
 
     genomic_df = data_sub.var.loc[:, ["chromosome", "start", "end"]]
     chromosomes = natsorted([x for x in genomic_df["chromosome"].unique() if x.startswith("chr")])
@@ -81,11 +83,11 @@ def calc_infercnv(
         chr2gene_idx[chr] = genomic_df.index.get_indexer(genes)
 
     n_jobs = eff_n_jobs(n_jobs)
+
+    logger.info("Calculate initial CNV scores")
     chunks = process_map(
             _infercnv_chunk,
             [X[i:(i+chunk_size), :] for i in range(0, data.shape[0], chunk_size)],
-            itertools.repeat(gene_means),
-            itertools.repeat(lfc_clip),
             itertools.repeat(chr2gene_idx),
             itertools.repeat(window_size),
             tqdm_class=tqdm,
@@ -98,27 +100,32 @@ def calc_infercnv(
         base_means = _get_reference_means(data_sub, cnv_init, reference_key, reference_cat)
         base_min = np.min(base_means, axis=0)
         base_max = np.max(base_means, axis=0)
-        cnv_final = np.apply_along_axis(lambda row: _correct_by_reference_per_cell(row, base_min, base_max, noise), axis=1, arr=cnv_init)
+        #cnv_final = np.apply_along_axis(lambda row: _correct_by_reference_per_cell(row, base_min, base_max, noise), axis=1, arr=cnv_init)
+        logger.info("Calculate final CNV scores")
+        chunks = process_map(
+            _correct_by_reference_per_cell,
+            [cnv_init[i:(i+chunk_size), :] for i in range(0, data.shape[0], chunk_size)],
+            itertools.repeat(base_min),
+            itertools.repeat(base_max),
+            itertools.repeat(noise),
+            tqdm_class=tqdm,
+            max_workers=n_jobs,
+        )
+        cnv_final = np.vstack(chunks)
     else:
+        logger.info("No reference category is specified. The initial CNV scores are already the final scores.")
         cnv_final = cnv_init
 
     data.obsm[f"X_{res_key}"] = csr_matrix(cnv_final)
     data.uns[res_key] = dict(zip(chromosomes, np.cumsum([0] + [idx.size for idx in chr2gene_idx.values()])))
 
 
-def _infercnv_chunk(x, gene_means, lfc_clip, chr2gene_idx, window_size):
+def _infercnv_chunk(x, chr2gene_idx, window_size):
     from pegasus.cylib.fast_utils import calc_running_mean
 
-    # Step 1. Center by genes
-    #x_centered = x - gene_means
-
-    # Step 2. Clip
-    #x_clipped = np.clip(x_centered, -lfc_clip, lfc_clip)
-
-    # Step 3. Window smoothing
+    # Step 1. Window smoothing
     running_means = []
     for chr in chr2gene_idx:
-        #tmp_x = x_clipped[:, chr2gene_idx[chr]]
         tmp_x = x[:, chr2gene_idx[chr]].toarray()
         m, n = tmp_x.shape
         if n < window_size:
@@ -126,7 +133,7 @@ def _infercnv_chunk(x, gene_means, lfc_clip, chr2gene_idx, window_size):
         running_means.append(calc_running_mean(tmp_x, m, n, window_size))
     x_smoothed = np.hstack(running_means)
 
-    # Step 4. Center by cell medians
+    # Step 2. Center by cell medians
     x_cell_centered = x_smoothed - np.median(x_smoothed, axis=1)[:, np.newaxis]
 
     return x_cell_centered
