@@ -12,7 +12,7 @@ from natsort import natsorted
 from scipy.sparse import csr_matrix, issparse
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
-from pegasus.tools import predefined_gene_orders, process_mat_key, log_norm, eff_n_jobs
+from pegasus.tools import predefined_gene_orders, log_norm, eff_n_jobs
 from pegasusio import MultimodalData, UnimodalData, timer
 from typing import Union, List, Optional
 
@@ -53,13 +53,15 @@ def calc_infercnv(
     if len(var_genomic_cols) < 3:
         _inject_genomic_info_to_data(data, genome)
 
+    if mat_key is None:
+        mat_key = data.current_matrix()
+
     # I. Initial CNV scores
-    # log-norm TP100K
-    source_mat_key = mat_key
+    # log-norm TP100K if specified
     if run_log_norm:
-        mat_key = process_mat_key(data, mat_key)
-        source_mat_key = f"{mat_key}.log_norm"
-        log_norm(data, base_matrix=mat_key, target_matrix=source_mat_key)
+        base_matrix = mat_key
+        mat_key = f"{base_matrix}.log_norm"
+        log_norm(data, base_matrix=base_matrix, target_matrix=mat_key)
 
     # Exclude genes with no chromosome position or on chromosomes not included
     var_mask = data.var["chromosome"].isnull()
@@ -71,7 +73,7 @@ def calc_infercnv(
         var_mask = var_mask | data.var["chromosome"].isin(exclude_chromosomes)
     data_sub = data[:, ~var_mask].copy()
 
-    X = data_sub.get_matrix(source_mat_key)
+    X = data_sub.get_matrix(mat_key)
     if issparse(X) and (not isinstance(X, csr_matrix)):
         X = X.tocsr()
 

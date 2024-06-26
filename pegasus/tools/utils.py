@@ -274,20 +274,3 @@ def calc_csi_matrix(corr_mat):
             csi_mat[j, i] = csi_mat[i, j]
     csi_mat /= n
     return csi_mat
-
-
-def process_mat_key(
-    data: Union[MultimodalData, UnimodalData],
-    mat_key: Optional[str],
-) -> str:
-    if mat_key is None:
-        udata_check = data._unidata if isinstance(data, MultimodalData) else data
-        if "counts" in udata_check.matrices:
-            mat_key = "counts"
-        elif "raw.X" in udata_check.matrices:
-            mat_key = "raw.X"
-        else:
-            import sys
-            logger.error("No matrix with default key found in data! Please specify an explicit matrix key!")
-            sys.exit(-1)
-    return mat_key

@@ -17,7 +17,6 @@ from .utils import (
     predefined_gene_orders,
     load_signatures_from_file,
     largest_variance_from_random_matrix,
-    process_mat_key,
 )
 
 from .preprocessing import (
