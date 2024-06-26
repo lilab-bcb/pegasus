@@ -2524,6 +2524,59 @@ def plot_infercnv(
     output_file: Optional[str] = None,
     **kwargs,
 ) -> Union[plt.Figure, None]:
+    """Generate InferCNV plot based on the results calculate by ``calc_infercnv`` function.
+
+    Parameters
+    ----------
+    data: ``MultimodalData`` or ``UnimodalData`` object
+        Single-cell data matrix.
+
+    groupby: ``str``
+        Specify the key for grouping cells in the heatmap. Must exist in ``data.obs``.
+
+    ref_cat: ``str``, optional, default: ``None``
+        Specify the categories in ``data.obs[groupby]`` that is treated as reference (i.e. non-malignant cell groups).
+        If ``None``, which is the default, treat all cell groups as tumor, and only show one heatmap for all groups.
+
+    tumor_cat: ``str``, optional, default: ``None``
+        Specify the categories in ``data.obs[groupby]`` that is treated as tumor (i.e. malignant cell groups).
+        If ``None``, which is the default, and if ``ref_cat`` is not ``None``, then treat all cell groups not in ``ref_cat`` as tumor groups. In this case, there will be 2 heatmaps: one for reference, one for tumor.
+        Otherwise, if there are still cell groups not in ``ref_cat`` or ``tumor_cat``, then there will be 3 heatmaps: one for reference on top, one for tumor on bottom, and one for the rest groups in middle.
+
+    rep: ``str``, optional, default: ``cnv``
+        Specify the key for CNV results stored in data. By default, use the default result key of ``calc_infercnv`` function.
+
+    panel_size: ``(int, int)``, optional, default: ``(16, 10)``
+        Specify the figure size in ``(width, height)`` format.
+
+    cmap: ``str``, optional, default: ``bwr``
+        Color map for plotting heatmap. Available options are in `Matplotlib colormaps manual <https://matplotlib.org/stable/users/explain/colors/colormaps.html>`_.
+
+    legend_fontsize: ``float``, optional, default: ``10.0``
+        Font size of legend, as well as chromosome names shown at the bottom of plot.
+
+    show_groupby_border: ``bool``, optional, default: ``False``
+        If show cell group borders as horizontal lines in each heatmap. Do not show them by default.
+
+    return_fig: ``bool``, optional, default: ``False``
+        Return a ``Figure`` object if ``True``; return ``None`` otherwise.
+
+    dpi: ``float``, optional, default: ``300.0``
+        The resolution in dots per inch.
+
+    output_file: ``str``, optional, default: ``None``
+        The filename when saving the plot as file. If ``None``, which is the default, do not save to file.
+
+    Returns
+    -------
+
+    `Figure` object
+        A ``matplotlib.figure.Figure`` object containing the dot plot if ``return_fig == True``.
+
+    Examples
+    --------
+    >>> plot_infercnv(data, groupby="anno", ref_cat=["Macrophage", "T", "B", "Plasma"])
+    """
     chr_pos_dict = dict(sorted(data.uns[rep].items(), key=lambda x: x[1]))
 
     all_cats = data.obs[groupby].cat.categories.tolist()

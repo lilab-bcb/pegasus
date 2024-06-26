@@ -49,6 +49,69 @@ def calc_infercnv(
     chunk_size: int = 5000,
     n_jobs: int = -1,
 ) -> None:
+    """Infer the Copy Number Variant (CNV) from single-cell data [Tirosh16]_.
+    This implementation is a variant of `InferCNA <https://github.com/jlaffy/infercna>`_ algorithm. It has 2 steps:
+        * Step 1: Calculate initial CNV scores by window smoothing the log-norm counts of genes along genomic regions for each cell, and center the results by cell medians.
+        * Step 2: Calculate final CNV scores by correcting the initial CNV scores using the group means of reference cells (non-malignant cell groups specified by users).
+    Notice that if the input count matrix is already log-normalized, you don't need to apply log-norm operation again. Set ``run_log_norm=False`` for this case.
+    The log-normalization is TP100K (i.e. number of counts is 1e5 for each cell after normalization).
+
+    Parameters
+    ----------
+    data: ``MultimodalData`` or ``UnimodalData``
+        Single-cell count matrix.
+
+    genome: ``str``
+        Specify which genome's gene order to use. Available keywords: ``GRCh38_2020_A`` for human genome GRCh38-2020-A, ``mm10_2020_A`` for mouse genome mm10-2020-A.
+
+    reference_key: ``str``, optional, default: ``None``
+        The cell attribute key used for specifying non-malignant cell groups as reference. Must be a column in ``data.obs`` field.
+        If ``None``, which is the default, no cell group is used as reference, so the initial CNV scores is the final scores to return.
+
+    reference_cat: ``str``, optional, default: ``None``
+        Specify which cell groups in ``data.obs[reference_key]`` as reference.
+        If ``None``, which is the default, no cell group is used as reference, so the initial CNV scores is the final scores to return.
+
+    mat_key: ``str``, optional, default: ``None``
+        Specify the count matrix to use for calculating CNV scores.
+        If ``None``, which is the default, use the current matrix ``data.X``.
+
+    run_log_norm: ``bool``, optional, default: ``True``
+        If applying log-normalization to the input count matrix.
+        If the input matrix is raw counts, then must apply log-normalization; otherwise, if the input matrix is already log-normed, you can set this parameter to ``False``.
+
+    noise: ``float``, optional, default: ``0.2``
+        The noise term used in the correction step to get final CNV scores corrected by reference cells.
+        It does not take effects if ``reference_key`` or ``reference_cat`` is ``None``.
+
+    window_size: ``int``, optional, default: ``100``
+        The window size used for window smoothing average gene expressions along genome positions.
+
+    res_key: ``str``, optional, default: ``cnv``
+        Specify the key for storing results back to the input data object.
+
+    exclude_chromosomes: ``List[str]``, optional, default: ``["chrM", "chrX", "chrY"]``
+        Specify chromosomes to exclude from calculating CNV scores.
+        By default, exlude genes on chrM, chrX and chrY genomes. When using the mouse genome, you'll need to explicitly specify which chromosomes to exclude.
+
+    chunk_size: ``int``, optional, default: ``5000``
+        The chunk size of cells that runs per thread. Ths is useful for speeding up the calculation via multi-threading.
+
+    n_jobs: ``int``, optional, default: ``-1``
+        Specify number of threads for the calculation. By default, use all the vCPUs of the machine.
+
+    Returns
+    -------
+    ``None``
+
+    Update ``data.obsm``:
+        * ``data.obsm["X_"+res_key]``: The matrix of final CNV scores calculated, with rows for cells and columns for genes ordered by their positions on genomic regions.
+        * ``data.uns[res_key]``: A dictionary of starting positions of all chromosomes used for calculating CNV scores. This is used for plotting the InferCNV plot.
+
+    Example
+    -------
+    >>> pg.calc_infercnv(data, "GRCh38_2020_A", reference_key="anno", reference_cat=["Macrophage", "T", "B", "Plasma"])
+    """
     var_genomic_cols = [col for col in data.var.columns if col in ["chromosome", "start", "end"]]
     if len(var_genomic_cols) < 3:
         _inject_genomic_info_to_data(data, genome)

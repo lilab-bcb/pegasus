@@ -128,6 +128,14 @@ Label Transfer
     train_scarches_scanvi
     predict_scarches_scanvi
 
+Copy Number Variant
+~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: .
+
+    calc_infercnv
+
 Differential Expression and Gene Set Enrichment Analysis
 --------------------------------------------------------
 
@@ -171,6 +179,7 @@ Plotting
     wordcloud
     plot_gsea
     elbowplot
+    plot_infercnv
 
 Pseudo-bulk analysis
 ---------------------

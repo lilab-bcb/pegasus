@@ -69,6 +69,10 @@ References
    "Revealing the critical regulators of cell identity in the mouse cell atlas",
    In `Cell reports <https://www.sciencedirect.com/science/article/pii/S2211124718316346>`_, 2018.
 
+.. [Tirosh16] I. TiroshTirosh, et al.,
+   "Dissecting the multicellular ecosystem of metastatic melanoma by single-cell RNA-seq",
+   In `Science <https://www.science.org/doi/10.1126/science.aad0501>`__, 2016.
+
 .. [Traag19] V. A. Traag, L. Waltman, and N. J. van Eck,
    "From Louvain to Leiden: guaranteeing well-connected communities",
    In `Scientific Reports <https://www.nature.com/articles/s41598-019-41695-z>`__, 2019.
