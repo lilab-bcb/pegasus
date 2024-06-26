@@ -2518,6 +2518,7 @@ def plot_infercnv(
     panel_size: Tuple[int, int] = (16, 10),
     cmap: str = "bwr",
     legend_fontsize: float = 10.0,
+    show_groupby_border: bool = False,
     return_fig: bool = False,
     dpi: float = 300.0,
     output_file: Optional[str] = None,
@@ -2575,13 +2576,25 @@ def plot_infercnv(
 
     legend_elements = [Patch(color=color, label=label) for color, label in zip(palette, cluster_ids.categories)]
 
+    from matplotlib.colors import TwoSlopeNorm
+
+    norm = TwoSlopeNorm(0 if vmin < 0 else 1, vmin=vmin, vmax=vmax)
+
     fig = plt.figure(figsize=panel_size, dpi=dpi)
     height_ratios = []
     for cat in valid_groupby_cats:
         height_ratios.append(np.sum(cluster_ids.isin(cat)))
     height_ratios = np.array(height_ratios)
     height_ratios = height_ratios / height_ratios.min()
-    gs = GridSpec(len(valid_groupby_cats)+1, 3, width_ratios=[0.4, 9, 2], height_ratios=height_ratios.tolist() + [0.2], hspace=0.1, wspace=0.1)
+    gs = GridSpec(
+        nrows=len(valid_groupby_cats)+1,
+        ncols=3,
+        figure=fig,
+        width_ratios=[0.2, 9, 2],
+        height_ratios=height_ratios.tolist() + [height_ratios.sum() / 19],    # Last row has height = 0.05 * H
+        hspace=0.2,
+        wspace=0.02,
+    )
 
     for i, elem in enumerate(zip(subtitles, valid_groupby_cats)):
         groupby_cat = elem[1]
@@ -2591,28 +2604,42 @@ def plot_infercnv(
             cell_colors=cell_colors,
             idx_included=idx_included,
             chr_pos_dict=chr_pos_dict,
-            vmin=vmin,
-            vmax=vmax,
+            norm=norm,
             cmap=cmap,
             legend_fontsize=legend_fontsize,
-            legend_patches = [patch for patch in legend_elements if patch.get_label() in groupby_cat],
-            subtitle = elem[0],
-            show_cbar = True if i == len(valid_groupby_cats) - 1 else False,
+            legend_patches=[patch for patch in legend_elements if patch.get_label() in groupby_cat],
+            subtitle=elem[0],
+            show_groupby_border=show_groupby_border,
             fig=fig,
             gs=gs,
             gs_index=i,
             **kwargs,
         )
 
+    # Add colorbar
+    from matplotlib.cm import ScalarMappable
+    sm = ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])  # Dummy array required for the ScalarMappable
+    ax_cbar = fig.add_subplot(gs[len(valid_groupby_cats), 2])
+    plt.colorbar(sm, cax=ax_cbar, orientation="horizontal")
+
+
     # Add chromesome names
-    #ax_chr = fig.add_subplot(gs[len(valid_groupby_cats), 1])
-    #chr_name_list = list(chr_pos_dict.keys())
-    #for i, chr_name in enumerate(chr_name_list):
-    #    if i + 1 < len(chr_name_list):
-    #        x_pos = (chr_pos_dict[chr_name] + chr_pos_dict[chr_name_list[i + 1]]) / 2
-    #    else:
-    #        x_pos = (chr_pos_dict[chr_name] + ax_chr.get_xlim()[1]) / 2
-    #    ax_chr.text(x_pos, 10, chr_name, ha='center', va='center', color='black', fontsize=10, rotation=90)
+    ax_chr = fig.add_subplot(gs[len(valid_groupby_cats), 1])
+    pixel_size = ax_chr.get_xlim()[1] / X.shape[1]
+    chr_name_list = list(chr_pos_dict.keys())
+    for i, chr_name in enumerate(chr_name_list):
+        if i + 1 < len(chr_name_list):
+            x_pos = (chr_pos_dict[chr_name] + chr_pos_dict[chr_name_list[i + 1]]) * pixel_size / 2
+        else:
+            x_pos = (chr_pos_dict[chr_name] + X.shape[1]) * pixel_size / 2
+        ax_chr.text(x_pos, 0.9 * ax_chr.get_ylim()[1], chr_name, ha='center', va='center', color='black', fontsize=legend_fontsize, rotation=90)
+    ax_chr.set_xticks([])
+    ax_chr.set_yticks([])
+    ax_chr.set_xticklabels([])
+    ax_chr.set_yticklabels([])
+    for spine in ax_chr.spines.values():
+        spine.set_visible(False)
 
 
     if output_file:
@@ -2623,8 +2650,23 @@ def plot_infercnv(
         return fig
 
 
-def _infercnv_subplot(df, cell_colors, idx_included, chr_pos_dict, vmin, vmax, cmap, legend_fontsize, legend_patches, subtitle, show_cbar, fig, gs, gs_index, **kwargs):
-    from matplotlib.colors import TwoSlopeNorm, ListedColormap
+def _infercnv_subplot(
+    df,
+    cell_colors,
+    idx_included,
+    chr_pos_dict,
+    norm,
+    cmap,
+    legend_fontsize,
+    legend_patches,
+    subtitle,
+    show_groupby_border,
+    fig,
+    gs,
+    gs_index,
+    **kwargs,
+):
+    from matplotlib.colors import ListedColormap
 
     # Groupby colors
     ax_row_colors = fig.add_subplot(gs[gs_index, 0])
@@ -2652,9 +2694,9 @@ def _infercnv_subplot(df, cell_colors, idx_included, chr_pos_dict, vmin, vmax, c
         linewidths=0,
         yticklabels=[],
         xticklabels=[],
-        norm=TwoSlopeNorm(0 if vmin < 0 else 1, vmin=vmin, vmax=vmax),
+        norm=norm,
         ax=ax_heatmap,
-        #cbar=show_cbar,
+        cbar=False,
         **kwargs,
     )
 
@@ -2666,74 +2708,21 @@ def _infercnv_subplot(df, cell_colors, idx_included, chr_pos_dict, vmin, vmax, c
     ax_heatmap.spines['left'].set_visible(True)
     ax_heatmap.spines['right'].set_visible(True)
 
+    if show_groupby_border:
+        _, indices, counts = np.unique(cell_colors[idx_included], return_index=True, return_counts=True)
+        if indices.size > 1:
+            indices = np.argsort(indices)
+            counts = counts[indices]
+            groupby_pos = np.cumsum(counts)
+            ax_heatmap.hlines(groupby_pos[:-1], colors='k', lw=1, xmin=0, xmax=df.shape[1])
+
+
     # Legend
     ax_legend = fig.add_subplot(gs[gs_index, 2])
-    ax_legend.legend(handles=legend_patches, loc='upper center', fontsize=legend_fontsize)
-    ax_legend.axis('off')
-
-    #if show_cbar:
-    #    ax_heatmap.collections[0].colorbar.remove()
-    #
-    #    cbar = fig.colorbar(heatmap.collections[0], cax=ax_colorbar)
-    #    cbar.set_label("")
-
-    #if show_xlabel:
-    #    chr_name_list = list(chr_pos_dict.keys())
-    #    for i, chr_name in enumerate(chr_name_list):
-    #        if i + 1 < len(chr_name_list):
-    #            x_pos = (chr_pos_dict[chr_name] + chr_pos_dict[chr_name_list[i + 1]]) / 2
-    #        else:
-    #            x_pos = (chr_pos_dict[chr_name] + cg.ax_heatmap.get_xlim()[1]) / 2
-    #        cg.ax_heatmap.text(x_pos, idx_included.size + 10, chr_name, ha='center', va='center', color='black', fontsize=10, rotation=90)
-
-
-def plot_infercnv_scanpy(
-
-    data,
-    groupby,
-    rep_key: str = "cnv",
-    cmap: str = "bwr",
-    figsize: Tuple[int, int] = (16, 10),
-    return_fig: bool = False,
-    **kwargs,
-):
-    import scanpy as sc
-    from matplotlib.colors import TwoSlopeNorm
-    from anndata import AnnData
-
-    tmp_adata = AnnData(X=data.obsm[f"X_{rep_key}"], obs=data.obs, uns=data.uns)
-
-    # re-sort, as saving & loading anndata destroys the order
-    chr_pos_dict = dict(sorted(tmp_adata.uns[rep_key].items(), key=lambda x: x[1]))
-    chr_pos = list(chr_pos_dict.values())
-
-    # center color map at 0
-    tmp_data = tmp_adata.X.data if issparse(tmp_adata.X) else tmp_adata.X
-    vmin = kwargs.pop("vmin", None)
-    vmax = kwargs.pop("vmax", None)
-    if vmin is None:
-        vmin = np.nanmin(tmp_data)
-    if vmax is None:
-        vmax = np.nanmax(tmp_data)
-    kwargs["norm"] = TwoSlopeNorm(0, vmin=vmin, vmax=vmax)
-
-    # add chromosome annotations
-    var_group_positions = list(zip(chr_pos, chr_pos[1:] + [tmp_adata.shape[1]]))
-
-    return_ax_dic = sc.pl.heatmap(
-        tmp_adata,
-        var_names=tmp_adata.var.index.values,
-        groupby=groupby,
-        figsize=figsize,
-        cmap=cmap,
-        show_gene_labels=False,
-        var_group_positions=var_group_positions,
-        var_group_labels=list(chr_pos_dict.keys()),
-        show=False,
-        **kwargs,
+    ax_legend.legend(
+        handles=legend_patches,
+        loc='upper left',
+        bbox_to_anchor=(0.1, 1),
+        fontsize=legend_fontsize,
     )
-
-    return_ax_dic["heatmap_ax"].vlines(chr_pos[1:], lw=0.6, ymin=0, ymax=tmp_adata.shape[0])
-
-    if return_fig:
-        return return_ax_dic
+    ax_legend.axis('off')
