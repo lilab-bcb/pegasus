@@ -2758,6 +2758,8 @@ def _infercnv_subplot(
 
     ax_heatmap.spines['left'].set_visible(True)
     ax_heatmap.spines['right'].set_visible(True)
+    ax_heatmap.spines['top'].set_visible(True)
+    ax_heatmap.spines['bottom'].set_visible(True)
 
     if show_groupby_border:
         _, indices, counts = np.unique(cell_colors[idx_included], return_index=True, return_counts=True)
