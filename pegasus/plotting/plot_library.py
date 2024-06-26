@@ -2525,7 +2525,6 @@ def plot_infercnv(
     **kwargs,
 ) -> Union[plt.Figure, None]:
     chr_pos_dict = dict(sorted(data.uns[rep].items(), key=lambda x: x[1]))
-    chr_pos = list(chr_pos_dict.values())
 
     all_cats = data.obs[groupby].cat.categories.tolist()
     obs_cat = None
@@ -2572,20 +2571,20 @@ def plot_infercnv(
         cell_colors[cluster_ids == cat] = palette[k]
 
     from matplotlib.patches import Patch
+    from matplotlib.colors import TwoSlopeNorm
     from matplotlib.gridspec import GridSpec
 
     legend_elements = [Patch(color=color, label=label) for color, label in zip(palette, cluster_ids.categories)]
-
-    from matplotlib.colors import TwoSlopeNorm
-
     norm = TwoSlopeNorm(0 if vmin < 0 else 1, vmin=vmin, vmax=vmax)
 
     fig = plt.figure(figsize=panel_size, dpi=dpi)
+
     height_ratios = []
     for cat in valid_groupby_cats:
         height_ratios.append(np.sum(cluster_ids.isin(cat)))
     height_ratios = np.array(height_ratios)
     height_ratios = height_ratios / height_ratios.min()
+
     gs = GridSpec(
         nrows=len(valid_groupby_cats)+1,
         ncols=3,
@@ -2596,6 +2595,7 @@ def plot_infercnv(
         wspace=0.02,
     )
 
+    # Add main heatmaps and corresponding row colors
     for i, elem in enumerate(zip(subtitles, valid_groupby_cats)):
         groupby_cat = elem[1]
         idx_included = np.where(cluster_ids.isin(groupby_cat))[0]
@@ -2623,7 +2623,6 @@ def plot_infercnv(
     ax_cbar = fig.add_subplot(gs[len(valid_groupby_cats), 2])
     plt.colorbar(sm, cax=ax_cbar, orientation="horizontal")
 
-
     # Add chromesome names
     ax_chr = fig.add_subplot(gs[len(valid_groupby_cats), 1])
     pixel_size = ax_chr.get_xlim()[1] / X.shape[1]
@@ -2640,7 +2639,6 @@ def plot_infercnv(
     ax_chr.set_yticklabels([])
     for spine in ax_chr.spines.values():
         spine.set_visible(False)
-
 
     if output_file:
         plt.tight_layout()
