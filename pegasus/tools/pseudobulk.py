@@ -276,7 +276,7 @@ def _run_pydeseq2(
     )
     dds.deseq2()
 
-    if isinstance(contrasts, str):
+    if isinstance(contrasts, Tuple):
         contrasts = [contrasts]
     if isinstance(de_key, str):
         de_key = [de_key]
@@ -339,7 +339,7 @@ def _run_rdeseq2(
 
     dds = deseq2.DESeq(dds)
 
-    if isinstance(contrasts, str):
+    if isinstance(contrasts, Tuple):
         contrasts = [contrasts]
     if isinstance(de_key, str):
         de_key = [de_key]
