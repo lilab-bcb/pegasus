@@ -10,7 +10,6 @@ from .utils import (
     calc_expm1,
     calc_stat_per_batch,
     calc_sig_background,
-    simulate_doublets,
     check_batch_key,
     predefined_signatures,
     predefined_pathways,
@@ -76,7 +75,7 @@ from .diff_expr import (
 from .gradient_boosting import find_markers, run_find_markers
 from .subcluster_utils import clone_subset
 from .signature_score import calc_signature_score, calculate_z_score
-from .doublet_detection import infer_doublets, mark_doublets
+from .doublet_detection import infer_doublets, mark_doublets, simulate_doublets, concat_obs_sim, find_dbl_threshold, plot_diagnostics, run_dbl_detection
 from .nmf import nmf, integrative_nmf, find_nmf_programs
 from .pseudobulk import pseudobulk, deseq2
 from .fgsea import fgsea, write_fgsea_results_to_excel
