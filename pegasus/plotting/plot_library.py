@@ -649,6 +649,7 @@ def spatial(
     ncols: Optional[int] = None,
     y_flip: bool = True,
     margin_percent: float = 0.05,
+    marker_size: Optional[float] = None,
     aspect: Optional[str] = "equal",
     dpi: float = 300.0,
     return_fig: bool = False,
@@ -695,6 +696,8 @@ def spatial(
         For 10x Visium data, if ``resolution`` is specified, this parameter is then ignored.
     margin_percent: ``float``, optional, default: ``0.05``
         The margin is set to ``margin_percent``*100% of the smaller edge of the image size in each of the 4 sides.
+    marker_size: ``float``, optional (default: ``None``)
+        Manually set the marker size in the plot. If ``None``, automatically adjust the marker size to the plot size.
     aspect:``str``, optional (default: ``equal``)
         Set the aspect of the axis scaling, i.e. the ratio of y-unit to x-unit. Set ``auto`` to fill the position rectangle with data; ``equal`` for the same scaling for x and y.
         It applies to all subplots.
@@ -710,8 +713,9 @@ def spatial(
 
     Examples
     --------
-    >>> pg.spatial(data, attrs=['louvain_labels', 'Channel'])
+    >>> pg.spatial(data, attrs=['leiden_labels', 'Channel'])
     >>> pg.spatial(data, attrs=['CD14', 'TRAC'], resolution='lowres')
+    >>> pg.spatial(data, attrs=["leiden_labels"], y_flip=False)
     """
     assert f"X_{basis}" in data.obsm.keys(), f"'X_{basis}' coordinates do not exist!"
 
@@ -755,6 +759,7 @@ def spatial(
         dpi=dpi,
         alpha=alpha,
         aspect=aspect,
+        marker_size=marker_size,
         return_fig=True,
     )
 
