@@ -6,6 +6,7 @@ import scipy.optimize as so
 
 from pegasusio import MultimodalData, UnimodalData
 from pegasus.tools import eff_n_jobs
+from pegasus.tools import SimpleGoodTuring
 from anndata import AnnData
 from scipy.special import loggamma
 from scipy.sparse import coo_matrix
@@ -57,8 +58,10 @@ def empty_drops(
         df_droplets.loc[df_droplets["n_counts"] <= thresh_low].index.values
     )
     G = X[idx_low, :]
+
     ambient_profile = G.sum(axis=0).A1
-    ambient_proportion = _simple_good_turing(ambient_profile)
+    sgt = SimpleGoodTuring(ambient_profile)
+    ambient_proportion = sgt.get_proportions()
 
     if not alpha:
         alpha = _estimate_alpha(G, ambient_proportion)
@@ -161,25 +164,6 @@ def _test_ambient_by_chunk(alpha, prop, p_arr, t_b, L_b):
         L_test = _logL(alpha, prop, t_b, samples)
         n_below += (L_test <= L_b)
     return n_below
-
-
-def _simple_good_turing(counts):
-    from nltk.probability import FreqDist, SimpleGoodTuringProbDist
-    from collections import Counter
-
-    n_genes = counts.size
-    idx_obs = np.where(counts > 0)[0]
-    n0 = n_genes - idx_obs.size
-    freq_dist = FreqDist(Counter(dict(zip(np.arange(n_genes), counts))))
-    sgt = SimpleGoodTuringProbDist(freq_dist)
-
-    ambient_proportion = (
-        sgt.prob(None) / n0 * np.ones(n_genes) if n0 != 0 else np.zeros(n_genes)
-    )
-    for i in idx_obs:
-        ambient_proportion[i] = sgt.prob(i)
-
-    return ambient_proportion
 
 
 def _estimate_alpha(G, prop):
