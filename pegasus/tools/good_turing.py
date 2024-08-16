@@ -20,7 +20,7 @@ class SimpleGoodTuring():
         self.estimate()
 
     def smooth_fit(self):
-        z = np.zeros(self._r.size, dtype=self._Nr.dtype)
+        z = np.zeros(self._r.size)
         for i in range(z.size):
             if i == 0:
                 z[i] = 2 * self._Nr[i] / self._r[i + 1]
