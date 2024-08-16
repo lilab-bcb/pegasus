@@ -1,20 +1,27 @@
+import itertools
+
 import numpy as np
 import pandas as pd
 import scipy.optimize as so
 
 from pegasusio import MultimodalData, UnimodalData
+from pegasus.tools import eff_n_jobs
 from anndata import AnnData
 from scipy.special import loggamma
 from scipy.sparse import coo_matrix
 from scipy.interpolate import UnivariateSpline
 from statsmodels.stats.multitest import fdrcorrection as fdr
+from tqdm.auto import tqdm
+from tqdm.contrib.concurrent import process_map
 from typing import Union, Optional
 
 import logging
-
 logger = logging.getLogger(__name__)
 
+from pegasusio import timer
 
+
+@timer(logger=logger)
 def empty_drops(
     data: Union[MultimodalData, UnimodalData, AnnData],
     mat_key: Optional[str] = None,
@@ -24,6 +31,8 @@ def empty_drops(
     random_state: int = 0,
     exclude_from: int = 50,
     significance_level: float = 0.05,
+    chunk_size: int = 5000,
+    n_jobs: int = -1,
 ) -> None:
     if "counts" in data._unidata.matrices:
         mat_key = "counts"
@@ -36,7 +45,7 @@ def empty_drops(
             "Calculate n_counts for EmptyDrops since 'n_counts' not in data.obs."
         )
         df_droplets = pd.DataFrame(index=data.obs_names)
-        df_droplets.obs["n_counts"] = X.sum(axis=1).A1
+        df_droplets["n_counts"] = X.sum(axis=1).A1
     else:
         df_droplets = data.obs[["n_counts"]].copy()
 
@@ -44,23 +53,24 @@ def empty_drops(
         np.sum(X.sum(axis=0) == 0) == 0
     ), "Some genes have zero counts in data! Please run pegasus.identify_robust_genes() first!"
 
-    idx_low = df_droplets.obs_names.get_indexer(
+    idx_low = df_droplets.index.get_indexer(
         df_droplets.loc[df_droplets["n_counts"] <= thresh_low].index.values
     )
-    idx_high = df_droplets.obs_names.get_indexer(
-        df_droplets.loc[df_droplets["n_counts"] > thresh_low].index.values
-    )
     G = X[idx_low, :]
-    ambient_profile = G.sum(axis=0)
+    ambient_profile = G.sum(axis=0).A1
     ambient_proportion = _simple_good_turing(ambient_profile)
 
     if not alpha:
         alpha = _estimate_alpha(G, ambient_proportion)
+        logger.info(f"Calculating alpha is finished. Estimate alpha = {alpha}.")
 
     t_b = X.sum(axis=1).A1
     L_b = _logL(alpha, ambient_proportion, t_b, X)
+    n_cells = t_b.size
 
-    n_below = _test_ambient(alpha, ambient_proportion, t_b, L_b, n_iters, random_state)
+    n_jobs = eff_n_jobs(n_jobs)
+    n_below = _test_ambient(alpha, ambient_proportion, t_b, L_b, n_iters, random_state, chunk_size, n_jobs)
+    logger.info("Calculation on p-values is finished.")
     pval = (n_below + 1) / (n_iters + 1)
     _, qval = fdr(pval)
 
@@ -68,6 +78,8 @@ def empty_drops(
     data.obs["EmptyDrops.qval"] = qval
 
     df_rank_stats, knee, inflection = _rank_barcode(t_b, thresh_low, exclude_from)
+    logger.info("Calculate the knee point.")
+
     data.obs["EmptyDrops.quality"] = "low"
     data.obs.loc[data.obs["EmptyDrops.qval"]<significance_level, "EmptyDrops.quality"] = "high"
     data.obs.loc[data.obs["n_counts"]>inflection, "EmptyDrops.quality"] = "high"
@@ -121,20 +133,33 @@ def _find_curve_bounds(x, y, exclude_from):
     return (left_edge + skip, right_edge + skip)
 
 
-def _test_ambient(alpha, prop, t_b, L_b, n_iters, random_state):
+def _test_ambient(alpha, prop, t_b, L_b, n_iters, random_state, chunk_size, n_jobs):
     n_cells = t_b.size
     n_genes = prop.size
     n_below = np.zeros(n_cells, dtype=int)
     np.random.seed(random_state)
 
-    for i in range(n_iters):
-        samples = np.zeros((n_cells, n_genes))
-        p_b = np.random.dirichlet(alpha * prop, size=n_cells)
-        for k in range(n_cells):
-            samples[k, :] = np.random.multinomial(t_b[k], p_b[k])
+    p_arr = np.random.dirichlet(alpha * prop, size=n_iters)
+    print(p_arr.shape)
+    chunks = process_map(
+        _test_ambient_by_chunk,
+        itertools.repeat(alpha),
+        itertools.repeat(prop),
+        itertools.repeat(p_arr),
+        [t_b[i:(i+chunk_size)] for i in range(0, n_cells, chunk_size)],
+        [L_b[i:(i+chunk_size)] for i in range(0, n_cells, chunk_size)],
+        tqdm_class=tqdm,
+        max_workers=n_jobs,
+    )
+    return np.hstack(chunks)
+
+
+def _test_ambient_by_chunk(alpha, prop, p_arr, t_b, L_b):
+    n_below = np.zeros(t_b.size, dtype=int)
+    for p in p_arr:
+        samples = coo_matrix([np.random.multinomial(t, p) for t in t_b])
         L_test = _logL(alpha, prop, t_b, samples)
         n_below += (L_test <= L_b)
-
     return n_below
 
 
@@ -158,7 +183,7 @@ def _simple_good_turing(counts):
 
 
 def _estimate_alpha(G, prop):
-    total_counts = G.sum(axis=0)
+    total_counts = G.sum(axis=0).A1
     n_cells = total_counts.size
     indices = G.nonzero()[1]
     x = G.data
@@ -189,7 +214,6 @@ def _logL(alpha, prop, total_counts, Y):
         loggamma(total_counts + 1)
         + loggamma(alpha)
         - loggamma(total_counts + alpha)
-        + loggamma(Y_ag)
         + np.asarray(Y_ag.sum(axis=1)).squeeze()
         - np.asarray(Y_p1.sum(axis=1)).squeeze()
         - np.sum(loggamma(alpha * prop))
