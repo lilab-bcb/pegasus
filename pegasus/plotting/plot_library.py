@@ -759,7 +759,6 @@ def spatial(
         dpi=dpi,
         alpha=alpha,
         aspect=aspect,
-        marker_size=marker_size,
         return_fig=True,
     )
 
