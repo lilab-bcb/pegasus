@@ -238,7 +238,7 @@ cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type
             if bin_count[j] > 1:
                 estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
             sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
-            
+
     return sig_bkg_mean, sig_bkg_std
 
 
@@ -305,7 +305,7 @@ cpdef tuple simulate_doublets_sparse(int n_sim, int N, const int[:] data, indice
 
         u = doublet_indices[i, 0]
         v = doublet_indices[i, 1]
-        
+
         j = indptr[u]
         u_up = indptr[u + 1]
         k = indptr[v]
@@ -362,3 +362,48 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
             out_array[i, j] = X[u, j] + X[v, j]
 
     return results
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef test_empty_drops(const float[:] alpha_prop, const int[:] tb_unique, int tb_unique_size, const int[:] tb_cnt, const float[:] L_b, int random_state, int n_cells, int n_genes, const int[:] seeds):
+    cdef float cur_L
+    cdef int t
+    cdef Py_ssize_t idx_tb, idx_b, idx_cmp
+
+    z_buffer = np.zeros(n_genes, dtype=int)
+    cdef int[:] z = z_buffer
+
+    below_cnt_buffer = np.zeros(n_cells, dtype=int)
+    cdef int[:] below_cnt = below_cnt_buffer
+
+    for seed in seeds:
+        # Iterate over sampled multinomial probabilities
+        np.random.seed(seed)
+        p = np.random.dirichlet(alpha_prop)
+
+        idx_tb = 0
+        idx_b = 0
+        cur_L = 0
+        t = 0
+
+        while idx_tb < tb_unique_size:
+
+            while t < tb_unique[idx_tb]:
+                selected = np.random.choice(np.arange(n_genes), p=p)
+                z[selected] += 1
+                cur_L = cur_L + np.log(z[selected] + alpha_prop[selected] - 1) - np.log(z[selected])
+                t += 1
+
+            idx_cmp = idx_b
+            while idx_cmp < idx_b + tb_cnt[idx_tb]:
+                if cur_L <= L_b[idx_cmp]:
+                    below_cnt[idx_cmp] += 1
+                    idx_cmp += 1
+                else:
+                    break
+
+            idx_b += tb_cnt[idx_tb]
+            idx_tb += 1
+
+    return below_cnt_buffer

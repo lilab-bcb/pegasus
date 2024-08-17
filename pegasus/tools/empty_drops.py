@@ -8,6 +8,8 @@ import scipy.optimize as so
 from pegasusio import MultimodalData, UnimodalData
 from pegasus.tools import eff_n_jobs
 from pegasus.tools import SimpleGoodTuring
+from pegasus.cylib.fast_utils import test_empty_drops
+
 from anndata import AnnData
 from scipy.special import loggamma, factorial
 from scipy.sparse import coo_matrix, issparse
@@ -170,62 +172,32 @@ def _find_curve_bounds(x, y, exclude_from):
 def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs):
     idx_sorted = np.lexsort((P_data, t_b))
     P_sorted = P_data[idx_sorted]
-    t_b_sorted, t_b_cnt = np.unique(t_b[idx_sorted], return_counts=True)
+    t_b_unique, t_b_cnt = np.unique(t_b[idx_sorted], return_counts=True)
 
-    # Above follows R impl
-
-    #tb_dict = {}
-    #for idx, t in enumerate(t_b):
-    #    if t in tb_dict:
-    #        tb_dict[t].append(idx)
-    #    else:
-    #        tb_dict[t] = [idx]
-    #tb_unique = list(tb_dict.keys())
-    #tb_unique.sort()
+    alpha_prop = alpha * prop
+    n_cells = t_b.size
+    n_genes = prop.size
 
     np.random.seed(random_state)
-    p_array = np.random.dirichlet(alpha * prop, size=n_iters)
+    seed_array = np.random.randint(low=0, high=2**32, size=n_iters, dtype=int)
+
     chunk_size = n_iters // n_jobs
     chunks = process_map(
-        _test_empty_drops_by_chunk,
-        itertools.repeat(alpha),
-        itertools.repeat(prop),
-        itertools.repeat(tb_unique),
-        itertools.repeat(tb_dict),
-        itertools.repeat(t_b),
-        itertools.repeat(L_b),
+        test_empty_drops,
+        itertools.repeat(alpha_prop),
+        itertools.repeat(t_b_unique),
+        itertools.repeat(t_b_unique.size),
+        itertools.repeat(t_b_cnt),
+        itertools.repeat(P_sorted),
         itertools.repeat(random_state),
-        [p_array[i:(i+chunk_size)] for i in range(0, n_iters, chunk_size)],
+        itertools.repeat(n_cells),
+        itertools.repeat(n_genes),
+        [seed_array[i:(i+chunk_size)] for i in range(0, n_iters, chunk_size)],
         tqdm_class=tqdm,
         max_workers=n_jobs,
     )
-    return np.vstack(chunks).sum(axis=0)
-
-
-def _test_empty_drops_by_chunk(alpha, prop, tb_unique, tb_dict, t_b, L_b, random_state, p_arr):
-    tb_min = tb_unique[0]
-    idx_all_genes = np.arange(prop.size)
-    n_below = np.zeros(t_b.size)
-    L_test = np.zeros(t_b.size)
-
-    np.random.seed(random_state)
-    for p in p_arr:
-        for t in tb_unique:
-            if t == tb_min:
-                z = np.random.multinomial(t, p)
-                L = _logL(alpha, prop, np.array(t), coo_matrix(z))
-            else:
-                idx_extra_genes = np.random.choice(idx_all_genes, size=t-t1, replace=True, p=p)
-                for i in idx_extra_genes:
-                    z[i] += 1
-                L = _calc_logL_by_increment(L1, alpha, prop, t, t - t1, z, idx_extra_genes)
-
-            L_test[tb_dict[t]] = L
-            t1 = t
-            L1 = L
-        n_below += (L_test <= L_b)
-
-    return n_below
+    n_below_sorted = np.vstack(chunks).sum(axis=0)
+    return n_below_sorted[idx_sorted]
 
 
 def _calc_logL_by_increment(L1, alpha, prop, t, n_extra_counts, z, idx_extra_genes):
@@ -234,39 +206,6 @@ def _calc_logL_by_increment(L1, alpha, prop, t, n_extra_counts, z, idx_extra_gen
         + n_extra_counts * np.log(t / (t + alpha - 1))
         + np.sum(np.log((z[idx_extra_genes] + alpha * prop[idx_extra_genes] - 1) / z[idx_extra_genes]))
     )
-
-
-#def _test_empty_drops(alpha, prop, t_b, L_b, n_iters, random_state, chunk_size, n_jobs):
-#    n_cells = t_b.size
-#    n_genes = prop.size
-#    n_below = np.zeros(n_cells, dtype=int)
-#    np.random.seed(random_state)
-#
-#    #p = np.random.dirichlet(alpha * prop, size=n_iters)
-#    n_below = np.zeros(n_cells, dtype=int)
-#    for k in range(n_iters):
-#        p = np.random.dirichlet(alpha * prop)
-#        chunks = process_map(
-#            _test_ambient_by_chunk,
-#            itertools.repeat(alpha),
-#            itertools.repeat(prop),
-#            itertools.repeat(p),
-#            [t_b[i:(i+chunk_size)] for i in range(0, n_cells, chunk_size)],
-#            [L_b[i:(i+chunk_size)] for i in range(0, n_cells, chunk_size)],
-#            tqdm_class=tqdm,
-#            max_workers=n_jobs,
-#        )
-#        n_below += np.hstack(chunks)
-#        if (k + 1) % 1000 == 0:
-#            print(f"{k+1} iterations finished.")
-#    return n_below
-
-
-#def _test_ambient_by_chunk(alpha, prop, p, t_b, L_b):
-#    n_below = np.zeros(t_b.size, dtype=int)
-#    samples = coo_matrix([np.random.multinomial(t, p) for t in t_b])
-#    L_test = _logL(alpha, prop, t_b, samples)
-#    return (L_test <= L_b)
 
 
 def _estimate_alpha(G, prop, bounds=(0.01, 10000)):
@@ -293,22 +232,3 @@ def _estimate_alpha(G, prop, bounds=(0.01, 10000)):
 
     estimator = so.minimize_scalar(neg_logL, bounds=bounds, method="bounded")
     return estimator.x
-
-
-#def _logL(alpha, prop, total_counts, Y):
-#    n_cells = total_counts.size
-#    n_genes = prop.size
-#    idx_cells, idx_genes = Y.nonzero()
-#    x = Y.data
-#    Y_ag = coo_matrix((loggamma(x + alpha * prop[idx_genes]), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
-#    Y_fact = coo_matrix((loggamma(x + 1), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
-#    A_g = coo_matrix((loggamma(alpha * prop[idx_genes]), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
-#
-#    return (
-#        loggamma(total_counts + 1)
-#        + loggamma(alpha)
-#        - loggamma(total_counts + alpha)
-#        + np.asarray(Y_ag.sum(axis=1)).squeeze()
-#        - np.asarray(Y_fact.sum(axis=1)).squeeze()
-#        - np.asarray(A_g.sum(axis=1)).squeeze()
-#    )
