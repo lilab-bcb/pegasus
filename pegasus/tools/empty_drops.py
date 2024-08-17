@@ -10,11 +10,12 @@ from pegasus.tools import eff_n_jobs
 from pegasus.tools import SimpleGoodTuring
 from anndata import AnnData
 from scipy.special import loggamma, factorial
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, issparse
 from scipy.interpolate import UnivariateSpline
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
+#from joblib import Parallel, delayed, parallel_backend
 from typing import Union, Optional
 
 import logging
@@ -35,6 +36,7 @@ def empty_drops(
     significance_level: float = 0.05,
     chunk_size: int = 5000,
     n_jobs: int = -1,
+    ambient_proportion: Optional[np.array] = None,
 ) -> None:
     if "counts" in data._unidata.matrices:
         mat_key = "counts"
@@ -60,9 +62,10 @@ def empty_drops(
     )
     G = X[idx_low, :]
 
-    ambient_profile = G.sum(axis=0).A1
-    sgt = SimpleGoodTuring(ambient_profile)
-    ambient_proportion = sgt.get_proportions()
+    if not ambient_proportion:
+        ambient_profile = G.sum(axis=0).A1
+        sgt = SimpleGoodTuring(ambient_profile)
+        ambient_proportion = sgt.get_proportions()
 
     if not alpha:
         alpha = _estimate_alpha(G, ambient_proportion)
@@ -73,11 +76,13 @@ def empty_drops(
     logger.info(f"Run test through {idx_test.size} cells passing thresh_low.")
 
     T = X[idx_test, :]
-    t_b = T.sum(axis=1).A1
-    L_b = _logL(alpha, ambient_proportion, t_b, T)
+    t_b = T.sum(axis=1).A1 if issparse(T) else T.sum(axis=1)
+    L_b_data = _logL_data_dep(T, ambient_proportion, alpha)
+    L_b_alpha = _logL_data_indep(t_b, alpha)
+    #L_b = _logL(alpha, ambient_proportion, t_b, T)
 
     n_jobs = eff_n_jobs(n_jobs)
-    n_below = _test_empty_drops(alpha, ambient_proportion, t_b, L_b, n_iters, random_state, n_jobs)
+    n_below = _test_empty_drops(alpha, ambient_proportion, t_b, L_b_data, n_iters, random_state, n_jobs)
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
@@ -95,6 +100,23 @@ def empty_drops(
     data.obs.loc[cells_test, "EmptyDrops.qval"] = qval
 
     return (df_rank_stats, knee, inflection)
+
+
+def _logL_data_dep(Y, prop, alpha):
+    if issparse(Y):
+        idx_b, idx_g = Y.nonzero()
+        y = Y.data
+    else:
+        idx_b, idx_g = np.nonzero(Y)
+        y = Y[idx_b, idx_g]
+    alpha_prop = alpha * prop[idx_g]
+    L_a1 = loggamma(y + alpha_prop) - np.log(factorial(y)) - loggamma(alpha_prop)
+    L_mat = csr_matrix((L_a1, idx_b, idx_g), shape=Y.shape)
+    return L_mat.sum(axis=1).A1
+
+
+def _logL_data_indep(t_b, alpha):
+    return np.log(factorial(t_b)) + loggamma(alpha) - loggamma(t_b + alpha)
 
 
 def _rank_barcode(total_counts, thresh_low, exclude_from):
@@ -145,15 +167,21 @@ def _find_curve_bounds(x, y, exclude_from):
     return (left_edge + skip, right_edge + skip)
 
 
-def _test_empty_drops(alpha, prop, t_b, L_b, n_iters, random_state, n_jobs):
-    tb_dict = {}
-    for idx, t in enumerate(t_b):
-        if t in tb_dict:
-            tb_dict[t].append(idx)
-        else:
-            tb_dict[t] = [idx]
-    tb_unique = list(tb_dict.keys())
-    tb_unique.sort()
+def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs):
+    idx_sorted = np.lexsort((P_data, t_b))
+    P_sorted = P_data[idx_sorted]
+    t_b_sorted, t_b_cnt = np.unique(t_b[idx_sorted], return_counts=True)
+
+    # Above follows R impl
+
+    #tb_dict = {}
+    #for idx, t in enumerate(t_b):
+    #    if t in tb_dict:
+    #        tb_dict[t].append(idx)
+    #    else:
+    #        tb_dict[t] = [idx]
+    #tb_unique = list(tb_dict.keys())
+    #tb_unique.sort()
 
     np.random.seed(random_state)
     p_array = np.random.dirichlet(alpha * prop, size=n_iters)
@@ -241,41 +269,46 @@ def _calc_logL_by_increment(L1, alpha, prop, t, n_extra_counts, z, idx_extra_gen
 #    return (L_test <= L_b)
 
 
-def _estimate_alpha(G, prop):
-    total_counts = G.sum(axis=1).A1
-    n_cells = total_counts.size
-    indices = G.nonzero()[1]
-    x = G.data
+def _estimate_alpha(G, prop, bounds=(0.01, 10000)):
+    if issparse(G):
+        t_b = G.sum(axis=1).A1
+        idx_g = G.nonzero()[1]
+        y = G.data
+    else:
+        t_b = G.sum(axis=1)
+        idx_b, idx_g = np.nonzero(G)[1]
+        y = G[idx_b, idx_g]
+
+    n_cells = t_b.size
 
     def neg_logL(alpha):
-        # TODO: Maybe remove terms not related to alpha
+        # Remove terms not related to alpha from Likelihood
+        alpha_prop = alpha * prop[idx_g]
         return -(
-            np.sum(loggamma(total_counts + 1))
-            + n_cells * loggamma(alpha)
-            - np.sum(loggamma(total_counts + alpha))
-            + np.sum(loggamma(x + alpha * prop[indices]))
-            - np.sum(loggamma(x + 1))
-            - np.sum(n_cells * loggamma(alpha * prop[indices]))
+            n_cells * loggamma(alpha)
+            - np.sum(loggamma(t_b + alpha))
+            + np.sum(loggamma(y + alpha_prop))
+            - np.sum(loggamma(alpha_prop))
         )
 
-    estimator = so.minimize(neg_logL, np.array([1]), bounds=so.Bounds(0.01, 10000))
-    return estimator.x[0]
+    estimator = so.minimize_scalar(neg_logL, bounds=bounds, method="bounded")
+    return estimator.x
 
 
-def _logL(alpha, prop, total_counts, Y):
-    n_cells = total_counts.size
-    n_genes = prop.size
-    idx_cells, idx_genes = Y.nonzero()
-    x = Y.data
-    Y_ag = coo_matrix((loggamma(x + alpha * prop[idx_genes]), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
-    Y_fact = coo_matrix((loggamma(x + 1), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
-    A_g = coo_matrix((loggamma(alpha * prop[idx_genes]), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
-
-    return (
-        loggamma(total_counts + 1)
-        + loggamma(alpha)
-        - loggamma(total_counts + alpha)
-        + np.asarray(Y_ag.sum(axis=1)).squeeze()
-        - np.asarray(Y_fact.sum(axis=1)).squeeze()
-        - np.asarray(A_g.sum(axis=1)).squeeze()
-    )
+#def _logL(alpha, prop, total_counts, Y):
+#    n_cells = total_counts.size
+#    n_genes = prop.size
+#    idx_cells, idx_genes = Y.nonzero()
+#    x = Y.data
+#    Y_ag = coo_matrix((loggamma(x + alpha * prop[idx_genes]), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
+#    Y_fact = coo_matrix((loggamma(x + 1), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
+#    A_g = coo_matrix((loggamma(alpha * prop[idx_genes]), (idx_cells, idx_genes)), shape=(n_cells, n_genes))
+#
+#    return (
+#        loggamma(total_counts + 1)
+#        + loggamma(alpha)
+#        - loggamma(total_counts + alpha)
+#        + np.asarray(Y_ag.sum(axis=1)).squeeze()
+#        - np.asarray(Y_fact.sum(axis=1)).squeeze()
+#        - np.asarray(A_g.sum(axis=1)).squeeze()
+#    )
