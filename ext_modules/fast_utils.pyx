@@ -377,9 +377,10 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
     below_cnt_buffer = np.zeros(n_cells, dtype=long)
     cdef long[:] below_cnt = below_cnt_buffer
 
+    rng = np.random.default_rng(random_state)
+
     for p in p_arr:
-        np.random.seed(random_state)
-        genes_selected = np.random.choice(np.arange(n_genes), p=p, replace=True, size=tb_max)
+        genes_selected = rng.choice(np.arange(n_genes), p=p, replace=True, size=tb_max, shuffle=False)
 
         idx_tb = 0
         idx_b = 0
