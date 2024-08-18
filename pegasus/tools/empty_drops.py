@@ -11,13 +11,11 @@ from pegasus.tools import SimpleGoodTuring
 from pegasus.cylib.fast_utils import test_empty_drops
 
 from anndata import AnnData
-from scipy.special import loggamma, factorial
-from scipy.sparse import coo_matrix, issparse
+from scipy.special import loggamma
+from scipy.sparse import csr_matrix, issparse
 from scipy.interpolate import UnivariateSpline
 from statsmodels.stats.multitest import fdrcorrection as fdr
-from tqdm.auto import tqdm
-from tqdm.contrib.concurrent import process_map
-#from joblib import Parallel, delayed, parallel_backend
+from joblib import Parallel, delayed, parallel_backend
 from typing import Union, Optional
 
 import logging
@@ -36,7 +34,6 @@ def empty_drops(
     random_state: int = 0,
     exclude_from: int = 50,
     significance_level: float = 0.05,
-    chunk_size: int = 5000,
     n_jobs: int = -1,
     ambient_proportion: Optional[np.array] = None,
 ) -> None:
@@ -64,7 +61,7 @@ def empty_drops(
     )
     G = X[idx_low, :]
 
-    if not ambient_proportion:
+    if ambient_proportion is None:
         ambient_profile = G.sum(axis=0).A1
         sgt = SimpleGoodTuring(ambient_profile)
         ambient_proportion = sgt.get_proportions()
@@ -81,7 +78,6 @@ def empty_drops(
     t_b = T.sum(axis=1).A1 if issparse(T) else T.sum(axis=1)
     L_b_data = _logL_data_dep(T, ambient_proportion, alpha)
     L_b_alpha = _logL_data_indep(t_b, alpha)
-    #L_b = _logL(alpha, ambient_proportion, t_b, T)
 
     n_jobs = eff_n_jobs(n_jobs)
     n_below = _test_empty_drops(alpha, ambient_proportion, t_b, L_b_data, n_iters, random_state, n_jobs)
@@ -94,7 +90,6 @@ def empty_drops(
     logger.info("Adjust p-values by the estimated knee point.")
 
     _, qval = fdr(pval)
-    logger.info
 
     data.obs["EmptyDrops.pval"] = np.nan
     data.obs.loc[cells_test, "EmptyDrops.pval"] = pval
@@ -112,13 +107,13 @@ def _logL_data_dep(Y, prop, alpha):
         idx_b, idx_g = np.nonzero(Y)
         y = Y[idx_b, idx_g]
     alpha_prop = alpha * prop[idx_g]
-    L_a1 = loggamma(y + alpha_prop) - np.log(factorial(y)) - loggamma(alpha_prop)
-    L_mat = csr_matrix((L_a1, idx_b, idx_g), shape=Y.shape)
+    L_a1 = loggamma(y + alpha_prop) - loggamma(y + 1) - loggamma(alpha_prop)
+    L_mat = csr_matrix((L_a1, (idx_b, idx_g)), shape=Y.shape)
     return L_mat.sum(axis=1).A1
 
 
 def _logL_data_indep(t_b, alpha):
-    return np.log(factorial(t_b)) + loggamma(alpha) - loggamma(t_b + alpha)
+    return loggamma(t_b + 1) + loggamma(alpha) - loggamma(t_b + alpha)
 
 
 def _rank_barcode(total_counts, thresh_low, exclude_from):
@@ -169,7 +164,7 @@ def _find_curve_bounds(x, y, exclude_from):
     return (left_edge + skip, right_edge + skip)
 
 
-def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs):
+def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs, temp_folder=None):
     idx_sorted = np.lexsort((P_data, t_b))
     P_sorted = P_data[idx_sorted]
     t_b_unique, t_b_cnt = np.unique(t_b[idx_sorted], return_counts=True)
@@ -177,27 +172,47 @@ def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs):
     alpha_prop = alpha * prop
     n_cells = t_b.size
     n_genes = prop.size
+    t_b_max = t_b_unique[-1]
 
     np.random.seed(random_state)
-    seed_array = np.random.randint(low=0, high=2**32, size=n_iters, dtype=int)
+    p_arr = np.random.dirichlet(alpha_prop, size=n_iters)
 
     chunk_size = n_iters // n_jobs
-    chunks = process_map(
-        test_empty_drops,
-        itertools.repeat(alpha_prop),
-        itertools.repeat(t_b_unique),
-        itertools.repeat(t_b_unique.size),
-        itertools.repeat(t_b_cnt),
-        itertools.repeat(P_sorted),
-        itertools.repeat(random_state),
-        itertools.repeat(n_cells),
-        itertools.repeat(n_genes),
-        [seed_array[i:(i+chunk_size)] for i in range(0, n_iters, chunk_size)],
-        tqdm_class=tqdm,
-        max_workers=n_jobs,
-    )
-    n_below_sorted = np.vstack(chunks).sum(axis=0)
-    return n_below_sorted[idx_sorted]
+    remainder = n_iters % n_jobs
+    if chunk_size == 0:
+        n_jobs = 1
+        chunk_size = n_iters
+        remainder = 0
+    intervals = []
+    start_pos = end_pos = 0
+    for i in range(n_jobs):
+        end_pos = start_pos + chunk_size + (i < remainder)
+        if end_pos == start_pos:
+            break
+        intervals.append((start_pos, end_pos))
+        start_pos = end_pos
+    seeds = np.random.randint(low=0, high=2**16, size=n_jobs)
+
+    with parallel_backend("loky", inner_max_num_threads=1):
+        result = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
+            delayed(test_empty_drops)(
+                alpha_prop,
+                t_b_unique,
+                t_b_unique.size,
+                t_b_max,
+                t_b_cnt,
+                P_sorted,
+                n_cells,
+                n_genes,
+                seeds[i],
+                p_arr[intervals[i][0]:intervals[i][1]],
+            )
+            for i in range(n_jobs)
+        )
+    n_below = np.vstack(result).sum(axis=0)
+    n_below[idx_sorted] = n_below
+
+    return n_below
 
 
 def _calc_logL_by_increment(L1, alpha, prop, t, n_extra_counts, z, idx_extra_genes):

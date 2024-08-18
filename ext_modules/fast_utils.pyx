@@ -366,44 +366,49 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef test_empty_drops(const float[:] alpha_prop, const int[:] tb_unique, int tb_unique_size, const int[:] tb_cnt, const float[:] L_b, int random_state, int n_cells, int n_genes, const int[:] seeds):
-    cdef float cur_L
-    cdef int t
-    cdef Py_ssize_t idx_tb, idx_b, idx_cmp
+cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const double[:, :] p_arr):
+    cdef double cur_L
+    cdef long t, prev
+    cdef Py_ssize_t idx_tb, idx_b, idx_below, idx_g, k, i
 
-    z_buffer = np.zeros(n_genes, dtype=int)
-    cdef int[:] z = z_buffer
+    z_buffer = np.zeros(n_genes, dtype=long)
+    cdef long[:] z = z_buffer
 
-    below_cnt_buffer = np.zeros(n_cells, dtype=int)
-    cdef int[:] below_cnt = below_cnt_buffer
+    below_cnt_buffer = np.zeros(n_cells, dtype=long)
+    cdef long[:] below_cnt = below_cnt_buffer
 
-    for seed in seeds:
-        # Iterate over sampled multinomial probabilities
-        np.random.seed(seed)
-        p = np.random.dirichlet(alpha_prop)
+    for p in p_arr:
+        np.random.seed(random_state)
+        genes_selected = np.random.choice(np.arange(n_genes), p=p, replace=True, size=tb_max)
 
         idx_tb = 0
         idx_b = 0
+        idx_g = 0
         cur_L = 0
         t = 0
 
         while idx_tb < tb_unique_size:
 
             while t < tb_unique[idx_tb]:
-                selected = np.random.choice(np.arange(n_genes), p=p)
-                z[selected] += 1
-                cur_L = cur_L + np.log(z[selected] + alpha_prop[selected] - 1) - np.log(z[selected])
+                k = genes_selected[idx_g]
+                z[k] += 1
+                cur_L = cur_L + np.log(z[k] + alpha_prop[k] - 1) - np.log(z[k])
                 t += 1
+                idx_g += 1
 
-            idx_cmp = idx_b
-            while idx_cmp < idx_b + tb_cnt[idx_tb]:
-                if cur_L <= L_b[idx_cmp]:
-                    below_cnt[idx_cmp] += 1
-                    idx_cmp += 1
-                else:
-                    break
+            idx_below = np.searchsorted(L_b[idx_b:(idx_b+tb_cnt[idx_tb])], cur_L, side="left")
+            if idx_below < tb_cnt[idx_tb]:
+                below_cnt[idx_b + idx_below] += 1
 
             idx_b += tb_cnt[idx_tb]
             idx_tb += 1
+
+    idx_below = 0
+    for idx_tb in range(tb_unique_size):
+        for i in range(tb_cnt[idx_tb] - 1):
+            prev = below_cnt[idx_below]
+            idx_below += 1
+            below_cnt[idx_below] += prev
+        idx_below += 1
 
     return below_cnt_buffer
