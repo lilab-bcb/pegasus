@@ -366,10 +366,10 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const double[:, :] p_arr):
+cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const long[:, :] gs_arr, const int start_pos, const int end_pos):
     cdef double cur_L
     cdef long t, prev
-    cdef Py_ssize_t idx_tb, idx_b, idx_below, idx_g, k, i
+    cdef Py_ssize_t idx_tb, idx_b, idx_below, idx_g, i, k
 
     z_buffer = np.zeros(n_genes, dtype=long)
     cdef long[:] z = z_buffer
@@ -377,10 +377,12 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
     below_cnt_buffer = np.zeros(n_cells, dtype=long)
     cdef long[:] below_cnt = below_cnt_buffer
 
-    rng = np.random.default_rng(random_state)
+    #genes_selected_buffer = np.zeros(tb_max, dtype=long)
+    #cdef long[:] genes_selected = genes_selected_buffer
 
-    for p in p_arr:
-        genes_selected = rng.choice(np.arange(n_genes), p=p, replace=True, size=tb_max, shuffle=False)
+    #rng = np.random.default_rng(random_state)
+    for i in range(start_pos, end_pos):
+        #genes_selected_buffer = rng.choice(np.arange(n_genes), p=p_arr[i, :], replace=True, size=tb_max, shuffle=False)
 
         idx_tb = 0
         idx_b = 0
@@ -388,10 +390,13 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
         cur_L = 0
         t = 0
 
+        for k in range(n_genes):
+            z[k] = 0
+
         while idx_tb < tb_unique_size:
 
             while t < tb_unique[idx_tb]:
-                k = genes_selected[idx_g]
+                k = gs_arr[i, idx_g]
                 z[k] += 1
                 cur_L = cur_L + np.log(z[k] + alpha_prop[k] - 1) - np.log(z[k])
                 t += 1
@@ -403,6 +408,8 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
 
             idx_b += tb_cnt[idx_tb]
             idx_tb += 1
+
+        assert idx_g == tb_max, f"Only {idx_g} counts out of {tb_max} are used!"
 
     idx_below = 0
     for idx_tb in range(tb_unique_size):

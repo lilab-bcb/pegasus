@@ -35,7 +35,8 @@ def empty_drops(
     exclude_from: int = 50,
     significance_level: float = 0.05,
     n_jobs: int = -1,
-    ambient_proportion: Optional[np.array] = None,
+    ambient_proportion: Optional[np.array] = None,  # Testing
+    knee: Optional[float] = None,  # Testing
 ) -> None:
     if "counts" in data._unidata.matrices:
         mat_key = "counts"
@@ -84,7 +85,10 @@ def empty_drops(
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
-    df_rank_stats, knee, inflection = _rank_barcode(t_b, thresh_low, exclude_from)
+    df_rank_stats, knee_est, inflection = _rank_barcode(t_b, thresh_low, exclude_from)
+    if knee is None:
+        knee = knee_est
+
     idx_always = np.where(t_b >= knee)[0]
     pval[idx_always] = 0.0
     logger.info("Adjust p-values by the estimated knee point.")
@@ -176,6 +180,9 @@ def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs, t
 
     np.random.seed(random_state)
     p_arr = np.random.dirichlet(alpha_prop, size=n_iters)
+    rng = np.random.default_rng(random_state)
+    gs_arr = np.array([rng.choice(np.arange(n_genes), p=p, replace=True, size=t_b_max) for p in p_arr])
+    logger.info("Sampling is finished.")
 
     chunk_size = n_iters // n_jobs
     remainder = n_iters % n_jobs
@@ -205,12 +212,17 @@ def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs, t
                 n_cells,
                 n_genes,
                 seeds[i],
-                p_arr[intervals[i][0]:intervals[i][1]],
+                gs_arr,
+                intervals[i][0],
+                intervals[i][1],
             )
             for i in range(n_jobs)
         )
-    n_below = np.vstack(result).sum(axis=0)
-    n_below[idx_sorted] = n_below
+    n_below_sorted = np.vstack(result).sum(axis=0)
+
+    idx_inv = np.empty_like(idx_sorted)
+    idx_inv[idx_sorted] = np.arange(idx_sorted.size)
+    n_below = n_below_sorted[idx_inv]
 
     return n_below
 
