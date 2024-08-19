@@ -85,13 +85,13 @@ def empty_drops(
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
-    df_rank_stats, knee_est, inflection = _rank_barcode(t_b, thresh_low, exclude_from)
+    df_rank_stats, knee_est, inflection = _rank_barcode(X, thresh_low, exclude_from)
     if knee is None:
         knee = knee_est
 
     idx_always = np.where(t_b >= knee)[0]
     pval[idx_always] = 0.0
-    logger.info("Adjust p-values by the estimated knee point.")
+    logger.info(f"Adjust p-values by the knee point {knee}.")
 
     _, qval = fdr(pval)
 
@@ -120,7 +120,8 @@ def _logL_data_indep(t_b, alpha):
     return loggamma(t_b + 1) + loggamma(alpha) - loggamma(t_b + alpha)
 
 
-def _rank_barcode(total_counts, thresh_low, exclude_from):
+def _rank_barcode(X, thresh_low, exclude_from):
+    total_counts = X.sum(axis=1).A1 if issparse(X) else X.sum(axis=1)
     rank_values, rank_sizes = np.unique(total_counts, return_counts=True)
     rank_values = rank_values[::-1]
     rank_sizes = rank_sizes[::-1]
