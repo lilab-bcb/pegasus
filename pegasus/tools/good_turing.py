@@ -21,6 +21,17 @@ class SimpleGoodTuring():
         self.estimate()
 
     def smooth_fit(self):
+        z = self._calc_z()
+
+        # Perform linear regression on log-log scale
+        x = np.log(self._r)
+        y = np.log(z)
+        slope, intercept, _, _, _ = linregress(x, y)
+        self._slope = slope
+        self._intercept = intercept
+        self._z = z
+
+    def _calc_z(self):
         z = np.zeros(self._r.size)
         for i in range(z.size):
             if i == 0:
@@ -29,13 +40,7 @@ class SimpleGoodTuring():
                 z[i] = self._Nr[i] / (self._r[i] - self._r[i - 1])
             else:
                 z[i] = 2 * self._Nr[i] / (self._r[i + 1] - self._r[i - 1])
-
-        # Perform linear regression on log-log scale
-        x = np.log(self._r)
-        y = np.log(z)
-        slope, intercept, _, _, _ = linregress(x, y)
-        self._slope = slope
-        self._intercept = intercept
+        return z
 
     def smoothed_Nr(self, r):
         return np.exp(self._intercept + self._slope * np.log(r))
