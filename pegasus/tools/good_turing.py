@@ -29,7 +29,6 @@ class SimpleGoodTuring():
         slope, intercept, _, _, _ = linregress(x, y)
         self._slope = slope
         self._intercept = intercept
-        self._z = z
 
     def _calc_z(self):
         z = np.zeros(self._r.size)
@@ -60,11 +59,7 @@ class SimpleGoodTuring():
                 self._switch_point = cur_r
                 break
 
-    def estimate(self):
-        # Calculate p0
-        N = np.sum(self._r * self._Nr)
-        p0 = self._Nr[0] / N if 1 in self._r else 0
-
+    def _calc_r_star(self):
         # Calculate Good-Turing estimates
         r_star = np.zeros(self._r.size)
         for i, cur_r in enumerate(self._r):
@@ -72,7 +67,14 @@ class SimpleGoodTuring():
                 r_star[i] = (cur_r + 1) * self._Nr[i + 1] / self._Nr[i]
             else:
                 r_star[i] = (cur_r + 1) * self.smoothed_Nr(cur_r + 1) / self.smoothed_Nr(cur_r)
-        self._r_star = r_star
+        return r_star
+
+    def estimate(self):
+        # Calculate p0
+        N = np.sum(self._r * self._Nr)
+        p0 = self._Nr[0] / N if 1 in self._r else 0
+
+        r_star = self._calc_r_star()
 
         N_estimated = np.sum(r_star * self._Nr)
         prob_estimated = np.zeros(r_star.size)
