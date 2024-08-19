@@ -366,6 +366,28 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cpdef binary_search_inplace_left(const double[:] L, const Py_ssize_t start_pos, const Py_ssize_t end_pos, const double val):
+    cdef Py_ssize_t left = start_pos
+    cdef Py_ssize_t right = end_pos - 1
+    cdef mid
+    cdef Py_ssize_t result = -1
+
+    while left <= right:
+        mid = left + (right - left) // 2
+        if L[mid] >= val:
+            result = mid
+            right = mid - 1
+        else:
+            left = mid + 1
+
+    if result > 0:
+        assert result >= start_pos and result < end_pos, f"{result} out of range [{start_pos}, {end_pos})!"
+
+    return result
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const long[:, :] gs_arr, const int start_pos, const int end_pos):
     cdef double cur_L
     cdef long t, prev
@@ -402,9 +424,10 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
                 t += 1
                 idx_g += 1
 
-            idx_below = np.searchsorted(L_b[idx_b:(idx_b+tb_cnt[idx_tb])], cur_L, side="left")
-            if idx_below < tb_cnt[idx_tb]:
-                below_cnt[idx_b + idx_below] += 1
+            #idx_below = np.searchsorted(L_b[idx_b:(idx_b+tb_cnt[idx_tb])], cur_L, side="left")
+            idx_below = binary_search_inplace_left(L_b, idx_b, idx_b + tb_cnt[idx_tb], cur_L)
+            if idx_below >= 0:
+                below_cnt[idx_below] += 1
 
             idx_b += tb_cnt[idx_tb]
             idx_tb += 1
