@@ -17,6 +17,7 @@ class SimpleGoodTuring():
         self._n0 = n0
 
         self.smooth_fit()
+        self.decide_switch_point()
         self.estimate()
 
     def smooth_fit(self):
@@ -43,6 +44,17 @@ class SimpleGoodTuring():
         i = np.where(self._r==r)[0][0]
         return np.sqrt((r + 1)**2 * (self._Nr[i + 1] / self._Nr[i]**2) * (1 + self._Nr[i + 1] / self._Nr[i]))
 
+    def decide_switch_point(self):
+        for i, cur_r in enumerate(self._r):
+            if i == self._r.size - 1 or self._r[i + 1] != cur_r + 1:
+                self._switch_point = cur_r
+                break
+            y_r = (cur_r + 1) * self.smoothed_Nr(cur_r + 1) / self.smoothed_Nr(cur_r)
+            x_r = (cur_r + 1) * self._Nr[i + 1] / self._Nr[i]
+            if np.abs(x_r - y_r) <= 1.96 * self.std_r(cur_r):
+                self._switch_point = cur_r
+                break
+
     def estimate(self):
         # Calculate p0
         N = np.sum(self._r * self._Nr)
@@ -51,12 +63,11 @@ class SimpleGoodTuring():
         # Calculate Good-Turing estimates
         r_star = np.zeros(self._r.size)
         for i, cur_r in enumerate(self._r):
-            y_r = (cur_r + 1) * self.smoothed_Nr(cur_r + 1) / self.smoothed_Nr(cur_r)
-            if (cur_r + 1) in self._r:
-                x_r = (cur_r + 1) * self._Nr[i + 1] / self._Nr[i]
-                r_star[i] = y_r if np.abs(x_r - y_r) <= 1.96 * self.std_r(cur_r) else x_r
+            if cur_r < self._switch_point:
+                r_star[i] = (cur_r + 1) * self._Nr[i + 1] / self._Nr[i]
             else:
-                r_star[i] = y_r
+                r_star[i] = (cur_r + 1) * self.smoothed_Nr(cur_r + 1) / self.smoothed_Nr(cur_r)
+        self._r_star = r_star
 
         N_estimated = np.sum(r_star * self._Nr)
         prob_estimated = np.zeros(r_star.size)
