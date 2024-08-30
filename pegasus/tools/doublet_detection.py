@@ -566,8 +566,10 @@ def simulate_doublets(
     sim_doublet_ratio: Optional[float] = 2.0,
     anno_attr: Optional[str] = None,
     random_state: Optional[int] = 0,
+    norm_method: Optional[str] = "log_norm",
 ) -> MultimodalData:
     """
+    norm_method: log_norm or norm
     """
     rawX = data.get_matrix(raw_mat_key)
     simX, pair_idx = _simulate_doublets(rawX, sim_doublet_ratio, random_state)
@@ -598,16 +600,20 @@ def simulate_doublets(
 
     sim_data = pio.MultimodalData(unidat)
 
-    from pegasus.tools import qc_metrics, log_norm
+    from pegasus.tools import qc_metrics, log_norm, normalize
     
     qc_metrics(sim_data)
     assert 'norm_count' in data.uns
-    log_norm(sim_data, norm_count=data.uns['norm_count'])
+    if norm_method == 'log_norm':
+        log_norm(sim_data, norm_count=data.uns['norm_count'])
+    else:
+        assert norm_method == 'norm'
+        normalize(sim_data, norm_count=data.uns['norm_count'])
 
     return sim_data
 
 
-def concat_obs_sim(datslt, datsim, K=100, calc_umap=True, n_jobs=-1, regress=False, anno_attr='anno'):
+def concat_obs_sim(datslt, datsim, K=100, calc_umap=True, n_jobs=-1, regress=False, anno_attr='anno', processed_mat='counts.log_norm'):
     import pegasusio as pio
     from scipy.sparse import vstack
 
@@ -624,10 +630,10 @@ def concat_obs_sim(datslt, datsim, K=100, calc_umap=True, n_jobs=-1, regress=Fal
               'highly_variable_features': datslt.var['highly_variable_features'],
              },
              {'counts': vstack([datslt.get_matrix('counts'), datsim.get_matrix('counts')]),
-              'counts.log_norm': vstack([datslt.get_matrix('counts.log_norm'), datsim.get_matrix('counts.log_norm')]),
+              processed_mat: vstack([datslt.get_matrix(processed_mat), datsim.get_matrix(processed_mat)]),
              },
              {'modality': datslt.uns['modality'], 'genome': datslt.uns['genome'], 'pca_ncomps': datslt.uns['pca_ncomps']},
-             cur_matrix='counts.log_norm')
+             cur_matrix=processed_mat)
 
     if 'featureid' in datslt.var:
         unidat.var['featureid'] = datslt.var['featureid']
@@ -726,9 +732,10 @@ def run_dbl_detection(
     method: Optional[str] = "kmeans",
     regress: Optional[bool]=False,
     plot_hist: Optional[bool] = True,
+    norm_method: Optional[str] = "log_norm", # alternative: "norm""
 ):
-    datsim = simulate_doublets(data, raw_mat_key=raw_mat_key, sim_doublet_ratio=sim_doublet_ratio, anno_attr=anno_attr, random_state=random_state)
-    dat_concat = concat_obs_sim(data, datsim, K=K, calc_umap=calc_umap, n_jobs=n_jobs, regress=regress, anno_attr=anno_attr)
+    datsim = simulate_doublets(data, raw_mat_key=raw_mat_key, sim_doublet_ratio=sim_doublet_ratio, anno_attr=anno_attr, random_state=random_state, norm_method=norm_method)
+    dat_concat = concat_obs_sim(data, datsim, K=K, calc_umap=calc_umap, n_jobs=n_jobs, regress=regress, anno_attr=anno_attr, processed_mat=('counts.log_norm' if norm_method == 'log_norm' else 'counts.norm'))
     thre = find_dbl_threshold(dat_concat, method=method, random_state=random_state)
 
     data.obs["doublet_score"] = dat_concat.obs.loc[data.obs_names, "doublet_score"].astype(np.float32)
