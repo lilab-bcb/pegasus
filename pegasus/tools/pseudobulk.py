@@ -164,9 +164,9 @@ def pseudobulk(
 def deseq2(
     pseudobulk: MultimodalData,
     design: str,
-    contrast: Tuple[str, str, str],
+    contrasts: Union[Tuple[str, str, str], List[Tuple[str, str, str]]],
     backend: str = "pydeseq2",
-    de_key: str = "deseq2",
+    de_key: Union[str, List[str]] = "deseq2",
     alpha: float = 0.05,
     compute_all: bool = False,
     verbose: bool = True,
@@ -183,16 +183,18 @@ def deseq2(
         For ``pydeseq2`` backend, specify either a factor or a list of factors to be used as design variables.They must be all in ``pseudobulk.obs``.
         For ``deseq2`` backend, specify the design formula that will be passed to DESeq2. E.g. ``~group+condition`` or ``~genotype+treatment+genotype:treatment``.
 
-    contrast: ``Tuple[str, str, str]``
+    contrasts: ``Tuple[str, str, str]`` or ``List[Tuple[str, str, str]]``
         A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as the test level (numeritor of fold change), and a level as the reference level (denominator of fold change).
+        It also accept multiple contrasts as a list. In this way, ``de_key`` must be a list of strings, and the DE result of each contrast will then be stored in ``data.varm`` with the corresponding key.
 
     backend: ``str``, optional, default: ``pydeseq2``
         Specify which package to use as the backend for pseudobulk DE analysis.
         By default, use ``PyDESeq2`` which is a pure Python implementation of DESeq2 method.
         Alternatively, if specifying ``deseq2``, then use R package DESeq2, which requires ``rpy2`` package and R installation.
 
-    de_key: ``str``, optional, default: ``"deseq2"``
+    de_key: ``str`` or ``List[str]``, optional, default: ``"deseq2"``
         Key name of DE analysis results stored. For count matrix with name ``condition.X``, stored key will be ``condition.de_key``.
+        Provide a list of keys if ``contrasts`` is a list.
 
     alpha: ``float``, optional, default: ``0.05``
         The significance cutoff (between 0 and 1) used for optimizing the independent filtering to calculate the adjusted p-values (FDR).
@@ -218,21 +220,22 @@ def deseq2(
     --------
     >>> pg.deseq2(pseudobulk, 'gender', ('gender', 'female', 'male'))
     >>> pg.deseq2(pseudobulk, '~gender', ('gender', 'female', 'male'), backend="deseq2")
+    >>> pg.deseq2(pseudobulk, 'treatment', [('treatment', 'A', 'B'), ('treatment', 'A', 'C')], de_key=['deseq2_A_B', 'deseq2_A_C'])
     """
     mat_keys = ['counts'] if not compute_all else pseudobulk.list_keys()
     for mat_key in mat_keys:
         if backend == "pydeseq2":
-            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrast=contrast, de_key=de_key, alpha=alpha, n_jobs=n_jobs, verbose=verbose)
+            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrasts=contrasts, de_key=de_key, alpha=alpha, n_jobs=n_jobs, verbose=verbose)
         else:
-            _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrast=contrast, de_key=de_key, alpha=alpha)
+            _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrasts=contrasts, de_key=de_key, alpha=alpha)
 
 
 def _run_pydeseq2(
     pseudobulk: MultimodalData,
     mat_key: str,
     design_factors: Union[str, List[str]],
-    contrast: Tuple[str, str, str],
-    de_key: str,
+    contrasts: Union[Tuple[str, str, str], List[Tuple[str, str, str]]],
+    de_key: Union[str, List[str]],
     alpha: float,
     n_jobs: int,
     verbose: bool,
@@ -272,25 +275,31 @@ def _run_pydeseq2(
     )
     dds.deseq2()
 
-    stat_res = DeseqStats(
-        dds,
-        contrast=contrast,
-        alpha=alpha,
-        inference=inference,
-        quiet=not verbose,
-    )
-    stat_res.summary()
-    res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
-    res_df = stat_res.results_df
-    pseudobulk.varm[res_key] = res_df.to_records(index=False)
+    if isinstance(contrasts, Tuple):
+        contrasts = [contrasts]
+    if isinstance(de_key, str):
+        de_key = [de_key]
+
+    for i, contrast in enumerate(contrasts):
+        stat_res = DeseqStats(
+            dds,
+            contrast=contrast,
+            alpha=alpha,
+            inference=inference,
+            quiet=not verbose,
+        )
+        stat_res.summary()
+        res_key = de_key[i] if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key[i]
+        res_df = stat_res.results_df
+        pseudobulk.varm[res_key] = res_df.to_records(index=False)
 
 
 def _run_rdeseq2(
     pseudobulk: MultimodalData,
     mat_key: str,
     design: str,
-    contrast: Tuple[str, str, str],
-    de_key: str,
+    contrasts: Union[Tuple[str, str, str], List[Tuple[str, str, str]]],
+    de_key: Union[str, List[str]],
     alpha: float,
 ) -> None:
     try:
@@ -328,9 +337,16 @@ def _run_rdeseq2(
         dds = deseq2.DESeqDataSetFromMatrix(countData = pseudobulk.get_matrix(mat_key).T, colData = pseudobulk.obs, design = Formula(design))
 
     dds = deseq2.DESeq(dds)
-    res= deseq2.results(dds, contrast=ro.StrVector(contrast), alpha=alpha)
-    with localconverter(ro.default_converter + pandas2ri.converter):
-      res_df = ro.conversion.rpy2py(to_dataframe(res))
 
-    res_key = de_key if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key
-    pseudobulk.varm[res_key] = res_df.to_records(index=False)
+    if isinstance(contrasts, Tuple):
+        contrasts = [contrasts]
+    if isinstance(de_key, str):
+        de_key = [de_key]
+
+    for i, contrast in enumerate(contrasts):
+        res= deseq2.results(dds, contrast=ro.StrVector(contrast), alpha=alpha)
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            res_df = ro.conversion.rpy2py(to_dataframe(res))
+
+        res_key = de_key[i] if mat_key == "counts" else mat_key.removesuffix(".X") + "." + de_key[i]
+        pseudobulk.varm[res_key] = res_df.to_records(index=False)

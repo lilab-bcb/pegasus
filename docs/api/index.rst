@@ -137,8 +137,8 @@ Differential Expression and Gene Set Enrichment Analysis
     de_analysis
     markers
     write_results_to_excel
-    fgsea
-    write_fgsea_results_to_excel
+    gsea
+    write_gsea_results_to_excel
 
 Annotate clusters
 -------------------
@@ -183,6 +183,7 @@ Pseudo-bulk analysis
     pseudo.markers
     pseudo.write_results_to_excel
     pseudo.volcano
+    pseudo.get_original_DE_result
 
 Demultiplexing
 ---------------
