@@ -238,7 +238,7 @@ cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type
             if bin_count[j] > 1:
                 estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
             sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
-            
+
     return sig_bkg_mean, sig_bkg_std
 
 
@@ -305,7 +305,7 @@ cpdef tuple simulate_doublets_sparse(int n_sim, int N, const int[:] data, indice
 
         u = doublet_indices[i, 0]
         v = doublet_indices[i, 1]
-        
+
         j = indptr[u]
         u_up = indptr[u + 1]
         k = indptr[v]
@@ -362,3 +362,84 @@ cpdef simulate_doublets_dense(int n_sim, int N, const int[:, :] X, const int[:, 
             out_array[i, j] = X[u, j] + X[v, j]
 
     return results
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef binary_search_inplace_left(const double[:] L, const Py_ssize_t start_pos, const Py_ssize_t end_pos, const double val):
+    cdef Py_ssize_t left = start_pos
+    cdef Py_ssize_t right = end_pos - 1
+    cdef mid
+    cdef Py_ssize_t result = -1
+
+    while left <= right:
+        mid = left + (right - left) // 2
+        if L[mid] >= val:
+            result = mid
+            right = mid - 1
+        else:
+            left = mid + 1
+
+    if result > 0:
+        assert result >= start_pos and result < end_pos, f"{result} out of range [{start_pos}, {end_pos})!"
+
+    return result
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const long[:, :] gs_arr, const int start_pos, const int end_pos):
+    cdef double cur_L
+    cdef long t, prev
+    cdef Py_ssize_t idx_tb, idx_b, idx_below, idx_g, i, k
+
+    z_buffer = np.zeros(n_genes, dtype=long)
+    cdef long[:] z = z_buffer
+
+    below_cnt_buffer = np.zeros(n_cells, dtype=long)
+    cdef long[:] below_cnt = below_cnt_buffer
+
+    #genes_selected_buffer = np.zeros(tb_max, dtype=long)
+    #cdef long[:] genes_selected = genes_selected_buffer
+
+    #rng = np.random.default_rng(random_state)
+    for i in range(start_pos, end_pos):
+        #genes_selected_buffer = rng.choice(np.arange(n_genes), p=p_arr[i, :], replace=True, size=tb_max, shuffle=False)
+
+        idx_tb = 0
+        idx_b = 0
+        idx_g = 0
+        cur_L = 0
+        t = 0
+
+        for k in range(n_genes):
+            z[k] = 0
+
+        while idx_tb < tb_unique_size:
+
+            while t < tb_unique[idx_tb]:
+                k = gs_arr[i, idx_g]
+                z[k] += 1
+                cur_L = cur_L + np.log(z[k] + alpha_prop[k] - 1) - np.log(z[k])
+                t += 1
+                idx_g += 1
+
+            #idx_below = np.searchsorted(L_b[idx_b:(idx_b+tb_cnt[idx_tb])], cur_L, side="left")
+            idx_below = binary_search_inplace_left(L_b, idx_b, idx_b + tb_cnt[idx_tb], cur_L)
+            if idx_below >= 0:
+                below_cnt[idx_below] += 1
+
+            idx_b += tb_cnt[idx_tb]
+            idx_tb += 1
+
+        assert idx_g == tb_max, f"Only {idx_g} counts out of {tb_max} are used!"
+
+    idx_below = 0
+    for idx_tb in range(tb_unique_size):
+        for i in range(tb_cnt[idx_tb] - 1):
+            prev = below_cnt[idx_below]
+            idx_below += 1
+            below_cnt[idx_below] += prev
+        idx_below += 1
+
+    return below_cnt_buffer
