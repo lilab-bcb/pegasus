@@ -388,8 +388,7 @@ cpdef binary_search_inplace_left(const double[:] L, const Py_ssize_t start_pos, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const long[:, :] gs_arr, const int start_pos, const int end_pos):
-#cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const double[:, :] prob_arr, const int start_pos, const int end_pos):
+cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const int start_pos, const int end_pos):
     cdef double cur_L
     cdef long t, prev
     cdef Py_ssize_t idx_tb, idx_b, idx_below, idx_g, i, j, k
@@ -400,12 +399,17 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
     below_cnt_buffer = np.zeros(n_cells, dtype=long)
     cdef long[:] below_cnt = below_cnt_buffer
 
-    #gs_buffer = np.zeros(tb_max, dtype=long)
-    #cdef long[:] gs_arr = gs_buffer
+    #gs_dbg = np.loadtxt("/home/ubuntu/empty_drops_debug/GS_R.txt").astype(long)
 
-    #rng = np.random.default_rng(random_state)
+    gs_buffer = np.zeros(tb_max, dtype=long)
+    cdef long[:] gs_arr
+
+    rng = np.random.default_rng(random_state)
     for i in range(start_pos, end_pos):
-        #gs_buffer = rng.choice(np.arange(n_genes), p=prob_arr[i, :], replace=True, size=tb_max, shuffle=False)
+        prob_arr = rng.dirichlet(alpha_prop)
+        gs_buffer = rng.choice(n_genes, p=prob_arr, replace=True, size=tb_max, shuffle=False)
+        #gs_buffer = gs_dbg[i, :]
+        gs_arr = gs_buffer
 
         idx_tb = 0
         idx_b = 0
@@ -419,14 +423,12 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
         while idx_tb < tb_unique_size:
 
             while t < tb_unique[idx_tb]:
-                k = gs_arr[i, idx_g]
-                #k = gs_arr[idx_g]
+                k = gs_arr[idx_g]
                 z[k] += 1
                 cur_L = cur_L + std_log(z[k] + alpha_prop[k] - 1) - std_log(z[k])
                 t += 1
                 idx_g += 1
 
-            #idx_below = np.searchsorted(L_b[idx_b:(idx_b+tb_cnt[idx_tb])], cur_L, side="left")
             idx_below = binary_search_inplace_left(L_b, idx_b, idx_b + tb_cnt[idx_tb], cur_L)
             if idx_below >= 0:
                 below_cnt[idx_below] += 1

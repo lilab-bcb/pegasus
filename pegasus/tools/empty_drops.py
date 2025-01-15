@@ -79,10 +79,9 @@ def empty_drops(
     tb = T.sum(axis=1).A1 if issparse(T) else T.sum(axis=1)
     Lb_data = _logL_data_dep(T, ambient_proportion, alpha)
     Lb_alpha = _logL_data_indep(tb, alpha)
-    GS = np.loadtxt("/home/ubuntu/empty_drops_debug/GS_R.txt").astype(int)
 
     n_jobs = eff_n_jobs(n_jobs)
-    n_below = _test_empty_drops(alpha, ambient_proportion, tb, Lb_data, n_iters, random_state, GS, n_jobs)
+    n_below = _test_empty_drops(alpha, ambient_proportion, tb, Lb_data, n_iters, random_state, n_jobs)
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
@@ -176,7 +175,7 @@ def _find_curve_bounds(x, y, exclude_from):
     return (left_edge + skip, right_edge + skip)
 
 
-def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, GS, n_jobs, temp_folder=None):
+def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, n_jobs, temp_folder=None):
     idx_sorted = np.lexsort((P_data, tb))
     P_sorted = P_data[idx_sorted]
     tb_unique, tb_cnt = np.unique(tb[idx_sorted], return_counts=True)
@@ -185,11 +184,6 @@ def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, GS, n_jobs
     n_cells = tb.size
     n_genes = prop.size
     tb_max = tb_unique[-1]
-
-    #rng = np.random.default_rng(random_state)
-    #prob_arr = rng.dirichlet(alpha_prop, size=n_iters)
-    #gs_arr = np.array([rng.choice(np.arange(n_genes), p=p, replace=True, size=tb_max, shuffle=False) for p in p_arr])
-    #logger.info("Sampling is finished.")
 
     chunk_size = n_iters // n_jobs
     remainder = n_iters % n_jobs
@@ -218,8 +212,6 @@ def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, GS, n_jobs
                 n_cells,
                 n_genes,
                 random_state,
-                #prob_arr,
-                GS,
                 intervals[i][0],
                 intervals[i][1],
             )
