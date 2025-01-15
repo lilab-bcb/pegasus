@@ -67,21 +67,22 @@ def empty_drops(
         sgt = SimpleGoodTuring(ambient_profile)
         ambient_proportion = sgt.get_proportions()
 
-    if not alpha:
+    if alpha is None:
         alpha = _estimate_alpha(G, ambient_proportion)
         logger.info(f"Calculating alpha is finished. Estimate alpha = {alpha}.")
 
     cells_test = df_droplets.loc[df_droplets["n_counts"] > thresh_low].index.values
     idx_test = df_droplets.index.get_indexer(cells_test)
-    logger.info(f"Run test through {idx_test.size} cells passing thresh_low.")
+    logger.info(f"Run test through {idx_test.size} cells with n_counts > {thresh_low}.")
 
     T = X[idx_test, :]
-    t_b = T.sum(axis=1).A1 if issparse(T) else T.sum(axis=1)
-    L_b_data = _logL_data_dep(T, ambient_proportion, alpha)
-    L_b_alpha = _logL_data_indep(t_b, alpha)
+    tb = T.sum(axis=1).A1 if issparse(T) else T.sum(axis=1)
+    Lb_data = _logL_data_dep(T, ambient_proportion, alpha)
+    Lb_alpha = _logL_data_indep(tb, alpha)
+    GS = np.loadtxt("/home/ubuntu/empty_drops_debug/GS_R.txt").astype(int)
 
     n_jobs = eff_n_jobs(n_jobs)
-    n_below = _test_empty_drops(alpha, ambient_proportion, t_b, L_b_data, n_iters, random_state, n_jobs)
+    n_below = _test_empty_drops(alpha, ambient_proportion, tb, Lb_data, n_iters, random_state, GS, n_jobs)
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
@@ -89,16 +90,19 @@ def empty_drops(
     if knee is None:
         knee = knee_est
 
-    idx_always = np.where(t_b >= knee)[0]
-    pval[idx_always] = 0.0
+    idx_always = np.where(tb >= knee)[0]
+    pval_modified = pval.copy()
+    pval_modified[idx_always] = 0.0
     logger.info(f"Adjust p-values by the knee point {knee}.")
 
-    _, qval = fdr(pval)
+    _, qval = fdr(pval_modified)
 
     data.obs["EmptyDrops.pval"] = np.nan
     data.obs.loc[cells_test, "EmptyDrops.pval"] = pval
     data.obs["EmptyDrops.qval"] = np.nan
     data.obs.loc[cells_test, "EmptyDrops.qval"] = qval
+    data.obs["EmptyDrops.logL"] = np.nan
+    data.obs.loc[cells_test, "EmptyDrops.logL"] = Lb_alpha + Lb_data
 
     return (df_rank_stats, knee, inflection)
 
@@ -137,12 +141,15 @@ def _rank_barcode(X, thresh_low, exclude_from):
     fitted_values = np.log1p(rank_values)
     idx_focus = np.arange(left_edge, right_edge+1)
     if idx_focus.size >= 4:
-        spline = UnivariateSpline(x[idx_focus], y[idx_focus], k=3, s=5)
-        fitted_values[idx_focus] = spline(x[idx_focus])
-        d1 = spline.derivative(n=1)(x[idx_focus])
-        d2 = spline.derivative(n=2)(x[idx_focus])
-        curvature = d2 / (1 + d1**2)**1.5
-        knee = np.expm1(y[idx_focus][np.argmin(curvature)])
+        curx = x[idx_focus]
+        cury = y[idx_focus]
+        xbounds = curx[[0, -1]]
+        ybounds = cury[[0, -1]]
+        slope = (ybounds[1] - ybounds[0]) / (xbounds[1] - xbounds[0])
+        intercept = ybounds[0] - xbounds[0] * slope
+        above = np.where(cury >= curx * slope + intercept)[0]
+        dist = np.abs(slope * curx[above] - cury[above] + intercept) / np.sqrt(slope**2 + 1)
+        knee = np.expm1(cury[above[np.argmax(dist)]])
     else:
         knee = np.expm1(y[idx_focus[0]])
 
@@ -169,21 +176,20 @@ def _find_curve_bounds(x, y, exclude_from):
     return (left_edge + skip, right_edge + skip)
 
 
-def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs, temp_folder=None):
-    idx_sorted = np.lexsort((P_data, t_b))
+def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, GS, n_jobs, temp_folder=None):
+    idx_sorted = np.lexsort((P_data, tb))
     P_sorted = P_data[idx_sorted]
-    t_b_unique, t_b_cnt = np.unique(t_b[idx_sorted], return_counts=True)
+    tb_unique, tb_cnt = np.unique(tb[idx_sorted], return_counts=True)
 
     alpha_prop = alpha * prop
-    n_cells = t_b.size
+    n_cells = tb.size
     n_genes = prop.size
-    t_b_max = t_b_unique[-1]
+    tb_max = tb_unique[-1]
 
-    np.random.seed(random_state)
-    p_arr = np.random.dirichlet(alpha_prop, size=n_iters)
-    rng = np.random.default_rng(random_state)
-    gs_arr = np.array([rng.choice(np.arange(n_genes), p=p, replace=True, size=t_b_max) for p in p_arr])
-    logger.info("Sampling is finished.")
+    #rng = np.random.default_rng(random_state)
+    #prob_arr = rng.dirichlet(alpha_prop, size=n_iters)
+    #gs_arr = np.array([rng.choice(np.arange(n_genes), p=p, replace=True, size=tb_max, shuffle=False) for p in p_arr])
+    #logger.info("Sampling is finished.")
 
     chunk_size = n_iters // n_jobs
     remainder = n_iters % n_jobs
@@ -199,26 +205,27 @@ def _test_empty_drops(alpha, prop, t_b, P_data, n_iters, random_state, n_jobs, t
             break
         intervals.append((start_pos, end_pos))
         start_pos = end_pos
-    seeds = np.random.randint(low=0, high=2**16, size=n_jobs)
 
     with parallel_backend("loky", inner_max_num_threads=1):
         result = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
             delayed(test_empty_drops)(
                 alpha_prop,
-                t_b_unique,
-                t_b_unique.size,
-                t_b_max,
-                t_b_cnt,
+                tb_unique,
+                tb_unique.size,
+                tb_max,
+                tb_cnt,
                 P_sorted,
                 n_cells,
                 n_genes,
-                seeds[i],
-                gs_arr,
+                random_state,
+                #prob_arr,
+                GS,
                 intervals[i][0],
                 intervals[i][1],
             )
             for i in range(n_jobs)
         )
+    logger.info("Significance test is finished.")
     n_below_sorted = np.vstack(result).sum(axis=0)
 
     idx_inv = np.empty_like(idx_sorted)
@@ -238,22 +245,22 @@ def _calc_logL_by_increment(L1, alpha, prop, t, n_extra_counts, z, idx_extra_gen
 
 def _estimate_alpha(G, prop, bounds=(0.01, 10000)):
     if issparse(G):
-        t_b = G.sum(axis=1).A1
+        tb = G.sum(axis=1).A1
         idx_g = G.nonzero()[1]
         y = G.data
     else:
-        t_b = G.sum(axis=1)
+        tb = G.sum(axis=1)
         idx_b, idx_g = np.nonzero(G)[1]
         y = G[idx_b, idx_g]
 
-    n_cells = t_b.size
+    n_cells = tb.size
 
     def neg_logL(alpha):
         # Remove terms not related to alpha from Likelihood
         alpha_prop = alpha * prop[idx_g]
         return -(
             n_cells * loggamma(alpha)
-            - np.sum(loggamma(t_b + alpha))
+            - np.sum(loggamma(tb + alpha))
             + np.sum(loggamma(y + alpha_prop))
             - np.sum(loggamma(alpha_prop))
         )
