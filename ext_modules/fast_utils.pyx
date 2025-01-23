@@ -404,7 +404,7 @@ cpdef test_empty_drops(const bint use_alpha, const double[:] alpha_prop, const l
     gs_buffer = np.zeros(tb_max, dtype=long)
     cdef long[:] gs_arr
 
-    #rng = np.random.default_rng(random_state)
+    rng = np.random.default_rng(random_state)
     for i in range(start_pos, end_pos):
         prob_arr = rng.dirichlet(alpha_prop) if use_alpha else alpha_prop
         gs_buffer = rng.choice(n_genes, p=prob_arr, replace=True, size=tb_max, shuffle=False)
