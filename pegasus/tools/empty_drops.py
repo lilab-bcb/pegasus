@@ -9,11 +9,11 @@ from pegasusio import MultimodalData, UnimodalData
 from pegasus.tools import eff_n_jobs
 from pegasus.tools import SimpleGoodTuring
 from pegasus.cylib.fast_utils import test_empty_drops
+from pegasus.plotting import plot_barcode_rank
 
 from anndata import AnnData
 from scipy.special import loggamma
 from scipy.sparse import csr_matrix, issparse
-from scipy.interpolate import UnivariateSpline
 from statsmodels.stats.multitest import fdrcorrection as fdr
 from joblib import Parallel, delayed, parallel_backend
 from typing import Union, Optional
@@ -29,65 +29,67 @@ def empty_drops(
     data: Union[MultimodalData, UnimodalData, AnnData],
     mat_key: Optional[str] = None,
     thresh_low: float = 100,
+    distribution: str = "multi-dirichlet",
     alpha: Optional[float] = None,
     n_iters: int = 10000,
     random_state: int = 0,
     exclude_from: int = 50,
-    significance_level: float = 0.05,
-    n_jobs: int = -1,
-    ambient_proportion: Optional[np.array] = None,  # Testing
-    knee: Optional[float] = None,  # Testing
-) -> None:
-    if "counts" in data._unidata.matrices:
-        mat_key = "counts"
-    elif "raw.X" in data._unidata.matrices:
-        mat_key = "raw.X"
+    significance_level: float = 0.01,
+    show_summary_plot: bool = False,
+    knee_method: str = "linear",
+    n_jobs: int = 1,
+) -> (int, int):
+    if mat_key is None:
+        if "counts" in data._unidata.matrices:
+            mat_key = "counts"
+        elif "raw.X" in data._unidata.matrices:
+            mat_key = "raw.X"
     X = data.get_matrix(mat_key) if mat_key else data.X
 
     if "n_counts" not in data.obs:
         logger.info(
             "Calculate n_counts for EmptyDrops since 'n_counts' not in data.obs."
         )
-        df_droplets = pd.DataFrame(index=data.obs_names)
-        df_droplets["n_counts"] = X.sum(axis=1).A1
+        n_counts = X.sum(axis=1).A1 if issparse(X) else X.sum(axis=1)
     else:
-        df_droplets = data.obs[["n_counts"]].copy()
+        n_counts = data.obs["n_counts"].values
 
     assert (
         np.sum(X.sum(axis=0) == 0) == 0
     ), "Some genes have zero counts in data! Please run pegasus.identify_robust_genes() first!"
 
-    idx_low = df_droplets.index.get_indexer(
-        df_droplets.loc[df_droplets["n_counts"] <= thresh_low].index.values
-    )
+    idx_low = np.where(n_counts <= thresh_low)[0]
     G = X[idx_low, :]
 
-    if ambient_proportion is None:
-        ambient_profile = G.sum(axis=0).A1
-        sgt = SimpleGoodTuring(ambient_profile)
-        ambient_proportion = sgt.get_proportions()
+    ambient_profile = G.sum(axis=0).A1
+    sgt = SimpleGoodTuring(ambient_profile)
+    ambient_proportion = sgt.get_proportions()
 
-    if alpha is None:
-        alpha = _estimate_alpha(G, ambient_proportion)
-        logger.info(f"Calculating alpha is finished. Estimate alpha = {alpha}.")
+    use_alpha = True if distribution == "multi-dirichlet" else False
 
-    cells_test = df_droplets.loc[df_droplets["n_counts"] > thresh_low].index.values
-    idx_test = df_droplets.index.get_indexer(cells_test)
+    if use_alpha:
+        if alpha is None:
+            alpha = _estimate_alpha(G, ambient_proportion)
+            logger.info(f"Calculating alpha is finished. Estimate alpha = {alpha}.")
+        else:
+            logger.info(f"Use user-specified alpha = {alpha}.")
+
+    idx_test = np.where(n_counts > thresh_low)[0]
+    cells_test = data.obs.iloc[idx_test].index.values
     logger.info(f"Run test through {idx_test.size} cells with n_counts > {thresh_low}.")
 
     T = X[idx_test, :]
-    tb = T.sum(axis=1).A1 if issparse(T) else T.sum(axis=1)
-    Lb_data = _logL_data_dep(T, ambient_proportion, alpha)
-    Lb_alpha = _logL_data_indep(tb, alpha)
+    tb = n_counts[idx_test]
+    Lb_data = _logL_data_dep(T, ambient_proportion, alpha, use_alpha)
+    Lb_alpha = _logL_data_indep(tb, alpha, use_alpha)
 
     n_jobs = eff_n_jobs(n_jobs)
-    n_below = _test_empty_drops(alpha, ambient_proportion, tb, Lb_data, n_iters, random_state, n_jobs)
+    n_below = _test_empty_drops(use_alpha, alpha, ambient_proportion, tb, Lb_data, n_iters, random_state, n_jobs)
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
-    df_rank_stats, knee_est, inflection = _rank_barcode(X, thresh_low, exclude_from)
-    if knee is None:
-        knee = knee_est
+    assert knee_method in ["spline", "linear"], "knee_method must be chosen from ['spline', 'linear']!"
+    df_barcode_rank, knee, inflection = _rank_barcode(n_counts, thresh_low, exclude_from, knee_method)
 
     idx_always = np.where(tb >= knee)[0]
     pval_modified = pval.copy()
@@ -102,65 +104,96 @@ def empty_drops(
     data.obs.loc[cells_test, "EmptyDrops.qval"] = qval
     data.obs["EmptyDrops.logL"] = np.nan
     data.obs.loc[cells_test, "EmptyDrops.logL"] = Lb_alpha + Lb_data
+    data.obs["ambient"] = True
+    data.obs.loc[data.obs["EmptyDrops.qval"] <= significance_level, "ambient"] = False
 
-    return (df_rank_stats, knee, inflection)
+    if show_summary_plot:
+        idx_nonambient = data.obs_names.get_indexer(data.obs.loc[~data.obs["ambient"]].index)
+        plot_barcode_rank(df_barcode_rank, n_counts[idx_nonambient], thresh_low, knee, inflection)
+
+    return (df_barcode_rank, knee, inflection)
 
 
-def _logL_data_dep(Y, prop, alpha):
+def _logL_data_dep(Y, prop, alpha, use_alpha):
     if issparse(Y):
         idx_b, idx_g = Y.nonzero()
         y = Y.data
     else:
         idx_b, idx_g = np.nonzero(Y)
         y = Y[idx_b, idx_g]
-    alpha_prop = alpha * prop[idx_g]
-    L_a1 = loggamma(y + alpha_prop) - loggamma(y + 1) - loggamma(alpha_prop)
+
+    if use_alpha:
+        alpha_prop = alpha * prop[idx_g]
+        L_a1 = loggamma(y + alpha_prop) - loggamma(y + 1) - loggamma(alpha_prop)
+    else:
+        L_a1 = y * np.log(prop[idx_g]) - loggamma(y + 1)
+
     L_mat = csr_matrix((L_a1, (idx_b, idx_g)), shape=Y.shape)
     return L_mat.sum(axis=1).A1
 
 
-def _logL_data_indep(t_b, alpha):
-    return loggamma(t_b + 1) + loggamma(alpha) - loggamma(t_b + alpha)
+def _logL_data_indep(tb, alpha, use_alpha):
+    if use_alpha:
+        return loggamma(tb + 1) + loggamma(alpha) - loggamma(tb + alpha)
+    else:
+        return loggamma(tb + 1)
 
 
-def _rank_barcode(X, thresh_low, exclude_from):
-    total_counts = X.sum(axis=1).A1 if issparse(X) else X.sum(axis=1)
-    rank_values, rank_sizes = np.unique(total_counts, return_counts=True)
+def _rank_barcode(n_counts, thresh_low, exclude_from, knee_method="spline"):
+    rank_values, rank_sizes = np.unique(n_counts, return_counts=True)
     rank_values = rank_values[::-1]
     rank_sizes = rank_sizes[::-1]
     tie_rank = np.cumsum(rank_sizes) - (rank_sizes - 1) / 2  # Get mid-rank of each tie
 
     idx_keep = np.where(rank_values > thresh_low)[0]
-    y = np.log1p(rank_values[idx_keep])
+    y = np.log(rank_values[idx_keep])
     x = np.log(tie_rank[idx_keep])
     left_edge, right_edge = _find_curve_bounds(x, y, exclude_from)
 
-    inflection = np.expm1(y[right_edge])
+    inflection = int(np.exp(y[right_edge]))
 
-    fitted_values = np.log1p(rank_values)
+    fitted = np.full(tie_rank.size, np.nan)
     idx_focus = np.arange(left_edge, right_edge+1)
     if idx_focus.size >= 4:
-        curx = x[idx_focus]
-        cury = y[idx_focus]
-        xbounds = curx[[0, -1]]
-        ybounds = cury[[0, -1]]
-        slope = (ybounds[1] - ybounds[0]) / (xbounds[1] - xbounds[0])
-        intercept = ybounds[0] - xbounds[0] * slope
-        above = np.where(cury >= curx * slope + intercept)[0]
-        dist = np.abs(slope * curx[above] - cury[above] + intercept) / np.sqrt(slope**2 + 1)
-        knee = np.expm1(cury[above[np.argmax(dist)]])
+        knee = _find_knee_point(x, y, fitted, idx_focus, method=knee_method)
+        print(f"knee = {knee}")
     else:
-        knee = np.expm1(y[idx_focus[0]])
+        knee = int(np.ceil(np.exp(y[idx_focus[0]])))
 
     def repeat(vals, lens):
         return [element for element, count in zip(vals, lens) for _ in range(count)]
 
-    df_stats = pd.DataFrame({
-        "Barcodes": repeat(np.log(tie_rank), rank_sizes),
-        "n_counts": repeat(rank_values, rank_sizes),
-        "UMI counts": repeat(fitted_values, rank_sizes),
+    df_rank = pd.DataFrame({
+        "rank": tie_rank,
+        "size": rank_sizes,
+        "n_counts_obs": rank_values,
+        "n_counts_fitted": fitted,
     })
-    return (df_stats, knee, inflection)
+    return (df_rank, knee, inflection)
+
+
+def _find_knee_point(x, y, fitted, idx_focus, method="spline"):
+    x_obs = x[idx_focus]
+    y_obs = y[idx_focus]
+    if method == "spline":
+        from scipy.interpolate import UnivariateSpline
+
+        spline = UnivariateSpline(x_obs, y_obs, k=3, s=5)
+        fitted[idx_focus] = spline(x_obs)
+        d1 = spline.derivative(n=1)(x_obs)
+        d2 = spline.derivative(n=2)(x_obs)
+        curvature = d2 / (1 + d1**2)**1.5
+        knee = int(np.ceil(np.exp(y_obs[np.argmin(curvature)])))
+    else:
+        slope = (y_obs[-1] - y_obs[0]) / (x_obs[-1] - x_obs[0])
+        intercept = y_obs[0] - x_obs[0] * slope
+        y_fitted = x_obs * slope + intercept
+        fitted[idx_focus] = y_fitted
+        above = np.where(y_obs >= y_fitted)[0]
+        distance = (y_obs[above] - y_fitted[above]) / np.sqrt(slope**2 + 1)
+        knee = int(np.ceil(np.exp(y_obs[above[np.argmax(distance)]])))
+
+    return knee
 
 
 def _find_curve_bounds(x, y, exclude_from):
@@ -169,18 +202,18 @@ def _find_curve_bounds(x, y, exclude_from):
     skip = np.min([d1n.size - 1, np.sum(x<=np.log(exclude_from))])
     d1n = d1n[-(d1n.size - skip):]
 
-    right_edge = np.argmin(d1n)
-    left_edge = np.argmax(d1n[:(right_edge+1)])
+    right_edge = np.argmin(d1n)   # point with the least steep
+    left_edge = np.argmax(d1n[:(right_edge+1)])   # point with the highest steep to the left of right edge
 
     return (left_edge + skip, right_edge + skip)
 
 
-def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, n_jobs, temp_folder=None):
+def _test_empty_drops(use_alpha, alpha, prop, tb, P_data, n_iters, random_state, n_jobs, temp_folder=None):
     idx_sorted = np.lexsort((P_data, tb))
     P_sorted = P_data[idx_sorted]
     tb_unique, tb_cnt = np.unique(tb[idx_sorted], return_counts=True)
 
-    alpha_prop = alpha * prop
+    alpha_prop = alpha * prop if use_alpha else prop
     n_cells = tb.size
     n_genes = prop.size
     tb_max = tb_unique[-1]
@@ -203,6 +236,7 @@ def _test_empty_drops(alpha, prop, tb, P_data, n_iters, random_state, n_jobs, te
     with parallel_backend("loky", inner_max_num_threads=1):
         result = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
             delayed(test_empty_drops)(
+                use_alpha,
                 alpha_prop,
                 tb_unique,
                 tb_unique.size,

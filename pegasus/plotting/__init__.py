@@ -15,4 +15,5 @@ from .plot_library import (
     wordcloud,
     plot_gsea,
     elbowplot,
+    plot_barcode_rank,
 )

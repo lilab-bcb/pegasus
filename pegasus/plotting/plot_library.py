@@ -2507,3 +2507,36 @@ def elbowplot(
     ax.axvline(x = ncomps + 0.5, ls = "--", c = "r", linewidth=1)
 
     return fig if return_fig else None
+
+
+def plot_barcode_rank(df_plot, n_counts_nonambient, thresh_low, knee, inflection):
+    fig, ax = _get_subplot_layouts(panel_size=(4, 4), dpi=200)
+
+    counts_nonambient, sizes_nonambient = np.unique(n_counts_nonambient, return_counts=True)
+    df_nonambient = pd.DataFrame({"n_counts": counts_nonambient, "size": sizes_nonambient}).set_index("n_counts")
+    df_plot["size_nonambient"] = 0
+    df_plot = df_plot.set_index("n_counts_obs")
+    df_plot.loc[df_nonambient.index, "size_nonambient"] = df_nonambient["size"]
+    df_plot = df_plot.reset_index()
+    df_plot["percent_nonambient"] = df_plot["size_nonambient"] / df_plot["size"]
+
+    idx_ambient = df_plot.loc[df_plot["size_nonambient"]==0].index
+    ax.scatter(df_plot.loc[idx_ambient, "rank"].values, df_plot.loc[idx_ambient, "n_counts_obs"].values, s=4, c="#dbdbdb")
+    idx_nonambient = df_plot.loc[df_plot["size_nonambient"]>0].index
+    ax.scatter(df_plot.loc[idx_nonambient, "rank"].values, df_plot.loc[idx_nonambient, "n_counts_obs"].values, s=4, cmap="Blues", c=df_plot.loc[idx_nonambient, "percent_nonambient"].values)
+
+    ax.axhline(y=thresh_low, linestyle='--', color="red", linewidth=1)
+
+
+    idx_knee = np.argmin(np.abs(df_plot["n_counts_obs"].values - knee))
+    ax.scatter(df_plot.iloc[idx_knee]["rank"], df_plot.iloc[idx_knee]["n_counts_obs"], s=4, c="red")
+    ax.text(df_plot.iloc[idx_knee]["rank"], df_plot.iloc[idx_knee]["n_counts_obs"], f"knee = {knee}", fontsize=5, ha="left")
+
+    idx_inflection = np.argmin(np.abs(df_plot["n_counts_obs"].values - inflection))
+    ax.scatter(df_plot.iloc[idx_inflection]["rank"], df_plot.iloc[idx_inflection]["n_counts_obs"], s=4, c="yellow")
+    ax.text(df_plot.iloc[idx_inflection]["rank"], df_plot.iloc[idx_inflection]["n_counts_obs"], f"inflection = {inflection}", fontsize=5, ha="left")
+
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel("Barcode rank")
+    ax.set_ylabel("UMI count")

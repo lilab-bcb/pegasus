@@ -388,7 +388,7 @@ cpdef binary_search_inplace_left(const double[:] L, const Py_ssize_t start_pos, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const int start_pos, const int end_pos):
+cpdef test_empty_drops(const bint use_alpha, const double[:] alpha_prop, const long[:] tb_unique, int tb_unique_size, long tb_max, const long[:] tb_cnt, const double[:] L_b, int n_cells, int n_genes, int random_state, const int start_pos, const int end_pos):
     cdef double cur_L
     cdef long t, prev
     cdef Py_ssize_t idx_tb, idx_b, idx_below, idx_g, i, j, k
@@ -404,9 +404,9 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
     gs_buffer = np.zeros(tb_max, dtype=long)
     cdef long[:] gs_arr
 
-    rng = np.random.default_rng(random_state)
+    #rng = np.random.default_rng(random_state)
     for i in range(start_pos, end_pos):
-        prob_arr = rng.dirichlet(alpha_prop)
+        prob_arr = rng.dirichlet(alpha_prop) if use_alpha else alpha_prop
         gs_buffer = rng.choice(n_genes, p=prob_arr, replace=True, size=tb_max, shuffle=False)
         #gs_buffer = gs_dbg[i, :]
         gs_arr = gs_buffer
@@ -425,7 +425,10 @@ cpdef test_empty_drops(const double[:] alpha_prop, const long[:] tb_unique, int 
             while t < tb_unique[idx_tb]:
                 k = gs_arr[idx_g]
                 z[k] += 1
-                cur_L = cur_L + std_log(z[k] + alpha_prop[k] - 1) - std_log(z[k])
+                if use_alpha:
+                    cur_L = cur_L + std_log(z[k] + alpha_prop[k] - 1) - std_log(z[k])
+                else:
+                    cur_L = cur_L + std_log(alpha_prop[k]) - std_log(z[k])
                 t += 1
                 idx_g += 1
 
