@@ -15,7 +15,8 @@ def sgt_estimate_cython(counts):
     else:
         n0 = 0
 
-    prop_adj = sgt_cython(r, Nr, n0, r.size, counts, counts.size)
+    N = np.sum(counts)
+    prop_adj = sgt_cython(counts, r, Nr, n0, r.size, N, counts.size)
     return prop_adj
 
 
@@ -39,26 +40,12 @@ def sgt_estimate(
     y = np.log(z)
     slope, intercept = _smooth_fit(x, y)
 
-    prob_est, prob_unseen = _estimate_probability(r, Nr, n0, slope, intercept)
-    prop_adj = _assign_proportion(counts, r, prob_est, prob_unseen)
+    prop_adj = _estimate_proportion(counts, r, Nr, n0, slope, intercept)
     return prop_adj
 
 
 @njit
-def _assign_proportion(counts, r, prob_est, prob_unseen):
-    prop_adj = np.full(counts.size, np.nan)
-
-    indices = np.where(counts==0)[0]
-    if indices.size > 0:
-        prop_adj[indices] = prob_unseen
-    for i, cur_r in enumerate(r):
-        indices = np.where(counts==cur_r)[0]
-        prop_adj[indices] = prob_est[i]
-    return prop_adj
-
-
-@njit
-def _estimate_probability(r, Nr, n0, slope, intercept):
+def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
     N = np.sum(r * Nr)
     p0 = Nr[0] / N if r[0] == 1 else 0
     Sr = Dict.empty(
@@ -93,7 +80,18 @@ def _estimate_probability(r, Nr, n0, slope, intercept):
     prob_est = (1 - p0) * r_star / N_star
     prob_unseen = p0 / n0 if n0 > 0 else 0
 
-    return prob_est, prob_unseen
+    prob_est_map = Dict.empty(
+        key_type=types.int64,
+        value_type=types.float64,
+    )
+    for i, p in enumerate(prob_est):
+        prob_est_map[r[i]] = p
+
+    prop_adj = np.full(counts.size, np.nan)
+    for i in np.arange(counts.size):
+        prop_adj[i] = prob_est_map[counts[i]] if counts[i] > 0 else prob_unseen
+
+    return prop_adj
 
 
 @njit
