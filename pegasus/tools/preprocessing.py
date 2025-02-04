@@ -103,7 +103,7 @@ def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> 
 
     df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
     gb1 = df.groupby("Channel")
-    df_before = gb1.median()
+    df_before = gb1.median(numeric_only=True)
     df_before = df_before.assign(total=gb1.size())
     df_before.rename(
         columns={
@@ -116,7 +116,7 @@ def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> 
 
     # focusing only on filtered cells
     gb2 = data.obs[data.obs["passed_qc"]].groupby("Channel")
-    df_after = gb2.median()
+    df_after = gb2.median(numeric_only=True)
     df_after = df_after.assign(kept=gb2.size())
     df_after.rename(
         columns={
