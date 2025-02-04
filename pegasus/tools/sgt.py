@@ -23,8 +23,23 @@ def sgt_estimate_cython(counts):
 def sgt_estimate(
     counts: np.array,
 ) -> np.array:
-    """Perform Simple Good-Turing (SGT) estimation on proportions given an integer count array
+    """Perform Simple Good-Turing (SGT) estimation on proportions of each species/event from an observed sample.
+    The estimation uses Simple Good-Turing method ([Gale95]_), which has the nice property of assigning non-zero proportions
+    to species/events not observed in the given sample.
+    An example use case is to estimate proportion of each gene in ambient, given UMI counts of each gene from a selected ambient sample.
 
+    Parameters
+    -----------
+    counts: ``numpy.array``
+        The 1D array of shape ``(n_species,)``, where each element is an integer count of the corresponding species/event.
+
+    Returns
+    -------
+    An array of shape ``(n_species,)``, where each element is a proportion estimated by SGT for the species/event.
+
+    Examples
+    ---------
+    >>> pg.sgt_estimate(counts)
     """
     r, Nr = np.unique(counts, return_counts=True)
     if r[0] == 0:
@@ -48,15 +63,18 @@ def sgt_estimate(
 def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
     N = np.sum(r * Nr)
     p0 = Nr[0] / N if r[0] == 1 else 0
-    Sr = Dict.empty(
-        key_type=types.int64,
-        value_type=types.float64,
-    )
     switch_point = 0
     r_star = np.zeros(r.size)
 
+    sr_cache = np.nan
     for i, cur_r in enumerate(r):
-        y_r = (cur_r + 1) * _smoothed_Nr(cur_r + 1, slope, intercept, Sr) / _smoothed_Nr(cur_r, slope, intercept, Sr)
+        sr = sr_cache if not np.isnan(sr_cache) else _smoothed_Nr(cur_r, slope, intercept)
+        sr_next = _smoothed_Nr(cur_r + 1, slope, intercept)
+        y_r = (cur_r + 1) * sr_next / sr
+        if (i < r.size - 1) and (r[i + 1] == cur_r + 1):
+            sr_cache = sr_next  # Cache S(r+1) only when next is r+1
+        else:
+            sr_cache = np.nan
         if switch_point == 0:
             # Decide if switch point
             if (i == r.size - 1) or (r[i + 1] != cur_r + 1):
@@ -120,7 +138,5 @@ def _smooth_fit(x, y):
 
 
 @njit
-def _smoothed_Nr(r, slope, intercept, Sr):
-    if r not in Sr:
-        Sr[r] = np.exp(intercept + slope * np.log(r))
-    return Sr[r]
+def _smoothed_Nr(r, slope, intercept):
+    return np.exp(intercept + slope * np.log(r))
