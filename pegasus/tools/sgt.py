@@ -131,7 +131,7 @@ def _smooth_fit(x, y):
     x_sum = x.sum()
     y_sum = y.sum()
 
-    slope = (n_obs * np.sum(x*y) - x_sum * y.sum()) / (n_obs * np.sum(x**2) - x_sum**2)
+    slope = (n_obs * np.sum(x*y) - x_sum * y_sum) / (n_obs * np.sum(x**2) - x_sum**2)
     intercept = (y_sum - slope * x_sum) / n_obs
 
     return slope, intercept
