@@ -44,8 +44,8 @@ def sgt_estimate(
     r, Nr = np.unique(counts, return_counts=True)
     if r[0] == 0:
         n0 = Nr[0]
-        Nr = Nr[1:].view()
-        r = r[1:].view()
+        Nr = Nr[1:]
+        r = r[1:]
     else:
         n0 = 0
 
@@ -59,7 +59,7 @@ def sgt_estimate(
     return prop_adj
 
 
-@njit
+@njit(cache=True)
 def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
     N = np.sum(r * Nr)
     p0 = Nr[0] / N if r[0] == 1 else 0
@@ -110,7 +110,7 @@ def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
     return prop_adj
 
 
-@njit
+@njit(cache=True)
 def _calc_z(r, Nr):
     z = np.zeros(r.size)
     for i in np.arange(z.size):
@@ -123,7 +123,7 @@ def _calc_z(r, Nr):
     return z
 
 
-@njit
+@njit(cache=True)
 def _smooth_fit(x, y):
     n_obs = x.size
     x_sum = x.sum()
@@ -135,6 +135,6 @@ def _smooth_fit(x, y):
     return slope, intercept
 
 
-@njit
+@njit(cache=True)
 def _smoothed_Nr(r, slope, intercept):
     return np.exp(intercept + slope * np.log(r))
