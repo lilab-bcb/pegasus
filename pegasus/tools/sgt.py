@@ -95,19 +95,17 @@ def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
                 r_star[i] = y_r
 
     N_star = np.sum(r_star * Nr)
-    prob_est = (1 - p0) * r_star / N_star
     prob_unseen = p0 / n0 if n0 > 0 else 0
-
-    prob_est_map = Dict.empty(
+    prob_est = Dict.empty(
         key_type=types.int64,
         value_type=types.float64,
     )
-    for i, p in enumerate(prob_est):
-        prob_est_map[r[i]] = p
+    for i, cur_r in enumerate(r):
+        prob_est[cur_r] = (1 - p0) * r_star[i] / N_star
 
     prop_adj = np.full(counts.size, np.nan)
     for i in np.arange(counts.size):
-        prop_adj[i] = prob_est_map[counts[i]] if counts[i] > 0 else prob_unseen
+        prop_adj[i] = prob_est[counts[i]] if counts[i] > 0 else prob_unseen
 
     return prop_adj
 
