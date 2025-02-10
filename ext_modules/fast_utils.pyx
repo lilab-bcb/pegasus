@@ -399,11 +399,7 @@ cpdef test_empty_drops(const bint use_alpha, const double[:] alpha_prop, const l
     below_cnt_buffer = np.zeros(n_cells, dtype=long)
     cdef long[:] below_cnt = below_cnt_buffer
 
-    #gs_dbg = np.loadtxt("/home/ubuntu/empty_drops_debug/GS_R.txt").astype(long)
-
-    gs_buffer = np.zeros(tb_max, dtype=long)
     cdef long[:] gs_arr
-
     rng = np.random.default_rng(random_state)
     for i in range(start_pos, end_pos):
         prob_arr = rng.dirichlet(alpha_prop) if use_alpha else alpha_prop

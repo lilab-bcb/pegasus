@@ -7,7 +7,7 @@ import scipy.optimize as so
 
 from pegasusio import MultimodalData, UnimodalData
 from pegasus.tools import eff_n_jobs
-from pegasus.tools import SimpleGoodTuring
+from pegasus.tools import sgt_estimate
 from pegasus.cylib.fast_utils import test_empty_drops
 from pegasus.plotting import plot_barcode_rank
 
@@ -62,8 +62,7 @@ def empty_drops(
     G = X[idx_low, :]
 
     ambient_profile = G.sum(axis=0).A1
-    sgt = SimpleGoodTuring(ambient_profile)
-    ambient_proportion = sgt.get_proportions()
+    ambient_proportion = sgt_estimate(ambient_profile)
 
     use_alpha = True if distribution == "multi-dirichlet" else False
 
@@ -111,7 +110,7 @@ def empty_drops(
         idx_nonambient = data.obs_names.get_indexer(data.obs.loc[~data.obs["ambient"]].index)
         plot_barcode_rank(df_barcode_rank, n_counts[idx_nonambient], thresh_low, knee, inflection)
 
-    return (df_barcode_rank, knee, inflection)
+    return (knee, inflection)
 
 
 def _logL_data_dep(Y, prop, alpha, use_alpha):
@@ -156,7 +155,6 @@ def _rank_barcode(n_counts, thresh_low, exclude_from, knee_method="spline"):
     idx_focus = np.arange(left_edge, right_edge+1)
     if idx_focus.size >= 4:
         knee = _find_knee_point(x, y, fitted, idx_focus, method=knee_method)
-        print(f"knee = {knee}")
     else:
         knee = int(np.ceil(np.exp(y[idx_focus[0]])))
 
@@ -259,14 +257,6 @@ def _test_empty_drops(use_alpha, alpha, prop, tb, P_data, n_iters, random_state,
     n_below = n_below_sorted[idx_inv]
 
     return n_below
-
-
-def _calc_logL_by_increment(L1, alpha, prop, t, n_extra_counts, z, idx_extra_genes):
-    return (
-        L1
-        + n_extra_counts * np.log(t / (t + alpha - 1))
-        + np.sum(np.log((z[idx_extra_genes] + alpha * prop[idx_extra_genes] - 1) / z[idx_extra_genes]))
-    )
 
 
 def _estimate_alpha(G, prop, bounds=(0.01, 10000)):
