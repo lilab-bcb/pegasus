@@ -30,7 +30,7 @@ jobs:
         python -m pip install flake8 pytest setuptools wheel cython
         python -m pip install zarr
         python -m pip install git+https://github.com/lilab-bcb/pegasusio@master
-        python -m pip install -e .[all]
+        python -m pip install -e .[louvain,tsne,torch,forceatlas,scvi,pseudobulk]
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
