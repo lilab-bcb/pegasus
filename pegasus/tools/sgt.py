@@ -73,11 +73,7 @@ def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
                 else:
                     r_star[i] = x_r
         else:
-            # Compare with switch point
-            if cur_r < switch_point:  ## TODO: No need to compare; directly use y_r
-                r_star[i] = (cur_r + 1) * Nr[i + 1] / Nr[i]
-            else:
-                r_star[i] = y_r
+            r_star[i] = y_r
 
     N_star = np.sum(r_star * Nr)
     prob_unseen = p0 / n0 if n0 > 0 else 0
