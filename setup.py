@@ -14,7 +14,6 @@ extensions = [
     Extension("pegasus.cylib.fast_utils", ["ext_modules/fast_utils.pyx"]),
     Extension("pegasus.cylib.cfisher", ["ext_modules/cfisher.pyx"]),
     Extension("pegasus.cylib.de_utils", ["ext_modules/diff_expr_utils.pyx"]),
-    Extension("pegasus.cylib.fast_sgt", ["ext_modules/fast_sgt.pyx"], language="c++"),
 ]
 
 setup(

@@ -4,21 +4,6 @@ from numba import njit
 from numba.core import types
 from numba.typed import Dict
 
-from pegasus.cylib.fast_sgt import sgt_cython
-
-def sgt_estimate_cython(counts):
-    r, Nr = np.unique(counts, return_counts=True)
-    if r[0] == 0:
-        n0 = Nr[0]
-        Nr = Nr[1:].view()
-        r = r[1:].view()
-    else:
-        n0 = 0
-
-    N = np.sum(counts)
-    prop_adj = sgt_cython(counts, r, Nr, n0, r.size, N, counts.size)
-    return prop_adj
-
 
 def sgt_estimate(
     counts: np.array,
@@ -89,7 +74,7 @@ def _estimate_proportion(counts, r, Nr, n0, slope, intercept):
                     r_star[i] = x_r
         else:
             # Compare with switch point
-            if cur_r < switch_point:
+            if cur_r < switch_point:  ## TODO: No need to compare; directly use y_r
                 r_star[i] = (cur_r + 1) * Nr[i + 1] / Nr[i]
             else:
                 r_star[i] = y_r
