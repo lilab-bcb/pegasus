@@ -34,7 +34,7 @@ def empty_drops_numba(
     knee_method: str = "linear",
     n_jobs: int = 1,
 ) -> (int, int):
-    """EmptyDrops algorithm
+    """Estimation on cell barcodes to decide if ambient or real cells by EmptyDrops algorithm. [Lun19]_
 
     Parameters
     -----------
@@ -66,10 +66,14 @@ def empty_drops_numba(
         Random state for reproducibility.
 
     knee_method: ``str``, optional, default: ``"linear"``
+        Regression method used to find the knee point.
+        By default, use linear regression. Alternatively, users can set to ``"spline"` to use the smooth spline method which is described in paper.
 
     exclude_from: ``int``, optional, default: ``50``
+        Parameter used for finding the knee point. Specify the number of highest ranked cell barcodes to exclude from fitting so as to avoid problems with discreteness.
 
     show_summary_plot: ``bool``, optional, default: ``False``
+        Whether plotting barcode rank plot or not. By default ``False``.
 
     n_jobs: ``int``, optional, default: ``1``
         Number of jobs used in Monte-Carlo simulation.
@@ -80,10 +84,10 @@ def empty_drops_numba(
     Knee point and inflection point calculated.
 
     Update ``data.obs``:
-        * ``data.obs["ambient"]``
-        * ``data.obs["EmptyDrops.logL"]``
-        * ``data.obs["EmptyDrops.pval"]``
-        * ``data.obs["EmptyDrops.qval"]``
+        * ``data.obs["ambient"]``: Boolean attribute. ``True`` if the cell is in ambient; ``False`` if it's the real cell.
+        * ``data.obs["EmptyDrops.logL"]``: The log-likelihood of each cell.
+        * ``data.obs["EmptyDrops.pval"]``: p-values of cells from the EmptyDrops hypothesis test.
+        * ``data.obs["EmptyDrops.qval"]``: FDR q-values of cells from the EmptyDrops  hypothesis test.
     """
     if mat_key is None:
         if "counts" in data._unidata.matrices:

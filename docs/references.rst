@@ -57,6 +57,10 @@ References
    "Fast interpolation-based t-SNE for improved visualization of single-cell RNA-seq data",
    In `Nature Methods <https://www.nature.com/articles/s41592-018-0308-4>`__, 2019.
 
+.. [Lun19] A. Lun, et al.,
+   "EmptyDrops: distinguishing cells from empty droplets in droplet-based single-cell RNA sequencing data",
+   In `Genome biology <https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1662-y>`__, 2019.
+
 .. [Jerby-Arnon18] L. Jerby-Arnon, et al.,
    "A cancer cell program promotes T cell exclusion and resistance to checkpoint blockade",
    In `Cell <https://www.sciencedirect.com/science/article/pii/S0092867418311784>`__, 2018.
