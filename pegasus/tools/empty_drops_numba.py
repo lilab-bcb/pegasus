@@ -190,6 +190,8 @@ def _estimate_alpha(G, prop, bounds=(0.01, 10000)):
 
 
 def _logL_data_dep(Y, prop, alpha, use_alpha):
+    """Calculate the count matrix dependent part of logL, i.e. terms within the summation notation.
+    """
     if issparse(Y):
         idx_b, idx_g = Y.nonzero()
         y = Y.data
@@ -208,6 +210,8 @@ def _logL_data_dep(Y, prop, alpha, use_alpha):
 
 
 def _logL_data_indep(tb, alpha, use_alpha):
+    """Calculate the count matrix independent part of logL, i.e. terms outside the summation notation.
+    """
     if use_alpha:
         return loggamma(tb + 1) + loggamma(alpha) - loggamma(tb + alpha)
     else:
@@ -224,52 +228,39 @@ def _test_empty_drops_numba(use_alpha, alpha, prop, tb, P_data, n_iters, random_
     alpha_prop = alpha * prop if use_alpha else prop
     n_cells = tb.size
 
-    #chunk_size = n_iters // n_jobs
-    #remainder = n_iters % n_jobs
-    #if chunk_size == 0:
-    #    n_jobs = 1
-    #    chunk_size = n_iters
-    #    remainder = 0
-    #intervals = []
-    #start_pos = end_pos = 0
-    #for i in range(n_jobs):
-    #    end_pos = start_pos + chunk_size + (i < remainder)
-    #    if end_pos == start_pos:
-    #        break
-    #    intervals.append((start_pos, end_pos))
-    #    start_pos = end_pos
+    chunk_size = n_iters // n_jobs
+    remainder = n_iters % n_jobs
+    if chunk_size == 0:
+        n_jobs = 1
+        chunk_size = n_iters
+        remainder = 0
+    intervals = []
+    start_pos = end_pos = 0
+    for i in range(n_jobs):
+        end_pos = start_pos + chunk_size + (i < remainder)
+        if end_pos == start_pos:
+            break
+        intervals.append((start_pos, end_pos))
+        start_pos = end_pos
 
-    #with parallel_backend("loky", inner_max_num_threads=1):
-    #    result = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
-    #        delayed(test_empty_drops_numba)(
-    #            use_alpha,
-    #            alpha_prop,
-    #            tb_unique,
-    #            tb_cnt,
-    #            P_sorted,
-    #            n_cells,
-    #            random_state,
-    #            intervals[i][0],
-    #            intervals[i][1],
-    #        )
-    #        for i in range(n_jobs)
-    #    )
-    #logger.info("Significance test is finished.")
-    #n_below_sorted = np.vstack(result).sum(axis=0)
-
-    # Use all cells as one chunk for testing purpose
-    # Monte Carlo simulation
-    n_below_sorted = _test_by_chunk(
-        use_alpha,
-        alpha_prop,
-        tb_unique,
-        tb_cnt,
-        P_sorted,
-        n_cells,
-        random_state,
-        0,
-        n_iters,
-    )
+    with parallel_backend("loky", inner_max_num_threads=1):
+        result = Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
+            # Monte-Carlo simulation
+            delayed(_test_by_chunk)(
+                use_alpha,
+                alpha_prop,
+                tb_unique,
+                tb_cnt,
+                P_sorted,
+                n_cells,
+                random_state,
+                intervals[i][0],
+                intervals[i][1],
+            )
+            for i in range(n_jobs)
+        )
+    logger.info("Significance test is finished.")
+    n_below_sorted = np.vstack(result).sum(axis=0)
 
     # Get n_below (ordered by original cell order) from n_below_sorted (ordered by P_sorted)
     idx_inv = np.empty_like(idx_sorted)
@@ -329,6 +320,8 @@ def _test_by_chunk(
 
         assert idx_g == tb_max, f"Only {idx_g} counts out of {tb_max} are used!"
 
+    # TODO: Use the same way as R package, which returns n_chunk vectors of shape (n_cells,).
+    # While in Cell Ranger implementation, Monte-Carlo step returns 2d vector of shape (tb_unique.size, n_iters), which takes more space.
     idx_below = 0
     for idx_tb in np.arange(tb_unique.size):
         for i in np.arange(tb_cnt[idx_tb] - 1):
@@ -392,18 +385,27 @@ def _rank_barcode(n_counts, thresh_low, exclude_from, knee_method="spline"):
     return (df_rank, knee, inflection)
 
 
-@njit
 def _find_knee_point(x, y, fitted, idx_focus, method="linear"):
     x_obs = x[idx_focus]
     y_obs = y[idx_focus]
 
-    slope = (y_obs[-1] - y_obs[0]) / (x_obs[-1] - x_obs[0])
-    intercept = y_obs[0] - x_obs[0] * slope
-    y_fitted = x_obs * slope + intercept
-    fitted[idx_focus] = y_fitted
-    above = np.where(y_obs >= y_fitted)[0]
-    distance = (y_obs[above] - y_fitted[above]) / np.sqrt(slope**2 + 1)
-    knee = int(np.ceil(np.exp(y_obs[above[np.argmax(distance)]])))
+    if method == "spline":  # Described in paper
+        from scipy.interpolate import UnivariateSpline
+
+        spline = UnivariateSpline(x_obs, y_obs, k=3, s=5)    # Try to approximate smooth.spline() in R, which only uses df parameter.
+        fitted[idx_focus] = spline(x_obs)
+        d1 = spline.derivative(n=1)(x_obs)
+        d2 = spline.derivative(n=2)(x_obs)
+        curvature = d2 / (1 + d1**2)**1.5
+        knee = int(np.ceil(np.exp(y_obs[np.argmin(curvature)])))
+    else:    # Used in R package's latest version.
+        slope = (y_obs[-1] - y_obs[0]) / (x_obs[-1] - x_obs[0])
+        intercept = y_obs[0] - x_obs[0] * slope
+        y_fitted = x_obs * slope + intercept
+        fitted[idx_focus] = y_fitted
+        above = np.where(y_obs >= y_fitted)[0]
+        distance = (y_obs[above] - y_fitted[above]) / np.sqrt(slope**2 + 1)
+        knee = int(np.ceil(np.exp(y_obs[above[np.argmax(distance)]])))
 
     return knee
 
