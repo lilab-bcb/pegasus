@@ -83,6 +83,7 @@ from .tools import (
     train_scarches_scanvi,
     predict_scarches_scanvi,
     largest_variance_from_random_matrix,
+    sgt_estimate,
 )
 from .annotate_cluster import infer_cell_types, annotate, infer_cluster_names
 from .misc import search_genes, search_de_genes, find_outlier_clusters
