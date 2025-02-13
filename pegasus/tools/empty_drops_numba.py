@@ -11,6 +11,7 @@ from anndata import AnnData
 from scipy.special import loggamma
 from scipy.sparse import csr_matrix, issparse
 from statsmodels.stats.multitest import fdrcorrection as fdr
+from joblib import Parallel, delayed, parallel_backend
 from typing import Union, Optional
 
 import logging
@@ -133,7 +134,7 @@ def empty_drops_numba(
     Lb_data = _logL_data_dep(T, ambient_proportion, alpha, use_alpha)
     Lb_alpha = _logL_data_indep(tb, alpha, use_alpha)
 
-    n_below = _test_empty_drops_numba(use_alpha, alpha, ambient_proportion, tb, Lb_data, n_iters, random_state)
+    n_below = _test_empty_drops_numba(use_alpha, alpha, ambient_proportion, tb, Lb_data, n_iters, random_state, n_jobs)
     pval = (n_below + 1) / (n_iters + 1)
     logger.info("Calculation on p-values is finished.")
 
@@ -218,7 +219,7 @@ def _logL_data_indep(tb, alpha, use_alpha):
         return loggamma(tb + 1)
 
 
-def _test_empty_drops_numba(use_alpha, alpha, prop, tb, P_data, n_iters, random_state):
+def _test_empty_drops_numba(use_alpha, alpha, prop, tb, P_data, n_iters, random_state, n_jobs, temp_folder=None):
     # Sort cells by UMI counts in ascending order, then for ties sort by logL in ascending order
     idx_sorted = np.lexsort((P_data, tb))
     P_sorted = P_data[idx_sorted]
