@@ -225,6 +225,9 @@ def _test_empty_drops_numba(use_alpha, alpha, prop, tb, P_data, n_iters, random_
     P_sorted = P_data[idx_sorted]
     tb_unique, tb_cnt = np.unique(tb[idx_sorted], return_counts=True)
 
+    # Debug
+    #gs_dbg = np.loadtxt("/home/ubuntu/empty_drops_debug/GS_R.txt").astype(int)
+
     # Parameters passed to Monte Carlo simulation
     alpha_prop = alpha * prop if use_alpha else prop
     n_cells = tb.size
@@ -257,6 +260,7 @@ def _test_empty_drops_numba(use_alpha, alpha, prop, tb, P_data, n_iters, random_
                 random_state,
                 intervals[i][0],
                 intervals[i][1],
+                #gs_dbg,
             )
             for i in range(n_jobs)
         )
@@ -282,6 +286,7 @@ def _test_by_chunk(
     random_state: int,
     start_pos: int,
     end_pos: int,
+    #gs_dbg: np.array,
 ) -> np.array:
     tb_max = tb_unique[-1]
     n_genes = alpha_prop.size
@@ -292,6 +297,7 @@ def _test_by_chunk(
     for i in np.arange(start_pos, end_pos):
         prob_arr = dirichlet_sampling(alpha_prop) if use_alpha else alpha_prop
         gs_arr = weighted_sampling(prob_arr, tb_max)
+        #gs_arr = gs_dbg[i, :]
 
         z = np.zeros(n_genes, dtype=np.int64)
         idx_tb = 0
