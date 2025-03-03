@@ -37,7 +37,7 @@ def _calc_vec_f(func, size, f, h): # convenient function to vetorize the above f
     return res
 
 def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: float = 0.06) -> Tuple[List[int], List[int], List[int]]:
-    """ find local maxima that has a magnitude larger than the frac * global maxima. 
+    """ find local maxima that has a magnitude larger than the frac * global maxima.
         Then merge adjacent peaks, where the maximal height and minimal height between the two peaks are within merge_peak_frac of the maximal height.
     """
     lower_bound = y.max() * frac
@@ -755,7 +755,7 @@ def _identify_doublets_fisher(cluster_labels: Union[pd.Categorical, List[int]], 
         result['qval'] = 1.0
         return result
 
-    ndbl = df[True].sum()
+    ndbl = df[True].sum().astype(np.int32)
     a = df[True].values.astype(np.int32)
     b = df[False].values.astype(np.int32)
     c = ndbl - a
@@ -840,7 +840,7 @@ def infer_doublets(
 
     plot_hist: ``str``, optional, default: ``sample``
         If not None, plot diagnostic histograms using ``plot_hist`` as the prefix. If `channel_attr` is None, ``plot_hist.dbl.png`` is generated; Otherwise, ``plot_hist.channel_name.dbl.png`` files are generated. Each figure consists of 4 panels showing histograms of doublet scores for observed cells (panel 1, density in log scale), simulated doublets (panel 2, density in log scale), KDE plot (panel 3) and signed curvature plot (panel 4) of log doublet scores for simulated doublets. Each plot contains two dashed lines. The red dashed line represents the theoretical cutoff (calucalted based on number of cells and 10x doublet table) and the black dashed line represents the cutof inferred from the data.
-    
+
     manual_correction: ``str``, optional, default: ``None``
         Use human guide to correct doublet threshold for certain channels. This is string representing a comma-separately list. Each item in the list represent one sample and the sample name and correction guide are separated using ':'. The correction guides supported are 'peak', 'theory', 'expected' and threshold. 'peak' cuts at the center of the peak (assuming one peak); 'theory' cuts at the theoretically computed doublet rate from simulated data; 'expected' does not find threshold from simulated data, instead it cuts as the expected doublet rate (computing from number of total cells using 10x table) from doublet scores of real data. If the guide is neither 'peak', 'theory' nor 'expected', pegasus will try to convert the string into float and use it as doublet threshold. If only one sample available, no need to specify sample name.
 
@@ -878,7 +878,7 @@ def infer_doublets(
             for item in manual_correction.split(','):
                 name, action = item.split(':')
                 mancor[name] = action
-            
+
     if channel_attr is None:
         if data.shape[0] >= min_cell:
             fig = _run_scrublet(data, raw_mat_key, expected_doublet_rate = expected_doublet_rate, sim_doublet_ratio = sim_doublet_ratio, \
@@ -905,7 +905,7 @@ def infer_doublets(
             # Generate a new unidata object for the channel
             idx = np.where(data.obs[channel_attr] == channel)[0]
             if idx.size >= min_cell:
-                unidata = UnimodalData({"barcodekey": data.obs_names[idx]}, 
+                unidata = UnimodalData({"barcodekey": data.obs_names[idx]},
                                        {"featurekey": data.var_names},
                                        {raw_mat_key: rawX[idx]},
                                        {"genome": genome, "modality": modality},

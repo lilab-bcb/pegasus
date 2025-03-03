@@ -20,3 +20,4 @@ forceatlas2-python
 pyarrow
 pegasusio>=0.5.1
 demuxEM
+zarr>=2,<3
