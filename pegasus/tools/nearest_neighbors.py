@@ -465,8 +465,7 @@ def calc_kBET(
     nsample = data.shape[0]
     nbatch = ideal_dist.size
 
-    attr_values = data.obs[attr].values.copy()
-    attr_values.categories = range(nbatch)
+    attr_values = data.obs[attr].cat.rename_categories(range(nbatch)).values
 
     indices, distances, K = get_neighbors(
         data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
