@@ -97,6 +97,10 @@ def empty_drops_numba(
             mat_key = "raw.X"
     X = data.get_matrix(mat_key) if mat_key else data.X
 
+    assert (
+        np.sum(X.sum(axis=0) == 0) == 0
+    ), "Some genes have zero counts in data! Please run pegasus.identify_robust_genes() first!"
+
     if "n_counts" not in data.obs:
         logger.info(
             "Calculate n_counts for EmptyDrops since 'n_counts' not in data.obs."
@@ -104,10 +108,6 @@ def empty_drops_numba(
         n_counts = X.sum(axis=1).A1 if issparse(X) else X.sum(axis=1)
     else:
         n_counts = data.obs["n_counts"].values
-
-    assert (
-        np.sum(X.sum(axis=0) == 0) == 0
-    ), "Some genes have zero counts in data! Please run pegasus.identify_robust_genes() first!"
 
     idx_low = np.where(n_counts <= thresh_low)[0]
     G = X[idx_low, :]
@@ -257,7 +257,7 @@ def _test_empty_drops_numba(use_alpha, alpha, prop, tb, P_data, n_iters, random_
                 tb_cnt,
                 P_sorted,
                 n_cells,
-                random_state,
+                random_state,   #TODO: Only 1 random state provided here, as my test cases always have n_jobs=1; modify if final decision is to keep this parallel feature
                 intervals[i][0],
                 intervals[i][1],
                 #gs_dbg,
@@ -327,7 +327,7 @@ def _test_by_chunk(
 
         assert idx_g == tb_max, f"Only {idx_g} counts out of {tb_max} are used!"
 
-    # TODO: Use the same way as R package, which returns n_chunk vectors of shape (n_cells,).
+    # Use the same way as R package, which returns n_chunk vectors of shape (n_cells,).
     # While in Cell Ranger implementation, Monte-Carlo step returns 2d vector of shape (tb_unique.size, n_iters), which takes more space.
     idx_below = 0
     for idx_tb in np.arange(tb_unique.size):
