@@ -4,6 +4,7 @@ import pandas as pd
 
 from typing import Dict, List, Union
 from sklearn.cluster import KMeans
+from scipy.sparse import issparse
 
 import anndata
 from pegasusio import UnimodalData, MultimodalData, timer
@@ -57,7 +58,8 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             if key in data.obs:
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
 
-            data.obs[key] = ((data.X[:, idx].toarray() - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
+            X = data.X[:, idx].toarray() if issparse(data.X) else data.X[:, idx]
+            data.obs[key] = ((X - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
             data.register_attr(key, "signature")
 
 

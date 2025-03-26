@@ -212,24 +212,30 @@ cpdef normalize_by_count_dense(int M, int N, float[:, :] X, uint8[:] robust, dou
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type[:] indices, indptr_type[:] indptr, int n_bins, const int[:] codes, const double[:] mean_vec):
-    cdef Py_ssize_t i, j
+    cdef Py_ssize_t i, j, k
 
     sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
     sig_bkg_std = np.ones((M, n_bins), dtype = np.float64)
+    cexpr = np.zeros(N, dtype = np.float64)
     cdef double[:, :] sig_bkgm_view = sig_bkg_mean
     cdef double[:, :] sig_bkgs_view = sig_bkg_std
+    cdef double[:] cexpr_view = cexpr
 
     cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
-    cdef double cexpr, estd
+    cdef double estd
 
     for j in range(N):
         bin_count[codes[j]] += 1
 
     for i in range(M):
-        for j in range(indptr[i], indptr[i + 1]):
-            cexpr = data[j] - mean_vec[indices[j]]
-            sig_bkgm_view[i, codes[indices[j]]] += cexpr
-            sig_bkgs_view[i, codes[indices[j]]] += cexpr * cexpr
+        for k in range(indptr[i], indptr[i + 1]):
+            cexpr_view[indices[k]] = data[k]
+        for j in range(N):
+            cexpr_view[j] -= mean_vec[j]
+            sig_bkgm_view[i, codes[j]] += cexpr_view[j]
+            sig_bkgs_view[i, codes[j]] += cexpr_view[j] * cexpr_view[j]
+            cexpr_view[j] = 0.0  # Clear for next cell
+
 
     for j in range(n_bins):
         for i in range(M):
@@ -238,7 +244,7 @@ cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type
             if bin_count[j] > 1:
                 estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
             sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
-            
+
     return sig_bkg_mean, sig_bkg_std
 
 
@@ -305,7 +311,7 @@ cpdef tuple simulate_doublets_sparse(int n_sim, int N, const int[:] data, indice
 
         u = doublet_indices[i, 0]
         v = doublet_indices[i, 1]
-        
+
         j = indptr[u]
         u_up = indptr[u + 1]
         k = indptr[v]
