@@ -212,34 +212,34 @@ cpdef normalize_by_count_dense(int M, int N, float[:, :] X, uint8[:] robust, dou
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type[:] indices, indptr_type[:] indptr, int n_bins, const int[:] codes, const double[:] mean_vec):
-    cdef Py_ssize_t i, j, k
+    cdef Py_ssize_t i, j
 
     sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
     sig_bkg_std = np.ones((M, n_bins), dtype = np.float64)
-    cexpr = np.zeros(N, dtype = np.float64)
+    bin_mean = np.zeros(n_bins, dtype = np.float64)
+    bin_sq = np.zeros(n_bins, dtype = np.float64)
     cdef double[:, :] sig_bkgm_view = sig_bkg_mean
     cdef double[:, :] sig_bkgs_view = sig_bkg_std
-    cdef double[:] cexpr_view = cexpr
+    cdef double[:] bin_mean_view = bin_mean
+    cdef double[:] bin_sq_view = bin_sq
 
     cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
     cdef double estd
 
     for j in range(N):
         bin_count[codes[j]] += 1
+        bin_mean_view[codes[j]] += mean_vec[j]
+        bin_sq_view[codes[j]] += (mean_vec[j] * mean_vec[j])
 
     for i in range(M):
-        for k in range(indptr[i], indptr[i + 1]):
-            cexpr_view[indices[k]] = data[k]
-        for j in range(N):
-            cexpr_view[j] -= mean_vec[j]
-            sig_bkgm_view[i, codes[j]] += cexpr_view[j]
-            sig_bkgs_view[i, codes[j]] += cexpr_view[j] * cexpr_view[j]
-            cexpr_view[j] = 0.0  # Clear for next cell
-
+        for j in range(indptr[i], indptr[i + 1]):
+            sig_bkgm_view[i, codes[indices[j]]] += data[j]
+            sig_bkgs_view[i, codes[indices[j]]] += (data[j]**2 - 2 * data[j] * mean_vec[indices[j]])
 
     for j in range(n_bins):
         for i in range(M):
-            sig_bkgm_view[i, j] /= bin_count[j]
+            sig_bkgm_view[i, j] = (sig_bkgm_view[i, j] - bin_mean_view[j]) / bin_count[j]
+            sig_bkgs_view[i, j] += bin_sq_view[j]
             estd = 0.0
             if bin_count[j] > 1:
                 estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
