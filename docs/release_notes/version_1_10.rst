@@ -1,3 +1,9 @@
+1.10.2 :small:`March 27, 2025`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Bug fix for ``calc_signature_score``. (PR `317 <https://github.com/lilab-bcb/pegasus/pull/317>`_)
+
+
 1.10.1 :small:`February 10, 2025`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
