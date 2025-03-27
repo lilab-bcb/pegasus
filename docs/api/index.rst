@@ -201,6 +201,7 @@ Miscellaneous
 .. autosummary::
     :toctree: .
 
+    sgt_estimate
     search_genes
     search_de_genes
     find_outlier_clusters

@@ -17,6 +17,11 @@ References
    "A test metric for assessing single-cell RNA-seq batch correction",
    In `Nature Methods <https://www.nature.com/articles/s41592-018-0254-1>`__, 2018.
 
+.. [Gale95] W. A. Gale, and G. Sampson.
+   "Good‐turing frequency estimation without tears.",
+   In `Journal of quantitative linguistics <https://www.grsampson.net/AGTf.pdf>`__, 1995.
+
+
 .. [Gao21] Ch. Gao, et al.,
    "Iterative single-cell multi-omic integration using online learning",
    In `Nature Biotechnology <https://www.nature.com/articles/s41587-021-00867-x>`__, 2021.
