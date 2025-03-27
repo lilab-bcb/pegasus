@@ -148,7 +148,7 @@ def calc_signature_score(
         Number of bins on expression levels for grouping genes.
 
     standardize: ``bool``, optional, default: True
-        If standardize the resulting signature scores regarding bin means.
+        If standardize the resulting signature scores regarding gene means.
 
     show_omitted_genes: ``bool``, optional, default False
         Signature genes that are not expressed in the data will be omitted. By default, pegasus does not report which genes are omitted. If this option is turned on, report omitted genes.
