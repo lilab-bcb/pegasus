@@ -216,30 +216,63 @@ cpdef calc_sig_background_sparse(int M, int N, const float[:] data, indices_type
 
     sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
     sig_bkg_std = np.ones((M, n_bins), dtype = np.float64)
+    bin_mean = np.zeros(n_bins, dtype = np.float64)
+    bin_sq = np.zeros(n_bins, dtype = np.float64)
     cdef double[:, :] sig_bkgm_view = sig_bkg_mean
     cdef double[:, :] sig_bkgs_view = sig_bkg_std
+    cdef double[:] bin_mean_view = bin_mean
+    cdef double[:] bin_sq_view = bin_sq
 
     cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
-    cdef double cexpr, estd
+    cdef double estd
 
     for j in range(N):
         bin_count[codes[j]] += 1
+        bin_mean_view[codes[j]] += mean_vec[j]
+        bin_sq_view[codes[j]] += (mean_vec[j] * mean_vec[j])
 
     for i in range(M):
         for j in range(indptr[i], indptr[i + 1]):
-            cexpr = data[j] - mean_vec[indices[j]]
-            sig_bkgm_view[i, codes[indices[j]]] += cexpr
-            sig_bkgs_view[i, codes[indices[j]]] += cexpr * cexpr
+            sig_bkgm_view[i, codes[indices[j]]] += data[j]
+            sig_bkgs_view[i, codes[indices[j]]] += (data[j]**2 - 2 * data[j] * mean_vec[indices[j]])
 
     for j in range(n_bins):
         for i in range(M):
-            sig_bkgm_view[i, j] /= bin_count[j]
+            sig_bkgm_view[i, j] = (sig_bkgm_view[i, j] - bin_mean_view[j]) / bin_count[j]
+            sig_bkgs_view[i, j] += bin_sq_view[j]
             estd = 0.0
             if bin_count[j] > 1:
                 estd = sqrt((sig_bkgs_view[i, j] - bin_count[j] * sig_bkgm_view[i, j] * sig_bkgm_view[i, j]) / (bin_count[j] - 1))
             sig_bkgs_view[i, j] = estd if estd > 1e-4 else 1.0
-            
+
     return sig_bkg_mean, sig_bkg_std
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef calc_sig_background_sparse_no_std(int M, int N, const float[:] data, indices_type[:] indices, indptr_type[:] indptr, int n_bins, const int[:] codes, const double[:] mean_vec):
+    cdef Py_ssize_t i, j
+
+    sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
+    bin_mean = np.zeros(n_bins, dtype = np.float64)
+    cdef double[:, :] sig_bkgm_view = sig_bkg_mean
+    cdef double[:] bin_mean_view = bin_mean
+
+    cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
+
+    for j in range(N):
+        bin_count[codes[j]] += 1
+        bin_mean_view[codes[j]] += mean_vec[j]
+
+    for i in range(M):
+        for j in range(indptr[i], indptr[i + 1]):
+            sig_bkgm_view[i, codes[indices[j]]] += data[j]
+
+    for j in range(n_bins):
+        for i in range(M):
+            sig_bkgm_view[i, j] = (sig_bkgm_view[i, j] - bin_mean_view[j]) / bin_count[j]
+
+    return sig_bkg_mean
 
 
 @cython.boundscheck(False)
@@ -277,6 +310,32 @@ cpdef calc_sig_background_dense(int M, int N, const float[:, :] X, int n_bins, c
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cpdef calc_sig_background_dense_no_std(int M, int N, const float[:, :] X, int n_bins, const int[:] codes, const double[:] mean_vec):
+    cdef Py_ssize_t i, j
+
+    sig_bkg_mean = np.zeros((M, n_bins), dtype = np.float64)
+    cdef double[:, :] sig_bkgm_view = sig_bkg_mean
+
+    cdef int[:] bin_count = np.zeros(n_bins, dtype = np.int32)
+    cdef double cexpr
+
+    for j in range(N):
+        bin_count[codes[j]] += 1
+
+    for i in range(M):
+        for j in range(N):
+            cexpr = X[i, j] - mean_vec[j]
+            sig_bkgm_view[i, codes[j]] += cexpr
+
+    for j in range(n_bins):
+        for i in range(M):
+            sig_bkgm_view[i, j] /= bin_count[j]
+
+    return sig_bkg_mean
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef tuple simulate_doublets_sparse(int n_sim, int N, const int[:] data, indices_type[:] indices, indptr_type[:] indptr, const int[:, :] doublet_indices):
     ### Assume X is ordered in ascending order
     cdef Py_ssize_t i, j, k, u, v, u_up, v_up, size, counter
@@ -305,7 +364,7 @@ cpdef tuple simulate_doublets_sparse(int n_sim, int N, const int[:] data, indice
 
         u = doublet_indices[i, 0]
         v = doublet_indices[i, 1]
-        
+
         j = indptr[u]
         u_up = indptr[u + 1]
         k = indptr[v]

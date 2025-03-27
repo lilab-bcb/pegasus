@@ -4,6 +4,7 @@ import pandas as pd
 
 from typing import Dict, List, Union
 from sklearn.cluster import KMeans
+from scipy.sparse import issparse
 
 import anndata
 from pegasusio import UnimodalData, MultimodalData, timer
@@ -13,8 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
-def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
+def _check_and_calc_sig_background(data: UnimodalData, n_bins: int, standardize: bool) -> bool:
     if "mean" not in data.var:
         data.var["mean"] = calc_mean(to_csr_or_dense(data.X),axis = 0)
 
@@ -35,11 +35,14 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int) -> bool:
         data.var["bins"] = bins
 
         # calculate background expectations
-        data.obsm["sig_bkg_mean"], data.obsm["sig_bkg_std"] = calc_sig_background(to_csr_or_dense(data.X), bins, mean_vec)
+        data.obsm["sig_bkg_mean"], sig_bkg_std = calc_sig_background(to_csr_or_dense(data.X), bins, mean_vec, standardize=standardize)
+        if standardize:
+            data.obsm["sig_bkg_std"] = sig_bkg_std
 
     return True
 
-def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_omitted_genes: bool = False, skip_threshold: int = 1) -> None:
+
+def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_omitted_genes: bool = False, skip_threshold: int = 1, standardize: bool = True) -> None:
     for key, gene_list in signatures.items():
         genes = pd.Index(gene_list)
         idx = data.var_names.isin(genes)
@@ -57,7 +60,11 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
             if key in data.obs:
                 logger.warning(f"Signature key {key} exists in data.obs, the existing content will be overwritten!")
 
-            data.obs[key] = ((data.X[:, idx].toarray() - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
+            X = data.X[:, idx].toarray() if issparse(data.X) else data.X[:, idx]
+            if standardize:
+                data.obs[key] = ((X - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
+            else:
+                data.obs[key] = (X - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
             data.register_attr(key, "signature")
 
 
@@ -87,7 +94,7 @@ def calculate_z_score(
     if isinstance(data, MultimodalData):
         data = data._unidata
 
-    if not _check_and_calc_sig_background(data, n_bins):
+    if not _check_and_calc_sig_background(data, n_bins, standardize=True):
         return None
 
     mat = data.X
@@ -104,6 +111,7 @@ def calc_signature_score(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     signatures: Union[Dict[str, List[str]], str],
     n_bins: int = 50,
+    standardize: bool = True,
     show_omitted_genes: bool = False,
     skip_threshold: int = 1,
     random_state: int = 0
@@ -138,6 +146,9 @@ def calc_signature_score(
 
     n_bins: ``int``, optional, default: 50
         Number of bins on expression levels for grouping genes.
+
+    standardize: ``bool``, optional, default: True
+        If standardize the resulting signature scores regarding bin means.
 
     show_omitted_genes: ``bool``, optional, default False
         Signature genes that are not expressed in the data will be omitted. By default, pegasus does not report which genes are omitted. If this option is turned on, report omitted genes.
@@ -178,7 +189,7 @@ def calc_signature_score(
     if isinstance(data, MultimodalData):
         data = data._unidata
 
-    if not _check_and_calc_sig_background(data, n_bins):
+    if not _check_and_calc_sig_background(data, n_bins, standardize=standardize):
         return None
 
     if isinstance(signatures, str):
@@ -228,4 +239,4 @@ def calc_signature_score(
             signatures = load_signatures_from_file(sig_string)
             _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)
     else:
-        _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)
+        _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold, standardize=standardize)
