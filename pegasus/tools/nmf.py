@@ -451,6 +451,7 @@ def integrative_nmf(
     tol: float = 1e-4,
     use_gpu: bool = False,
     lam: float = 5.0,
+    eta: float = 0.0,
     fp_precision: str = "float",
     online_chunk_size: int = 5000,
     n_jobs: int = -1,
@@ -498,6 +499,9 @@ def integrative_nmf(
 
     lam: ``float``, optional, default: ``5.0``
         The coefficient for regularization terms. If ``0``, then no regularization will be performed.
+
+    eta: ``float``, optional, default: ``0.0``
+        The L1 coefficient for H_ks. If ``0``, no L1 regularization.
 
     fp_precision: ``str``, optional, default: ``float``
         The numeric precision on the results. Choose from ``float`` and ``double``.
@@ -564,6 +568,7 @@ def integrative_nmf(
         random_state=random_state,
         use_gpu=use_gpu,
         lam=lam,
+        eta=eta,
         fp_precision=fp_precision,
         online_chunk_size=online_chunk_size,
     )
