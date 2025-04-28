@@ -292,7 +292,7 @@ def _find_curv_minima_at_peak(curv, peak_pos):
         end += 1
     return curv[start:end].min()
 
-def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, rel_thre = 0.45, minima_dir_thre = -0.25):
+def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, rel_thre = 0.1, minima_dir_thre = -0.25):
     """ Find a negative curvature value that is a local minima or a filtered local maxima with respect to density value at the right hand side of start.
         Beside being a local minima, the value must also satisfy the rel_thre requirement.
         rel_thre requires that the curvature value must smaller than rel_thre fraction of the max of minimal curvature value of the peak and the minimal curvature value since start at direction dir.
@@ -350,11 +350,11 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
         pos = _locate_cutoff_among_peaks_with_guide(x, y, maxima, sim_scores, d_neo)
     else:
         frac_right = (sim_scores > x[maxima[0]]).sum() / sim_scores.size
-        if frac_right > 0.4:
+        if x[maxima[0]] < threshold_expected or frac_right > 0.4:
             pos = _find_cutoff_right_side(maxima[0], curv, filtered_maxima)
         else:
             pos = _find_cutoff_left_side(maxima[0], x, curv, threshold_guide)
-    
+
     threshold = x[pos]
 
     threshold_auto = None
@@ -364,6 +364,12 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
             threshold = maxima[0]
         elif manual_correction == "expected":
             threshold = threshold_expected
+        elif manual_correction == "right":
+            pos = _find_cutoff_right_side(maxima[0], curv, filtered_maxima)
+            threshold = x[pos]
+        elif manual_correction == "left":
+            pos = _find_cutoff_left_side(maxima[0], x, curv, threshold_guide)
+            threshold = x[pos]
         else:
             threshold = float(manual_correction)
 
