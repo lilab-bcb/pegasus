@@ -1860,6 +1860,7 @@ def hvfplot(
 def qcviolin(
     data: Union[MultimodalData, UnimodalData, anndata.AnnData],
     plot_type: str,
+    groupby: str = "Channel",
     min_genes_before_filt: Optional[int] = 100,
     n_violin_per_panel: Optional[int] = 8,
     panel_size: Optional[Tuple[float, float]] = (6, 4),
@@ -1871,7 +1872,8 @@ def qcviolin(
     dpi: Optional[float] = 300.0,
 ) -> Union[plt.Figure, None]:
     """
-    Plot quality control statistics (before filtration vs. after filtration) as violin plots. Require statistics such as "n_genes", "n_counts" and "percent_mito" precomputed.
+    Plot quality control statistics (before filtration vs. after filtration) as violin plots.
+    Require statistics such as "n_genes", "n_counts", "percent_mito" and "percent_ribo" precomputed.
 
     Parameters
     -----------
@@ -1879,7 +1881,9 @@ def qcviolin(
     data: ``MultimodalData``, ``UnimodalData``, or ``anndata.AnnData`` object.
         Single cell expression data.
     plot_type: ``str``
-        Choose from ``gene``, ``count`` and ``mito``, which shows number of expressed genes, number of UMIs and percentage of mitochondrial rate.
+        Choose from ``gene``, ``count``, ``mito`` and ``ribo``, which shows number of expressed genes, number of UMIs, percent of mitochondrial genes, and percent of ribosomal genes.
+    groupby: ``str``, optional, default: ``Channel``
+        The categorical cell attribute for grouping cells.
     min_genes_before_filt: ``int``, optional, default: 100
         If data loaded are raw data (i.e. min(n_genes) == 0), filter out cell barcodes with less than ``min_genes_before_filt`` for better visual effects.
     n_violin_per_panel: ``int``, optional, default: 8
@@ -1909,18 +1913,19 @@ def qcviolin(
     ---------
     >>> pg.qcviolin(data, "mito", dpi = 500)
     """
-    pt2attr = {"gene": "n_genes", "count": "n_counts", "mito": "percent_mito"}
+    pt2attr = {"gene": "n_genes", "count": "n_counts", "mito": "percent_mito", "ribo": "percent_ribo"}
     pt2ylab = {
         "gene": "Number of expressed genes",
         "count": "Number of UMIs",
         "mito": "Percentage of mitochondrial UMIs",
+        "ribo": "Percentage of ribosomal UMIs",
     }
 
     if "df_qcplot" not in data.uns:
-        if "Channel" not in data.obs:
-            data.obs["Channel"] = pd.Categorical([""] * data.shape[0])
+        if groupby not in data.obs:
+            data.obs[groupby] = pd.Categorical([""] * data.shape[0])
 
-        target_cols = np.array(["Channel", "n_genes", "n_counts", "percent_mito"])
+        target_cols = np.array([groupby, "n_genes", "n_counts", "percent_mito", "percent_ribo"])
         target_cols = target_cols[np.isin(target_cols, data.obs.columns)]
 
         df = data.obs[data.obs["n_genes"] >= min_genes_before_filt] if data.obs["n_genes"].min() == 0 else data.obs
@@ -1935,7 +1940,7 @@ def qcviolin(
         df_qcplot = pd.concat((df_plot_before, df_plot_after), axis=0)
 
         df_qcplot["status"] = pd.Categorical(df_qcplot["status"].values, categories = ["original", "filtered"])
-        df_qcplot["Channel"] = pd.Categorical(df_qcplot["Channel"].values, categories = natsorted(df_qcplot["Channel"].astype(str).unique()))
+        df_qcplot[groupby] = pd.Categorical(df_qcplot[groupby].values, categories = natsorted(df_qcplot[groupby].astype(str).unique()))
 
         data.uns["df_qcplot"] = df_qcplot
 
@@ -1946,7 +1951,7 @@ def qcviolin(
         logger.warning(f"Cannot find qc metric {pt2attr[plot_type]}!")
         return None
 
-    channels = df_qcplot["Channel"].cat.categories
+    channels = df_qcplot[groupby].cat.categories
     n_channels = channels.size
     n_pannels = (n_channels - 1) // n_violin_per_panel + 1
 
@@ -1962,16 +1967,16 @@ def qcviolin(
             if panel_no < n_pannels:
                 start = panel_no * n_violin_per_panel
                 end = min(start + n_violin_per_panel, n_channels)
-                idx = np.isin(df_qcplot["Channel"], channels[start:end])
+                idx = np.isin(df_qcplot[groupby], channels[start:end])
 
                 if start == 0 and end == n_channels:
                     df_plot = df_qcplot
                 else:
                     df_plot = df_qcplot[idx].copy()
-                    df_plot["Channel"] = pd.Categorical(df_plot["Channel"].values, categories = natsorted(channels[start:end]))
+                    df_plot[groupby] = pd.Categorical(df_plot[groupby].values, categories = natsorted(channels[start:end]))
 
                 sns.violinplot(
-                    x="Channel",
+                    x=groupby,
                     y=pt2attr[plot_type],
                     hue="status",
                     data=df_plot,
@@ -1982,7 +1987,7 @@ def qcviolin(
                     ax = ax,
                 )
 
-                ax.set_xlabel("Channel")
+                ax.set_xlabel(groupby)
                 ax.set_ylabel(pt2ylab[plot_type])
                 ax.legend(loc="upper right", fontsize=8)
                 if max([len(x) for x in channels[start:end]]) >= 5:

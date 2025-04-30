@@ -19,14 +19,16 @@ from pegasusio import timer, run_gc
 def qc_metrics(
     data: MultimodalData,
     select_singlets: bool = False,
-    remap_string: str = None,
-    subset_string: str = None,
-    min_genes: int = None,
-    max_genes: int = None,
-    min_umis: int = None,
-    max_umis: int = None,
-    mito_prefix: str = None,
-    percent_mito: float = None,
+    remap_string: Optional[str] = None,
+    subset_string: Optional[str] = None,
+    min_genes: Optional[int] = None,
+    max_genes: Optional[int] = None,
+    min_umis: Optional[int] = None,
+    max_umis: Optional[int] = None,
+    mito_prefix: Optional[str] = None,
+    percent_mito: Optional[float] = None,
+    ribo_prefix: Optional[Union[List[str], str]] = None,
+    percent_ribo: Optional[float] = None,
 ) -> None:
     """Generate Quality Control (QC) metrics regarding cell barcodes on the dataset.
 
@@ -51,7 +53,11 @@ def qc_metrics(
     mito_prefix: ``str``, optional, default: ``None``
        Prefix for mitochondrial genes.
     percent_mito: ``float``, optional, default: ``None``
-       Only keep cells with percent mitochondrial genes less than ``percent_mito`` % of total counts.
+       Only keep cells with percent of mitochondrial genes less than ``percent_mito`` % of total counts.
+    ribo_prefix: ``str`` or ``List[str]``, optional, default: ``None``
+       Prefix(es) for ribosomal genes.
+    percent_ribo: ``float``, optional, default: ``None``
+       Only keep cells with percent of ribosomal genes less than ``percent_ribo`` % of total counts.
 
     Returns
     -------
@@ -62,16 +68,30 @@ def qc_metrics(
         * ``n_genes``: Total number of genes for each cell.
         * ``n_counts``: Total number of counts for each cell.
         * ``percent_mito``: Percent of mitochondrial genes for each cell.
+        * ``percent_ribo``: Percent of ribosomal genes for each cell.
         * ``passed_qc``: Boolean type indicating if a cell passes the QC process based on the QC metrics.
         * ``demux_type``: this column might be deleted if select_singlets is on.
 
     Examples
     --------
-    >>> pg.qc_metrics(data, min_genes=500, max_genes=6000, mito_prefix="MT-", percent_mito=10)
+    >>> pg.qc_metrics(data, min_genes=500, max_genes=6000, mito_prefix="MT-", percent_mito=10, ribo_prefix=["RPS", "RPL"])
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
-    calc_qc_filters(data, select_singlets = select_singlets, remap_string = remap_string, subset_string = subset_string, min_genes = min_genes, max_genes = max_genes, min_umis = min_umis, max_umis = max_umis, mito_prefix = mito_prefix, percent_mito = percent_mito)
+    calc_qc_filters(
+        data,
+        select_singlets = select_singlets,
+        remap_string = remap_string,
+        subset_string = subset_string,
+        min_genes = min_genes,
+        max_genes = max_genes,
+        min_umis = min_umis,
+        max_umis = max_umis,
+        mito_prefix = mito_prefix,
+        percent_mito = percent_mito,
+        ribo_prefix = ribo_prefix,
+        percent_ribo = percent_ribo,
+    )
 
 
 def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> pd.DataFrame:
