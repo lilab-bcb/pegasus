@@ -65,7 +65,7 @@ def _gen_sim_data(
 
     rawX = data.get_matrix(raw_mat_key)
     simX, pair_idx = _simulate_doublets(rawX, sim_doublet_ratio, random_state)
-    
+
     barcodes = data.obs_names.values.astype(str)
     barcodekey = np.char.add(np.char.add(barcodes[pair_idx[:, 0]], '|'), barcodes[pair_idx[:, 1]])
 
@@ -78,7 +78,7 @@ def _gen_sim_data(
 
     if 'featureid' in data.var:
         unidat.var['featureid'] = data.var['featureid']
-    assert ('robust' in data.var) and ('highly_variable_features' in data.var) 
+    assert ('robust' in data.var) and ('highly_variable_features' in data.var)
     unidat.var['robust'] = data.var['robust']
     unidat.var['highly_variable_features'] = data.var['highly_variable_features']
 
@@ -94,7 +94,7 @@ def _gen_sim_data(
     sim_data = pio.MultimodalData(unidat)
 
     from pegasus.tools import qc_metrics, log_norm
-    
+
     qc_metrics(sim_data)
     assert 'norm_count' in data.uns
     log_norm(sim_data, norm_count=data.uns['norm_count'])
@@ -114,7 +114,7 @@ def _concat_and_process(datslt, datsim, K, r, rho, n_jobs, calc_umap=False, anno
                                'n_genes': np.concatenate((datslt.obs['n_genes'].values, datsim.obs['n_genes'].values)),
                                'n_counts': np.concatenate((datslt.obs['n_counts'].values, datsim.obs['n_counts'].values)),
                               },
-             {'featurekey': datslt.var_names, 
+             {'featurekey': datslt.var_names,
               'robust': datslt.var['robust'],
               'highly_variable_features': datslt.var['highly_variable_features'],
              },
@@ -132,7 +132,7 @@ def _concat_and_process(datslt, datsim, K, r, rho, n_jobs, calc_umap=False, anno
         if 'anno' in datsim.obs:
             unidat.obs['anno_all'] = np.concatenate((datslt.obs[anno_attr], np.char.add('!', datsim.obs['anno'].values.astype(str))))
             unidat.obs['subtype'] = unidat.obs['type'].copy()
-            unidat.obs.loc[unidat.obs['anno_all'].map(lambda x: x.find('|') > 0), 'subtype'] = 'sim_neo'            
+            unidat.obs.loc[unidat.obs['anno_all'].map(lambda x: x.find('|') > 0), 'subtype'] = 'sim_neo'
 
     unidat.obsm['X_pca'] = np.vstack((datslt.obsm['X_pca'], pc_transform(datslt, datsim.get_matrix('counts'))))
     dat_concat = pio.MultimodalData(unidat)
@@ -173,7 +173,7 @@ def _calc_expected_emb_rate_in_sim(obs_pca, rho, n_jobs, random_state):
 def _kde_smooth(scores, bw_method='silverman'):
     from scipy.stats import gaussian_kde
     from math import ceil
-    
+
     # Estimate KDE
     min_score = scores.min()
     max_score = scores.max()
@@ -197,7 +197,7 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
 
         RETURNS:
           maxima: merged peak coordinates sorted y in descending order
-          maxima_by_x: passing filter but not merged peak coordiantes sorted by x 
+          maxima_by_x: passing filter but not merged peak coordiantes sorted by x
           filtered_maxima: filtered peak coordinates
     """
     lower_bound = y.max() * frac
@@ -342,7 +342,7 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
     assert maxima.size > 0
 
     # Calculate curvature
-    curv = _calc_vec_f(_curvature, x.size, y, gap) 
+    curv = _calc_vec_f(_curvature, x.size, y, gap)
 
     # Compute cutoff position
     pos = -1
@@ -800,7 +800,7 @@ def mark_doublets(
 
 
 
-### For old Scrublet implementation, might be obsoleted 
+### For old Scrublet implementation, might be obsoleted
 
 def _comp_pca_obs(data, raw_mat_key, pca, n_jobs):
     # subset the raw count matrix
@@ -878,7 +878,7 @@ def _run_scrublet(
     if k is None:
         k = int(round(0.5 * np.sqrt(data.shape[0])))
 
-    # Compute PC space for original data    
+    # Compute PC space for original data
     from sklearn.decomposition import PCA
     pca = PCA(n_components=n_prin_comps, random_state=random_state)
     rawX, obs_umis, m1, std, obs_pca = _comp_pca_obs(data, raw_mat_key, pca, n_jobs)
