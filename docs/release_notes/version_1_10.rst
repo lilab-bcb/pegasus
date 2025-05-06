@@ -1,3 +1,15 @@
+1.10.2 :small:`March 27, 2025`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Bug fix for ``calc_signature_score``. (PR `317 <https://github.com/lilab-bcb/pegasus/pull/317>`_)
+
+
+1.10.1 :small:`February 10, 2025`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Bug fix for ``deseq2`` function. (PR `309 <https://github.com/lilab-bcb/pegasus/pull/309>`_)
+* Make ``get_filter_stats`` function work with Pandas v2. (PR `314 <https://github.com/lilab-bcb/pegasus/pull/314>`_, thanks to `hoondy <https://github.com/hoondy>`_)
+
 1.10.0 :small:`June 12, 2024`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

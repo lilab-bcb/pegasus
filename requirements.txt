@@ -27,3 +27,4 @@ umap-learn>=0.5.2
 wordcloud
 xlsxwriter
 igraph
+zarr<3
