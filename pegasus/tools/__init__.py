@@ -10,7 +10,6 @@ from .utils import (
     calc_expm1,
     calc_stat_per_batch,
     calc_sig_background,
-    simulate_doublets,
     check_batch_key,
     predefined_signatures,
     predefined_pathways,
