@@ -2373,6 +2373,7 @@ def wordcloud(
 
     ax.imshow(wc)
     ax.axis('off')
+    ax.set_title(f"M{factor}")
 
     return fig if return_fig else None
 
