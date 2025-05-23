@@ -121,7 +121,7 @@ def _concat_and_process(datslt, datsim, K, r, rho, n_jobs, calc_umap=False, anno
              {'counts': vstack([datslt.get_matrix('counts'), datsim.get_matrix('counts')]),
               'counts.log_norm': vstack([datslt.get_matrix('counts.log_norm'), datsim.get_matrix('counts.log_norm')]),
              },
-             {'modality': datslt.uns['modality'], 'genome': datslt.uns['genome'], 'pca_ncomps': datslt.uns['pca_ncomps']},
+             {'modality': datslt.uns['modality'], 'genome': datslt.uns['genome'], 'pca_ncomps': datslt.uns['pca_ncomps'] if "pca_ncomps" in datslt.uns else datslt.obsm["X_pca"].shape[1]},
              cur_matrix='counts.log_norm')
 
     if 'featureid' in datslt.var:
