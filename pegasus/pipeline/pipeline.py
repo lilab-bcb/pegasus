@@ -14,7 +14,6 @@ logger = logging.getLogger("pegasus")
 
 
 def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, append_data: UnimodalData, **kwargs) -> None:
-    print()
     logger.info(f"Begin to analyze UnimodalData {unidata.get_uid()}.")
 
     if is_raw:
@@ -30,7 +29,7 @@ def analyze_one_modality(unidata: UnimodalData, output_name: str, is_raw: bool, 
                 standardize = True
                 tools.highly_variable_features(
                     unidata,
-                    kwargs["batch_attr"] if kwargs["batch_correction"] else None,
+                    batch=kwargs["batch_attr"] if kwargs["batch_correction"] else None,
                     flavor=kwargs["hvf_flavor"],
                     n_top=kwargs["hvf_ngenes"],
                     n_jobs=kwargs["n_jobs"],
@@ -452,8 +451,6 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     for key in focus_list:
         unidata = data.get_data(key)
         analyze_one_modality(unidata, f"{output_name}.{unidata.get_uid()}", is_raw, append_data, **kwargs)
-
-    print()
 
     # if kwargs["subcluster"]:
     #     unidata = tools.get_anndata_for_subclustering(adata, kwargs["subset_selections"])
