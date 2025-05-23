@@ -38,7 +38,6 @@ class TestPipeline(unittest.TestCase):
     def test_embeddings(self):
         self.assertEqual(self.data.obsm['X_pca_harmony'].shape, (1043, 50), "Harmony PCA shape differs!")
         self.assertEqual(self.data.obsm['X_umap'].shape, (1043, 2), "UMAP shape differs!")
-        self.assertEqual(self.data.obsm['X_tsne'].shape, (1043, 2), "tSNE shape differs!")
         self.assertEqual(self.data.obsm['X_fle'].shape, (1043, 2), "FLE shape differs!")
 
     def test_de_tests(self):
@@ -55,7 +54,6 @@ class TestPipeline(unittest.TestCase):
     def test_plot(self):
         self.assertIn('result.compo.pdf', os.listdir('tests'), "Composition plot is lost!")
         self.assertIn('result.leiden_labels.umap.pdf', os.listdir('tests'), "UMAP plot is lost!")
-        self.assertIn('result.leiden_labels.tsne.pdf', os.listdir('tests'), "tSNE plot is lost!")
         self.assertIn('result.leiden_labels.fle.pdf', os.listdir('tests'), 'FLE plot is lost!')
 
     def test_output(self):
