@@ -1,4 +1,4 @@
-#pegasus aggregate_matrix tests/data/count_matrix.csv tests/aggr
+pegasus aggregate_matrix tests/data/count_matrix.csv tests/aggr
 
 if [ -f "tests/aggr.zarr.zip" ]; then
     pegasus cluster -p 2 --min-genes 500 --max-genes 6000 --mito-prefix mt- --percent-mito 20.0 --output-filtration-results --output-h5ad --output-loom --plot-filtration-results --plot-hvf --exact-K --correct-batch-effect --nmf --leiden --tsne --umap --calc-signature-scores cell_cycle_mouse tests/aggr.zarr.zip tests/result
