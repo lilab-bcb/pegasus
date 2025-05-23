@@ -13,7 +13,8 @@ leidenalg
 matplotlib>=3.7.0
 natsort
 numba
-numpy
+numpy<2; python_version == '3.9'
+numpy; python_version >= '3.10'
 pandas>=1.2.0
 pegasusio>=0.9.1
 pybind11
