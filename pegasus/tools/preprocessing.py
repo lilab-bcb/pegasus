@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 
 from typing import List, Tuple, Union, Optional
 from pegasusio import UnimodalData, MultimodalData, calc_qc_filters, DictWithDefault
-from pegasus.tools import eff_n_jobs
+from pegasus.tools import eff_n_jobs, load_signatures_from_file, predefined_signatures
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,8 +27,7 @@ def qc_metrics(
     max_umis: Optional[int] = None,
     mito_prefix: Optional[str] = None,
     percent_mito: Optional[float] = None,
-    ribo_prefix: Optional[Union[List[str], str]] = None,
-    percent_ribo: Optional[float] = None,
+    ribo_species: Optional[str] = None,
 ) -> None:
     """Generate Quality Control (QC) metrics regarding cell barcodes on the dataset.
 
@@ -54,10 +53,8 @@ def qc_metrics(
        Prefix for mitochondrial genes.
     percent_mito: ``float``, optional, default: ``None``
        Only keep cells with percent of mitochondrial genes less than ``percent_mito`` % of total counts.
-    ribo_prefix: ``str`` or ``List[str]``, optional, default: ``None``
-       Prefix(es) for ribosomal genes.
-    percent_ribo: ``float``, optional, default: ``None``
-       Only keep cells with percent of ribosomal genes less than ``percent_ribo`` % of total counts.
+    ribo_species: ``str``, optional, default: ``None``
+       Caculate percent of ribosomal genes for each cell. Available options: ``"human"``, ``"mouse"``. If ``None``, do not calculate such metric.
 
     Returns
     -------
@@ -74,7 +71,7 @@ def qc_metrics(
 
     Examples
     --------
-    >>> pg.qc_metrics(data, min_genes=500, max_genes=6000, mito_prefix="MT-", percent_mito=10, ribo_prefix=["RPS", "RPL"])
+    >>> pg.qc_metrics(data, min_genes=500, max_genes=6000, mito_prefix="MT-", percent_mito=10, ribo_species="human")
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
@@ -89,9 +86,21 @@ def qc_metrics(
         max_umis = max_umis,
         mito_prefix = mito_prefix,
         percent_mito = percent_mito,
-        ribo_prefix = ribo_prefix,
-        percent_ribo = percent_ribo,
     )
+    _calc_ribo_percent(data, ribo_species=ribo_species)
+
+
+def _calc_ribo_percent(data: MultimodalData, ribo_species: Optional[str]) -> None:
+    if ribo_species is None:
+        return
+
+    assert ribo_species in ["human", "mouse"], f"Unsupported species for calculating percent of ribosomal genes: '{ribo_species}'!"
+    if ribo_species == "human":
+        ribo_set = load_signatures_from_file(predefined_signatures["ribosomal_genes_human"])["ribo_genes"]
+    else:
+        ribo_set = load_signatures_from_file(predefined_signatures["ribosomal_genes_mouse"])["ribo_genes"]
+    idx_ribo = data.var_names.get_indexer(ribo_set)
+    data.obs["percent_ribo"] = (data.X[:, idx_ribo].sum(axis=1).A1 / np.maximum(data.obs["n_counts"].values, 1.0)) * 100
 
 
 def get_filter_stats(data: MultimodalData, min_genes_before_filt: int = 100) -> pd.DataFrame:
@@ -184,15 +193,21 @@ def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
 
 
 @timer(logger=logger)
-def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> None:
-    """ Identify robust genes as candidates for HVG selection and remove genes that are not expressed in any cells.
+def identify_robust_genes(
+    data: MultimodalData,
+    percent_cells: float = 0.05,
+    remove_none: bool = True,
+) -> None:
+    """ Identify robust genes as candidates for HVG selection, and if specified, remove genes that are not expressed in any cells.
 
     Parameters
     ----------
     data: ``pegasusio.MultimodalData``
         Use current selected modality in data, which should contain one RNA expression matrix.
     percent_cells: ``float``, optional, default: ``0.05``
-       Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
+        Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
+    remove_none: ``bool``, optional, default: ``True``
+        If remove genes that are not expressed in any cells.
 
     Returns
     -------
@@ -207,7 +222,7 @@ def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> 
 
     Examples
     --------
-    >>> pg.identify_robust_genes(data, percent_cells = 0.05)
+    >>> pg.identify_robust_genes(data, remove_none=False)
     """
     if isinstance(data, MultimodalData):
         data = data.current_data()
@@ -216,7 +231,8 @@ def identify_robust_genes(data: MultimodalData, percent_cells: float = 0.05) -> 
 
     if issparse(data.X):
         data.var["n_cells"] = data.X.getnnz(axis=0)
-        data._inplace_subset_var(data.var["n_cells"] > 0)
+        if remove_none:
+            data._inplace_subset_var(data.var["n_cells"] > 0)
         data.var["percent_cells"] = (data.var["n_cells"] / data.shape[0]) * 100
         data.var["robust"] = data.var["percent_cells"] >= percent_cells
     else:
