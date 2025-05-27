@@ -61,7 +61,7 @@ setup(
         pseudobulk=["pydeseq2", "gseapy"],
         all=["fitsne", "louvain", "scanorama", "torch", "harmony-pytorch", "nmf-torch", "rpy2", "forceatlas2-python", "scvi-tools", "pydeseq2", "gseapy"]
     ),
-    python_requires="~=3.8",
+    python_requires="~=3.9",
     package_data={
         "pegasus.annotate_cluster": [
             "human_immune_cell_markers.json",
