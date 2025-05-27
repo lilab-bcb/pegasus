@@ -1842,14 +1842,14 @@ def hvfplot(
     ax.set_ylabel("Variance of log expression")
 
     order = x.argsort().values
-    ax.plot(x[order], fitted[order], "r-", linewidth=1)
+    ax.plot(x.iloc[order], fitted.iloc[order], "r-", linewidth=1)
 
     ord_rank = hvg_rank.argsort().values
 
     texts = []
     for i in range(top_n):
         pos = ord_rank[i]
-        texts.append(ax.text(x[pos], y[pos], gene_symbols[pos], fontsize=5))
+        texts.append(ax.text(x.iloc[pos], y.iloc[pos], gene_symbols[pos], fontsize=5))
 
     from adjustText import adjust_text
     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
@@ -1991,6 +1991,7 @@ def qcviolin(
                 ax.set_ylabel(pt2ylab[plot_type])
                 ax.legend(loc="upper right", fontsize=8)
                 if max([len(x) for x in channels[start:end]]) >= 5:
+                    ax.set_xticks(ax.get_xticks())
                     ax.set_xticklabels(ax.get_xticklabels(), fontsize=8, rotation=-45)
             else:
                 ax.set_frame_on(False)

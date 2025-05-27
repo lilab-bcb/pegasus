@@ -147,29 +147,6 @@ def calc_sig_background(X: Union[csr_matrix, np.ndarray], bins: pd.Categorical, 
             return calc_sig_background_dense_no_std(X.shape[0], X.shape[1], X, n_bins, codes, mean_vec), None
 
 
-def simulate_doublets(X: Union[csr_matrix, np.ndarray], sim_doublet_ratio: float, random_state: int = 0) -> Tuple[Union[csr_matrix, np.ndarray], np.ndarray]:
-    # simulate doublet indices
-    np.random.seed(random_state)
-    n_sim = int(X.shape[0] * sim_doublet_ratio)
-    doublet_indices = np.random.randint(0, X.shape[0], size=(n_sim, 2), dtype = np.int32)
-
-    results = None
-    if issparse(X):
-        data = X.data
-        if data.dtype != np.int32:
-            data = data.astype(np.int32)
-        from pegasus.cylib.fast_utils import simulate_doublets_sparse
-        results = csr_matrix(simulate_doublets_sparse(n_sim, X.shape[1], data, X.indices, X.indptr, doublet_indices), shape = (n_sim, X.shape[1]), copy = False)
-    else:
-        data = X
-        if data.dtype != np.int32:
-            data = data.astype(np.int32)
-        from pegasus.cylib.fast_utils import simulate_doublets_dense
-        results = simulate_doublets_dense(n_sim, X.shape[1], data, doublet_indices)
-
-    return results, doublet_indices
-
-
 def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: Union[str, List[str]], warning_msg: str) -> bool:
     if batch is None:
         return False

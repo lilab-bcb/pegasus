@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
     - uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
         python -m pip install flake8 pytest setuptools wheel cython
         python -m pip install "zarr==2.*"
         python -m pip install git+https://github.com/lilab-bcb/pegasusio@master
-        python -m pip install -e .[louvain,tsne,torch,forceatlas,scvi,pseudobulk]
+        python -m pip install -e .[louvain,torch,forceatlas,pseudobulk]
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
