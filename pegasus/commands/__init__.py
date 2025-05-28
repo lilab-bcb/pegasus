@@ -4,6 +4,7 @@ aggregate_matrix.__doc__ = aggregate_matrix.__doc__.replace('pegasusio', 'pegasu
 from demuxEM.commands.DemuxEM import DemuxEM as demuxEM
 demuxEM.__doc__ = demuxEM.__doc__.replace('demuxEM ', 'pegasus demuxEM ')
 
+from .QC import QC as qc
 from .Clustering import Clustering as cluster
 from .DeAnalysis import DeAnalysis as de_analysis
 from .AnnotateCluster import AnnotateCluster as annotate_cluster

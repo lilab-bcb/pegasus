@@ -6,6 +6,7 @@ from pegasusio import UnimodalData, MultimodalData
 from pegasusio import read_input, write_output, _fillna
 
 from pegasus import tools, misc
+from pegasus import elbowplot
 
 
 import logging
@@ -461,3 +462,93 @@ def run_pipeline(input_file: str, output_name: str, **kwargs):
     write_output(data, f"{output_name}.zarr.zip")
 
     print("Results are written.")
+
+
+def run_qc_pipeline(input_file: str, output_name: str, **kwargs):
+    genome = kwargs["genome"]
+    mdata = read_input(input_file, genome=genome)
+
+    species = None
+    if genome.startswith("GRCh38") and ("GRCm39" not in genome) and ("mm10" not in genome):
+        species = "human"
+    elif genome.startswith("GRCm39") or genome.startswith("mm10"):
+        species = "mouse"
+
+    mito_prefix = None
+    if species == "human":
+        mito_prefix = "MT-"
+    elif species == "mouse":
+        mito_prefix = "mt-"
+
+    tools.qc_metrics(
+        mdata,
+        min_genes=kwargs["min_genes"],
+        max_genes=kwargs["max_genes"],
+        min_umis=kwargs["min_umis"],
+        max_umis=kwargs["max_umis"],
+        mito_prefix=mito_prefix,
+        percent_mito=kwargs["percent_mito"],
+        ribo_species=species,
+    )
+
+    mdata.obs["outlier"] = ""
+    def _mark_outliers(attr, side=None):
+        q1, q3 = mdata.obs[attr].quantile([0.25, 0.75])
+        irq = q3 - q1
+
+        if side is None:
+            mdata.obs.loc[mdata.obs[attr] > q3 + 1.5 * irq, "outlier"] = attr
+            mdata.obs.loc[mdata.obs[attr] < q1 - 1.5 * irq, "outlier"] = attr
+        elif side == "upper":
+            mdata.obs.loc[mdata.obs[attr] > q3 + 1.5 * irq, "outlier"] = attr
+        else:
+            mdata.obs.loc[mdata.obs[attr] < q1 - 1.5 * irq, "outlier"] = attr
+
+    if kwargs["min_genes"] is None:
+        _mark_outliers("n_genes", "lower")
+    if kwargs["max_genes"] is None:
+        _mark_outliers("n_genes", "upper")
+    if kwargs["min_umis"] is None:
+        _mark_outliers("n_counts", "lower")
+    if kwargs["max_umis"] is None:
+        _mark_outliers("n_counts", "upper")
+    if kwargs["percent_mito"] is None:
+        _mark_outliers("percent_mito", "upper")
+    _mark_outliers("percent_ribo")
+
+    mdata_qc = mdata.copy()
+    tools.filter_data(mdata_qc)
+    tools.identify_robust_genes(mdata_qc, percent_cells=kwargs["gene_percent_cells"])
+    tools.log_norm(mdata_qc)
+    tools.highly_variable_features(mdata_qc)
+    tools.pca(mdata_qc)
+    elbowplot(mdata_qc)
+    tools.neighbors(mdata_qc, n_comps=mdata_qc.uns["pca_ncomps"])
+    tools.leiden(mdata_qc)
+    tools.infer_doublets(mdata_qc, method="improved", clust_attr="leiden_labels", plot_hist=output_name)
+
+    df_dbl_cls = mdata_qc.uns["pred_dbl_cluster"]
+    dbl_cls = df_dbl_cls.loc[df_dbl_cls["percentage"]>70, "cluster"].values
+    dbl_clusts = f"leiden_labels:{','.join(dbl_cls)}" if dbl_cls.size > 0 else None
+    tools.mark_doublets(mdata_qc, demux_attr="dbl_type_pegasus", dbl_clusts=dbl_clusts)
+
+    def _write_back_obs(attr, default_value, is_category=False):
+        mdata.obs[attr] = default_value
+        mdata.obs.loc[mdata_qc.obs_names, attr] = mdata_qc.obs[attr] if not is_category else mdata_qc.obs[attr].astype(str)
+
+    _write_back_obs("doublet_score", np.nan)
+    _write_back_obs("dbl_type_pegasus", "N/A", is_category=True)
+
+    sig_name = "cell_cycle_human" if species == "human" else "cell_cycle_mouse"
+    tools.calc_signature_score(mdata_qc, sig_name)
+
+    _write_back_obs("G1/S", np.nan)
+    _write_back_obs("G2/M", np.nan)
+    _write_back_obs("cycling", np.nan)
+    _write_back_obs("predicted_phase", "N/A", is_category=True)
+
+    mdata.var["robust"] = False
+    mdata.var.loc[mdata_qc.var_names, "robust"] = mdata_qc.var["robust"]
+
+    write_output(mdata, f"{output_name}.h5ad")
+    print("QC results are written.")

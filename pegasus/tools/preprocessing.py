@@ -196,7 +196,6 @@ def filter_data(data: MultimodalData, focus_list: List[str] = None) -> None:
 def identify_robust_genes(
     data: MultimodalData,
     percent_cells: float = 0.05,
-    remove_none: bool = True,
 ) -> None:
     """ Identify robust genes as candidates for HVG selection, and if specified, remove genes that are not expressed in any cells.
 
@@ -206,8 +205,6 @@ def identify_robust_genes(
         Use current selected modality in data, which should contain one RNA expression matrix.
     percent_cells: ``float``, optional, default: ``0.05``
         Only assign genes to be ``robust`` that are expressed in at least ``percent_cells`` % of cells.
-    remove_none: ``bool``, optional, default: ``True``
-        If remove genes that are not expressed in any cells.
 
     Returns
     -------
@@ -231,8 +228,7 @@ def identify_robust_genes(
 
     if issparse(data.X):
         data.var["n_cells"] = data.X.getnnz(axis=0)
-        if remove_none:
-            data._inplace_subset_var(data.var["n_cells"] > 0)
+        data._inplace_subset_var(data.var["n_cells"] > 0)
         data.var["percent_cells"] = (data.var["n_cells"] / data.shape[0]) * 100
         data.var["robust"] = data.var["percent_cells"] >= percent_cells
     else:
