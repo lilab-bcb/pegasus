@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.sparse import issparse, csr_matrix
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, Dict
 from matplotlib.figure import Figure
 
 import logging
@@ -214,22 +214,30 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
     filtered_maxima = np.array(filtered_maxima, dtype=int)
     n_max = maxima_by_x.size
 
+    print(f"maxima_by_x = {maxima_by_x}")
+    peak_groups = dict()
+
     curr_peak = 0
     merged_peaks = []
+    tmp_peaks = [maxima_by_x[0]]
     for i in range(n_max - 1):
         min_value = y[maxima_by_x[i]+1:maxima_by_x[i + 1]].min()
         max_value = max(y[maxima_by_x[i]], y[maxima_by_x[i + 1]])
         if (max_value - min_value) / max_value > merge_peak_frac: # do not merge i + 1
             merged_peaks.append(maxima_by_x[curr_peak])
+            peak_groups[maxima_by_x[curr_peak]] = np.array(tmp_peaks, dtype=int)
+            tmp_peaks = [maxima_by_x[i + 1]]
             curr_peak = i + 1
         else:
+            tmp_peaks.append(maxima_by_x[i + 1])
             if y[maxima_by_x[i + 1]] > y[maxima_by_x[curr_peak]]:
                 curr_peak = i + 1
     merged_peaks.append(maxima_by_x[curr_peak])
+    peak_groups[maxima_by_x[curr_peak]] = np.array(tmp_peaks, dtype=int)
     merged_peaks = np.array(merged_peaks, dtype=int)
     maxima = merged_peaks[np.argsort(y[merged_peaks])[::-1]]
 
-    return maxima, maxima_by_x, filtered_maxima
+    return maxima, peak_groups, filtered_maxima
 
 def _locate_cutoff_among_peaks_with_guide(x: List[float], y: List[float], maxima: List[float], scores: List[float], d_neo: float) -> int:
     """
@@ -303,25 +311,28 @@ def _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start, rel_t
     if tmp_arr.size > 0:
         lmax = tmp_arr.min()
         pos_to = _find_pos_curv(curv, lmax-1, '-') + 1
-    assert pos_from < pos_to
+    if pos_from >= pos_to:
+        # No local minima within the range
+        return pos_to
     minima_with_dir = curv[pos_from:pos_to].min()
     if minima_with_dir >= minima_dir_thre:
-        # No other local minima
+        # No local minima lower than minima_dir_thre
         return pos_to # return right end
     thre = min(max(peak_curv_value, minima_with_dir) * rel_thre, minima_dir_thre)
     assert thre < 0.0
     for pos in range(pos_from, pos_to):
-        if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] < curv[pos + 1]:
+        if curv[pos] < thre and curv[pos - 1] > curv[pos] and curv[pos] <= curv[pos + 1]:
             return pos
-    assert False
+    return pos_to - 1
 
-def _find_cutoff_right_side(peak_pos: int, curv: List[float], filtered_maxima: List[int]) -> int:
+def _find_cutoff_right_side(peak_pos: int, peak_groups: Dict[int, List[int]], curv: List[float], filtered_maxima: List[int]) -> int:
     # Peak represents embedded doublets, find a cutoff at the right side
     peak_curv_value = _find_curv_minima_at_peak(curv, peak_pos)
-    start = _find_pos_curv(curv, peak_pos+1, '+')
+    peak_pos_rlimit = peak_groups[peak_pos].max()
+    start = _find_pos_curv(curv, peak_pos_rlimit+1, '+')
     end = _find_pos_curv(curv, _find_curv_local_minima(curv, peak_curv_value, filtered_maxima, start+1)-1, '-')
-    assert start <= end
-    return curv[start:end+1].argmax() + start
+
+    return start + (curv[start:end+1].argmax() if start <= end else 0)
 
 def _find_cutoff_left_side(peak_pos: int, x: List[float], curv: List[float], x_theory: float) -> int:
     # Peak represents a doublet peak and thus we need to find a cutoff at the left side
@@ -338,7 +349,11 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
     x, y, gap = _kde_smooth(sim_scores)
 
     # Find local maxima
-    maxima, maxima_by_x, filtered_maxima = _find_local_maxima(y)
+    maxima, peak_groups, filtered_maxima = _find_local_maxima(y)
+    print(f"maxima = {maxima}")
+    print(f"peak_groups = {peak_groups}")
+    print(f"filtered_maxima = {filtered_maxima}")
+    print(f"threshold_expected = {threshold_expected}")
     assert maxima.size > 0
 
     # Calculate curvature
@@ -351,7 +366,7 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
     else:
         frac_right = (sim_scores > x[maxima[0]]).sum() / sim_scores.size
         if x[maxima[0]] < threshold_expected or frac_right > 0.4:
-            pos = _find_cutoff_right_side(maxima[0], curv, filtered_maxima)
+            pos = _find_cutoff_right_side(maxima[0], peak_groups, curv, filtered_maxima)
         else:
             pos = _find_cutoff_left_side(maxima[0], x, curv, threshold_guide)
 
@@ -365,7 +380,7 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
         elif manual_correction == "expected":
             threshold = threshold_expected
         elif manual_correction == "right":
-            pos = _find_cutoff_right_side(maxima[0], curv, filtered_maxima)
+            pos = _find_cutoff_right_side(maxima[0], peak_groups, curv, filtered_maxima)
             threshold = x[pos]
         elif manual_correction == "left":
             pos = _find_cutoff_left_side(maxima[0], x, curv, threshold_guide)
