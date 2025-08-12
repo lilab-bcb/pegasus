@@ -197,7 +197,7 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
 
         RETURNS:
           maxima: merged peak coordinates sorted y in descending order
-          maxima_by_x: passing filter but not merged peak coordiantes sorted by x
+          peak_groups: map of merged peak coordinates to their corresponding unmerged peak coordinates, which all pass the filter
           filtered_maxima: filtered peak coordinates
     """
     lower_bound = y.max() * frac
@@ -214,7 +214,6 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
     filtered_maxima = np.array(filtered_maxima, dtype=int)
     n_max = maxima_by_x.size
 
-    print(f"maxima_by_x = {maxima_by_x}")
     peak_groups = dict()
 
     curr_peak = 0
@@ -350,10 +349,6 @@ def _find_score_threshold(sim_scores, d_neo, threshold_guide, threshold_expected
 
     # Find local maxima
     maxima, peak_groups, filtered_maxima = _find_local_maxima(y)
-    print(f"maxima = {maxima}")
-    print(f"peak_groups = {peak_groups}")
-    print(f"filtered_maxima = {filtered_maxima}")
-    print(f"threshold_expected = {threshold_expected}")
     assert maxima.size > 0
 
     # Calculate curvature
