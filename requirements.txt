@@ -1,5 +1,5 @@
 adjustText
-anndata>=0.7.1
+anndata>=0.7.1,<=0.11.4
 Cython
 docopt
 demuxEM
@@ -13,10 +13,9 @@ leidenalg
 matplotlib>=3.7.0
 natsort
 numba
-numpy<2; python_version == '3.9'
-numpy; python_version >= '3.10'
+numpy>=2.0.2
 pandas>=1.2.0
-pegasusio>=0.9.1
+pegasusio>=0.10.0
 pybind11
 scikit-learn>=0.23.2
 scikit-misc
