@@ -1,5 +1,5 @@
 adjustText
-anndata>=0.7.1
+anndata>=0.7.1,<=0.11.4
 Cython
 docopt
 demuxEM
