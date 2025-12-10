@@ -2378,12 +2378,11 @@ def wordcloud(
     return fig if return_fig else None
 
 
-def _make_one_gsea_plot(df, ax, color, size=10, fontsize=5):
+def _make_one_gsea_plot(df, ax, color, fontsize=5):
     if df.shape[0] == 0:
         ax.axis('off')
         return None
     df_plot = df.sort_values(['Log Q', 'NES Abs'], ascending=False)
-    df_plot = df_plot.iloc[0:size]
     ax = sns.barplot(x='Log Q', y='pathway', data=df_plot, color=color, ax=ax)
     ax.set_xlabel('')
     ax.set_ylabel('')
