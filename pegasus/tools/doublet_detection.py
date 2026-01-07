@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.sparse import issparse, csr_matrix
+from scipy.signal import find_peaks
 from typing import List, Optional, Union, Tuple, Dict
 from matplotlib.figure import Figure
 
@@ -201,17 +202,10 @@ def _find_local_maxima(y: List[float], frac: float = 0.25, merge_peak_frac: floa
           filtered_maxima: filtered peak coordinates
     """
     lower_bound = y.max() * frac
-    maxima_by_x = []
-    filtered_maxima = []
-    for i in range(2, y.size - 2):
-        if (y[i - 1] == y[i] and y[i - 2] < y[i - 1] and y[i] > y[i + 1]) or (y[i - 2] < y[i - 1] and y[i - 1] < y[i] and y[i] > y[i + 1] and y[i + 1] > y[i + 2]):
-            # i is a local maxima
-            if y[i] > lower_bound:
-                maxima_by_x.append(i)
-            else:
-                filtered_maxima.append(i)
-    maxima_by_x = np.array(maxima_by_x, dtype=int)
-    filtered_maxima = np.array(filtered_maxima, dtype=int)
+    all_peaks, _ = find_peaks(y)
+    is_above = y[all_peaks] > lower_bound
+    maxima_by_x = all_peaks[is_above]
+    filtered_maxima = all_peaks[~is_above]
     n_max = maxima_by_x.size
 
     peak_groups = dict()
