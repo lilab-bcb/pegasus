@@ -3,8 +3,8 @@
 from sys import exit
 
 import json
-import pkg_resources
 
+from importlib import resources
 from typing import List, Dict, Tuple
 
 import logging
@@ -23,8 +23,8 @@ def load_json_index(input_file: str) -> Dict[str, List[str]]:
 
 def load_chromium_indexes() -> Tuple[dict, dict]:
     # Load chromium index sets
-    GA_indexes = load_json_index(pkg_resources.resource_filename("pegasus.check_sample_indexes", "chromium-shared-sample-indexes-plate.json"))
-    NA_indexes = load_json_index(pkg_resources.resource_filename("pegasus.check_sample_indexes", "Chromium-i7-Multiplex-Kit-N-Set-A-sample-indexes-plate.json"))
+    GA_indexes = load_json_index(str(resources.files("pegasus.check_sample_indexes" / "chromium-shared-sample-indexes-plate.json")))
+    NA_indexes = load_json_index(str(resources.files("pegasus.check_sample_indexes" / "Chromium-i7-Multiplex-Kit-N-Set-A-sample-indexes-plate.json")))
     return GA_indexes, NA_indexes
 
 
@@ -81,10 +81,10 @@ def run_check_sample_indexes(index_file, n_mis=1, n_report=-1):
     n_mismatch = (min_hd - 1) // 2
     barcode1 = index_arr[min_i][0] if index_arr[min_i][1] == 'orig' else f"{index_arr[min_i][1]}({index_arr[min_i][0]})"
     barcode2 = index_arr[min_j][0] if index_arr[min_j][1] == 'orig' else f"{index_arr[min_j][1]}({index_arr[min_j][0]})"
-    
+
     logger.info(f"Minimum hamming distance is {min_hd}, achieved between {barcode1} and {barcode2}. A n_mis = {n_mismatch} can be set.")
 
-   
+
     if n_mismatch < n_mis:
         logger.error(f"Index collision detected in {index_file} with n_mis = {n_mis}!")
     elif n_report > 0:

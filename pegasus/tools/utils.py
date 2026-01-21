@@ -169,29 +169,31 @@ def check_batch_key(data: Union[MultimodalData, UnimodalData], batch: Union[str,
 
 
 
-import pkg_resources
+from importlib import resources
+
+data_path = resources.files("pegasus") / "data_files"
 
 predefined_signatures = dict(
-    cell_cycle_human=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_human.gmt"),
-    cell_cycle_mouse=pkg_resources.resource_filename("pegasus", "data_files/cell_cycle_mouse.gmt"),
-    gender_human=pkg_resources.resource_filename("pegasus", "data_files/gender_human.gmt"),
-    gender_mouse=pkg_resources.resource_filename("pegasus", "data_files/gender_mouse.gmt"),
-    mitochondrial_genes_human=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_human.gmt"),
-    mitochondrial_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/mitochondrial_genes_mouse.gmt"),
-    ribosomal_genes_human=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_human.gmt"),
-    ribosomal_genes_mouse=pkg_resources.resource_filename("pegasus", "data_files/ribosomal_genes_mouse.gmt"),
-    apoptosis_human=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_human.gmt"),
-    apoptosis_mouse=pkg_resources.resource_filename("pegasus", "data_files/apoptosis_mouse.gmt"),
-    human_lung=pkg_resources.resource_filename("pegasus", "data_files/human_lung.gmt"),
-    mouse_lung=pkg_resources.resource_filename("pegasus", "data_files/mouse_lung.gmt"),
-    mouse_brain=pkg_resources.resource_filename("pegasus", "data_files/mouse_brain.gmt"),
-    mouse_liver=pkg_resources.resource_filename("pegasus", "data_files/mouse_liver.gmt"),
-    emt_human=pkg_resources.resource_filename("pegasus", "data_files/emt_human.gmt"),
+    cell_cycle_human=str(data_path / "cell_cycle_human.gmt"),
+    cell_cycle_mouse=str(data_path / "cell_cycle_mouse.gmt"),
+    gender_human=str(data_path / "gender_human.gmt"),
+    gender_mouse=str(data_path / "gender_mouse.gmt"),
+    mitochondrial_genes_human=str(data_path / "mitochondrial_genes_human.gmt"),
+    mitochondrial_genes_mouse=str(data_path / "mitochondrial_genes_mouse.gmt"),
+    ribosomal_genes_human=str(data_path / "ribosomal_genes_human.gmt"),
+    ribosomal_genes_mouse=str(data_path / "ribosomal_genes_mouse.gmt"),
+    apoptosis_human=str(data_path / "apoptosis_human.gmt"),
+    apoptosis_mouse=str(data_path / "apoptosis_mouse.gmt"),
+    human_lung=str(data_path / "human_lung.gmt"),
+    mouse_lung=str(data_path / "mouse_lung.gmt"),
+    mouse_brain=str(data_path / "mouse_brain.gmt"),
+    mouse_liver=str(data_path / "mouse_liver.gmt"),
+    emt_human=str(data_path / "emt_human.gmt"),
 )
 
 predefined_pathways = dict(
-    hallmark=pkg_resources.resource_filename("pegasus", "data_files/h.all.v7.5.1.symbols.gmt"),
-    canonical_pathways=pkg_resources.resource_filename("pegasus", "data_files/c2.cp.v7.5.1.symbols.gmt"),
+    hallmark=str(data_path / "h.all.v7.5.1.symbols.gmt"),
+    canonical_pathways=str(data_path / "c2.cp.v7.5.1.symbols.gmt"),
 )
 
 def load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:

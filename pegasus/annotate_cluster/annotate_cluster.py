@@ -315,7 +315,7 @@ def infer_cell_types(
     if output_file is not None:
         fout = open(output_file, "w")
 
-    import pkg_resources
+    from importlib import resources
     predefined_markers = dict(
         human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
@@ -331,9 +331,9 @@ def infer_cell_types(
         markers = None
         for token in tokens:
             if token in predefined_markers:
-                token = pkg_resources.resource_filename(
-                    "pegasus.annotate_cluster", predefined_markers[token]
-                )
+                token = str(resources.files(
+                    "pegasus.annotate_cluster" / predefined_markers[token]
+                ))
             with open(token) as fin:
                 tmp_dict = json.load(fin)
             if markers is None:
@@ -427,7 +427,7 @@ def annotate(
     if isinstance(anno_dict, list):
         cluster_ids = data.obs[based_on].cat.categories.values.astype('str')
         anno_dict = dict(zip(cluster_ids, anno_dict))
-    from natsort import natsorted 
+    from natsort import natsorted
     data.obs[name] = pd.Categorical([anno_dict[x] for x in data.obs[based_on]], categories = natsorted(np.unique(list(anno_dict.values()))))
 
 @timer(logger=logger)
