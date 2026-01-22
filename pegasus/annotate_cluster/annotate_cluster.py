@@ -9,6 +9,7 @@ from anndata import AnnData
 from io import IOBase
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from pegasusio import timer, MultimodalData, UnimodalData
@@ -30,8 +31,7 @@ class CellType:
         de_down: pd.DataFrame,
         thre: float,
     ):
-        """ Calculate score for matching a cluster with a putative cell type.
-        """
+        """Calculate score for matching a cluster with a putative cell type."""
         self.score = self.avgp = 0.0
         self.weak_support = []
         self.strong_support = []
@@ -56,14 +56,10 @@ class CellType:
 
                         if fc >= thre:
                             numer += 2.0
-                            self.strong_support.append(
-                                (marker, f"{percent:.2f}%")
-                            )
+                            self.strong_support.append((marker, f"{percent:.2f}%"))
                         else:
                             numer += 1.0 + (fc - 1.0) / (thre - 1.0)
-                            self.weak_support.append(
-                                (marker, f"{percent:.2f}%")
-                            )
+                            self.weak_support.append((marker, f"{percent:.2f}%"))
                 else:
                     assert sign == "-"
                     if gsym not in de_up.index:
@@ -76,14 +72,10 @@ class CellType:
                             percent = de_down.at[gsym, "percent"]
                             if fc >= thre:
                                 numer += 2.0
-                                self.strong_support.append(
-                                    (marker, f"{percent:.2f}%")
-                                )
+                                self.strong_support.append((marker, f"{percent:.2f}%"))
                             else:
                                 numer += 1.0 + (fc - 1.0) / (thre - 1.0)
-                                self.weak_support.append(
-                                    (marker, f"{percent:.2f}%")
-                                )
+                                self.weak_support.append((marker, f"{percent:.2f}%"))
                         elif not self.ignore_nonde:
                             numer += 1.0
                             self.weak_support.append((marker, "N/A"))
@@ -116,8 +108,7 @@ class Annotator:
         self.recalibrate(self.object, genes)
 
     def recalibrate(self, obj: dict, genes: List[str]) -> None:
-        """ Remove markers that are not expressed (not in genes) and calculate partial weights for existing genes.
-        """
+        """Remove markers that are not expressed (not in genes) and calculate partial weights for existing genes."""
         for celltype in obj["cell_types"]:
             denom = 0.0
             for marker_set in celltype["markers"]:
@@ -141,8 +132,7 @@ class Annotator:
         ignore_nonde: bool = False,
         obj: dict = None,
     ):
-        """ Evaluate a cluster to determine its putative cell type.
-        """
+        """Evaluate a cluster to determine its putative cell type."""
         if obj is None:
             obj = self.object
 
@@ -172,8 +162,7 @@ class Annotator:
         ct_list: List["CellType"],
         space: int = 4,
     ) -> None:
-        """ Write putative cell type reports to fout.
-        """
+        """Write putative cell type reports to fout."""
         for ct in ct_list:
             fout.write(" " * space + str(ct) + "\n")
             if ct.subtypes is not None:
@@ -181,7 +170,9 @@ class Annotator:
 
 
 def infer_cluster_names(
-    cell_type_dict: Dict[str, List["CellType"]], threshold: float = 0.5, is_human_immune: bool = False
+    cell_type_dict: Dict[str, List["CellType"]],
+    threshold: float = 0.5,
+    is_human_immune: bool = False,
 ) -> List[str]:
     """Decide cluster names based on cell types automatically.
 
@@ -222,7 +213,9 @@ def infer_cluster_names(
                 subname = None
                 has_naive_t = False
                 for subt in ct.subtypes:
-                    if subt.score >= threshold and (subt.name != "T regulatory cell" or subt.avgp > 0.5):
+                    if subt.score >= threshold and (
+                        subt.name != "T regulatory cell" or subt.avgp > 0.5
+                    ):
                         if subt.name == "Naive T cell" and subt.score >= 0.6:
                             has_naive_t = True
                         elif subname is None:
@@ -230,17 +223,28 @@ def infer_cluster_names(
                 if subname is None:
                     cell_name = "Naive T cell" if has_naive_t else "T cell"
                 elif has_naive_t and (subname in ["T helper cell", "Cytotoxic T cell"]):
-                    cell_name = "CD4+ Naive T cell" if subname == "T helper cell" else "CD8+ Naive T cell"
+                    cell_name = (
+                        "CD4+ Naive T cell"
+                        if subname == "T helper cell"
+                        else "CD8+ Naive T cell"
+                    )
                 else:
                     cell_name = subname
             elif is_human_immune and ct.name == "CD1C+ dendritic cell":
                 cell_name = ct.name
                 for ctype in ct_list[1:]:
-                    if ctype.score >= threshold and ctype.name == "CLEC9A+ dendritic cell":
+                    if (
+                        ctype.score >= threshold
+                        and ctype.name == "CLEC9A+ dendritic cell"
+                    ):
                         cell_name = "Conventional dendritic cell (CD1C+/CLEC9A+)"
                         break
             else:
-                while ct.subtypes is not None and len(ct.subtypes) > 0 and ct.subtypes[0].score >= threshold:
+                while (
+                    ct.subtypes is not None
+                    and len(ct.subtypes) > 0
+                    and ct.subtypes[0].score >= threshold
+                ):
                     ct = ct.subtypes[0]
                 cell_name = ct.name
 
@@ -316,6 +320,7 @@ def infer_cell_types(
         fout = open(output_file, "w")
 
     from importlib import resources
+
     predefined_markers = dict(
         human_immune="human_immune_cell_markers.json",
         mouse_immune="mouse_immune_cell_markers.json",
@@ -327,13 +332,14 @@ def infer_cell_types(
     )
 
     if isinstance(markers, str):
-        tokens = markers.split(',')
+        tokens = markers.split(",")
         markers = None
         for token in tokens:
             if token in predefined_markers:
-                token = str(resources.files(
-                    "pegasus.annotate_cluster" / predefined_markers[token]
-                ))
+                token = str(
+                    resources.files("pegasus.annotate_cluster")
+                    / predefined_markers[token]
+                )
             with open(token) as fin:
                 tmp_dict = json.load(fin)
             if markers is None:
@@ -379,7 +385,9 @@ def infer_cell_types(
             de_up["fc"] = 2.0 ** de_up["fc"]
             de_down["fc"] = 2.0 ** de_down["fc"]
 
-        results = anno.evaluate(de_up, de_down, threshold=threshold, ignore_nonde=ignore_nonde)
+        results = anno.evaluate(
+            de_up, de_down, threshold=threshold, ignore_nonde=ignore_nonde
+        )
 
         if output_file is not None:
             fout.write(f"Cluster {clust_id}:\n")
@@ -394,7 +402,7 @@ def infer_cell_types(
 
 
 def annotate(
-    data: Union[MultimodalData, UnimodalData,AnnData],
+    data: Union[MultimodalData, UnimodalData, AnnData],
     name: str,
     based_on: str,
     anno_dict: Union[Dict[str, str], List[str]],
@@ -425,10 +433,15 @@ def annotate(
     >>> pg.annotate(data, 'anno', 'louvain_labels', ['T cell', 'B cell'])
     """
     if isinstance(anno_dict, list):
-        cluster_ids = data.obs[based_on].cat.categories.values.astype('str')
+        cluster_ids = data.obs[based_on].cat.categories.values.astype("str")
         anno_dict = dict(zip(cluster_ids, anno_dict))
     from natsort import natsorted
-    data.obs[name] = pd.Categorical([anno_dict[x] for x in data.obs[based_on]], categories = natsorted(np.unique(list(anno_dict.values()))))
+
+    data.obs[name] = pd.Categorical(
+        [anno_dict[x] for x in data.obs[based_on]],
+        categories=natsorted(np.unique(list(anno_dict.values()))),
+    )
+
 
 @timer(logger=logger)
 def run_annotate_cluster(
@@ -441,8 +454,7 @@ def run_annotate_cluster(
     threshold: float = 0.5,
     ignore_nonde: bool = False,
 ) -> None:
-    """ For command line use.
-    """
+    """For command line use."""
     from pegasusio import read_input
 
     data = read_input(input_file, mode="r")
@@ -459,8 +471,8 @@ def run_annotate_cluster(
 
 
 def annotate_data_object(input_file: str, annotation: str) -> None:
-    """ For command line use.
-        annotation:  anno_name:clust_name:cell_type1;...cell_typen
+    """For command line use.
+    annotation:  anno_name:clust_name:cell_type1;...cell_typen
     """
     from pegasusio import read_input, write_output
 
