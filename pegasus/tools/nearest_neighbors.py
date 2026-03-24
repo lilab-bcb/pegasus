@@ -1,28 +1,30 @@
-import logging
-from typing import List, Tuple
-
-import numba
+import time
 import numpy as np
 import pandas as pd
-from pegasusio import MultimodalData
+import numba
+
 from scipy.sparse import issparse, csr_matrix
 from scipy.stats import chi2
 from sklearn.neighbors import NearestNeighbors
+from pegasusio import MultimodalData
+from typing import List, Tuple
 
 from pegasus.tools import eff_n_jobs, update_rep, X_from_rep
 
+import logging
 logger = logging.getLogger(__name__)
 
 from pegasusio import timer
+
 
 
 @numba.njit(cache=True)
 def _reorg_knn(indices, distances):
     for i in range(indices.shape[0]):
         if indices[i, 0] != i:
-            for j in range(indices.shape[1] - 1, 0, -1):
-                indices[i, j] = indices[i, j - 1]
-                distances[i, j] = distances[i, j - 1]
+            for j in range(indices.shape[1]-1, 0, -1):
+                indices[i, j] = indices[i, j-1]
+                distances[i, j] = distances[i, j-1]
             indices[i, 0] = i
             distances[i, 0] = 0.0
 
@@ -80,14 +82,13 @@ def calculate_nearest_neighbors(
     if nsample <= 1000:
         method = "sklearn"
 
-    k_rot = int(nsample ** 0.5)  # rot, rule of thumb
+    k_rot = int(nsample ** 0.5) # rot, rule of thumb
     if (K is None) or (K > k_rot and (not exact_k)):
         K = k_rot
         logger.info(f"in calculate_nearest_neighbors, K is adjusted to {K}.")
 
     if K == 1:
-        return np.zeros((nsample, 0), dtype=int), np.zeros((nsample, 0),
-                                                           dtype=np.float32), K
+        return np.zeros((nsample, 0), dtype=int), np.zeros((nsample, 0), dtype=np.float32), K
 
     n_jobs = eff_n_jobs(n_jobs)
 
@@ -95,8 +96,7 @@ def calculate_nearest_neighbors(
         try:
             import hnswlib
         except ImportError:
-            raise ImportError(
-                "Need hnswlib! Try 'pip install hnswlib' or 'conda install -c conda-forge hnswlib'.")
+            raise ImportError("Need hnswlib! Try 'pip install hnswlib' or 'conda install -c conda-forge hnswlib'.")
 
         assert not issparse(X)
         # Build hnsw index
@@ -196,7 +196,7 @@ def get_neighbors(
     indices_key = rep + "_knn_indices"
     distances_key = rep + "_knn_distances"
 
-    k_rot = int(data.shape[0] ** 0.5)  # rot, rule of thumb
+    k_rot = int(data.shape[0] ** 0.5) # rot, rule of thumb
     if (K is None) or (K > k_rot and (not exact_k)):
         K = k_rot
         logger.info(f"in get_neighbors, K is adjusted to {K}.")
@@ -242,6 +242,7 @@ def get_symmetric_matrix(csr_mat: "csr_matrix") -> "csr_matrix":
 def calculate_affinity_matrix(
     indices: List[int], distances: List[float]
 ) -> "csr_matrix":
+
     nsample = indices.shape[0]
     K = indices.shape[1]
     # calculate sigma, important to use median here!
@@ -364,7 +365,7 @@ def neighbors(
     )
 
     # calculate affinity matrix
-    W = calculate_affinity_matrix(indices[:, 0: K - 1], distances[:, 0: K - 1])
+    W = calculate_affinity_matrix(indices[:, 0 : K - 1], distances[:, 0 : K - 1])
     data.obsp["W_" + rep] = W
     # pop out jump method values
     data.uns.pop(f"{rep}_jump_values", None)
@@ -392,7 +393,6 @@ def calc_kBET_for_one_chunk(knn_indices, attr_values, ideal_dist, K):
         results[i, 1] = p_value
 
     return results
-
 
 def calc_kBET(
     data: MultimodalData,
@@ -442,7 +442,6 @@ def calc_kBET(
     full_speed: `bool`, optional (default: False)
         If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
 
-
     Returns
     -------
     stat_mean: ``float``
@@ -473,11 +472,10 @@ def calc_kBET(
     attr_values = data.obs[attr].cat.rename_categories(range(nbatch)).values
 
     indices, distances, K = get_neighbors(
-        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state,
-        full_speed=full_speed, use_cache=use_cache,
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
-        (np.arange(nsample).reshape(-1, 1), indices[:, 0: K - 1]), axis=1
+        (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
     )  # add query as 1-nn
 
     # partition into chunks
@@ -493,7 +491,7 @@ def calc_kBET(
         kBET_arr = np.concatenate(
             Parallel(n_jobs=n_jobs, temp_folder=temp_folder)(
                 delayed(calc_kBET_for_one_chunk)(
-                    knn_indices[starts[i]: starts[i + 1], :], attr_values, ideal_dist, K
+                    knn_indices[starts[i] : starts[i + 1], :], attr_values, ideal_dist, K
                 )
                 for i in range(n_jobs)
             )
@@ -569,11 +567,10 @@ def calc_kSIM(
     nsample = data.shape[0]
 
     indices, distances, K = get_neighbors(
-        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state,
-        use_cache=use_cache, full_speed=full_speed
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
-        (np.arange(nsample).reshape(-1, 1), indices[:, 0: K - 1]), axis=1
+        (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
     )  # add query as 1-nn
 
     labels = np.reshape(data.obs[attr].values[knn_indices.ravel()], (-1, K))
