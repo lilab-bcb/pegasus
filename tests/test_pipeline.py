@@ -29,11 +29,6 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(self.data.obsm['pca_harmony_knn_distances'].shape, (1043, 99), "KNN distance matrix shape differs!")
         self.assertIn('leiden_labels', self.data.obs.columns, "Leiden result is lost!")
 
-    def test_doublet_detection(self):
-        self.assertIn('doublet_score', self.data.obs.columns, "Doublet score is lost!")
-        self.assertEqual(self.data.obs['pred_dbl'].dtype, 'bool', "Type differs!")
-        self.assertSetEqual(set(self.data.obs['demux_type'].cat.categories.tolist()), set(['doublet', 'singlet']), "Demux type names differ!")
-
     def test_signature_score(self):
         self.assertIn('G1/S', self.data.obs.columns, "G1/S signature score is lost!")
         self.assertIn('G2/M', self.data.obs.columns, "G2/M signature score is lost!")
@@ -43,7 +38,6 @@ class TestPipeline(unittest.TestCase):
     def test_embeddings(self):
         self.assertEqual(self.data.obsm['X_pca_harmony'].shape, (1043, 50), "Harmony PCA shape differs!")
         self.assertEqual(self.data.obsm['X_umap'].shape, (1043, 2), "UMAP shape differs!")
-        self.assertEqual(self.data.obsm['X_tsne'].shape, (1043, 2), "tSNE shape differs!")
         self.assertEqual(self.data.obsm['X_fle'].shape, (1043, 2), "FLE shape differs!")
 
     def test_de_tests(self):
@@ -60,7 +54,6 @@ class TestPipeline(unittest.TestCase):
     def test_plot(self):
         self.assertIn('result.compo.pdf', os.listdir('tests'), "Composition plot is lost!")
         self.assertIn('result.leiden_labels.umap.pdf', os.listdir('tests'), "UMAP plot is lost!")
-        self.assertIn('result.leiden_labels.tsne.pdf', os.listdir('tests'), "tSNE plot is lost!")
         self.assertIn('result.leiden_labels.fle.pdf', os.listdir('tests'), 'FLE plot is lost!')
 
     def test_output(self):

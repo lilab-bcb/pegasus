@@ -204,7 +204,7 @@ def calc_signature_score(
 
             _calc_sig_scores(data, signatures, show_omitted_genes=show_omitted_genes, skip_threshold=skip_threshold)
 
-            if sig_string.startswith("cell_cycle"):
+            if sig_string.startswith("cell_cycle") and ("G2/M" in data.obs and "G1/S" in data.obs):
                 data.obs["cycle_diff"] = data.obs["G2/M"] - data.obs["G1/S"]
 
                 values = data.obs[["G1/S", "G2/M"]].values

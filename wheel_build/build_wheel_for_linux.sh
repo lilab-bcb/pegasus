@@ -11,7 +11,7 @@ function repair_wheel {
     fi
 }
 
-declare -a PythonVersions=("cp38-cp38" "cp39-cp39" "cp310-cp310" "cp311-cp311" "cp312-cp312")
+declare -a PythonVersions=("cp39-cp39" "cp310-cp310" "cp311-cp311" "cp312-cp312" "cp313-cp313")
 
 for val in ${PythonVersions[@]}; do
     /opt/python/$val/bin/pip install -r /src/requirements.txt
