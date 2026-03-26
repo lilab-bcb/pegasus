@@ -197,8 +197,8 @@ predefined_pathways = dict(
 )
 
 predefined_gene_orders = dict(
-    GRCh38_2020_A=pkg_resources.resource_filename("pegasus", "data_files/GRCh38-2020-A_gene_order.txt"),
-    mm10_2020_A=pkg_resources.resource_filename("pegasus", "data_files/mm10-2020-A_gene_order.txt"),
+    GRCh38_2020_A=str(data_path / "GRCh38-2020-A_gene_order.txt"),
+    mm10_2020_A=str(data_path / "mm10-2020-A_gene_order.txt"),
 )
 
 def load_signatures_from_file(input_file: str) -> Dict[str, List[str]]:
