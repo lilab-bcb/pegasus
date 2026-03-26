@@ -197,6 +197,7 @@ predefined_pathways = dict(
 )
 
 predefined_gene_orders = dict(
+    GRCh38_2024_A=str(data_path / "GRCh38-2024-A_gene_order.txt"),
     GRCh38_2020_A=str(data_path / "GRCh38-2020-A_gene_order.txt"),
     mm10_2020_A=str(data_path / "mm10-2020-A_gene_order.txt"),
 )
