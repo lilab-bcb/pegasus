@@ -404,6 +404,7 @@ def calc_kBET(
     random_state: int = 0,
     temp_folder: str = None,
     use_cache: bool = True,
+    full_speed: bool = False,
 ) -> Tuple[float, float, float]:
     """Calculate the kBET metric of the data regarding a specific sample attribute and embedding.
 
@@ -438,6 +439,9 @@ def calc_kBET(
     use_cache: ``bool``, optional, default: ``True``
         If use cache results for kNN.
 
+    full_speed: `bool`, optional (default: False)
+        If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+
     Returns
     -------
     stat_mean: ``float``
@@ -468,7 +472,7 @@ def calc_kBET(
     attr_values = data.obs[attr].cat.rename_categories(range(nbatch)).values
 
     indices, distances, K = get_neighbors(
-        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
@@ -510,6 +514,7 @@ def calc_kSIM(
     n_jobs: int = -1,
     random_state: int = 0,
     use_cache: bool = True,
+    full_speed: bool = False,
 ) -> Tuple[float, float]:
     """Calculate the kSIM metric of the data regarding a specific sample attribute and embedding.
 
@@ -541,6 +546,9 @@ def calc_kSIM(
     use_cache: ``bool``, optional, default: ``True``
         If use cache results for kNN.
 
+    full_speed: `bool`, optional (default: False)
+        If full_speed, use multiple threads in constructing hnsw index. However, the kNN results are not reproducible. If not full_speed, use only one thread to make sure results are reproducible.
+
     Returns
     -------
     kSIM_mean: ``float``
@@ -559,7 +567,7 @@ def calc_kSIM(
     nsample = data.shape[0]
 
     indices, distances, K = get_neighbors(
-        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, use_cache=use_cache,
+        data, K=K, rep=rep, n_jobs=n_jobs, random_state=random_state, full_speed=full_speed, use_cache=use_cache,
     )
     knn_indices = np.concatenate(
         (np.arange(nsample).reshape(-1, 1), indices[:, 0 : K - 1]), axis=1
