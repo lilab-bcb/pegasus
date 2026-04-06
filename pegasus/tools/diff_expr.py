@@ -665,12 +665,12 @@ def write_results_to_excel(
                 # Extract suffix like '-2', in which Pegasus uses to distinguish clusters with the same cell type.
                 import re
                 suf = ""
-                match = re.search("\-\d+$", clust_id)
+                match = re.search(r"-\d+$", clust_id)
                 if match is not None:
                     suf = match.group()
                     clust_id = clust_id[:match.start()]
                 # Split by space
-                fields = re.split("\s+", clust_id)
+                fields = re.split(r"\s+", clust_id)
                 if fields[-1].lower() in ["cell", "cells"]:
                     fields = fields[:-1]
                 abbr = " ".join(fields) + suf
