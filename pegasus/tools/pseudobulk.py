@@ -103,6 +103,7 @@ def pseudobulk(
 
     mat_dict = {"counts": get_pseudobulk_count(X, group_codes, n_bulks)}
 
+    # Generate pseudo-bulk attributes if specified
     if attrs is not None:
         if isinstance(attrs, str):
             attrs = [attrs]
@@ -112,18 +113,17 @@ def pseudobulk(
                 logger.error(f"Cell attribute key '{attr}' must exist in data.obs!")
                 sys.exit(-1)
 
-    # Generate pseudo-bulk attributes if specified
-    if attrs is not None:
         df_pseudobulk = (
             df_barcode.groupby(groupby, sort=False, observed=True)[attrs]
             .agg(set_bulk_value)
             .reindex(bulk_list)
             .reset_index()
-            .rename(columns={groupby: "barcodekey"})
+            .rename(columns={"index": "barcodekey"})
         )
     else:
         df_pseudobulk = pd.DataFrame({"barcodekey": bulk_list})
 
+    # Remove unused levels in categorical columns
     for col in df_pseudobulk.columns:
         if col == 'barcodekey':
             continue
@@ -137,6 +137,7 @@ def pseudobulk(
     if "featureid" in data.var.columns:
         df_feature["featureid"] = data.var["featureid"]
 
+    # Generate pseudobulk matrices for each condition if specified
     if condition is not None:
         if condition not in data.obs.columns:
             import sys
