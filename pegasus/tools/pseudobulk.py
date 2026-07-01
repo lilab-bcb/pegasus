@@ -179,9 +179,8 @@ def deseq2(
     pseudobulk: ``MultimodalData`` or ``UnimodalData``
         Pseudobulk data with rows for samples/pseudobulks and columns for genes. It may contain multiple count matrices of the same shape with different keys
 
-    design: ``str`` or ``List[str]``
-        For ``pydeseq2`` backend, specify either a factor or a list of factors to be used as design variables.They must be all in ``pseudobulk.obs``.
-        For ``deseq2`` backend, specify the design formula that will be passed to DESeq2. E.g. ``~group+condition`` or ``~genotype+treatment+genotype:treatment``.
+    design: ``str``
+        Specify the design formula that will be passed to DESeq2. E.g. ``~group+condition`` or ``~genotype+treatment+genotype:treatment``.
 
     contrasts: ``Tuple[str, str, str]`` or ``List[Tuple[str, str, str]]``
         A tuple of three elements passing to DESeq2: a factor in design formula, a level in the factor as the test level (numeritor of fold change), and a level as the reference level (denominator of fold change).
@@ -225,7 +224,7 @@ def deseq2(
     mat_keys = ['counts'] if not compute_all else pseudobulk.list_keys()
     for mat_key in mat_keys:
         if backend == "pydeseq2":
-            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design_factors=design, contrasts=contrasts, de_key=de_key, alpha=alpha, n_jobs=n_jobs, verbose=verbose)
+            _run_pydeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrasts=contrasts, de_key=de_key, alpha=alpha, n_jobs=n_jobs, verbose=verbose)
         else:
             _run_rdeseq2(pseudobulk=pseudobulk, mat_key=mat_key, design=design, contrasts=contrasts, de_key=de_key, alpha=alpha)
 
@@ -233,7 +232,7 @@ def deseq2(
 def _run_pydeseq2(
     pseudobulk: MultimodalData,
     mat_key: str,
-    design_factors: Union[str, List[str]],
+    design: str,
     contrasts: Union[Tuple[str, str, str], List[Tuple[str, str, str]]],
     de_key: Union[str, List[str]],
     alpha: float,
@@ -249,17 +248,17 @@ def _run_pydeseq2(
         logger.error(f"{e}\nNeed pydeseq2! Try 'pip install pydeseq2'.")
         sys.exit(-1)
 
-    if isinstance(design_factors, str):
-        if design_factors not in pseudobulk.obs.columns:
-            import sys
-            logger.error(f"The design factor {design_factors} does not exist in data.obs!")
-            sys.exit(-1)
-    else:
-        for factor in design_factors:
-            if factor not in pseudobulk.obs.columns:
-                import sys
-                logger.error(f"The design factor {factor} does not exist in data.obs!")
-                sys.exit(-1)
+    #if isinstance(design_factors, str):
+    #    if design_factors not in pseudobulk.obs.columns:
+    #        import sys
+    #        logger.error(f"The design factor {design_factors} does not exist in data.obs!")
+    #        sys.exit(-1)
+    #else:
+    #    for factor in design_factors:
+    #        if factor not in pseudobulk.obs.columns:
+    #            import sys
+    #            logger.error(f"The design factor {factor} does not exist in data.obs!")
+    #            sys.exit(-1)
 
     counts_df = pd.DataFrame(pseudobulk.get_matrix(mat_key), index=pseudobulk.obs_names, columns=pseudobulk.var_names)
     metadata = pseudobulk.obs
@@ -269,7 +268,7 @@ def _run_pydeseq2(
     dds = DeseqDataSet(
         counts=counts_df,
         metadata=metadata,
-        design_factors=design_factors,
+        design=design,
         inference=inference,
         quiet=not verbose,
     )
