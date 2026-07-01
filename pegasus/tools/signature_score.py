@@ -42,7 +42,7 @@ def _check_and_calc_sig_background(data: UnimodalData, n_bins: int, standardize:
     return True
 
 
-def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_omitted_genes: bool = False, skip_threshold: int = 1, standardize: bool = True) -> None:
+def _calc_sig_scores(data: Union[UnimodalData, anndata.AnnData], signatures: Dict[str, List[str]], show_omitted_genes: bool = False, skip_threshold: int = 1, standardize: bool = True) -> None:
     for key, gene_list in signatures.items():
         genes = pd.Index(gene_list)
         idx = data.var_names.isin(genes)
@@ -65,7 +65,9 @@ def _calc_sig_scores(data: UnimodalData, signatures: Dict[str, List[str]], show_
                 data.obs[key] = ((X - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]) / data.obsm["sig_bkg_std"][:,data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
             else:
                 data.obs[key] = (X - data.var.loc[idx, "mean"].values - data.obsm["sig_bkg_mean"][:, data.var["bins"].cat.codes[idx]]).mean(axis = 1).astype(np.float32)
-            data.register_attr(key, "signature")
+
+            if not isinstance(data, anndata.AnnData):
+                data.register_attr(key, "signature")
 
 
 def calculate_z_score(
