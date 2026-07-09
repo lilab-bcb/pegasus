@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import logging
+from scipy.sparse import csr_matrix
 logger = logging.getLogger(__name__)
 
 from pegasusio import MultimodalData, UnimodalData, timer
@@ -18,14 +19,13 @@ def set_bulk_value(col):
         return col.value_counts().idxmax()
 
 
-def get_pseudobulk_count(X, df, attr, bulk_list):
-    M = []
-    for bulk in bulk_list:
-        df_bulk = df.loc[df[attr] == bulk]
-        bulk_vec = np.sum(X[df_bulk.index, :], axis=0).A1
-        M.append(bulk_vec)
-
-    return np.array(M, dtype=np.int32)
+def get_pseudobulk_count(X, group_codes, n_bulks):
+    n_cells = X.shape[0]
+    indicator = csr_matrix(
+        (np.ones(n_cells), (group_codes, np.arange(n_cells))),
+        shape=(n_bulks, n_cells),
+    )
+    return (indicator @ X).astype(np.int32)
 
 
 @timer(logger=logger)
@@ -96,14 +96,14 @@ def pseudobulk(
         else data.obs[groupby].astype("category")
     )
     bulk_list = sample_vec.cat.categories
+    group_codes = sample_vec.cat.codes.values
+    n_bulks = len(bulk_list)
 
     df_barcode = data.obs.reset_index()
 
-    mat_dict = {"counts": get_pseudobulk_count(X, df_barcode, groupby, bulk_list)}
+    mat_dict = {"counts": get_pseudobulk_count(X, group_codes, n_bulks)}
 
     # Generate pseudo-bulk attributes if specified
-    bulk_attr_list = []
-
     if attrs is not None:
         if isinstance(attrs, str):
             attrs = [attrs]
@@ -113,16 +113,17 @@ def pseudobulk(
                 logger.error(f"Cell attribute key '{attr}' must exist in data.obs!")
                 sys.exit(-1)
 
-    for bulk in bulk_list:
-        df_bulk = df_barcode.loc[df_barcode[groupby] == bulk]
-        if attrs is not None:
-            bulk_attr = df_bulk[attrs].apply(set_bulk_value, axis=0)
-            bulk_attr["barcodekey"] = bulk
-        else:
-            bulk_attr = pd.Series({"barcodekey": bulk})
-        bulk_attr_list.append(bulk_attr)
+        df_pseudobulk = (
+            df_barcode.groupby(groupby, sort=False, observed=True)[attrs]
+            .agg(set_bulk_value)
+            .reindex(bulk_list)
+            .reset_index()
+            .rename(columns={"index": "barcodekey"})
+        )
+    else:
+        df_pseudobulk = pd.DataFrame({"barcodekey": bulk_list})
 
-    df_pseudobulk = pd.DataFrame(bulk_attr_list)
+    # Remove unused levels in categorical columns
     for col in df_pseudobulk.columns:
         if col == 'barcodekey':
             continue
@@ -136,6 +137,7 @@ def pseudobulk(
     if "featureid" in data.var.columns:
         df_feature["featureid"] = data.var["featureid"]
 
+    # Generate pseudobulk matrices for each condition if specified
     if condition is not None:
         if condition not in data.obs.columns:
             import sys
@@ -144,8 +146,9 @@ def pseudobulk(
 
         cluster_list = data.obs[condition].astype("category").cat.categories
         for cls in cluster_list:
+            mask = (df_barcode[condition] == cls).values
             mat_dict[f"{condition}_{cls}.X"] = get_pseudobulk_count(
-                X, df_barcode.loc[df_barcode[condition] == cls], groupby, bulk_list
+                X[mask], group_codes[mask], n_bulks
             )
 
     udata = UnimodalData(
