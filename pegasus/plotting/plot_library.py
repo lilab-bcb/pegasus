@@ -929,6 +929,7 @@ def violin(
     matkey: Optional[str] = None,
     stripplot: Optional[bool] = False,
     stripsize: int = 1,
+    thresholds_display: Optional[List[float]] = None,
     inner: Optional[str] = None,
     scale: Optional[str] = 'width',
     panel_size: Optional[Tuple[float, float]] = (8, 0.5),
@@ -960,6 +961,9 @@ def violin(
         If matkey is set, select matrix with matkey as keyword in the current modality. Only works for MultimodalData or UnimodalData objects.
     stripplot: ``bool``, optional, default: ``False``
         Attach a stripplot to the violinplot or not. This option will be automatically turn off if 'hue' is set.
+    thresholds_display: ``List[float]``, optional, default: ``None``
+        Draw red dashed horizontal lines at the specified values and include
+        those values among the y-axis ticks.
     inner: ``str``, optional, default: ``None``
         Representation of the datapoints in the violin interior:
             - If ``box``, draw a miniature boxplot.
@@ -1048,6 +1052,21 @@ def violin(
         if stripplot:
             sns.stripplot(x="label", y=attrs[i], hue = hue, data=df, ax=ax, size=stripsize, color="k", jitter=True)
         sns.violinplot(x="label", y=attrs[i], data=df, inner=inner, linewidth=1, ax=ax, cut=0, density_norm=scale, palette=palette, **kwargs)
+        if thresholds_display is not None:
+            for thresh in thresholds_display:
+                ax.axhline(y=thresh, linestyle="--", color="red", linewidth=1)
+
+            # Use a secondary axis so that only threshold values are shown on
+            # the left; the regular y-axis ticks remain on the right.
+            threshold_ax = ax.twinx()
+            threshold_ax.set_ylim(ax.get_ylim())
+            threshold_ax.set_yticks(thresholds_display)
+            threshold_ax.yaxis.set_ticks_position("left")
+            threshold_ax.yaxis.set_label_position("left")
+            threshold_ax.spines["right"].set_visible(False)
+            threshold_ax.spines["left"].set_visible(True)
+            threshold_ax.tick_params(axis="y", colors="red", labelsize="small")
+            threshold_ax.patch.set_visible(False)
         ax.grid(False)
 
         if hue is not None:
