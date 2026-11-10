@@ -53,9 +53,27 @@ def _select_and_scale_features(
         X /= np.linalg.norm(X, axis=0)
         return X
 
-    cumsums = pd.concat([pd.Series({'__start': 0}), data.obs[batch].values.value_counts()]).cumsum().values
+    #cumsums = pd.concat([pd.Series({'__start': 0}), data.obs[batch].values.value_counts()]).cumsum().values
+    # Split in row order: categorical order need not match the cell order.
+    print(f"\tCorrect approach.")
+    batch_codes, batch_labels = pd.factorize(data.obs[batch], sort=False)
+    if np.any(batch_codes < 0):
+        raise ValueError(f"Batch column {batch!r} contains missing labels.")
+    boundaries = np.flatnonzero(batch_codes[1:] != batch_codes[:-1]) + 1
+    cumsums = np.concatenate(([0], boundaries, [X.shape[0]]))
+    if cumsums.size - 1 != len(batch_labels):
+        raise ValueError(f"Cells in each batch of {batch!r} must be adjacent to each other.")
     Xs = []
     for i in range(cumsums.size - 1):
+        # Check if current batch's cells actually contain multiple batch labels
+        start, end = cumsums[i], cumsums[i + 1]
+        labels = data.obs[batch].iloc[start:end]
+        assert labels.nunique(dropna=False) == 1, (
+            f"Batch slice [{start}:{end}] contains "
+            f"{labels.nunique(dropna=False)} distinct batch labels:"
+            f"{labels.unique().tolist()}"
+        )
+
         X_i = X[cumsums[i]:cumsums[i+1]]
         scale = np.linalg.norm(X_i, axis=0)
         scale[scale == 0.0] = 1.0
@@ -346,7 +364,7 @@ def find_nmf_programs(
                 fp_precision=fp_precision,
                 online_chunk_size=online_chunk_size,
             )
-            
+
             if err_best > err:
                 err_best = err
                 H_best = H
