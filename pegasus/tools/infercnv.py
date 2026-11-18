@@ -22,7 +22,9 @@ def _inject_genomic_info_to_data(
     genome: str,
 ) -> None:
     genomic_df = pd.read_csv(predefined_gene_orders[genome], sep="\t", header=None)
-    genomic_df.columns = ["featureid", "chromosome", "start", "end"]
+    # Columns: feature id, chromosome, start, end, and (optionally) chromosome arm "p"/"q".
+    # Coordinates are 1-based inclusive (GTF). chr_arm is empty for chrM and unplaced contigs.
+    genomic_df.columns = ["featureid", "chromosome", "start", "end", "chr_arm"][: genomic_df.shape[1]]
     genomic_df.set_index("featureid", inplace=True)
 
     var_df = data.var.reset_index().set_index("featureid")
@@ -103,6 +105,9 @@ def calc_infercnv(
     Returns
     -------
     ``None``
+
+    Update ``data.var``:
+        * ``data.var["chromosome"]``, ``data.var["start"]``, ``data.var["end"]``: Genomic position of each gene (added if not already present). For ``GRCh38_2024_A`` the column ``data.var["chr_arm"]`` (``"p"`` or ``"q"``; missing for chrM and unplaced contigs) is added as well.
 
     Update ``data.obsm``:
         * ``data.obsm["X_"+res_key]``: The matrix of final CNV scores calculated, with rows for cells and columns for genes ordered by their positions on genomic regions.
